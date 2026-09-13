@@ -188,4 +188,185 @@ class ArsipService
 
         return null;
     }
+
+    /**
+     * Membekukan data Ijazah Kelulusan Al-Qur'an ke Arsip Dokumen
+     */
+    public function arsipkanIjazahAlquran(\App\Models\UjianAlquran\PesertaUjianAlquran $peserta, $pengasuh = null, $juriPj = null, $administrator = null)
+    {
+        $peserta->loadMissing([
+            'ujianAlquran.tahunPelajaran',
+            'ujianAlquran.juris.ustadz',
+            'murid.waliMurid.kampung',
+            'ruangan.level.tingkat'
+        ]);
+
+        $ujian = $peserta->ujianAlquran;
+        $murid = $peserta->murid;
+
+        if (!$pengasuh) {
+            $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
+        }
+
+        if (!$juriPj) {
+            $juriPj = $ujian->juris->firstWhere('is_penanggung_jawab', true)
+                ?? $ujian->juris->firstWhere('peran_juri', 'Juri 1')
+                ?? $ujian->juris->first();
+        }
+
+        $thn = $ujian->tahunPelajaran->nama_masehi ?? date('Y');
+        $noIjazah = $peserta->no_ijazah ?? ("IJZ.QURAN/MDT-HS/{$thn}/" . str_pad($peserta->id, 4, '0', STR_PAD_LEFT));
+        $noSk = $peserta->no_sk ?? (str_pad($peserta->id, 3, '0', STR_PAD_LEFT) . "/SK.QURAN/IBT/MDT-HS/" . date('m/Y'));
+
+        if (empty($peserta->no_ijazah)) {
+            $peserta->update(['no_ijazah' => $noIjazah, 'no_sk' => $noSk]);
+        }
+
+        $snapshotIjazah = [
+            'tipe_ijazah'          => 'ijazah_alquran',
+            'nomor_dokumen'        => $noIjazah,
+            'nomor_ijazah_alquran' => $noIjazah,
+            'nomor_sk_alquran'     => $noSk,
+            'peserta_id'           => $peserta->id,
+            'ujian_alquran_id'     => $ujian->id,
+            'nama_ujian'           => $ujian->nama_ujian,
+            'tahun_pelajaran'      => ($ujian->tahunPelajaran->nama_hijriyah ?? '-') . ' H - ' . ($ujian->tahunPelajaran->nama_masehi ?? '-') . ' M',
+            'tahun_masehi'         => $ujian->tahunPelajaran->nama_masehi ?? date('Y'),
+            'tahun_hijriyah'       => $ujian->tahunPelajaran->nama_hijriyah ?? '-',
+            'nama_ruangan'         => $peserta->ruangan->nama_ruangan ?? '-',
+            'nama_level'           => $peserta->ruangan->level->nama_level ?? '5 IBT',
+            'lulus_dari_tingkat'   => 'IBTIDAIYAH (AL-QUR\'AN)',
+            'nomor_peserta'        => $peserta->nomor_peserta ?? '-',
+            'nism'                 => $murid->nism ?? '-',
+            'nama_murid'           => $murid->nama_lengkap ?? '-',
+            'tempat_lahir'         => $murid->tempat_lahir ?? '-',
+            'tanggal_lahir'        => $murid->tanggal_lahir ? \Carbon\Carbon::parse($murid->tanggal_lahir)->format('Y-m-d') : null,
+            'tempat_tgl_lahir'     => ($murid->tempat_lahir ?? '-') . ', ' . ($murid->tanggal_lahir ? \Carbon\Carbon::parse($murid->tanggal_lahir)->translatedFormat('d F Y') : '-'),
+            'nama_wali'            => $murid->waliMurid->nama_lengkap ?? ($murid->nama_ayah ?? '-'),
+            'nilai_akhir'          => (float) $peserta->nilai_akhir,
+            'predikat'             => $peserta->predikat,
+            'predikat_arab'        => $peserta->predikat_arab,
+            'jumlah_khoto_jali'    => (int) $peserta->jumlah_khoto_jali,
+            'jumlah_khoto_khofi'   => (int) $peserta->jumlah_khoto_khofi,
+            'total_pengurangan'    => (float) $peserta->total_pengurangan,
+            'pengasuh_id'          => $pengasuh?->id,
+            'pengasuh_nama'        => $pengasuh?->anggota?->nama_lengkap ?? ($pengasuh?->nama ?? 'Pengasuh Madrasah'),
+            'juri_pj_id'           => $juriPj?->ustadz_id,
+            'juri_pj_nama'         => $juriPj?->ustadz?->nama_lengkap ?? 'Dewan Penguji',
+            'juri_pj_peran'        => $juriPj ? $juriPj->peran_juri . ' • ' . $juriPj->kategori_juri : 'Dewan Penguji Al-Qur\'an',
+            'tanggal_ujian'        => $ujian->tanggal_ujian ? \Carbon\Carbon::parse($ujian->tanggal_ujian)->format('Y-m-d') : ($ujian->tanggal_pelaksanaan ? \Carbon\Carbon::parse($ujian->tanggal_pelaksanaan)->format('Y-m-d') : ($peserta->tanggal_lulus ? \Carbon\Carbon::parse($peserta->tanggal_lulus)->format('Y-m-d') : now()->format('Y-m-d'))),
+            'tanggal_pelaksanaan'  => $ujian->tanggal_ujian ? \Carbon\Carbon::parse($ujian->tanggal_ujian)->format('Y-m-d') : ($ujian->tanggal_pelaksanaan ? \Carbon\Carbon::parse($ujian->tanggal_pelaksanaan)->format('Y-m-d') : null),
+            'tanggal_lulus'        => $peserta->tanggal_lulus ? \Carbon\Carbon::parse($peserta->tanggal_lulus)->format('Y-m-d') : ($ujian->tanggal_ujian ? \Carbon\Carbon::parse($ujian->tanggal_ujian)->format('Y-m-d') : now()->format('Y-m-d')),
+            'tanggal_disahkan'     => $peserta->tanggal_lulus ? \Carbon\Carbon::parse($peserta->tanggal_lulus)->format('Y-m-d') : ($ujian->tanggal_ujian ? \Carbon\Carbon::parse($ujian->tanggal_ujian)->format('Y-m-d') : now()->format('Y-m-d')),
+        ];
+
+        return ArsipDokumen::updateOrCreate(
+            [
+                'tipe_dokumen'   => 'ijazah',
+                'referensi_tipe' => get_class($murid),
+                'referensi_id'   => $murid->id,
+                'snapshot_data->tipe_ijazah' => 'ijazah_alquran',
+            ],
+            [
+                'dicetak_oleh'  => Auth::id() ?? 1,
+                'snapshot_data' => $snapshotIjazah,
+            ]
+        );
+    }
+
+    /**
+     * Membekukan data Surat Keputusan (SK) Kelulusan Al-Qur'an ke Arsip Dokumen
+     */
+    public function arsipkanSkAlquran(\App\Models\UjianAlquran\PesertaUjianAlquran $peserta, $pengasuh = null, $kabid = null, $juriPj = null, $administrator = null)
+    {
+        $peserta->loadMissing([
+            'ujianAlquran.tahunPelajaran',
+            'ujianAlquran.juris.ustadz',
+            'murid.waliMurid.kampung',
+            'ruangan.level.tingkat'
+        ]);
+
+        $ujian = $peserta->ujianAlquran;
+        $murid = $peserta->murid;
+
+        if (!$pengasuh) {
+            $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
+        }
+
+        if (!$kabid) {
+            $kabid = Pengurus::getAktifByJabatan('Kepala Bidang Pendidikan', $peserta->ruangan->level->tingkat_id ?? null)
+                ?? Pengurus::getAktifByJabatan('Kepala Bidang Ibtidaiyah')
+                ?? Pengurus::getAktifByJabatan('Kepala Bidang');
+        }
+
+        if (!$juriPj) {
+            $juriPj = $ujian->juris->firstWhere('is_penanggung_jawab', true)
+                ?? $ujian->juris->firstWhere('peran_juri', 'Juri 1')
+                ?? $ujian->juris->first();
+        }
+
+        $thn = $ujian->tahunPelajaran->nama_masehi ?? date('Y');
+        $noIjazah = $peserta->no_ijazah ?? ("IJZ.QURAN/MDT-HS/{$thn}/" . str_pad($peserta->id, 4, '0', STR_PAD_LEFT));
+        $noSk = $peserta->no_sk ?? (str_pad($peserta->id, 3, '0', STR_PAD_LEFT) . "/SK.QURAN/IBT/MDT-HS/" . date('m/Y'));
+
+        if (empty($peserta->no_sk)) {
+            $peserta->update(['no_sk' => $noSk, 'no_ijazah' => $noIjazah]);
+        }
+
+        $snapshotSK = [
+            'tipe_sk'              => 'sk_alquran',
+            'nomor_dokumen'        => $noSk,
+            'nomor_sk_alquran'     => $noSk,
+            'nomor_ijazah_alquran' => $noIjazah,
+            'peserta_id'           => $peserta->id,
+            'ujian_alquran_id'     => $ujian->id,
+            'nama_ujian'           => $ujian->nama_ujian,
+            'tahun_pelajaran'      => ($ujian->tahunPelajaran->nama_hijriyah ?? '-') . ' H - ' . ($ujian->tahunPelajaran->nama_masehi ?? '-') . ' M',
+            'tahun_masehi'         => $ujian->tahunPelajaran->nama_masehi ?? date('Y'),
+            'tahun_hijriyah'       => $ujian->tahunPelajaran->nama_hijriyah ?? '-',
+            'nama_ruangan'         => $peserta->ruangan->nama_ruangan ?? '-',
+            'nama_level'           => $peserta->ruangan->level->nama_level ?? '5 IBT',
+            'nomor_peserta'        => $peserta->nomor_peserta ?? '-',
+            'nism'                 => $murid->nism ?? '-',
+            'nama_murid'           => $murid->nama_lengkap ?? '-',
+            'tempat_lahir'         => $murid->tempat_lahir ?? '-',
+            'tanggal_lahir'        => $murid->tanggal_lahir ? \Carbon\Carbon::parse($murid->tanggal_lahir)->format('Y-m-d') : null,
+            'tempat_tgl_lahir'     => ($murid->tempat_lahir ?? '-') . ', ' . ($murid->tanggal_lahir ? \Carbon\Carbon::parse($murid->tanggal_lahir)->translatedFormat('d F Y') : '-'),
+            'nama_wali'            => $murid->waliMurid->nama_lengkap ?? ($murid->nama_ayah ?? '-'),
+            'nilai_akhir'          => (float) $peserta->nilai_akhir,
+            'predikat'             => $peserta->predikat,
+            'predikat_arab'        => $peserta->predikat_arab,
+            'status_kelulusan'     => $peserta->status_kelulusan,
+            'jumlah_khoto_jali'    => (int) $peserta->jumlah_khoto_jali,
+            'jumlah_khoto_khofi'   => (int) $peserta->jumlah_khoto_khofi,
+            'poin_pengurangan_jali'  => (float) $peserta->poin_pengurangan_jali,
+            'poin_pengurangan_khofi' => (float) $peserta->poin_pengurangan_khofi,
+            'total_pengurangan'    => (float) $peserta->total_pengurangan,
+            'pengasuh_id'          => $pengasuh?->id,
+            'pengasuh_nama'        => $pengasuh?->anggota?->nama_lengkap ?? ($pengasuh?->nama ?? 'Pengasuh Madrasah'),
+            'kabid_id'             => $kabid?->id,
+            'kabid_nama'           => $kabid?->anggota?->nama_lengkap ?? ($kabid?->nama ?? 'Kepala Bidang'),
+            'juri_pj_id'           => $juriPj?->ustadz_id,
+            'juri_pj_nama'         => $juriPj?->ustadz?->nama_lengkap ?? 'Dewan Penguji',
+            'admin_id'             => $administrator?->id,
+            'admin_nama'           => $administrator?->nama_lengkap ?? 'Administrator',
+            'tanggal_ujian'        => $ujian->tanggal_ujian ? \Carbon\Carbon::parse($ujian->tanggal_ujian)->format('Y-m-d') : ($ujian->tanggal_pelaksanaan ? \Carbon\Carbon::parse($ujian->tanggal_pelaksanaan)->format('Y-m-d') : ($peserta->tanggal_lulus ? \Carbon\Carbon::parse($peserta->tanggal_lulus)->format('Y-m-d') : now()->format('Y-m-d'))),
+            'tanggal_pelaksanaan'  => $ujian->tanggal_ujian ? \Carbon\Carbon::parse($ujian->tanggal_ujian)->format('Y-m-d') : ($ujian->tanggal_pelaksanaan ? \Carbon\Carbon::parse($ujian->tanggal_pelaksanaan)->format('Y-m-d') : null),
+            'tanggal_lulus'        => $peserta->tanggal_lulus ? \Carbon\Carbon::parse($peserta->tanggal_lulus)->format('Y-m-d') : ($ujian->tanggal_ujian ? \Carbon\Carbon::parse($ujian->tanggal_ujian)->format('Y-m-d') : now()->format('Y-m-d')),
+            'tanggal_disahkan'     => $peserta->tanggal_lulus ? \Carbon\Carbon::parse($peserta->tanggal_lulus)->format('Y-m-d') : ($ujian->tanggal_ujian ? \Carbon\Carbon::parse($ujian->tanggal_ujian)->format('Y-m-d') : now()->format('Y-m-d')),
+        ];
+
+        return ArsipDokumen::updateOrCreate(
+            [
+                'tipe_dokumen'   => 'sk_keputusan',
+                'referensi_tipe' => get_class($murid),
+                'referensi_id'   => $murid->id,
+                'snapshot_data->tipe_sk' => 'sk_alquran',
+            ],
+            [
+                'dicetak_oleh'  => Auth::id() ?? 1,
+                'snapshot_data' => $snapshotSK,
+            ]
+        );
+    }
 }

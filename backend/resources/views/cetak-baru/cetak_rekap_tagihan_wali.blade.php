@@ -263,7 +263,7 @@
                 <th style="width: 65px;">NO REG</th>
                 <th>NAMA KEPALA KELUARGA</th>
                 <th style="width: 110px;">DUSUN</th>
-                <th>TANGGUNGAN SANTRI AKTIF</th>
+                <th>TANGGUNGAN MURID AKTIF</th>
                 <th style="width: 90px; text-align: right;">NOMINAL</th>
                 <th style="width: 75px; text-align: center;">STATUS</th>
                 <th style="width: 130px;">NO. KWITANSI / TGL</th>

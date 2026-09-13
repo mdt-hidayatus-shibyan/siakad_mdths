@@ -19,7 +19,7 @@
                 </h2>
                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                     Kelola dan terbitkan tagihan keluarga secara massal atau per Kepala Keluarga (KK) yang memiliki
-                    santri aktif.
+                    murid aktif.
                 </p>
             </div>
 
@@ -166,7 +166,7 @@
                 <!-- Pencarian Teks -->
                 <div class="lg:col-span-2">
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1">
-                        Cari Kepala KK / Santri
+                        Cari Kepala KK / Murid
                     </label>
                     <div class="relative">
                         <input type="text" name="search" value="{{ request('search') }}"
@@ -196,7 +196,7 @@
                     {{ number_format($totalWaliAktif, 0, ',', '.') }} <span
                         class="text-xs font-bold text-zinc-400">KK</span>
                 </h3>
-                <p class="text-[10px] text-zinc-400 mt-0.5">Memiliki anak santri aktif</p>
+                <p class="text-[10px] text-zinc-400 mt-0.5">Memiliki anak murid aktif</p>
             </div>
 
             <!-- Belum Diterbitkan -->
@@ -354,7 +354,7 @@
                                     class="w-4 h-4 rounded-lg border-zinc-300 dark:border-zinc-600 text-primary focus:ring-primary/30 bg-white/50 dark:bg-black/50 cursor-pointer">
                             </th>
                             <th class="py-2 px-4">Kepala Keluarga & Zonasi</th>
-                            <th class="py-2 px-4">Tanggungan Santri Aktif</th>
+                            <th class="py-2 px-4">Tanggungan Murid Aktif</th>
                             <th class="py-2 px-4 text-right">Tarif Tagihan</th>
                             <th class="py-2 px-4 text-center">Status Penerbitan</th>
                             <th class="py-2 px-4 text-center w-28">Aksi</th>

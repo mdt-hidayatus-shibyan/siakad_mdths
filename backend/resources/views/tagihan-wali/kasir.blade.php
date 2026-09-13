@@ -152,13 +152,13 @@
                         </div>
                     </div>
 
-                    <!-- Daftar Santri Aktif di bawah KK -->
+                    <!-- Daftar Murid Aktif di bawah KK -->
                     <div class="pt-3 border-t border-zinc-200/60 dark:border-zinc-800">
                         <div class="flex items-center justify-between mb-2.5">
                             <span
                                 class="text-[10px] font-black uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                                 <i class="bi bi-people-fill text-primary"></i>
-                                <span>Santri Aktif ({{ $waliTerpilih->murids->count() }})</span>
+                                <span>Murid Aktif ({{ $waliTerpilih->murids->count() }})</span>
                             </span>
                         </div>
 
@@ -175,12 +175,12 @@
                                     <div class="flex items-center justify-between mt-1 text-[10px] text-zinc-500">
                                         <span>
                                             <i class="bi bi-door-open text-zinc-400"></i>
-                                            {{ $anak->ruangans->first()?->nama_ruangan ?? 'Belum ada kelas' }}
+                                            {{ $anak->ruangans->first()?->nama_ruangan ?? 'Belum ada ruangan' }}
                                         </span>
                                         @php $tabungan = $anak->tabungans->first(); @endphp
                                         @if ($tabungan)
                                             <span class="font-bold text-emerald-600 dark:text-emerald-400"
-                                                title="Saldo Tabungan Santri">
+                                                title="Saldo Tabungan Murid">
                                                 <i class="bi bi-wallet2"></i> Rp
                                                 {{ number_format($tabungan->saldo, 0, ',', '.') }}
                                             </span>
@@ -188,7 +188,7 @@
                                     </div>
                                 </div>
                             @empty
-                                <p class="text-xs text-zinc-400 italic">Tidak ada santri aktif terdaftar.</p>
+                                <p class="text-xs text-zinc-400 italic">Tidak ada murid aktif terdaftar.</p>
                             @endforelse
                         </div>
                     </div>
@@ -349,11 +349,11 @@
                         <i class="bi bi-qr-code-scan"></i>
                     </div>
                     <h3 class="text-base md:text-lg font-black text-zinc-900 dark:text-white tracking-tight">
-                        Siap Melakukan Scan KK / Santri
+                        Siap Melakukan Scan KK / Murid
                     </h3>
                     <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">
                         Arahkan scanner barcode ke kartu identitas keluarga atau ketikkan nomor registrasi / nomor
-                        KK / NISM santri pada bilah pencarian di atas.
+                        KK / NISM murid pada bilah pencarian di atas.
                     </p>
 
                     <div
@@ -551,12 +551,12 @@
                         </div>
                     </div>
 
-                    <!-- Opsi Tambahan: Pilih Rekening Tabungan Santri (Jika metode Potong Tabungan) -->
+                    <!-- Opsi Tambahan: Pilih Rekening Tabungan Murid (Jika metode Potong Tabungan) -->
                     <div id="panelPilihTabungan"
                         class="hidden p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2">
                         <label
                             class="block text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-                            Pilih Rekening Tabungan Santri Yang Dipotong
+                            Pilih Rekening Tabungan Murid Yang Dipotong
                         </label>
                         <select name="tabungan_id" id="selectTabunganId"
                             class="m3-input-glass w-full text-xs font-bold">
@@ -568,11 +568,11 @@
                                     </option>
                                 @endforeach
                             @else
-                                <option value="">(Tidak ada rekening tabungan aktif santri pada KK ini)</option>
+                                <option value="">(Tidak ada rekening tabungan aktif murid pada KK ini)</option>
                             @endif
                         </select>
                         <p class="text-[10px] text-amber-600/80 dark:text-amber-400/80">
-                            * Saldo rekening santri terpilih akan otomatis didebet sejumlah nominal tagihan.
+                            * Saldo rekening murid terpilih akan otomatis didebet sejumlah nominal tagihan.
                         </p>
                     </div>
 

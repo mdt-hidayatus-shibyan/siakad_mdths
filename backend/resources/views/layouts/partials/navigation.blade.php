@@ -6,12 +6,52 @@
                 return false;
             }
 
+            // Explicit alias map for composite modules / redirect-based submenus
+            $aliases = [
+                // Tagihan Wali Murid Module
+                'tagihan-wali.terbitkan-index' => [
+                    'tagihan-wali.terbitkan-index',
+                    'tagihan-wali.terbitkan',
+                    'tagihan-wali.hapus-massal',
+                    'tagihan-wali.hapus-semua',
+                    'tagihan-wali.destroy',
+                ],
+                'tagihan-wali.kasir' => [
+                    'tagihan-wali.kasir',
+                    'tagihan-wali.kasir-leger',
+                    'tagihan-wali.kasir-leger.proses',
+                    'tagihan-wali.bayar',
+                    'tagihan-wali.batal',
+                    'tagihan-wali.cetak-kwitansi',
+                    'tagihan-wali.detail',
+                ],
+                'tagihan-wali.laporan' => ['tagihan-wali.laporan', 'tagihan-wali.cetak-rekap'],
+            ];
+
+            // If an explicit alias mapping is defined, it is strictly authoritative
+            if (isset($aliases[$url])) {
+                foreach ($aliases[$url] as $pattern) {
+                    if (request()->routeIs($pattern)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             // 1. Direct route exact match
             if (request()->routeIs($url)) {
                 return true;
             }
 
-            // 2. Match route prefix if URL ends with .index (e.g. 'tabungan.rekening.index' -> 'tabungan.rekening.*')
+            // 2. Suffix "-main" pattern matching
+            if (str_ends_with($url, '-main')) {
+                $base = substr($url, 0, -5);
+                if (request()->routeIs($base) || request()->routeIs($base . '.*') || request()->routeIs($base . '-*')) {
+                    return true;
+                }
+            }
+
+            // 3. Match route prefix if URL ends with .index (e.g. 'tabungan.rekening.index' -> 'tabungan.rekening.*')
             if (str_ends_with($url, '.index')) {
                 $prefix = substr($url, 0, -6);
                 if (request()->routeIs($prefix . '.*')) {
@@ -19,7 +59,7 @@
                 }
             }
 
-            // 3. Direct URL path match
+            // 4. Direct URL path match
             $path = trim($url, '/');
             if ($path) {
                 if (request()->is($path)) {
@@ -30,7 +70,7 @@
                 }
             }
 
-            // 4. Resolve Route URI
+            // 5. Resolve Route URI
             if (\Illuminate\Support\Facades\Route::has($url)) {
                 try {
                     $routeUri = \Illuminate\Support\Facades\Route::getRoutes()->getByName($url)?->uri();

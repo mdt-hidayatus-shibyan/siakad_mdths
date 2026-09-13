@@ -180,3 +180,98 @@ class RekapTagihanAnakModel {
     );
   }
 }
+
+class ItemTagihanWaliModel {
+  final int id;
+  final String namaTagihan;
+  final String kategori;
+  final int nominal;
+  final String statusBayar;
+  final String? tanggalBayar;
+  final String? noTransaksi;
+  final String? metodePembayaran;
+  final String? keterangan;
+  final String? tahunPelajaran;
+
+  ItemTagihanWaliModel({
+    required this.id,
+    required this.namaTagihan,
+    required this.kategori,
+    required this.nominal,
+    required this.statusBayar,
+    this.tanggalBayar,
+    this.noTransaksi,
+    this.metodePembayaran,
+    this.keterangan,
+    this.tahunPelajaran,
+  });
+
+  bool get isLunas => statusBayar == 'Lunas';
+
+  factory ItemTagihanWaliModel.fromJson(Map<String, dynamic> json) {
+    return ItemTagihanWaliModel(
+      id: json['id'] is int ? json['id'] : int.tryParse('${json['id']}') ?? 0,
+      namaTagihan: json['nama_tagihan']?.toString() ?? 'Tagihan Keluarga',
+      kategori: json['kategori']?.toString() ?? 'Wali Murid',
+      nominal: json['nominal'] is int
+          ? json['nominal']
+          : int.tryParse('${json['nominal']}') ?? 0,
+      statusBayar: json['status_bayar']?.toString() ?? 'Belum Lunas',
+      tanggalBayar: json['tanggal_bayar']?.toString(),
+      noTransaksi: json['no_transaksi']?.toString(),
+      metodePembayaran: json['metode_pembayaran']?.toString(),
+      keterangan: json['keterangan']?.toString(),
+      tahunPelajaran: json['tahun_pelajaran']?.toString(),
+    );
+  }
+}
+
+class RekapTagihanWaliModel {
+  final int totalTagihan;
+  final int totalLunas;
+  final int totalTunggakan;
+  final List<ItemTagihanWaliModel> items;
+
+  RekapTagihanWaliModel({
+    required this.totalTagihan,
+    required this.totalLunas,
+    required this.totalTunggakan,
+    required this.items,
+  });
+
+  int get calculatedTotal =>
+      items.fold<int>(0, (sum, item) => sum + item.nominal);
+  int get calculatedTotalLunas => items
+      .where((item) => item.isLunas)
+      .fold<int>(0, (sum, item) => sum + item.nominal);
+  int get calculatedTotalTunggakan =>
+      (calculatedTotal - calculatedTotalLunas).clamp(0, calculatedTotal);
+
+  factory RekapTagihanWaliModel.fromJson(Map<String, dynamic> json) {
+    final summary = json['summary'] as Map<String, dynamic>? ?? {};
+    final rawItems = json['items'] as List<dynamic>? ?? [];
+
+    final items = rawItems
+        .map((e) => ItemTagihanWaliModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    final defaultTotal = items.fold<int>(0, (sum, item) => sum + item.nominal);
+    final defaultLunas = items
+        .where((item) => item.isLunas)
+        .fold<int>(0, (sum, item) => sum + item.nominal);
+
+    return RekapTagihanWaliModel(
+      totalTagihan: summary['total_tagihan'] is int
+          ? summary['total_tagihan']
+          : int.tryParse('${summary['total_tagihan']}') ?? defaultTotal,
+      totalLunas: summary['total_lunas'] is int
+          ? summary['total_lunas']
+          : int.tryParse('${summary['total_lunas']}') ?? defaultLunas,
+      totalTunggakan: summary['total_tunggakan'] is int
+          ? summary['total_tunggakan']
+          : int.tryParse('${summary['total_tunggakan']}') ??
+                (defaultTotal - defaultLunas).clamp(0, defaultTotal),
+      items: items,
+    );
+  }
+}

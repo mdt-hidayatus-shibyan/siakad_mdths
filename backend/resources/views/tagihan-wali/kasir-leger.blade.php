@@ -172,7 +172,7 @@
                                 <th class="py-3 px-3 w-10 text-center">No</th>
                                 <th class="py-3 px-4">No. Registrasi / KK</th>
                                 <th class="py-3 px-4">Kepala Keluarga</th>
-                                <th class="py-3 px-4">Santri Aktif & Rekening Tabungan</th>
+                                <th class="py-3 px-4">Murid Aktif & Rekening Tabungan</th>
                                 <th class="py-3 px-4">Nominal</th>
                                 <th class="py-3 px-4 text-center">Status</th>
                                 <th class="py-3 px-4 text-right">Aksi</th>
@@ -250,7 +250,7 @@
                                         </div>
                                     </td>
 
-                                    <!-- 5. Santri Aktif & Rekening Tabungan -->
+                                    <!-- 5. Murid Aktif & Rekening Tabungan -->
                                     <td class="py-3.5 px-4">
                                         <div class="space-y-1 max-w-xs">
                                             @forelse ($wali->murids as $anak)
@@ -264,7 +264,8 @@
                                                         <span
                                                             class="font-bold text-zinc-800 dark:text-zinc-200">{{ $anak->nama_lengkap }}</span>
                                                         <span class="text-[9px] text-zinc-400">
-                                                            ({{ $ruanganAnak?->nama_ruangan ?? 'Ruangan -' }})</span>
+                                                            ({{ $ruanganAnak?->nama_ruangan ?? 'Ruangan -' }})
+                                                        </span>
                                                     </div>
                                                     @if ($tabunganAnak)
                                                         <span
@@ -279,7 +280,7 @@
                                                     @endif
                                                 </div>
                                             @empty
-                                                <span class="text-[10px] text-zinc-400 italic">Tidak ada santri
+                                                <span class="text-[10px] text-zinc-400 italic">Tidak ada murid
                                                     aktif</span>
                                             @endforelse
                                         </div>
@@ -618,19 +619,19 @@
                         </div>
                     </div>
 
-                    <!-- Panel Pilih Rekening Tabungan Santri (Jika metode Potong Tabungan) -->
+                    <!-- Panel Pilih Rekening Tabungan Murid (Jika metode Potong Tabungan) -->
                     <div id="panelSingleTabungan"
                         class="hidden p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2">
                         <label
                             class="block text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-                            Pilih Rekening Tabungan Santri Yang Dipotong
+                            Pilih Rekening Tabungan Murid Yang Dipotong
                         </label>
                         <select name="tabungan_id" id="modalSingleSelectTabungan"
                             class="m3-input-glass w-full text-xs font-bold">
                             <!-- Populated via JavaScript -->
                         </select>
                         <p class="text-[10px] text-amber-600/80 dark:text-amber-400/80">
-                            * Saldo rekening tabungan santri terpilih akan otomatis didebet sejumlah nominal tagihan.
+                            * Saldo rekening tabungan murid terpilih akan otomatis didebet sejumlah nominal tagihan.
                         </p>
                     </div>
 
@@ -775,7 +776,7 @@
                 } else {
                     const opt = document.createElement('option');
                     opt.value = '';
-                    opt.textContent = '(Tidak ada rekening tabungan aktif santri pada KK ini)';
+                    opt.textContent = '(Tidak ada rekening tabungan aktif murid pada KK ini)';
                     selectTabungan.appendChild(opt);
                 }
 

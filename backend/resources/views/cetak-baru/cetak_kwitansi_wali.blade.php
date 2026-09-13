@@ -359,7 +359,7 @@
             <tr>
                 <th style="width: 25px; text-align: center;">NO</th>
                 <th>DESKRIPSI TAGIHAN</th>
-                <th>TANGGUNGAN SANTRI AKTIF</th>
+                <th>TANGGUNGAN MURID AKTIF</th>
                 <th style="text-align: right; width: 120px;">NOMINAL DIBAYAR</th>
                 <th style="text-align: center; width: 60px;">STATUS</th>
             </tr>

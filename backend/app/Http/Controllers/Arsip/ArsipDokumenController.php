@@ -28,12 +28,17 @@ class ArsipDokumenController extends Controller
                 return view('cetak-baru.cetak_rapor_arsip', compact('data', 'arsip'));
 
             case 'sk_keputusan':
-                // Pastikan path view ini sesuai dengan file blade cetak SK arsip Anda
+            case 'sk_alquran':
+                if (($data['tipe_sk'] ?? '') === 'sk_alquran' || isset($data['nomor_sk_alquran'])) {
+                    return view('cetak-baru.cetak_sk_alquran_arsip', compact('data', 'arsip'));
+                }
                 return view('cetak-baru.cetak_sk_arsip', compact('data', 'arsip'));
 
             case 'ijazah':
-                // Ini akan memanggil view ijazah yang sudah kita percantik sebelumnya
-                // Pastikan path view-nya sesuai ('cetak_ijazah_arsip.blade.php' diletakkan di mana)
+            case 'ijazah_alquran':
+                if (($data['tipe_ijazah'] ?? '') === 'ijazah_alquran' || isset($data['nomor_ijazah_alquran'])) {
+                    return view('cetak-baru.cetak_ijazah_alquran_arsip', compact('data', 'arsip'));
+                }
                 return view('cetak-baru.cetak_ijazah_arsip', compact('data', 'arsip'));
 
             default:

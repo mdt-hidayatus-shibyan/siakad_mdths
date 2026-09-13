@@ -4,7 +4,8 @@
     <!-- Header Page -->
     <div class="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-20">
         <div>
-            <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight flex items-center gap-2">
+            <h2
+                class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight flex items-center gap-2">
                 <i class="bi bi-mortarboard-fill text-amber-500"></i> Arsip Ijazah (Syahadah)
             </h2>
             <p class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
@@ -84,10 +85,14 @@
             <table class="w-full text-left border-collapse text-xs min-w-[850px]">
                 <thead class="bg-zinc-100/70 dark:bg-zinc-800/50 border-b border-zinc-200/80 dark:border-zinc-800">
                     <tr class="text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                        <th class="py-3 px-4 text-center border-r border-zinc-200/60 dark:border-zinc-800/60 w-14">No</th>
-                        <th class="py-3 px-4 border-r border-zinc-200/60 dark:border-zinc-800/60 w-44">Tanggal Terbit</th>
-                        <th class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">Informasi Ijazah (Syahadah)</th>
-                        <th class="py-3 px-4 border-r border-zinc-200/60 dark:border-zinc-800/60 w-40 text-center">Disahkan Oleh</th>
+                        <th class="py-3 px-4 text-center border-r border-zinc-200/60 dark:border-zinc-800/60 w-14">No
+                        </th>
+                        <th class="py-3 px-4 border-r border-zinc-200/60 dark:border-zinc-800/60 w-44">Tanggal Terbit
+                        </th>
+                        <th class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">Informasi Ijazah
+                            (Syahadah)</th>
+                        <th class="py-3 px-4 border-r border-zinc-200/60 dark:border-zinc-800/60 w-40 text-center">
+                            Disahkan Oleh</th>
                         <th class="py-3 px-4 text-center w-32">Aksi Dokumen</th>
                     </tr>
                 </thead>
@@ -97,7 +102,8 @@
                         <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
 
                             <!-- Nomor -->
-                            <td class="py-3 px-4 text-center font-black text-zinc-400 border-r border-zinc-200/60 dark:border-zinc-800/60 align-top">
+                            <td
+                                class="py-3 px-4 text-center font-black text-zinc-400 border-r border-zinc-200/60 dark:border-zinc-800/60 align-top">
                                 {{ $arsips->firstItem() + $index }}
                             </td>
 
@@ -106,15 +112,23 @@
                                 <p class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-1">
                                     {{ \Carbon\Carbon::parse($arsip->created_at)->translatedFormat('d F Y, H:i') }}
                                 </p>
-                                <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-2xs">
-                                    IJAZAH KELULUSAN
-                                </span>
+                                @if (($data['tipe_ijazah'] ?? '') === 'ijazah_alquran' || $arsip->tipe_dokumen === 'ijazah_alquran')
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
+                                        IJAZAH AL-QUR'AN
+                                    </span>
+                                @else
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-2xs">
+                                        IJAZAH KELULUSAN
+                                    </span>
+                                @endif
                             </td>
 
                             <!-- Informasi Dokumen -->
                             <td class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60 align-top">
-                                <p class="font-black text-sm text-zinc-900 dark:text-white mb-0.5 uppercase tracking-tight">
+                                <p
+                                    class="font-black text-sm text-zinc-900 dark:text-white mb-0.5 uppercase tracking-tight">
                                     {{ $data['nama_murid'] ?? ($data['nama_murid'] ?? 'Tidak Diketahui') }}
                                 </p>
                                 <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
@@ -128,7 +142,8 @@
                             </td>
 
                             <!-- Disahkan Oleh -->
-                            <td class="py-3 px-4 text-center border-r border-zinc-200/60 dark:border-zinc-800/60 align-top">
+                            <td
+                                class="py-3 px-4 text-center border-r border-zinc-200/60 dark:border-zinc-800/60 align-top">
                                 <div
                                     class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-primary/10 dark:bg-primary-dark/20 text-primary dark:text-primary-dark mb-1 border border-primary/20 shadow-2xs">
                                     <i class="bi bi-person-badge-fill text-xs font-black"></i>
@@ -150,7 +165,8 @@
                     @empty
                         <tr>
                             <td colspan="5" class="py-12 text-center">
-                                <x-empty-state icon="bi-mortarboard" title="Arsip Ijazah Kosong" message="Belum ada Ijazah / Syahadah kelulusan yang disahkan untuk filter ini." />
+                                <x-empty-state icon="bi-mortarboard" title="Arsip Ijazah Kosong"
+                                    message="Belum ada Ijazah / Syahadah kelulusan yang disahkan untuk filter ini." />
                             </td>
                         </tr>
                     @endforelse
@@ -166,4 +182,3 @@
         @endif
     </div>
 </x-app-layout>
-

@@ -1,7 +1,7 @@
 @section('title', 'Loket Cetak Dokumen')
 
 <x-app-layout>
-    <div class="max-w-4xl mx-auto pb-12 relative z-10">
+    <div class="max-w-5xl mx-auto pb-12 relative z-10">
 
         <!-- HEADER LOKET -->
         <div class="text-center mb-6 pt-2">
@@ -131,7 +131,7 @@
                                                     </span>
                                                 @endif
 
-                                                <!-- TOMBOL IJAZAH -->
+                                                <!-- TOMBOL IJAZAH MADRASAH -->
                                                 @if (isset($dokumens['ijazah']))
                                                     <a href="{{ route('arsip.cetak', $dokumens['ijazah']->id) }}"
                                                         target="_blank"
@@ -142,6 +142,52 @@
                                                     <span
                                                         class="inline-flex items-center gap-1.5 px-3 h-8 bg-zinc-100/60 text-zinc-400 dark:bg-zinc-800/40 dark:text-zinc-600 border border-zinc-200/40 dark:border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-not-allowed opacity-60">
                                                         <span>Ijazah</span> <i class="bi bi-lock-fill text-xs"></i>
+                                                    </span>
+                                                @endif
+
+                                                <!-- TOMBOL SK AL-QUR'AN -->
+                                                @if (isset($dokumens['sk_alquran']))
+                                                    <a href="{{ route('arsip.cetak', $dokumens['sk_alquran']->id) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center gap-1.5 px-3 h-8 bg-teal-500/10 hover:bg-teal-600 text-teal-600 hover:text-white dark:text-teal-400 dark:hover:text-white border border-teal-500/20 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-2xs">
+                                                        <i class="bi bi-patch-check-fill text-xs"></i> <span>SK
+                                                            Al-Qur'an</span>
+                                                    </a>
+                                                @elseif (isset($dokumens['peserta_alquran']))
+                                                    <a href="{{ route('penilaian-ujian-alquran.cetak-sk', $dokumens['peserta_alquran']->id) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center gap-1.5 px-3 h-8 bg-teal-500/10 hover:bg-teal-600 text-teal-600 hover:text-white dark:text-teal-400 dark:hover:text-white border border-teal-500/20 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-2xs">
+                                                        <i class="bi bi-patch-check-fill text-xs"></i> <span>SK
+                                                            Al-Qur'an</span>
+                                                    </a>
+                                                @else
+                                                    <span
+                                                        class="inline-flex items-center gap-1.5 px-3 h-8 bg-zinc-100/60 text-zinc-400 dark:bg-zinc-800/40 dark:text-zinc-600 border border-zinc-200/40 dark:border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-not-allowed opacity-60">
+                                                        <span>SK Al-Qur'an</span> <i
+                                                            class="bi bi-lock-fill text-xs"></i>
+                                                    </span>
+                                                @endif
+
+                                                <!-- TOMBOL IJAZAH AL-QUR'AN -->
+                                                @if (isset($dokumens['ijazah_alquran']))
+                                                    <a href="{{ route('arsip.cetak', $dokumens['ijazah_alquran']->id) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center gap-1.5 px-3 h-8 bg-emerald-500/10 hover:bg-emerald-600 text-emerald-600 hover:text-white dark:text-emerald-400 dark:hover:text-white border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-2xs">
+                                                        <i class="bi bi-book-half text-xs"></i> <span>Ijazah
+                                                            Al-Qur'an</span>
+                                                    </a>
+                                                @elseif (isset($dokumens['peserta_alquran']) && $dokumens['peserta_alquran']->status_kelulusan === 'Lulus')
+                                                    <a href="{{ route('penilaian-ujian-alquran.cetak-ijazah', $dokumens['peserta_alquran']->id) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center gap-1.5 px-3 h-8 bg-emerald-500/10 hover:bg-emerald-600 text-emerald-600 hover:text-white dark:text-emerald-400 dark:hover:text-white border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-2xs">
+                                                        <i class="bi bi-book-half text-xs"></i> <span>Ijazah
+                                                            Al-Qur'an</span>
+                                                    </a>
+                                                @else
+                                                    <span
+                                                        class="inline-flex items-center gap-1.5 px-3 h-8 bg-zinc-100/60 text-zinc-400 dark:bg-zinc-800/40 dark:text-zinc-600 border border-zinc-200/40 dark:border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-not-allowed opacity-60">
+                                                        <span>Ijazah Al-Qur'an</span> <i
+                                                            class="bi bi-lock-fill text-xs"></i>
                                                     </span>
                                                 @endif
 

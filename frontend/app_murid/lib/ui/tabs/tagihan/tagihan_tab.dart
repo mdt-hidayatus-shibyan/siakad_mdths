@@ -33,9 +33,9 @@ class _TagihanTabState extends State<TagihanTab>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 2,
+      length: 3,
       vsync: this,
-      initialIndex: widget.initialTabIndex,
+      initialIndex: widget.initialTabIndex.clamp(0, 2),
     );
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
@@ -106,7 +106,7 @@ class _TagihanTabState extends State<TagihanTab>
                   Expanded(
                     child: ModernHeader(
                       title: 'Tagihan & Pembayaran',
-                      subtitle: 'Monitoring SPP Syahriyah & Tagihan Non-SPP',
+                      subtitle: 'Monitoring SPP, Tagihan Murid & Tagihan KK',
                     ),
                   ),
                 ],
@@ -116,7 +116,7 @@ class _TagihanTabState extends State<TagihanTab>
             // Multi-Child Switcher Bar
             const ChildSwitcherBar(),
 
-            // 2 Segmented Tabs (SPP & Non-SPP)
+            // 3 Segmented Tabs (SPP, Tagihan Murid, Tagihan KK)
             SegmentedTabBar(
               controller: _tabController,
               tabs: const [
@@ -125,8 +125,12 @@ class _TagihanTabState extends State<TagihanTab>
                   icon: Icons.credit_card_rounded,
                 ),
                 SegmentedTabBarItem(
-                  label: 'Tagihan Non-SPP',
+                  label: 'Tagihan Murid',
                   icon: Icons.receipt_long_rounded,
+                ),
+                SegmentedTabBarItem(
+                  label: 'Tagihan KK',
+                  icon: Icons.family_restroom_rounded,
                 ),
               ],
             ),
@@ -144,6 +148,7 @@ class _TagihanTabState extends State<TagihanTab>
                   children: [
                     _buildSppView(keuangan, isDark),
                     _buildNonSppView(keuangan, isDark),
+                    _buildTagihanWaliView(keuangan, dashboard, isDark),
                   ],
                 ),
               ),
@@ -522,6 +527,304 @@ class _TagihanTabState extends State<TagihanTab>
                       ),
                     ),
                   ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // TAB 3: TAGIHAN WALI MURID (KK / KELUARGA)
+  // =========================================================================
+  Widget _buildTagihanWaliView(
+    KeuanganProvider keuangan,
+    DashboardProvider dashboard,
+    bool isDark,
+  ) {
+    if (keuangan.isLoadingTagihanWali && keuangan.rekapTagihanWali == null) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+        ),
+      );
+    }
+
+    final waliList = keuangan.tagihanWaliList;
+    final rekap = keuangan.rekapTagihanWali;
+    final wali = dashboard.dashboardData?.wali;
+
+    if (waliList.isEmpty) {
+      return const EmptyStateWidget(
+        icon: Icons.family_restroom_rounded,
+        title: 'Belum Ada Tagihan KK',
+        subtitle:
+            'Tidak ada tagihan keluarga (seperti infaq gedung, haflah, dll.) yang dibebankan kepada wali murid saat ini.',
+      );
+    }
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      padding: EdgeInsets.fromLTRB(16, 8, 16, widget.isFullScreen ? 24 : 100),
+      children: [
+        if (rekap != null) ...[
+          GlassCard(
+            padding: const EdgeInsets.all(16),
+            borderRadius: 20,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildSummaryColumn(
+                  'Total Tagihan KK',
+                  CurrencyFormatter.format(rekap.totalTagihan),
+                  isDark ? Colors.white70 : Colors.black87,
+                  isDark,
+                ),
+                Container(
+                  height: 32,
+                  width: 1,
+                  color: isDark ? Colors.white12 : Colors.black12,
+                ),
+                _buildSummaryColumn(
+                  'Total Terbayar',
+                  CurrencyFormatter.format(rekap.totalLunas),
+                  const Color(0xFF10B981),
+                  isDark,
+                ),
+                Container(
+                  height: 32,
+                  width: 1,
+                  color: isDark ? Colors.white12 : Colors.black12,
+                ),
+                _buildSummaryColumn(
+                  'Tunggakan',
+                  CurrencyFormatter.format(rekap.totalTunggakan),
+                  rekap.totalTunggakan > 0
+                      ? AppColors.roseDanger
+                      : const Color(0xFF10B981),
+                  isDark,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        if (wali != null) ...[
+          GlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            borderRadius: 16,
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color:
+                        (isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight)
+                            .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.badge_rounded,
+                    color: isDark
+                        ? AppColors.primaryDark
+                        : AppColors.primaryLight,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'KK: ${wali.namaKepalaKeluarga}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'No. KK: ${wali.noKk} • Reg: ${wali.noRegistrasi}${wali.kampung != null && wali.kampung!.isNotEmpty ? " • Ds. ${wali.kampung}" : ""}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        Text(
+          'TAGIHAN PER KELUARGA / KK (INFAQ, HAFLAH, DLL)',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.8,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        ...waliList.map((tagihan) {
+          final isLunas = tagihan.isLunas;
+
+          Color badgeBg = Colors.grey.withValues(alpha: 0.15);
+          Color badgeColor = Colors.grey;
+
+          if (isLunas) {
+            badgeBg = const Color(0xFF10B981).withValues(alpha: 0.15);
+            badgeColor = const Color(0xFF10B981);
+          } else {
+            badgeBg = AppColors.amberAccent.withValues(alpha: 0.15);
+            badgeColor = const Color(0xFFD97706);
+          }
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: GlassCard(
+              padding: const EdgeInsets.all(16),
+              borderRadius: 20,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: isLunas
+                              ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                              : (isDark
+                                    ? Colors.white.withValues(alpha: 0.05)
+                                    : Colors.black.withValues(alpha: 0.03)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          isLunas
+                              ? Icons.check_circle_rounded
+                              : Icons.account_balance_wallet_rounded,
+                          color: isLunas
+                              ? const Color(0xFF10B981)
+                              : (isDark ? Colors.white60 : Colors.black54),
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tagihan.namaTagihan,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              CurrencyFormatter.format(tagihan.nominal),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: badgeBg,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          tagihan.statusBayar,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            color: badgeColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (tagihan.tahunPelajaran != null ||
+                      tagihan.tanggalBayar != null ||
+                      tagihan.keterangan != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : Colors.black.withValues(alpha: 0.02),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (tagihan.tahunPelajaran != null)
+                            Text(
+                              'Tahun Ajaran: ${tagihan.tahunPelajaran}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
+                            ),
+                          if (tagihan.tanggalBayar != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Dibayar: ${tagihan.tanggalBayar} • Kwitansi: ${tagihan.noTransaksi ?? "-"} • Metode: ${tagihan.metodePembayaran ?? "Tunai"}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.white60 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                          if (tagihan.keterangan != null &&
+                              tagihan.keterangan!.trim().isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Catatan: ${tagihan.keterangan}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontStyle: FontStyle.italic,
+                                color: isDark ? Colors.white54 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

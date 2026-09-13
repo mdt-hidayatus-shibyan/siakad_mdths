@@ -140,6 +140,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Api\WaliMuridApiController::class, 'getDashboard']);
         Route::get('/anak/{id}', [\App\Http\Controllers\Api\WaliMuridApiController::class, 'getDetailAnak']);
         Route::get('/tagihan/{id}', [\App\Http\Controllers\Api\WaliMuridApiController::class, 'getTagihanAnak']);
+        Route::get('/tagihan-wali', [\App\Http\Controllers\Api\WaliMuridApiController::class, 'getTagihanWali']);
         Route::get('/presensi/{id}', [\App\Http\Controllers\Api\WaliMuridApiController::class, 'getPresensiAnak']);
         Route::get('/pelanggaran/{id}', [\App\Http\Controllers\Api\WaliMuridApiController::class, 'getPelanggaranAnak']);
         Route::get('/nilai/{id}', [\App\Http\Controllers\Api\WaliMuridApiController::class, 'getNilaiAnak']);

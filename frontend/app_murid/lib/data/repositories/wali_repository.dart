@@ -47,6 +47,16 @@ class WaliRepository {
     return null;
   }
 
+  Future<RekapTagihanWaliModel?> getTagihanWali() async {
+    try {
+      final res = await _dio.get(ApiEndpoints.tagihanWali);
+      if (res.statusCode == 200 && res.data['success'] == true) {
+        return RekapTagihanWaliModel.fromJson(res.data['data']);
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<RekapPresensiAnakModel?> getPresensiAnak(
     int anakId, {
     String? tanggal,

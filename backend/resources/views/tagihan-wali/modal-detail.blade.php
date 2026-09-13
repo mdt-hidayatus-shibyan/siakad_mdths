@@ -37,11 +37,11 @@
         </div>
     </div>
 
-    <!-- Tanggungan Santri Aktif -->
+    <!-- Tanggungan Murid Aktif -->
     <div>
         <h4
             class="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-            <i class="bi bi-people text-primary"></i> <span>Tanggungan Santri Aktif
+            <i class="bi bi-people text-primary"></i> <span>Tanggungan Murid Aktif
                 ({{ $wali->murids->count() }})</span>
         </h4>
         <div class="space-y-2">
@@ -65,7 +65,7 @@
                     </span>
                 </div>
             @empty
-                <p class="text-xs text-zinc-400 italic">Tidak ada data santri aktif terdaftar.</p>
+                <p class="text-xs text-zinc-400 italic">Tidak ada data murid aktif terdaftar.</p>
             @endforelse
         </div>
     </div>

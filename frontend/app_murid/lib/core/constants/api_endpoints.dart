@@ -10,6 +10,7 @@ class ApiEndpoints {
   static const String dashboard = '/wali/dashboard';
   static const String detailAnak = '/wali/anak'; // + /{id}
   static const String tagihanAnak = '/wali/tagihan'; // + /{id}
+  static const String tagihanWali = '/wali/tagihan-wali';
   static const String presensiAnak = '/wali/presensi'; // + /{id}
   static const String pelanggaranAnak = '/wali/pelanggaran'; // + /{id}
   static const String nilaiAnak = '/wali/nilai'; // + /{id}

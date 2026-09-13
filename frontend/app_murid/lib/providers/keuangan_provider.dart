@@ -9,12 +9,14 @@ class KeuanganProvider extends ChangeNotifier {
   final WaliRepository _repo = WaliRepository();
 
   bool _isLoading = false;
+  bool _isLoadingTagihanWali = false;
   bool _isLoadingTabungan = false;
   bool _isLoadingKoperasi = false;
   bool _isLoadingKasRuangan = false;
   String? _errorMessage;
 
   final Map<int, RekapTagihanAnakModel> _rekapTagihanMap = {};
+  RekapTagihanWaliModel? _rekapTagihanWali;
   final Map<int, TabunganAnakData> _tabunganDataMap = {};
   final Map<int, KoperasiAnakData> _koperasiDataMap = {};
   final Map<int, KasRuanganAnakData> _kasRuanganDataMap = {};
@@ -23,6 +25,7 @@ class KeuanganProvider extends ChangeNotifier {
   String? _selectedTabunganBulan;
 
   bool get isLoading => _isLoading;
+  bool get isLoadingTagihanWali => _isLoadingTagihanWali;
   bool get isLoadingTabungan => _isLoadingTabungan;
   bool get isLoadingKoperasi => _isLoadingKoperasi;
   bool get isLoadingKasRuangan => _isLoadingKasRuangan;
@@ -36,6 +39,11 @@ class KeuanganProvider extends ChangeNotifier {
       _loadedAnakId != null ? _rekapTagihanMap[_loadedAnakId] : null;
   List<ItemSppModel> get sppList => rekapTagihan?.sppList ?? [];
   List<ItemNonSppModel> get nonSppList => rekapTagihan?.nonSppList ?? [];
+
+  // Tagihan Wali Murid (KK / Keluarga)
+  RekapTagihanWaliModel? get rekapTagihanWali => _rekapTagihanWali;
+  List<ItemTagihanWaliModel> get tagihanWaliList =>
+      _rekapTagihanWali?.items ?? [];
 
   TabunganAnakData? get tabunganData =>
       _loadedAnakId != null ? _tabunganDataMap[_loadedAnakId] : null;
@@ -80,6 +88,28 @@ class KeuanganProvider extends ChangeNotifier {
       _errorMessage = 'Gagal memuat tagihan: $e';
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchTagihanWali({bool force = false}) async {
+    if (!force && _rekapTagihanWali != null) {
+      return;
+    }
+
+    _isLoadingTagihanWali = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final res = await _repo.getTagihanWali();
+      if (res != null) {
+        _rekapTagihanWali = res;
+      }
+    } catch (e) {
+      _errorMessage = 'Gagal memuat tagihan keluarga: $e';
+    } finally {
+      _isLoadingTagihanWali = false;
       notifyListeners();
     }
   }
@@ -185,6 +215,7 @@ class KeuanganProvider extends ChangeNotifier {
     _loadedAnakId = anakId;
     await Future.wait([
       fetchTagihan(anakId, force: force),
+      fetchTagihanWali(force: force),
       fetchTabungan(anakId, force: force),
       fetchKoperasi(anakId, force: force),
       fetchKasRuangan(anakId, force: force),

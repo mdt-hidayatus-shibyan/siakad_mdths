@@ -202,11 +202,11 @@
                 <!-- 4. Search Input -->
                 <div>
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1 ml-1">
-                        Pencarian KK / Santri
+                        Pencarian KK / Murid
                     </label>
                     <div class="relative flex items-center">
                         <input type="text" name="search" value="{{ request('search') }}"
-                            placeholder="Cari nama KK / No KK / Santri..."
+                            placeholder="Cari nama KK / No KK / Murid..."
                             class="m3-input-glass w-full !pr-10 text-xs font-bold">
                         <button type="submit"
                             class="absolute right-0 inset-y-0 px-3 text-zinc-400 hover:text-primary transition-colors">
@@ -328,10 +328,10 @@
                                 class="py-3 px-4 bg-zinc-100/90 dark:bg-zinc-800/90 backdrop-blur-md border-y border-zinc-200/80 dark:border-zinc-800 w-[280px] shadow-2xs">
                                 Kepala Keluarga / Wali
                             </th>
-                            <!-- Tanggungan Santri Aktif -->
+                            <!-- Tanggungan Murid Aktif -->
                             <th
                                 class="py-3 px-4 bg-zinc-100/90 dark:bg-zinc-800/90 backdrop-blur-md border-y border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
-                                Tanggungan Santri Aktif
+                                Tanggungan Murid Aktif
                             </th>
                             <!-- Nominal & Status -->
                             <th
@@ -601,7 +601,7 @@
                         <div class="flex items-center justify-between">
                             <label
                                 class="block text-[10px] font-black text-primary dark:text-primary-dark uppercase tracking-wider">
-                                <i class="bi bi-credit-card-2-front-fill mr-1"></i> Rekening Tabungan Santri
+                                <i class="bi bi-credit-card-2-front-fill mr-1"></i> Rekening Tabungan Murid
                             </label>
                             <span id="tabunganCountBadge"
                                 class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary"></span>
@@ -652,7 +652,7 @@
                             class="hidden text-[10px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
                             <p class="flex items-start gap-1.5">
                                 <i class="bi bi-info-circle-fill text-primary mt-0.5 shrink-0"></i>
-                                <span>Sistem akan otomatis mendebet dari nomor rekening tabungan santri aktif dari
+                                <span>Sistem akan otomatis mendebet dari nomor rekening tabungan murid aktif dari
                                     masing-masing KK. Nomor rekening yang dipotong akan dicatat pada kwitansi.</span>
                             </p>
                         </div>
@@ -889,7 +889,7 @@
                         select.innerHTML = '<option value="">-- Tidak ada rekening tabungan aktif --</option>';
                         if (badge) badge.textContent = '0 Rekening';
                     } else {
-                        if (badge) badge.textContent = `${currentTabungans.length} Rekening Santri`;
+                        if (badge) badge.textContent = `${currentTabungans.length} Rekening Murid`;
                         currentTabungans.forEach(t => {
                             const opt = document.createElement('option');
                             opt.value = t.id;

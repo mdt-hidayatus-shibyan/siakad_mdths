@@ -570,6 +570,47 @@ $(document).on("change", ".toggle-status-ajax", function () {
     });
 });
 
+// ==========================================
+// H. MODULE: QUICK AJAX FORM / ACTION POST
+// ==========================================
+$(document).on("submit", "form.ajax-post, form.ajax-action", function (e) {
+    e.preventDefault();
+    const $form = $(this);
+    const refreshTarget =
+        $form.attr("data-refresh-target") || "#data-table-container";
+    const submitBtn = $form.find('button[type="submit"]');
+    const originalBtnText = submitBtn.html();
+
+    $.ajax({
+        url: $form.attr("action"),
+        method: $form.attr("method") || "POST",
+        data: $form.serialize(),
+        headers: { Accept: "application/json" },
+        beforeSend: function () {
+            submitBtn.prop("disabled", true);
+        },
+        success: function (response) {
+            submitBtn.html(originalBtnText).prop("disabled", false);
+            if (typeof Toast !== "undefined") {
+                Toast.fire({
+                    icon: "success",
+                    title: response.message || "Aksi berhasil diproses!",
+                });
+            }
+            window.refreshDataGrid(refreshTarget);
+        },
+        error: function (xhr) {
+            submitBtn.html(originalBtnText).prop("disabled", false);
+            let errorMsg = xhr.responseJSON?.message || "Gagal memproses aksi!";
+            if (typeof Toast !== "undefined") {
+                Toast.fire({ icon: "error", title: errorMsg });
+            } else {
+                Swal.fire("Error!", errorMsg, "error");
+            }
+        },
+    });
+});
+
 // 1. FUNGSI FULLSCREEN
 function toggleFullscreen() {
     const icon = document.getElementById("iconFullscreen");

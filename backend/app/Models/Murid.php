@@ -75,6 +75,11 @@ class Murid extends Model
         return $this->hasOne(\App\Models\Tabungan\Tabungan::class, 'murid_id')->oldestOfMany();
     }
 
+    public function pesertaUjianAlqurans()
+    {
+        return $this->hasMany(\App\Models\UjianAlquran\PesertaUjianAlquran::class, 'murid_id');
+    }
+
     /**
      * Accessor URL foto murid yang konsisten untuk Web & Mobile
      */

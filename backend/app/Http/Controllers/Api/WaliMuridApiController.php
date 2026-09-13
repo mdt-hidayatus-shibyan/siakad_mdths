@@ -313,6 +313,71 @@ class WaliMuridApiController extends Controller
     }
 
     /**
+     * Detail Tagihan & Riwayat Pembayaran Per Wali Murid (Kepala Keluarga / KK)
+     */
+    public function getTagihanWali(Request $request)
+    {
+        $wali = $this->resolveWali($request);
+
+        if (!$wali) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data Wali Murid tidak ditemukan atau sesi telah berakhir.'
+            ], 403);
+        }
+
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        $tahunId = $tahunAktif?->id;
+
+        $tagihanWalis = \App\Models\TagihanWaliMurid::with(['pengaturanTagihan', 'pembayaranTagihan', 'tahunPelajaran'])
+            ->where('wali_murid_id', $wali->id)
+            ->when($tahunId, function ($q) use ($tahunId) {
+                $q->where('tahun_pelajaran_id', $tahunId);
+            })
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $items = $tagihanWalis->map(function ($tw) {
+            return [
+                'id'                => $tw->id,
+                'nama_tagihan'      => $tw->nama_tagihan_spesifik,
+                'kategori'          => $tw->pengaturanTagihan->kategori_tagihan ?? 'Wali Murid',
+                'nominal'           => (int) $tw->nominal_tagihan,
+                'status_bayar'      => $tw->status_bayar,
+                'tanggal_bayar'     => $tw->pembayaranTagihan ? Carbon::parse($tw->pembayaranTagihan->tanggal_bayar)->format('d-m-Y') : null,
+                'no_transaksi'      => $tw->pembayaranTagihan->no_transaksi ?? null,
+                'metode_pembayaran' => $tw->pembayaranTagihan->metode_pembayaran ?? null,
+                'keterangan'        => $tw->keterangan ?? ($tw->pembayaranTagihan->catatan ?? null),
+                'tahun_pelajaran'   => $tw->tahunPelajaran ? (($tw->tahunPelajaran->nama_hijriyah ?? '-') . ' H - ' . ($tw->tahunPelajaran->nama_masehi ?? '-') . ' M') : null,
+            ];
+        });
+
+        $totalTagihan = (int) $tagihanWalis->sum('nominal_tagihan');
+        $totalLunas = (int) $tagihanWalis->where('status_bayar', 'Lunas')->sum('nominal_tagihan');
+        $totalTunggakan = (int) max(0, $totalTagihan - $totalLunas);
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'wali' => [
+                    'id'                   => $wali->id,
+                    'nama_kepala_keluarga' => $wali->nama_kepala_keluarga,
+                    'no_registrasi'        => $wali->no_registrasi,
+                    'no_kk'                => $wali->no_kk,
+                    'no_hp'                => $wali->no_hp,
+                    'kampung'              => $wali->kampung->nama_kampung ?? '-',
+                ],
+                'summary' => [
+                    'total_tagihan'   => $totalTagihan,
+                    'total_lunas'     => $totalLunas,
+                    'total_tunggakan' => $totalTunggakan,
+                ],
+                'items' => $items,
+            ]
+        ], 200);
+    }
+
+    /**
      * Rekap Presensi / Kehadiran Murid
      */
     public function getPresensiAnak($id, Request $request)

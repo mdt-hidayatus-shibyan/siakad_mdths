@@ -34,7 +34,7 @@ class PetugasCetakController extends Controller
                     $tipe = $arsip->tipe_dokumen;
 
                     // PENGECUALIAN KHUSUS RAPOR: Pisahkan antara Semester 1 dan Semester 2
-                    if ($tipe === 'rapor_murid' || $tipe === 'rapor_murid') {
+                    if ($tipe === 'rapor_murid') {
                         // Cek string semester (misal: "Semester 1 (Ganjil)")
                         $semester = strtolower($data['semester'] ?? $data['nama_semester'] ?? '');
 
@@ -45,6 +45,16 @@ class PetugasCetakController extends Controller
                         }
                     }
 
+                    // PENGECUALIAN KHUSUS IJAZAH AL-QUR'AN
+                    if ($tipe === 'ijazah' && (($data['tipe_ijazah'] ?? '') === 'ijazah_alquran' || isset($data['nomor_ijazah_alquran']))) {
+                        $tipe = 'ijazah_alquran';
+                    }
+
+                    // PENGECUALIAN KHUSUS SK AL-QUR'AN
+                    if (($tipe === 'sk_keputusan' || $tipe === 'sk_alquran') && (($data['tipe_sk'] ?? '') === 'sk_alquran' || isset($data['nomor_sk_alquran']))) {
+                        $tipe = 'sk_alquran';
+                    }
+
                     // Menyusun array multi-dimensi agar mudah di-looping di Blade
                     if (!isset($arsipDikelompokkan[$thn][$rng])) {
                         $arsipDikelompokkan[$thn][$rng] = [];
@@ -52,6 +62,34 @@ class PetugasCetakController extends Controller
 
                     // Simpan objek arsip ke dalam slot yang sudah spesifik
                     $arsipDikelompokkan[$thn][$rng][$tipe] = $arsip;
+                }
+
+                // 4. Sinkronisasi & Cek data Peserta Ujian Al-Qur'an murid ini
+                $pesertaAlqurans = \App\Models\UjianAlquran\PesertaUjianAlquran::with([
+                    'ujianAlquran.tahunPelajaran',
+                    'ruangan.level'
+                ])->where('murid_id', $murid->id)->get();
+
+                foreach ($pesertaAlqurans as $peserta) {
+                    $ujian = $peserta->ujianAlquran;
+                    $thn = $ujian ? (($ujian->tahunPelajaran->nama_hijriyah ?? '-') . ' H - ' . ($ujian->tahunPelajaran->nama_masehi ?? '-') . ' M') : 'Tahun Tidak Diketahui';
+                    $rng = $peserta->ruangan->nama_ruangan ?? 'Ruangan Tidak Diketahui';
+
+                    if (!isset($arsipDikelompokkan[$thn][$rng])) {
+                        $arsipDikelompokkan[$thn][$rng] = [];
+                    }
+
+                    $arsipDikelompokkan[$thn][$rng]['peserta_alquran'] = $peserta;
+
+                    if (!isset($arsipDikelompokkan[$thn][$rng]['sk_alquran']) && $peserta->status_kelulusan !== 'Belum Diuji') {
+                        $arsipSk = app(\App\Services\ArsipService::class)->arsipkanSkAlquran($peserta);
+                        $arsipDikelompokkan[$thn][$rng]['sk_alquran'] = $arsipSk;
+                    }
+
+                    if (!isset($arsipDikelompokkan[$thn][$rng]['ijazah_alquran']) && $peserta->status_kelulusan === 'Lulus') {
+                        $arsipIjz = app(\App\Services\ArsipService::class)->arsipkanIjazahAlquran($peserta);
+                        $arsipDikelompokkan[$thn][$rng]['ijazah_alquran'] = $arsipIjz;
+                    }
                 }
             }
         }

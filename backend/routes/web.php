@@ -47,6 +47,11 @@ use App\Http\Controllers\Ujian\BintangPelajarController;
 use App\Http\Controllers\Ujian\RiwayatKenaikanController;
 use App\Http\Controllers\Ujian\RaporController;
 use App\Http\Controllers\Ujian\PembayaranUjianController;
+use App\Http\Controllers\UjianAlquran\PengaturanUjianAlquranController;
+use App\Http\Controllers\UjianAlquran\PesertaUjianController;
+use App\Http\Controllers\UjianAlquran\JuriAlquranController;
+use App\Http\Controllers\UjianAlquran\PenilaianAlquranController;
+use App\Http\Controllers\UjianAlquran\RekapUjianAlquranController;
 use App\Http\Controllers\PetugasCetakController;
 
 // 6. Kesekretariatan & Arsip Controllers
@@ -507,6 +512,52 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cetak-rekap-spp/{murid_id}/{tahun_id}', 'cetakRekapSpp')->name('cetak-rekap-spp');
         Route::get('/cetak/{id}', 'cetakKwitansi')->name('cetak');
         Route::get('/laporan', 'laporan')->name('laporan');
+    });
+
+    // -- Ujian Al-Qur'an (Syarat Kelulusan Ibtidaiyah) --
+    // 1. Master Agenda Ujian
+    Route::prefix('ujian-alquran')->name('ujian-alquran.')->group(function () {
+        Route::get('/', [PengaturanUjianAlquranController::class, 'index'])->name('index');
+        Route::get('/create', [PengaturanUjianAlquranController::class, 'create'])->name('create');
+        Route::post('/store', [PengaturanUjianAlquranController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [PengaturanUjianAlquranController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PengaturanUjianAlquranController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PengaturanUjianAlquranController::class, 'destroy'])->name('destroy');
+    });
+
+    // 2. Peserta Ujian Murid
+    Route::prefix('peserta-ujian-alquran')->name('peserta-ujian-alquran.')->group(function () {
+        Route::get('/', [PesertaUjianController::class, 'index'])->name('index');
+        Route::get('/kandidat', [PesertaUjianController::class, 'getKandidatPeserta'])->name('kandidat');
+        Route::post('/simpan', [PesertaUjianController::class, 'storePeserta'])->name('store');
+        Route::post('/tarik', [PesertaUjianController::class, 'tarikPeserta'])->name('tarik');
+        Route::delete('/{pesertaId}', [PesertaUjianController::class, 'destroy'])->name('destroy');
+    });
+
+    // 3. Input Nilai Ujian (Admin Entry)
+    Route::prefix('penilaian-ujian-alquran')->name('penilaian-ujian-alquran.')->group(function () {
+        Route::get('/', [PenilaianAlquranController::class, 'index'])->name('index');
+        Route::post('/simpan', [PenilaianAlquranController::class, 'simpanNilai'])->name('store');
+        Route::get('/cetak-format', [PenilaianAlquranController::class, 'cetakFormatPenilaian'])->name('cetak-format');
+    });
+
+    // 4. Dewan Juri
+    Route::prefix('juri-ujian-alquran')->name('juri-ujian-alquran.')->group(function () {
+        Route::get('/', [JuriAlquranController::class, 'index'])->name('index');
+        Route::get('/create', [JuriAlquranController::class, 'create'])->name('create');
+        Route::post('/simpan', [JuriAlquranController::class, 'simpanJuri'])->name('store');
+        Route::get('/{juriId}/edit', [JuriAlquranController::class, 'edit'])->name('edit');
+        Route::put('/{juriId}', [JuriAlquranController::class, 'updateJuri'])->name('update');
+        Route::post('/{juriId}/set-penanggung-jawab', [JuriAlquranController::class, 'setPenanggungJawab'])->name('set-pj');
+        Route::delete('/{juriId}', [JuriAlquranController::class, 'hapusJuri'])->name('destroy');
+    });
+
+    // 5. Rekapitulasi & Dokumen Output
+    Route::prefix('rekap-ujian-alquran')->name('rekap-ujian-alquran.')->group(function () {
+        Route::get('/', [RekapUjianAlquranController::class, 'index'])->name('index');
+        Route::get('/cetak-ijazah/{pesertaId}', [RekapUjianAlquranController::class, 'cetakIjazah'])->name('cetak-ijazah');
+        Route::get('/cetak-sk/{pesertaId}', [RekapUjianAlquranController::class, 'cetakSk'])->name('cetak-sk');
+        Route::get('/cetak-rekap', [RekapUjianAlquranController::class, 'cetakRekap'])->name('cetak-rekap');
     });
 
 
