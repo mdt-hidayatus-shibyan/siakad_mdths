@@ -68,6 +68,28 @@
 
             <div class="col-span-2">
                 <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1.5 ml-1">
+                    Sasaran Penagihan <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                    <select name="sasaran"
+                        class="m3-input-glass w-full !pr-8 text-xs font-bold cursor-pointer appearance-none">
+                        <option value="murid"
+                            {{ (isset($biaya) && $biaya->sasaran == 'murid') || old('sasaran') == 'murid' ? 'selected' : '' }}>
+                            Per Murid / Santri
+                        </option>
+                        <option value="wali_murid"
+                            {{ (isset($biaya) && $biaya->sasaran == 'wali_murid') || old('sasaran') == 'wali_murid' ? 'selected' : '' }}>
+                            Per Wali Murid / Kepala Keluarga (KK)
+                        </option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
+                        <i class="bi bi-chevron-down text-[10px] font-black"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-2">
+                <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1.5 ml-1">
                     Tipe Penagihan <span class="text-rose-500">*</span>
                 </label>
                 <div class="relative">

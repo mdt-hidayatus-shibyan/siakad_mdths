@@ -20,9 +20,7 @@ class RoleSeeder extends Seeder
             'staff',
             'petugas-tabungan',
             'petugas-koperasi',
-            'bendahara',
             'ustadz',
-            'petugas-cetak',
             'wali-murid',
         ];
 

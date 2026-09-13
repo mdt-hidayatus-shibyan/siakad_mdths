@@ -44,7 +44,9 @@ class Pengurus extends Model
     {
         return self::with(['anggota.ustadz', 'jabatan', 'periode', 'tingkat'])
             ->whereHas('periode', function ($query) {
-                $query->where('status_aktif', 1);
+                $query->where(function ($sub) {
+                    $sub->where('status_aktif', 1)->orWhere('is_seumur_hidup', 1);
+                });
             })
             ->whereHas('jabatan', function ($query) use ($keyword) {
                 $query->where('nama_jabatan', 'LIKE', '%' . $keyword . '%');

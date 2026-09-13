@@ -8,9 +8,7 @@
             'staff' => 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
             'petugas-tabungan' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
             'petugas-koperasi' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-            'bendahara' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
             'ustadz' => 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20',
-            'petugas-cetak' => 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
             'wali-murid' => 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
         ];
         $roleBadgeClass =
@@ -22,9 +20,7 @@
             'staff' => 'bi-person-workspace',
             'petugas-tabungan' => 'bi-wallet2',
             'petugas-koperasi' => 'bi-shop',
-            'bendahara' => 'bi-cash-stack',
             'ustadz' => 'bi-mortarboard-fill',
-            'petugas-cetak' => 'bi-printer-fill',
             'wali-murid' => 'bi-people-fill',
         ];
         $roleIcon = $roleIcons[$roleName] ?? 'bi-person';

@@ -58,4 +58,26 @@ class WaliMurid extends Model
     {
         return $this->hasMany(Murid::class, 'wali_murid_id');
     }
+
+    // Relasi ke tabel Tagihan Wali Murid (Per KK)
+    public function tagihanWaliMurids()
+    {
+        return $this->hasMany(TagihanWaliMurid::class, 'wali_murid_id');
+    }
+
+    /**
+     * Scope untuk Wali Murid yang memiliki murid berstatus aktif di tahun pelajaran tertentu
+     */
+    public function scopeAktifDiTahun($query, $tahunPelajaranId)
+    {
+        return $query->where('is_active', true)
+            ->whereHas('murids', function ($q) use ($tahunPelajaranId) {
+                $q->where('status', 'Aktif')
+                    ->whereHas('ruangans', function ($rq) use ($tahunPelajaranId) {
+                        if ($tahunPelajaranId) {
+                            $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunPelajaranId);
+                        }
+                    });
+            });
+    }
 }

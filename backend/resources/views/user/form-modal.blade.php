@@ -124,7 +124,7 @@
 
             <!-- 4. Penugasan Tingkat (Kondisional) -->
             <div id="tingkatContainer"
-                class="{{ in_array(old('role', $userRole), ['administrator', 'petugas-tabungan', 'bendahara']) ? 'hidden' : '' }}">
+                class="{{ in_array(old('role', $userRole), ['administrator', 'petugas-tabungan', 'petugas-koperasi']) ? 'hidden' : '' }}">
                 <label
                     class="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
                     Penugasan Tingkat Madrasah

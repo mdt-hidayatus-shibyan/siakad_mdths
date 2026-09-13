@@ -13,6 +13,7 @@ class PengaturanTagihan extends Model
         'level_id',
         'nama_tagihan',
         'tipe',
+        'sasaran',
         'nominal'
     ];
     public function tahunPelajaran()
@@ -26,5 +27,19 @@ class PengaturanTagihan extends Model
     public function tagihanMurids()
     {
         return $this->hasMany(TagihanMurid::class, 'pengaturan_tagihan_id');
+    }
+    public function tagihanWaliMurids()
+    {
+        return $this->hasMany(TagihanWaliMurid::class, 'pengaturan_tagihan_id');
+    }
+
+    public function scopeWaliMurid($query)
+    {
+        return $query->where('sasaran', 'wali_murid');
+    }
+
+    public function scopeMurid($query)
+    {
+        return $query->where('sasaran', 'murid');
     }
 }

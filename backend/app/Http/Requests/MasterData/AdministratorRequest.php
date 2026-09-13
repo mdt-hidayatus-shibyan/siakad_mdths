@@ -47,7 +47,7 @@ class AdministratorRequest extends FormRequest
             'tanggal_lahir'        => 'required|date',
             'alamat'               => 'required|string|max:500',
             'no_hp'                => 'required|string|max:15',
-            'role'                 => 'nullable|string|in:administrator,petugas-tabungan,petugas-koperasi,staff,petugas-cetak',
+            'role'                 => 'nullable|string|in:administrator,petugas-tabungan,petugas-koperasi,staff',
             'tingkat_id'           => 'nullable|required_if:role,staff',
             'is_active'            => 'nullable|boolean',
             'foto'                 => 'nullable|image|mimes:jpeg,png,jpg|max:2048',

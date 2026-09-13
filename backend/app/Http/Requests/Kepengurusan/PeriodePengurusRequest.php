@@ -28,8 +28,17 @@ class PeriodePengurusRequest extends FormRequest
             'nama_periode' => 'required|string|max:255',
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date',
-            'status_aktif' => 'boolean',
+            'is_seumur_hidup' => 'nullable|boolean',
+            'status_aktif' => 'nullable|boolean',
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'is_seumur_hidup' => $this->boolean('is_seumur_hidup'),
+            'status_aktif' => $this->boolean('status_aktif'),
+        ]);
     }
 
     protected function failedValidation(Validator $validator)

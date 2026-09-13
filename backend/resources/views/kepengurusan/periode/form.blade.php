@@ -30,8 +30,29 @@
                 class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">
                 Nama Periode <span class="text-rose-500">*</span>
             </label>
-            <input type="text" name="nama_periode" value="{{ $periode->nama_periode ?? old('nama_periode') }}" required
-                placeholder="Contoh: Masa Bakti 2024-2029" class="m3-input-glass w-full text-xs font-bold uppercase">
+            <input type="text" name="nama_periode" value="{{ $periode->nama_periode ?? old('nama_periode') }}"
+                required placeholder="Contoh: Masa Bakti 2024-2029"
+                class="m3-input-glass w-full text-xs font-bold uppercase">
+        </div>
+
+        <!-- Opsi Periode Seumur Hidup -->
+        <div
+            class="p-3.5 rounded-2xl bg-purple-500/5 dark:bg-purple-500/10 border border-purple-500/20 flex items-start gap-3">
+            <div class="pt-0.5">
+                <input type="checkbox" name="is_seumur_hidup" id="is_seumur_hidup" value="1"
+                    {{ (isset($periode) && $periode->is_seumur_hidup) || old('is_seumur_hidup') ? 'checked' : '' }}
+                    onchange="toggleSeumurHidup(this.checked)"
+                    class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-zinc-900 border-zinc-300 dark:border-zinc-700 cursor-pointer">
+            </div>
+            <label for="is_seumur_hidup" class="cursor-pointer flex-1 select-none">
+                <span class="text-xs font-black text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                    <i class="bi bi-infinity text-sm"></i> Periode Seumur Hidup
+                </span>
+                <p class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    Centang jika masa bakti berlaku seumur hidup / tanpa batas akhir (misal: Pengasuh, Dewan Pembina,
+                    Majelis Masyayikh).
+                </p>
+            </label>
         </div>
 
         <!-- Grid untuk Tanggal Mulai & Selesai -->
@@ -46,12 +67,13 @@
                     class="m3-input-glass w-full text-xs font-bold cursor-pointer">
             </div>
 
-            <div>
+            <div id="containerTanggalSelesai"
+                class="{{ (isset($periode) && $periode->is_seumur_hidup) || old('is_seumur_hidup') ? 'opacity-40 pointer-events-none' : '' }}">
                 <label
                     class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">
                     Tanggal Selesai
                 </label>
-                <input type="date" name="tanggal_selesai"
+                <input type="date" name="tanggal_selesai" id="inputTanggalSelesai"
                     value="{{ isset($periode) && $periode->tanggal_selesai ? $periode->tanggal_selesai->format('Y-m-d') : old('tanggal_selesai') }}"
                     class="m3-input-glass w-full text-xs font-bold cursor-pointer">
             </div>
@@ -64,14 +86,15 @@
                 Status Periode
             </label>
             <div class="relative">
-                <select name="status_aktif" class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer">
-                    <option value="0"
-                        {{ (isset($periode) && $periode->status_aktif == 0) || old('status_aktif') == '0' ? 'selected' : '' }}>
-                        Tidak Aktif / Riwayat
-                    </option>
+                <select name="status_aktif"
+                    class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer">
                     <option value="1"
-                        {{ (isset($periode) && $periode->status_aktif == 1) || old('status_aktif') == '1' ? 'selected' : '' }}>
+                        {{ (isset($periode) && $periode->status_aktif == 1) || old('status_aktif') == '1' || !isset($periode) ? 'selected' : '' }}>
                         Periode Aktif (Sekarang)
+                    </option>
+                    <option value="0"
+                        {{ isset($periode) && $periode->status_aktif == 0 && old('status_aktif') !== '1' ? 'selected' : '' }}>
+                        Tidak Aktif / Riwayat
                     </option>
                 </select>
                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
@@ -93,3 +116,15 @@
     </div>
 </form>
 
+<script>
+    function toggleSeumurHidup(isChecked) {
+        const selesaiContainer = document.getElementById('containerTanggalSelesai');
+        const selesaiInput = document.getElementById('inputTanggalSelesai');
+        if (isChecked) {
+            if (selesaiContainer) selesaiContainer.classList.add('opacity-40', 'pointer-events-none');
+            if (selesaiInput) selesaiInput.value = '';
+        } else {
+            if (selesaiContainer) selesaiContainer.classList.remove('opacity-40', 'pointer-events-none');
+        }
+    }
+</script>

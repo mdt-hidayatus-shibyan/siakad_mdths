@@ -45,8 +45,11 @@ class TagihanMuridController extends Controller
             $ruanganTerpilih = Ruangan::with(['level', 'murids.waliMurid'])->find($request->ruangan_id);
 
             if ($ruanganTerpilih) {
-                // A. Ambil biaya ...
+                // A. Ambil biaya khusus murid ...
                 $masterBiayas = PengaturanTagihan::where('tahun_pelajaran_id', $tahunPelajaranId)
+                    ->where(function ($q) {
+                        $q->whereNull('sasaran')->orWhere('sasaran', 'murid');
+                    })
                     ->where(function ($q) use ($ruanganTerpilih) {
                         $q->whereNull('level_id')->orWhere('level_id', $ruanganTerpilih->level_id);
                     })->get();

@@ -29,6 +29,7 @@ class PengaturanTagihanRequest extends FormRequest
             'kode_tagihan' => ['required', 'string', 'max:10'],
             'nama_tagihan' => ['required', 'string', 'max:100'],
             'tipe'         => ['required', 'in:bulanan,semester,insidental'],
+            'sasaran'      => ['nullable', 'in:murid,wali_murid'],
             'nominal'      => ['required', 'numeric', 'min:0'],
         ];
     }

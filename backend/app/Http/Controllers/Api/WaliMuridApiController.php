@@ -124,8 +124,20 @@ class WaliMuridApiController extends Controller
         if ($tahunId) {
             $tagihanQuery->whereHas('ruangan', fn($q) => $q->where('tahun_pelajaran_id', $tahunId));
         }
-        $totalTagihan = (clone $tagihanQuery)->sum('nominal_tagihan');
-        $totalLunas = (clone $tagihanQuery)->where('status_bayar', 'Lunas')->sum('nominal_tagihan');
+        $totalTagihanAnak = (clone $tagihanQuery)->sum('nominal_tagihan');
+        $totalLunasAnak = (clone $tagihanQuery)->where('status_bayar', 'Lunas')->sum('nominal_tagihan');
+
+        // Ringkasan Tagihan Per Wali Murid (KK)
+        $tagihanWaliList = \App\Models\TagihanWaliMurid::with(['pengaturanTagihan', 'pembayaranTagihan'])
+            ->where('wali_murid_id', $wali->id)
+            ->when($tahunId, fn($q) => $q->where('tahun_pelajaran_id', $tahunId))
+            ->get();
+
+        $totalTagihanWali = $tagihanWaliList->sum('nominal_tagihan');
+        $totalLunasWali = $tagihanWaliList->where('status_bayar', 'Lunas')->sum('nominal_tagihan');
+
+        $totalTagihan = $totalTagihanAnak + $totalTagihanWali;
+        $totalLunas = $totalLunasAnak + $totalLunasWali;
         $totalTunggakan = max(0, $totalTagihan - $totalLunas);
 
         // Data Ringkas per Anak
@@ -149,6 +161,17 @@ class WaliMuridApiController extends Controller
             ];
         });
 
+        $dataTagihanWali = $tagihanWaliList->map(function ($tw) {
+            return [
+                'id'            => $tw->id,
+                'nama_tagihan'  => $tw->nama_tagihan_spesifik,
+                'nominal'       => (int) $tw->nominal_tagihan,
+                'status_bayar'  => $tw->status_bayar,
+                'tanggal_bayar' => $tw->pembayaranTagihan ? Carbon::parse($tw->pembayaranTagihan->tanggal_bayar)->format('d-m-Y') : null,
+                'no_transaksi'  => $tw->pembayaranTagihan->no_transaksi ?? null,
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'data'    => [
@@ -165,11 +188,14 @@ class WaliMuridApiController extends Controller
                     'nama_masehi'   => $tahunAktif->nama_masehi ?? '-',
                 ],
                 'ringkasan_keuangan' => [
-                    'total_tagihan'   => (int) $totalTagihan,
-                    'total_lunas'     => (int) $totalLunas,
-                    'total_tunggakan' => (int) $totalTunggakan,
+                    'total_tagihan'      => (int) $totalTagihan,
+                    'total_lunas'        => (int) $totalLunas,
+                    'total_tunggakan'    => (int) $totalTunggakan,
+                    'total_tagihan_kk'   => (int) $totalTagihanWali,
+                    'total_lunas_kk'     => (int) $totalLunasWali,
                 ],
                 'anak' => $dataAnak,
+                'tagihan_wali' => $dataTagihanWali,
             ]
         ], 200);
     }

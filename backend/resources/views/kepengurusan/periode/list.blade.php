@@ -24,6 +24,15 @@
                         class="text-sm md:text-base font-black text-zinc-900 dark:text-white tracking-tight leading-tight truncate">
                         {{ $item->nama_periode }}
                     </h4>
+                    <!-- Badge Seumur Hidup -->
+                    @if ($item->is_seumur_hidup)
+                        <span
+                            class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 shadow-2xs">
+                            <i class="bi bi-infinity mr-1 text-[10px]"></i>
+                            Seumur Hidup
+                        </span>
+                    @endif
+
                     <!-- Badge Status Aktif -->
                     @if ($item->status_aktif)
                         <span
@@ -42,9 +51,7 @@
                 <p
                     class="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1 truncate flex items-center gap-1.5 font-mono">
                     <i class="bi bi-clock-history text-zinc-400"></i>
-                    {{ $item->tanggal_mulai ? \Carbon\Carbon::parse($item->tanggal_mulai)->translatedFormat('d M Y') : '?' }}
-                    -
-                    {{ $item->tanggal_selesai ? \Carbon\Carbon::parse($item->tanggal_selesai)->translatedFormat('d M Y') : 'Sekarang' }}
+                    {{ $item->masa_bakti_text }}
                 </p>
             </div>
         </div>
@@ -80,4 +87,3 @@
     <x-empty-state icon="bi-calendar-x" title="Data Periode Masih Kosong"
         message="Anda belum menambahkan masa bakti kepengurusan." />
 @endforelse
-

@@ -29,9 +29,7 @@ class RbacSeeder extends Seeder
             'staff'             => 'Staff Administrasi / TU',
             'petugas-tabungan'  => 'Petugas Tabungan Madrasah',
             'petugas-koperasi'  => 'Petugas Koperasi & Toko Madrasah',
-            'bendahara'         => 'Bendahara / Keuangan Madrasah',
             'ustadz'            => 'Dewan Guru / Tenaga Pendidik',
-            'petugas-cetak'     => 'Petugas Cetak Rapor & Dokumen',
             'wali-murid'        => 'Wali Murid',
         ];
 
@@ -231,11 +229,42 @@ class RbacSeeder extends Seeder
                 'permissions' => ['read', 'create', 'update', 'delete'],
             ],
             [
+                'name'        => 'Tagihan Wali Murid',
+                'url'         => '#tagihan-wali',
+                'category'    => 'KEUANGAN & TABUNGAN',
+                'icon'        => 'bi-houses-fill',
+                'orders'      => 21,
+                'permissions' => ['read'],
+                'sub_menus'   => [
+                    [
+                        'name'        => 'Terbitkan Tagihan',
+                        'url'         => 'tagihan-wali.terbitkan-index',
+                        'icon'        => 'bi-lightning-charge-fill',
+                        'orders'      => 1,
+                        'permissions' => ['read', 'create', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Kasir Pembayaran',
+                        'url'         => 'tagihan-wali.kasir',
+                        'icon'        => 'bi-wallet2',
+                        'orders'      => 2,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Laporan & Rekap',
+                        'url'         => 'tagihan-wali.laporan',
+                        'icon'        => 'bi-file-earmark-bar-graph-fill',
+                        'orders'      => 3,
+                        'permissions' => ['read'],
+                    ],
+                ],
+            ],
+            [
                 'name'        => 'Pembayaran Syahriyah',
                 'url'         => 'pembayaran-tagihan.index',
                 'category'    => 'KEUANGAN & TABUNGAN',
                 'icon'        => 'bi-cash-coin',
-                'orders'      => 21,
+                'orders'      => 22,
                 'permissions' => ['read', 'create', 'update', 'delete'],
             ],
             [
@@ -243,7 +272,7 @@ class RbacSeeder extends Seeder
                 'url'         => '#kas-ruangan',
                 'category'    => 'KEUANGAN & TABUNGAN',
                 'icon'        => 'bi-cash-stack',
-                'orders'      => 22,
+                'orders'      => 23,
                 'permissions' => ['read'],
                 'sub_menus'   => [
                     [
@@ -835,6 +864,7 @@ class RbacSeeder extends Seeder
                 ->orWhere('name', 'like', '%bintang-pelajar%')
                 ->orWhere('name', 'like', '%rapor%')
                 ->orWhere('name', 'like', '%tagihan-murid%')
+                ->orWhere('name', 'like', '%tagihan-wali%')
                 ->orWhere('name', 'like', '%pembayaran-tagihan%')
                 ->orWhere('name', 'like', '%kas-ruangan%')
                 ->orWhere('name', 'like', '%pengurus%')
@@ -872,19 +902,7 @@ class RbacSeeder extends Seeder
         })->get();
         $roles['petugas-koperasi']->syncPermissions($koperasiPerms);
 
-        // E. BENDAHARA: Tagihan Syahriyah, Kas Ruangan, Tabungan, Koperasi, Keuangan Madrasah, Pembayaran
-        $bendaharaPerms = Permission::where(function ($q) {
-            $q->where('name', 'like', '%dashboard%')
-                ->orWhere('name', 'like', '%tagihan%')
-                ->orWhere('name', 'like', '%pembayaran%')
-                ->orWhere('name', 'like', '%kas-ruangan%')
-                ->orWhere('name', 'like', '%tabungan%')
-                ->orWhere('name', 'like', '%koperasi%')
-                ->orWhere('name', 'like', '%keuangan%');
-        })->get();
-        $roles['bendahara']->syncPermissions($bendaharaPerms);
-
-        // F. USTADZ: Dashboard, Jadwal, Presensi Murid, Nilai Ujian, Jadwal Ujian, Presensi Ujian, Pelanggaran, Kas Ruangan, Kendala
+        // E. USTADZ: Dashboard, Jadwal, Presensi Murid, Nilai Ujian, Jadwal Ujian, Presensi Ujian, Pelanggaran, Kas Ruangan, Kendala
         $ustadzPerms = Permission::where(function ($q) {
             $q->where('name', 'like', '%dashboard%')
                 ->orWhere('name', 'like', '%jadwal-pelajaran%')
@@ -898,29 +916,16 @@ class RbacSeeder extends Seeder
         })->get();
         $roles['ustadz']->syncPermissions($ustadzPerms);
 
-        // G. PETUGAS CETAK: Cetak Rapor, Kartu Pelajar, Berita Acara, DHPU, SPMB Bukti, Jadwal Ujian
-        $cetakPerms = Permission::where(function ($q) {
-            $q->where('name', 'like', '%dashboard%')
-                ->orWhere('name', 'like', '%rapor%')
-                ->orWhere('name', 'like', '%petugas-cetak%')
-                ->orWhere('name', 'like', '%kartu-pelajar%')
-                ->orWhere('name', 'like', '%presensi-ujian%')
-                ->orWhere('name', 'like', '%jadwal-ujian%')
-                ->orWhere('name', 'like', '%spmb%');
-        })->get();
-        $roles['petugas-cetak']->syncPermissions($cetakPerms);
-
-        // H. WALI MURID: View-only dashboard, tabungan, tagihan
+        // F. WALI MURID: View-only dashboard, tabungan, tagihan
         $waliPerms = Permission::where(function ($q) {
             $q->where('name', 'read dashboard')
                 ->orWhere('name', 'read tabungan.dashboard')
-                ->orWhere('name', 'read tagihan-murid.index');
+                ->orWhere('name', 'read tagihan-murid.index')
+                ->orWhere('name', 'read tagihan-wali.index');
         })->get();
         $roles['wali-murid']->syncPermissions($waliPerms);
 
-        // 7. Buat / Sinkronkan User Akun Default untuk Setiap Role Standar
-
-        // 1. Administrator (Super Admin)
+        // 7. Buat / Sinkronkan User Akun Default untuk Administrator (Super Admin)
         $adminUser = User::firstOrCreate(
             ['username' => 'mikyal_adly'],
             [
@@ -943,141 +948,6 @@ class RbacSeeder extends Seeder
                 'tanggal_lahir' => '1996-05-07',
                 'alamat'        => 'DSN. MORKONENG 003/004 DESA SOMORKONENG KEC. KWANYAR',
                 'no_hp'         => '6285104044033',
-                'is_active'     => true,
-            ]
-        );
-
-        // 2. Staff TU / Administrasi
-        $staffUser = User::firstOrCreate(
-            ['username' => 'staff_tu'],
-            [
-                'name'              => 'STAFF TATA USAHA MDT',
-                'email'             => 'tu@mdt-somorkoneng.sch.id',
-                'password'          => Hash::make('staff123'),
-                'is_active'         => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $staffUser->syncRoles(['staff']);
-
-        Administrator::firstOrCreate(
-            ['user_id' => $staffUser->id],
-            [
-                'nik'           => '3526110101910006',
-                'nama_lengkap'  => $staffUser->name,
-                'jenis_kelamin' => 'L',
-                'tempat_lahir'  => 'BANGKALAN',
-                'tanggal_lahir' => '1991-03-03',
-                'alamat'        => 'PONDOK PESANTREN HIDAYATUS SHIBYAN SOMORKONENG',
-                'no_hp'         => '6281234567892',
-                'is_active'     => true,
-            ]
-        );
-
-        // 3. Petugas Tabungan
-        $petugasUser = User::firstOrCreate(
-            ['username' => 'petugas_tabungan'],
-            [
-                'name'              => 'PETUGAS TABUNGAN MDT',
-                'email'             => 'tabungan@mdt-somorkoneng.sch.id',
-                'password'          => Hash::make('tabungan123'),
-                'is_active'         => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $petugasUser->syncRoles(['petugas-tabungan']);
-
-        Administrator::firstOrCreate(
-            ['user_id' => $petugasUser->id],
-            [
-                'nik'           => '3526110101900004',
-                'nama_lengkap'  => $petugasUser->name,
-                'jenis_kelamin' => 'L',
-                'tempat_lahir'  => 'BANGKALAN',
-                'tanggal_lahir' => '1990-01-01',
-                'alamat'        => 'PONDOK PESANTREN HIDAYATUS SHIBYAN SOMORKONENG',
-                'no_hp'         => '6281234567890',
-                'is_active'     => true,
-            ]
-        );
-
-        // 4. Petugas Koperasi
-        $petugasKoperasiUser = User::firstOrCreate(
-            ['username' => 'petugas_koperasi'],
-            [
-                'name'              => 'PETUGAS KOPERASI MDT',
-                'email'             => 'koperasi@mdt-somorkoneng.sch.id',
-                'password'          => Hash::make('koperasi123'),
-                'is_active'         => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $petugasKoperasiUser->syncRoles(['petugas-koperasi']);
-
-        Administrator::firstOrCreate(
-            ['user_id' => $petugasKoperasiUser->id],
-            [
-                'nik'           => '3526110101920005',
-                'nama_lengkap'  => $petugasKoperasiUser->name,
-                'jenis_kelamin' => 'L',
-                'tempat_lahir'  => 'BANGKALAN',
-                'tanggal_lahir' => '1992-02-02',
-                'alamat'        => 'PONDOK PESANTREN HIDAYATUS SHIBYAN SOMORKONENG',
-                'no_hp'         => '6281234567891',
-                'is_active'     => true,
-            ]
-        );
-
-        // 5. Bendahara Madrasah
-        $bendaharaUser = User::firstOrCreate(
-            ['username' => 'bendahara_mdt'],
-            [
-                'name'              => 'BENDAHARA MDT',
-                'email'             => 'bendahara@mdt-somorkoneng.sch.id',
-                'password'          => Hash::make('bendahara123'),
-                'is_active'         => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $bendaharaUser->syncRoles(['bendahara']);
-
-        Administrator::firstOrCreate(
-            ['user_id' => $bendaharaUser->id],
-            [
-                'nik'           => '3526110101930007',
-                'nama_lengkap'  => $bendaharaUser->name,
-                'jenis_kelamin' => 'L',
-                'tempat_lahir'  => 'BANGKALAN',
-                'tanggal_lahir' => '1993-04-04',
-                'alamat'        => 'PONDOK PESANTREN HIDAYATUS SHIBYAN SOMORKONENG',
-                'no_hp'         => '6281234567893',
-                'is_active'     => true,
-            ]
-        );
-
-        // 6. Petugas Cetak Rapor
-        $cetakUser = User::firstOrCreate(
-            ['username' => 'petugas_cetak'],
-            [
-                'name'              => 'PETUGAS CETAK RAPOR MDT',
-                'email'             => 'cetak@mdt-somorkoneng.sch.id',
-                'password'          => Hash::make('cetak123'),
-                'is_active'         => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $cetakUser->syncRoles(['petugas-cetak']);
-
-        Administrator::firstOrCreate(
-            ['user_id' => $cetakUser->id],
-            [
-                'nik'           => '3526110101940008',
-                'nama_lengkap'  => $cetakUser->name,
-                'jenis_kelamin' => 'L',
-                'tempat_lahir'  => 'BANGKALAN',
-                'tanggal_lahir' => '1994-05-05',
-                'alamat'        => 'PONDOK PESANTREN HIDAYATUS SHIBYAN SOMORKONENG',
-                'no_hp'         => '6281234567894',
                 'is_active'     => true,
             ]
         );

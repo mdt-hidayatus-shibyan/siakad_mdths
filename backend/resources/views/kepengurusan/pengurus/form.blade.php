@@ -31,7 +31,8 @@
                 Pilih Anggota <span class="text-rose-500">*</span>
             </label>
             <div class="relative">
-                <select name="anggota_id" class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer" required>
+                <select name="anggota_id" class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer"
+                    required>
                     <option value="">-- Pilih Anggota Yayasan --</option>
                     @foreach ($anggota as $org)
                         <option value="{{ $org->id }}"
@@ -53,7 +54,8 @@
                 Jabatan <span class="text-rose-500">*</span>
             </label>
             <div class="relative">
-                <select name="jabatan_id" class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer" required>
+                <select name="jabatan_id" class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer"
+                    required>
                     <option value="">-- Pilih Jabatan --</option>
                     @foreach ($jabatan as $jab)
                         <option value="{{ $jab->id }}"
@@ -70,11 +72,13 @@
 
         <!-- Tingkat/Unit -->
         <div>
-            <label class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">
+            <label
+                class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">
                 Tingkat / Unit (Opsional)
             </label>
             <div class="relative">
-                <select name="tingkat_id" class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer">
+                <select name="tingkat_id"
+                    class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer">
                     <option value="">-- Umum / Pengurus Yayasan Pusat --</option>
                     @foreach ($tingkats as $tkt)
                         <option value="{{ $tkt->id }}"
@@ -96,12 +100,13 @@
                 Periode Kepengurusan <span class="text-rose-500">*</span>
             </label>
             <div class="relative">
-                <select name="periode_id" class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer" required>
+                <select name="periode_id" class="m3-input-glass w-full text-xs font-bold appearance-none cursor-pointer"
+                    required>
                     <option value="">-- Pilih Periode --</option>
                     @foreach ($periode as $per)
                         <option value="{{ $per->id }}"
                             {{ (isset($pengurus) && $pengurus->periode_id == $per->id) || old('periode_id') == $per->id ? 'selected' : '' }}>
-                            {{ $per->nama_periode }} {!! $per->status_aktif ? '&#9989; (Aktif)' : '' !!}
+                            {{ $per->nama_periode }} {!! $per->is_seumur_hidup ? '&#8734; (Seumur Hidup)' : ($per->status_aktif ? '&#9989; (Aktif)' : '') !!}
                         </option>
                     @endforeach
                 </select>
@@ -130,4 +135,3 @@
         </button>
     </div>
 </form>
-

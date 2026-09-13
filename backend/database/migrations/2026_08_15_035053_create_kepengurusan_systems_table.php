@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('nama_periode');
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();
+            $table->boolean('is_seumur_hidup')->default(false);
             $table->boolean('status_aktif')->default(false);
             $table->timestamps();
         });

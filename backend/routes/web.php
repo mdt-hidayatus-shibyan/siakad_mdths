@@ -61,6 +61,7 @@ use App\Http\Controllers\Arsip\ArsipIjazahController;
 
 // 7. Keuangan Madrasah Controllers
 use App\Http\Controllers\Keuangan\TagihanMuridController;
+use App\Http\Controllers\Keuangan\TagihanWaliMuridController;
 use App\Http\Controllers\Keuangan\PembayaranTagihanController;
 use App\Http\Controllers\Keuangan\PengaturanTagihanController;
 use App\Http\Controllers\Keuangan\AkunKeuanganController;
@@ -245,6 +246,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('kartu-pelajar')->name('kartu-pelajar.')->group(function () {
         Route::get('/', [KartuPelajarController::class, 'index'])->name('index');
         Route::post('/cetak', [KartuPelajarController::class, 'cetak'])->name('cetak');
+        Route::get('/{ruangan_id}/upload-foto/{murid_id}', [KartuPelajarController::class, 'modalUpload'])->name('uploadFoto');
     });
 
     // -- Manajemen Akun Pengguna (Khusus Administrator) --
@@ -542,6 +544,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/proses', [TagihanMuridController::class, 'prosesTagihanPilihan'])->name('proses');
     });
     Route::resource('tagihan-murid', TagihanMuridController::class);
+
+    // -- Tagihan Per Wali Murid (KK Aktif) --
+    Route::prefix('tagihan-wali')->name('tagihan-wali.')->controller(TagihanWaliMuridController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+
+        // 1. Submenu: Terbitkan Tagihan
+        Route::get('/terbitkan', 'terbitkanIndex')->name('terbitkan-index');
+        Route::post('/terbitkan', 'terbitkan')->name('terbitkan');
+        Route::post('/hapus-massal', 'hapusMassal')->name('hapus-massal');
+        Route::post('/hapus-semua', 'hapusSemua')->name('hapus-semua');
+        Route::delete('/destroy/{id}', 'destroy')->name('destroy');
+
+        // 2. Submenu: Kasir Pembayaran
+        Route::get('/kasir', 'kasir')->name('kasir');
+        Route::get('/kasir/leger', 'kasirLeger')->name('kasir-leger');
+        Route::post('/kasir/leger-proses', 'prosesLeger')->name('kasir-leger.proses');
+        Route::post('/bayar', 'bayar')->name('bayar');
+        Route::post('/batal/{id}', 'batalBayar')->name('batal');
+        Route::get('/cetak-kwitansi/{id}', 'cetakKwitansi')->name('cetak-kwitansi');
+
+        // 3. Submenu: Laporan & Rekap
+        Route::get('/laporan', 'laporan')->name('laporan');
+        Route::get('/cetak-rekap', 'cetakRekap')->name('cetak-rekap');
+
+        // Detail AJAX Modal
+        Route::get('/detail/{id}', 'detail')->name('detail');
+    });
 
     // -- Pembayaran Tagihan / Syahriyah --
     Route::prefix('pembayaran-tagihan')->name('pembayaran-tagihan.')->controller(PembayaranTagihanController::class)->group(function () {

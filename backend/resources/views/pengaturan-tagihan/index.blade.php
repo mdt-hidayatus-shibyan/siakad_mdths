@@ -122,6 +122,26 @@
                         @enderror
                     </div>
 
+                    <!-- Sasaran Tagihan -->
+                    <div>
+                        <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1.5 ml-1">
+                            Sasaran Penagihan
+                        </label>
+                        <div class="relative">
+                            <select name="sasaran"
+                                class="m3-input-glass w-full !pr-8 text-xs font-bold cursor-pointer appearance-none">
+                                <option value="murid" {{ old('sasaran') == 'murid' ? 'selected' : '' }}>Per Murid /
+                                    Santri</option>
+                                <option value="wali_murid" {{ old('sasaran') == 'wali_murid' ? 'selected' : '' }}>Per
+                                    Wali Murid (KK)</option>
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
+                                <i class="bi bi-chevron-down text-[10px] font-black"></i>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tipe Tagihan -->
                     <div class="grid grid-cols-2 gap-3">
                         <div class="col-span-2">
@@ -276,6 +296,12 @@
                                                             Kode : {{ ucwords($biaya->kode_tagihan) }} | Tarif
                                                             {{ ucwords($tipe) }}
                                                         </span>
+                                                        @if ($biaya->sasaran === 'wali_murid')
+                                                            <span
+                                                                class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                                                Per KK / Wali
+                                                            </span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>

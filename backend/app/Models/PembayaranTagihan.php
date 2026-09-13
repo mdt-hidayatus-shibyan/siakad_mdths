@@ -13,6 +13,12 @@ class PembayaranTagihan extends Model
     {
         return $this->hasMany(TagihanMurid::class, 'pembayaran_tagihan_id');
     }
+
+    public function tagihanWaliMurids()
+    {
+        return $this->hasMany(TagihanWaliMurid::class, 'pembayaran_tagihan_id');
+    }
+
     public function pengaturanTagihan()
     {
         return $this->belongsTo(PengaturanTagihan::class, 'pengaturan_tagihan_id');

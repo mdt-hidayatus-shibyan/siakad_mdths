@@ -50,4 +50,15 @@ class KartuPelajarController extends Controller
         $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
         return view('kartu-pelajar.cetak', compact('murids', 'pengasuh'));
     }
+
+    /**
+     * Menampilkan Modal Form Upload & Crop Foto Murid (AJAX Partial)
+     */
+    public function modalUpload($ruangan_id, $murid_id)
+    {
+        $ruangan = Ruangan::findOrFail($ruangan_id);
+        $murid = Murid::with('waliMurid.kampung')->findOrFail($murid_id);
+
+        return view('rombongan-belajar.modal-upload-foto', compact('ruangan', 'murid'));
+    }
 }

@@ -38,14 +38,20 @@ class PengaturanTagihanController extends Controller
             'kode_tagihan' => 'required|string|max:10',
             'nama_tagihan' => 'required|string|max:100',
             'tipe' => 'required|in:bulanan,semester,insidental',
+            'sasaran' => 'nullable|in:murid,wali_murid',
             'nominal' => 'required|numeric|min:0',
         ]);
 
         // Ambil data dasar tagihan
-        $dataDasar = $request->only(['tahun_pelajaran_id', 'kode_tagihan', 'nama_tagihan', 'tipe', 'nominal']);
+        $dataDasar = $request->only(['tahun_pelajaran_id', 'kode_tagihan', 'nama_tagihan', 'tipe', 'sasaran', 'nominal']);
+        $dataDasar['sasaran'] = $request->sasaran ?? 'murid';
 
+        // JIKA SASARAN ADALAH PER WALI MURID (KK): Selalu tanpa level_id (berlaku tingkat keluarga)
+        if ($dataDasar['sasaran'] === 'wali_murid') {
+            PengaturanTagihan::create(array_merge($dataDasar, ['level_id' => null]));
+        }
         // JIKA TIDAK ADA KELAS YANG DICENTANG: Berlaku untuk semua kelas (level_id = null)
-        if (!$request->has('level_ids') || empty($request->level_ids)) {
+        elseif (!$request->has('level_ids') || empty($request->level_ids)) {
             PengaturanTagihan::create(array_merge($dataDasar, ['level_id' => null]));
         }
         // JIKA ADA KELAS YANG DICENTANG: Lakukan perulangan otomatis
@@ -67,7 +73,7 @@ class PengaturanTagihanController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Kriteria biaya berhasil diterapkan ke seluruh level yang dipilih!');
+        return redirect()->back()->with('success', 'Kriteria biaya berhasil diterapkan!');
     }
 
     public function edit(Request $request, $id)
@@ -89,7 +95,8 @@ class PengaturanTagihanController extends Controller
 
     public function update(PengaturanTagihanRequest $request, $id)
     {
-        $dataUpdate = $request->only(['level_id', 'kode_tagihan', 'nama_tagihan', 'tipe', 'nominal']);
+        $dataUpdate = $request->only(['level_id', 'kode_tagihan', 'nama_tagihan', 'tipe', 'sasaran', 'nominal']);
+        $dataUpdate['sasaran'] = $request->sasaran ?? 'murid';
 
         if ($request->filled('level_id')) {
             $level = Level::find($request->level_id);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
 
+use App\Models\Administrator;
 use App\Models\BulanHijriyah;
 use App\Models\Kepengurusan\Pengurus;
 use App\Models\Murid;
@@ -166,6 +167,9 @@ class PembayaranTagihanController extends Controller
 
             if ($ruanganTerpilih) {
                 $masterBiayas = PengaturanTagihan::where('tahun_pelajaran_id', $tahunPelajaranId)
+                    ->where(function ($q) {
+                        $q->whereNull('sasaran')->orWhere('sasaran', 'murid');
+                    })
                     ->where(function ($q) use ($ruanganTerpilih) {
                         $q->whereNull('level_id');
                     })->get();
@@ -416,7 +420,10 @@ class PembayaranTagihanController extends Controller
 
         $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
         $bendahara = Pengurus::getAktifByJabatan('Bendahara') ?? Pengurus::getAktifByJabatan('Sekretaris Jenderal');
+        $administrator = Administrator::where('user_id', auth()->id())->first()
+            ?? Administrator::where('is_active', true)->whereNull('tingkat_id')->first()
+            ?? Administrator::where('is_active', true)->first();
 
-        return view('cetak-baru.cetak_kwitansi', compact('pembayaran', 'pengasuh', 'bendahara'));
+        return view('cetak-baru.cetak_kwitansi', compact('pembayaran', 'pengasuh', 'bendahara', 'administrator'));
     }
 }

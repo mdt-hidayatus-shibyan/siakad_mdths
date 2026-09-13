@@ -257,7 +257,7 @@
 
 <body>
     @php
-        $adminNama = auth()->user()->name ?? 'Petugas Kasir';
+        $adminNama = $administrator?->nama_lengkap ?? (auth()->user()->name ?? 'Petugas Kasir');
         $tagihanList = $pembayaran->tagihanMurids;
         $firstTagihan = $tagihanList->first();
         $murid = $firstTagihan?->murid;
@@ -441,24 +441,24 @@
                 @else
                     <div class="sign-spacer"></div>
                 @endif
-                <span class="sign-name">
-                    {{ $pengasuh?->anggota?->nama_lengkap ?? ($pengasuh?->nama ?? 'Pengasuh Madrasah') }}
-                </span>
+
             </div>
 
-            <!-- Kolom Bendahara / Penerima -->
+            <!-- Kolom Administrator / Penerima -->
             <div class="signature-box">
-                <span>Penerima / Bendahara</span>
-                @if (!empty($bendahara?->id))
+                <span>Penerima / Administrator</span>
+                @if (!empty($administrator?->id))
+                    {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(55)->generate(
+                        URL::signedRoute('profil.publik', ['tipe' => 'administrator', 'id' => $administrator->id]),
+                    ) !!}
+                @elseif (!empty($bendahara?->id))
                     {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(55)->generate(
                         URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $bendahara->id]),
                     ) !!}
                 @else
                     <div class="sign-spacer"></div>
                 @endif
-                <span class="sign-name">
-                    {{ $bendahara?->anggota?->nama_lengkap ?? ($bendahara?->nama ?? $adminNama) }}
-                </span>
+
             </div>
         </div>
     </div>

@@ -25,7 +25,12 @@ class PeriodeKepengurusanController extends Controller
 
     public function store(PeriodePengurusRequest $request)
     {
-        PeriodeKepengurusan::create($request->validated());
+        $data = $request->validated();
+        if (!empty($data['is_seumur_hidup'])) {
+            $data['tanggal_selesai'] = null;
+        }
+
+        PeriodeKepengurusan::create($data);
         return response()->json([
             'status' => 'success',
             'message' => 'Data Periode Pengurus berhasil ditambahkan!'
@@ -44,7 +49,12 @@ class PeriodeKepengurusanController extends Controller
     public function update(PeriodePengurusRequest $request, $id)
     {
         $periodeKepengurusan = PeriodeKepengurusan::findOrFail($id);
-        $periodeKepengurusan->update($request->validated());
+        $data = $request->validated();
+        if (!empty($data['is_seumur_hidup'])) {
+            $data['tanggal_selesai'] = null;
+        }
+
+        $periodeKepengurusan->update($data);
         return response()->json([
             'status' => 'success',
             'message' => 'Data Periode Pengurus berhasil dirubah!'
