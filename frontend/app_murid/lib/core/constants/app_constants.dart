@@ -13,7 +13,6 @@ class AppConstants {
   static const String keyThemeMode = 'theme_mode';
 
   // Default Backend URL
-  static const String defaultBaseUrl = 'http://10.0.2.2:8000/api';
-  static const String productionBaseUrl =
-      'https://mdthidayatusshibyan.sch.id/api';
+  static const String defaultBaseUrl = 'http://116.212.73.16/api';
+  static const String productionBaseUrl = 'http://116.212.73.16/api';
 }

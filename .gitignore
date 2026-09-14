@@ -8,7 +8,10 @@ auth.json
 
 # Dependencies
 node_modules/
-vendor/
+/backend/vendor/
+/vendor/
+!resources/views/vendor/
+!backend/resources/views/vendor/
 
 # Logs & Databases
 *.log

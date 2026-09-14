@@ -1,11 +1,10 @@
 class ApiConstants {
   ApiConstants._();
 
-  // Local Laragon backend IP or configurable domain
-  static const String defaultBaseUrl =
-      'http://10.18.27.1:8000/api'; // Android Emulator alias to localhost
-  static const String webLocalUrl = 'http://localhost:8000/api';
-  static const String physicalDeviceUrl = 'http://192.168.1.100:8000/api';
+  // Backend API URL
+  static const String defaultBaseUrl = 'http://116.212.73.16/api';
+  static const String webLocalUrl = 'http://116.212.73.16/api';
+  static const String physicalDeviceUrl = 'http://116.212.73.16/api';
 
   // Endpoints
   static const String login = '/login';
