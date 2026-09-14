@@ -1,6 +1,7 @@
-﻿# Environment & Secrets
+# Environment & Secrets
 .env
 .env.*
+!.env.example
 .env.backup
 .env.production
 auth.json
@@ -13,6 +14,7 @@ vendor/
 *.log
 *.sqlite
 *.sqlite3
+*.sql
 
 # IDE & OS
 .DS_Store
@@ -46,3 +48,12 @@ backend/.phpstorm.meta.php
 **/ios/.symlinks/
 **/ios/Flutter/Generated.xcconfig
 **/ios/Flutter/flutter_export_environment.sh
+
+.BACKEND_GUIDELINES.md
+.FRONTEND_APP_MURID.md
+.FRONTEND_APP_USTADZ.md
+.KEUANGAN_MADRASAH.md
+.KOPERASI_MADRASAH.md
+.PRD.md
+.PROJECT_BLUEPRINT.md
+.TABUNGAN_MADRASAH.md
