@@ -5,6 +5,7 @@ namespace App\Models\Keuangan;
 use App\Models\User;
 use App\Models\Ustadz;
 use App\Models\WaliMurid;
+use App\Traits\HasEncryptedSensitiveData;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,9 +13,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class NasabahPinjaman extends Model
 {
-    use HasFactory;
+    use HasFactory, HasEncryptedSensitiveData;
 
     protected $table = 'nasabah_pinjamans';
+
+    protected $encryptedFields = ['nik_ktp'];
 
     protected $fillable = [
         'kode_nasabah',

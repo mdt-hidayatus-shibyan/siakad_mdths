@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\HasEncryptedSensitiveData;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class WaliMurid extends Model
 {
+    use HasEncryptedSensitiveData;
 
     protected $guarded = ['id'];
+    protected $encryptedFields = ['no_kk'];
 
     protected $hidden = [
         'pin',
@@ -34,9 +37,15 @@ class WaliMurid extends Model
      */
     public static function generateNoRegistrasi(): string
     {
-        $maxNo = DB::table('wali_murids')
-            ->whereRaw("no_registrasi REGEXP '^[0-9]+$'")
-            ->max(DB::raw('CAST(no_registrasi AS UNSIGNED)'));
+        $query = DB::table('wali_murids');
+
+        if (DB::getDriverName() === 'sqlite') {
+            $query->whereRaw("no_registrasi GLOB '[0-9]*'");
+        } else {
+            $query->whereRaw("no_registrasi REGEXP '^[0-9]+$'");
+        }
+
+        $maxNo = $query->max(DB::raw('CAST(no_registrasi AS UNSIGNED)'));
 
         $nextNo = $maxNo ? ($maxNo + 1) : 50001;
 

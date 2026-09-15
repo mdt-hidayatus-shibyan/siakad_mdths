@@ -44,7 +44,7 @@
                     <span
                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 font-mono shadow-2xs">
                         <i class="bi bi-credit-card-2-front text-[9px]"></i>
-                        {{ $item->nik ? substr($item->nik, 0, 6) . '********' : 'Tanpa NIK' }}
+                        {{ $item->nik ? mask_nik($item->nik) : 'Tanpa NIK' }}
                     </span>
 
                     <!-- Indikator apakah dia Ustadz atau Staf Umum -->
@@ -89,4 +89,3 @@
 @empty
     <x-empty-state icon="bi-people" title="Data Anggota Kosong" message="Belum ada data personel / anggota yayasan." />
 @endforelse
-

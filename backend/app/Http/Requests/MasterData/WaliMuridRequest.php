@@ -19,7 +19,7 @@ class WaliMuridRequest extends FormRequest
 
         return [
             // Ubah dari 'required' menjadi 'nullable'
-            'no_kk'                => ['nullable', 'string', 'size:16', Rule::unique('wali_murids', 'no_kk')->ignore($waliId)],
+            'no_kk'                => ['nullable', 'string', 'size:16', new \App\Rules\UniqueEncrypted('wali_murids', 'no_kk_hash', $waliId)],
             'kepala_keluarga'      => 'required|in:Ayah,Ibu,Wali',
             'nama_kepala_keluarga' => 'required|string|max:100',
             'no_hp'                => 'nullable|string|max:15',

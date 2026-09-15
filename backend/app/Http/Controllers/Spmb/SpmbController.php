@@ -47,7 +47,7 @@ class SpmbController extends Controller
         ]);
 
         $noKk = trim($request->no_kk);
-        $wali = WaliMurid::where('no_kk', $noKk)->first();
+        $wali = WaliMurid::whereNoKk($noKk)->first();
 
         if ($wali) {
             // Wali murid sudah terdaftar -> Langsung ke pendaftaran calon murid dengan ID wali murid
@@ -71,7 +71,7 @@ class SpmbController extends Controller
         }
 
         // Cek jika ternyata sudah ada
-        $existingWali = WaliMurid::where('no_kk', $noKk)->first();
+        $existingWali = WaliMurid::whereNoKk($noKk)->first();
         if ($existingWali) {
             return redirect()->route('spmb.daftar-murid', ['wali_murid_id' => $existingWali->id]);
         }
@@ -88,7 +88,7 @@ class SpmbController extends Controller
     public function storeWali(Request $request)
     {
         $request->validate([
-            'no_kk'                => 'required|string|size:16|unique:wali_murids,no_kk',
+            'no_kk'                => ['required', 'string', 'size:16', new \App\Rules\UniqueEncrypted('wali_murids', 'no_kk_hash')],
             'kepala_keluarga'      => 'required|in:Ayah,Ibu,Wali',
             'nama_kepala_keluarga' => 'required|string|max:100',
             'no_hp'                => 'required|string|max:20',
@@ -307,7 +307,7 @@ class SpmbController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Nomor KK wajib diisi.'], 400);
         }
 
-        $wali = WaliMurid::with('kampung')->where('no_kk', $noKk)->first();
+        $wali = WaliMurid::with('kampung')->whereNoKk($noKk)->first();
 
         if ($wali) {
             return response()->json([
@@ -373,12 +373,14 @@ class SpmbController extends Controller
         $hasil = collect();
 
         if ($keyword) {
+            $keywordHash = hash_sensitive($keyword);
+
             $hasil = PendaftaranSpmb::with(['tahunPelajaran', 'level.tingkat', 'waliMurid'])
                 ->where('nomor_pendaftaran', 'like', "%{$keyword}%")
-                ->orWhere('nik', $keyword)
+                ->orWhere('nik_hash', $keywordHash)
                 ->orWhere('nama_lengkap', 'like', "%{$keyword}%")
-                ->orWhereHas('waliMurid', function ($q) use ($keyword) {
-                    $q->where('no_kk', $keyword);
+                ->orWhereHas('waliMurid', function ($q) use ($keywordHash) {
+                    $q->where('no_kk_hash', $keywordHash);
                 })
                 ->latest()
                 ->get();

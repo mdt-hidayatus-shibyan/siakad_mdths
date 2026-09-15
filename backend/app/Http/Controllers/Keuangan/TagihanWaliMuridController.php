@@ -84,10 +84,11 @@ class TagihanWaliMuridController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $queryWali->where(function ($q) use ($search) {
+            $searchHash = hash_sensitive($search);
+            $queryWali->where(function ($q) use ($search, $searchHash) {
                 $q->where('nama_kepala_keluarga', 'LIKE', "%{$search}%")
                     ->orWhere('no_registrasi', 'LIKE', "%{$search}%")
-                    ->orWhere('no_kk', 'LIKE', "%{$search}%")
+                    ->orWhere('no_kk_hash', $searchHash)
                     ->orWhere('no_hp', 'LIKE', "%{$search}%")
                     ->orWhereHas('murids', function ($mq) use ($search) {
                         $mq->where('nama_lengkap', 'LIKE', "%{$search}%")
@@ -174,8 +175,9 @@ class TagihanWaliMuridController extends Controller
             ])
                 ->where('is_active', true)
                 ->where(function ($q) use ($searchKey) {
+                    $searchHash = hash_sensitive($searchKey);
                     $q->where('no_registrasi', $searchKey)
-                        ->orWhere('no_kk', $searchKey)
+                        ->orWhere('no_kk_hash', $searchHash)
                         ->orWhere('nama_kepala_keluarga', 'LIKE', "%{$searchKey}%")
                         ->orWhere('no_hp', $searchKey)
                         ->orWhereHas('murids', function ($mq) use ($searchKey) {
@@ -287,10 +289,11 @@ class TagihanWaliMuridController extends Controller
 
             if ($request->filled('search')) {
                 $search = trim($request->search);
-                $queryWali->where(function ($q) use ($search) {
+                $searchHash = hash_sensitive($search);
+                $queryWali->where(function ($q) use ($search, $searchHash) {
                     $q->where('nama_kepala_keluarga', 'LIKE', "%{$search}%")
                         ->orWhere('no_registrasi', 'LIKE', "%{$search}%")
-                        ->orWhere('no_kk', 'LIKE', "%{$search}%")
+                        ->orWhere('no_kk_hash', $searchHash)
                         ->orWhere('no_hp', 'LIKE', "%{$search}%")
                         ->orWhereHas('murids', function ($mq) use ($search) {
                             $mq->where('nama_lengkap', 'LIKE', "%{$search}%")
@@ -473,10 +476,11 @@ class TagihanWaliMuridController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $queryWali->where(function ($q) use ($search) {
+            $searchHash = hash_sensitive($search);
+            $queryWali->where(function ($q) use ($search, $searchHash) {
                 $q->where('nama_kepala_keluarga', 'LIKE', "%{$search}%")
                     ->orWhere('no_registrasi', 'LIKE', "%{$search}%")
-                    ->orWhere('no_kk', 'LIKE', "%{$search}%")
+                    ->orWhere('no_kk_hash', $searchHash)
                     ->orWhere('no_hp', 'LIKE', "%{$search}%")
                     ->orWhereHas('murids', function ($mq) use ($search) {
                         $mq->where('nama_lengkap', 'LIKE', "%{$search}%")

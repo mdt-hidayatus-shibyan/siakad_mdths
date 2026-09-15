@@ -78,7 +78,7 @@ class ProfileController extends Controller
 
         // 1. Validasi Input
         $validated = $request->validate([
-            'nik'           => 'nullable|string|size:16|unique:administrators,nik,' . $administrator->id,
+            'nik'           => ['nullable', 'string', 'size:16', new \App\Rules\UniqueEncrypted('administrators', 'nik_hash', $administrator->id)],
             'jenis_kelamin' => 'required|in:L,P',
             'tempat_lahir'  => 'nullable|string|max:50',
             'tanggal_lahir' => 'nullable|date',

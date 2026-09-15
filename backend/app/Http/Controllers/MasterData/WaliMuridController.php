@@ -32,8 +32,9 @@ class WaliMuridController extends Controller
             })
 
             ->when($search, function ($query, $search) {
+                $searchHash = hash_sensitive($search);
                 return $query->where('nama_kepala_keluarga', 'like', "%{$search}%")
-                    ->orWhere('no_kk', 'like', "%{$search}%")
+                    ->orWhere('no_kk_hash', $searchHash)
                     ->orWhere('no_registrasi', 'like', "%{$search}%");
             })
             ->orderBy('no_registrasi', 'desc') // Diubah dari nama_ayah
@@ -140,7 +141,7 @@ class WaliMuridController extends Controller
     public function searchKk(Request $request)
     {
         $no_kk = $request->query('no_kk');
-        $wali = WaliMurid::with('kampung')->where('no_kk', $no_kk)->first();
+        $wali = WaliMurid::with('kampung')->whereNoKk($no_kk)->first();
 
         if ($wali) {
             return response()->json([
@@ -286,7 +287,7 @@ class WaliMuridController extends Controller
                     }
                 } else {
                     if (!empty($no_kk)) {
-                        $wali = WaliMurid::where('no_kk', $no_kk)->first();
+                        $wali = WaliMurid::whereNoKk($no_kk)->first();
                     }
 
                     if (!$wali) {

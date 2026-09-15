@@ -3,11 +3,16 @@
 namespace App\Models\Kepengurusan;
 
 use App\Models\Ustadz;
+use App\Traits\HasEncryptedSensitiveData;
 use Illuminate\Database\Eloquent\Model;
 
 class Anggota extends Model
 {
+    use HasEncryptedSensitiveData;
+
     protected $table = 'anggota';
+
+    protected $encryptedFields = ['nik'];
 
     protected $fillable = [
         'nik',

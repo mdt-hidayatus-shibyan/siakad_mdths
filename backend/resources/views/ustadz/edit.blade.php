@@ -220,7 +220,7 @@
                             class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">Username
                             Login</label>
                         <input type="text" name="username"
-                            value="{{ old('username', $ustadz->user->username ?? '') }}"
+                            value="{{ old('username', $ustadz->user?->username ?? '') }}"
                             placeholder="Contoh: ustadz123"
                             class="m3-input-glass w-full text-xs font-bold @error('username') !border-rose-500 @enderror">
                         @error('username')
@@ -231,7 +231,7 @@
                         <label
                             class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">Email
                             Login</label>
-                        <input type="email" name="email" value="{{ old('email', $ustadz->user->email ?? '') }}"
+                        <input type="email" name="email" value="{{ old('email', $ustadz->user?->email ?? '') }}"
                             placeholder="Contoh: ustadz@madrasah.com"
                             class="m3-input-glass w-full text-xs font-bold @error('email') !border-rose-500 @enderror">
                         @error('email')

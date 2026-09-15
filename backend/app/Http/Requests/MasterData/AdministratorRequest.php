@@ -41,7 +41,7 @@ class AdministratorRequest extends FormRequest
 
         return [
             'nama_lengkap'         => 'required|string|max:100',
-            'nik'                  => ['required', 'string', 'size:16', Rule::unique('administrators', 'nik')->ignore($administratorId)],
+            'nik'                  => ['required', 'string', 'size:16', new \App\Rules\UniqueEncrypted('administrators', 'nik_hash', $administratorId)],
             'jenis_kelamin'        => 'required|in:L,P',
             'tempat_lahir'         => 'required|string|max:50',
             'tanggal_lahir'        => 'required|date',

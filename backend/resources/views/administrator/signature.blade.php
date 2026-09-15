@@ -10,15 +10,13 @@
                 <i class="bi bi-arrow-left text-base font-bold"></i>
             </a>
             <div>
-                <h2
-                    class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
+                <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
                     Buat Tanda Tangan
                 </h2>
-                <p
-                    class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
                     Untuk: <span
                         class="text-primary dark:text-primary-dark font-black">{{ $administrator->nama_lengkap }}</span>
-                    ({{ $administrator->user->roles->first()->name ?? 'Staff Admin' }})
+                    ({{ $administrator->user?->roles?->first()?->name ?? 'Staff Admin' }})
                 </p>
             </div>
         </div>
@@ -71,8 +69,7 @@
                 </div>
             </div>
 
-            <p
-                class="text-center text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-3.5">
+            <p class="text-center text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-3.5">
                 Gunakan mouse atau sentuhan jari Anda untuk menggambar di dalam kotak kanvas.
             </p>
 
@@ -91,7 +88,8 @@
                 </button>
 
                 <!-- Simpan -->
-                <button type="button" id="btn-submit" class="m3-btn-primary w-full sm:w-auto h-10 px-6 text-xs font-black shadow-2xs">
+                <button type="button" id="btn-submit"
+                    class="m3-btn-primary w-full sm:w-auto h-10 px-6 text-xs font-black shadow-2xs">
                     <i class="bi bi-save2-fill mr-1.5"></i> Simpan Tanda Tangan
                 </button>
             </div>
@@ -292,4 +290,3 @@
         </script>
     @endpush
 </x-app-layout>
-

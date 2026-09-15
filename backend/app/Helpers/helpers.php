@@ -272,3 +272,62 @@ if (!function_exists('getTahunPelajaranAktif')) {
             ?? \App\Models\TahunPelajaran::latest()->first();
     }
 }
+
+if (!function_exists('mask_nik')) {
+    /**
+     * Memformat NIK agar hanya sebagian digit yang tampil di antarmuka (contoh: 3201************).
+     *
+     * @param string|null $nik
+     * @return string
+     */
+    function mask_nik($nik = null)
+    {
+        if (empty($nik)) {
+            return '-';
+        }
+        $nik = (string) $nik;
+        $len = strlen($nik);
+        if ($len <= 4) {
+            return str_repeat('*', $len);
+        }
+        return substr($nik, 0, 4) . str_repeat('*', $len - 4);
+    }
+}
+
+if (!function_exists('mask_kk')) {
+    /**
+     * Memformat Nomor Kartu Keluarga agar hanya sebagian digit yang tampil di antarmuka (contoh: 3201************).
+     *
+     * @param string|null $noKk
+     * @return string
+     */
+    function mask_kk($noKk = null)
+    {
+        if (empty($noKk)) {
+            return '-';
+        }
+        $noKk = (string) $noKk;
+        $len = strlen($noKk);
+        if ($len <= 4) {
+            return str_repeat('*', $len);
+        }
+        return substr($noKk, 0, 4) . str_repeat('*', $len - 4);
+    }
+}
+
+if (!function_exists('hash_sensitive')) {
+    /**
+     * Menghitung hash HMAC-SHA256 blind index untuk pencarian dan validasi keunikan field terenkripsi.
+     *
+     * @param string|null $value
+     * @return string|null
+     */
+    function hash_sensitive($value = null)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $key = config('app.key') ?: 'mdt_secret_hash_key';
+        return hash_hmac('sha256', (string) $value, $key);
+    }
+}

@@ -209,20 +209,57 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      ElevatedButton(
-                        onPressed: authProvider.isLoading
-                            ? null
-                            : _handleRequestOtp,
-                        child: authProvider.isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: authProvider.isLoading
+                              ? null
+                              : _handleRequestOtp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                            foregroundColor: isDark
+                                ? AppColors.onPrimaryDark
+                                : Colors.white,
+                            disabledBackgroundColor:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.4),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: authProvider.isLoading
+                              ? SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: isDark
+                                        ? AppColors.onPrimaryDark
+                                        : Colors.white,
+                                  ),
+                                )
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Kirim Kode Verifikasi OTP',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.send_rounded, size: 18),
+                                  ],
                                 ),
-                              )
-                            : const Text('Kirim Kode Verifikasi OTP'),
+                        ),
                       ),
                     ],
                   ),

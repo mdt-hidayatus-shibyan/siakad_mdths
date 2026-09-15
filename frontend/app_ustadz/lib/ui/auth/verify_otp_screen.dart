@@ -11,11 +11,7 @@ class VerifyOtpScreen extends StatefulWidget {
   final String loginId;
   final String? maskedEmail;
 
-  const VerifyOtpScreen({
-    super.key,
-    required this.loginId,
-    this.maskedEmail,
-  });
+  const VerifyOtpScreen({super.key, required this.loginId, this.maskedEmail});
 
   @override
   State<VerifyOtpScreen> createState() => _VerifyOtpScreenState();
@@ -65,20 +61,28 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
       _startCountdown();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message'] ?? 'Kode OTP baru telah dikirim ke email Anda!'),
+          content: Text(
+            result['message'] ?? 'Kode OTP baru telah dikirim ke email Anda!',
+          ),
           backgroundColor: AppColors.primaryLight,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       );
     } else {
       HapticHelper.warning();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Gagal mengirim ulang kode OTP.'),
+          content: Text(
+            authProvider.errorMessage ?? 'Gagal mengirim ulang kode OTP.',
+          ),
           backgroundColor: AppColors.roseDanger,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       );
     }
@@ -99,10 +103,14 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
       HapticHelper.confirmSuccess();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Kode OTP berhasil diverifikasi! Silakan buat kata sandi baru.'),
+          content: const Text(
+            'Kode OTP berhasil diverifikasi! Silakan buat kata sandi baru.',
+          ),
           backgroundColor: AppColors.hadirTextLight,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       );
 
@@ -120,10 +128,14 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
       HapticHelper.warning();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Kode OTP tidak valid atau salah.'),
+          content: Text(
+            authProvider.errorMessage ?? 'Kode OTP tidak valid atau salah.',
+          ),
           backgroundColor: AppColors.roseDanger,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       );
     }
@@ -136,7 +148,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verifikasi OTP', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Verifikasi OTP',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.pop(context),
@@ -153,9 +168,14 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                 // Step Indicator Pill
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1B261D) : AppColors.primaryContainerLight,
+                      color: isDark
+                          ? const Color(0xFF1B261D)
+                          : AppColors.primaryContainerLight,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -163,7 +183,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
                       ),
                     ),
                   ),
@@ -176,13 +198,17 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1B261D) : AppColors.primaryContainerLight,
+                      color: isDark
+                          ? const Color(0xFF1B261D)
+                          : AppColors.primaryContainerLight,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.mark_email_read_rounded,
                       size: 38,
-                      color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+                      color: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
                     ),
                   ),
                 ),
@@ -204,7 +230,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.4,
-                    color: isDark ? const Color(0xFF8D9387) : const Color(0xFF73796E),
+                    color: isDark
+                        ? const Color(0xFF8D9387)
+                        : const Color(0xFF73796E),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -217,7 +245,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     children: [
                       const Text(
                         'Kode OTP (6 Digit):',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
@@ -225,19 +256,38 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
                         maxLength: 6,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 8,
+                        ),
                         decoration: InputDecoration(
                           hintText: '......',
                           counterText: '',
                           prefixIcon: const Icon(Icons.pin_outlined),
                           suffixIcon: _resendCountdown > 0
                               ? Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                  child: Text('$_resendCountdown s', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 14,
+                                  ),
+                                  child: Text(
+                                    '$_resendCountdown s',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 )
                               : TextButton(
                                   onPressed: _handleResendOtp,
-                                  child: const Text('Kirim Ulang', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  child: const Text(
+                                    'Kirim Ulang',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                         ),
                         validator: (val) {
@@ -249,16 +299,57 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Submit Button
-                      ElevatedButton(
-                        onPressed: authProvider.isLoading ? null : _handleVerifyOtp,
-                        child: authProvider.isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Text('Verifikasi Kode OTP'),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: authProvider.isLoading
+                              ? null
+                              : _handleVerifyOtp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                            foregroundColor: isDark
+                                ? AppColors.onPrimaryDark
+                                : Colors.white,
+                            disabledBackgroundColor:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.4),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: authProvider.isLoading
+                              ? SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: isDark
+                                        ? AppColors.onPrimaryDark
+                                        : Colors.white,
+                                  ),
+                                )
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Verifikasi Kode OTP',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.check_circle_rounded, size: 20),
+                                  ],
+                                ),
+                        ),
                       ),
                     ],
                   ),
@@ -272,7 +363,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? const Color(0xFF8D9387) : const Color(0xFF73796E),
+                      color: isDark
+                          ? const Color(0xFF8D9387)
+                          : const Color(0xFF73796E),
                     ),
                   ),
                 ),
@@ -284,4 +377,3 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     );
   }
 }
-

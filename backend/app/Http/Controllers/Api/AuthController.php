@@ -144,11 +144,12 @@ class AuthController extends Controller
         }
 
         $idInput = trim($request->identifier);
+        $idHash = hash_sensitive($idInput);
 
         // 1. Cari berdasarkan Wali Murid (No. KK / No. Registrasi)
         $wali = \App\Models\WaliMurid::with(['kampung', 'murids.ruangans'])
-            ->where(function ($q) use ($idInput) {
-                $q->where('no_kk', $idInput)
+            ->where(function ($q) use ($idInput, $idHash) {
+                $q->where('no_kk_hash', $idHash)
                     ->orWhere('no_registrasi', $idInput);
             })
             ->where('is_active', true)
@@ -158,7 +159,7 @@ class AuthController extends Controller
         if (!$wali) {
             $murid = \App\Models\Murid::where('nism', $idInput)
                 ->orWhere('nisn', $idInput)
-                ->orWhere('nik', $idInput)
+                ->orWhere('nik_hash', $idHash)
                 ->first();
 
             if ($murid && $murid->wali_murid_id) {
@@ -764,7 +765,7 @@ class AuthController extends Controller
 
         $validator = Validator::make($request->all(), [
             'nama_lengkap' => 'required|string|max:100',
-            'nik' => 'nullable|string|size:16|unique:ustadzs,nik,' . $ustadz->id,
+            'nik' => ['nullable', 'string', 'size:16', new \App\Rules\UniqueEncrypted('ustadzs', 'nik_hash', $ustadz->id)],
             'nigm' => 'nullable|string|max:30|unique:ustadzs,nigm,' . $ustadz->id,
             'jenis_kelamin' => 'required|in:L,P',
             'tempat_lahir' => 'nullable|string|max:50',

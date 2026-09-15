@@ -128,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                 // Madrasah Name
                 Text(
-                  'MDT HIDAYATUS SHIBYAN',
+                  'Ustadz - MDTHS',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -138,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Portal Asatidz • Somorkoneng',
+                  'Aplikasi Khusus Ustadz & Wali Ruangan',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,

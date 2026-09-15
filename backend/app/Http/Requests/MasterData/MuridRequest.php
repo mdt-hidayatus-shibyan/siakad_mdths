@@ -24,7 +24,7 @@ class MuridRequest extends FormRequest
             // Data Identitas & Negara
             'nism'           => ['required', 'string', 'max:20', Rule::unique('murids', 'nism')->ignore($muridId)],
             'nisn'           => ['nullable', 'string', 'max:20', Rule::unique('murids', 'nisn')->ignore($muridId)],
-            'nik'            => ['nullable', 'string', 'size:16', Rule::unique('murids', 'nik')->ignore($muridId)],
+            'nik'            => ['nullable', 'string', 'size:16', new \App\Rules\UniqueEncrypted('murids', 'nik_hash', $muridId)],
 
             // Data Pribadi
             'nama_lengkap'   => 'required|string|max:100',

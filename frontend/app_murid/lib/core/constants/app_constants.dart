@@ -3,7 +3,7 @@ class AppConstants {
 
   static const String appName = 'Wali Murid - MDTHS';
   static const String appVersion = '1.0.0';
-  static const String appTagline = 'Portal Monitoring Murid & Wali Murid';
+  static const String appTagline = 'Portal Monitoring Wali Murid';
 
   // Storage Keys
   static const String keyToken = 'auth_token';
@@ -13,6 +13,7 @@ class AppConstants {
   static const String keyThemeMode = 'theme_mode';
 
   // Default Backend URL
-  static const String defaultBaseUrl = 'http://116.212.73.16/api';
-  static const String productionBaseUrl = 'http://116.212.73.16/api';
+  static const String defaultBaseUrl = 'http://10.0.2.2:8000/api';
+  static const String productionBaseUrl =
+      'https://mdthidayatusshibyan.sch.id/api';
 }

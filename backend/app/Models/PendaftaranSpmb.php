@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\HasEncryptedSensitiveData;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PendaftaranSpmb extends Model
 {
-    use HasFactory;
+    use HasFactory, HasEncryptedSensitiveData;
 
     protected $table = 'pendaftaran_spmbs';
 
     protected $guarded = ['id'];
+
+    protected $encryptedFields = ['nik', 'nik_ayah', 'nik_ibu'];
 
     protected $casts = [
         'tanggal_lahir' => 'date',

@@ -377,7 +377,7 @@
                             Username Login (Opsional)
                         </label>
                         <input type="text" name="username"
-                            value="{{ old('username', $administrator->user->username ?? '') }}"
+                            value="{{ old('username', $administrator->user?->username ?? '') }}"
                             placeholder="Contoh: ustadz123"
                             class="m3-input-glass w-full text-xs font-bold font-mono {{ $errors->has('username') ? '!border-rose-500' : '' }}">
                         @error('username')
@@ -394,7 +394,7 @@
                             Email Login (Opsional)
                         </label>
                         <input type="email" name="email"
-                            value="{{ old('email', $administrator->user->email ?? '') }}"
+                            value="{{ old('email', $administrator->user?->email ?? '') }}"
                             placeholder="Contoh: ustadz@madrasah.com"
                             class="m3-input-glass w-full text-xs font-bold font-mono {{ $errors->has('email') ? '!border-rose-500' : '' }}">
                         @error('email')

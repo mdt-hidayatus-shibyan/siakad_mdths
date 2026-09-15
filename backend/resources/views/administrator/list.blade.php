@@ -23,7 +23,6 @@
             <div class="flex-1 overflow-hidden">
                 <h4
                     class="text-sm md:text-base font-black text-zinc-900 dark:text-white tracking-tight leading-tight truncate mb-1">
-                    {{ $administrator->jenis_kelamin === 'L' ? 'Ust' : 'Ustd' }}.
                     {{ $administrator->nama_lengkap }}
                 </h4>
 
@@ -32,7 +31,7 @@
                     <span
                         class="inline-flex items-center px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider shadow-2xs">
                         <span class="text-zinc-900 dark:text-white font-black">
-                            {{ $administrator->user->roles->first()->name ?? 'Staff Admin' }}
+                            {{ $administrator->user?->roles?->first()?->name ?? '-' }}
                         </span>
                         @if ($administrator->tingkat)
                             <span class="ml-1 text-primary dark:text-primary-dark font-black">
@@ -92,12 +91,12 @@
                     @if ($administrator->user && !$administrator->user->hasVerifiedEmail())
                         <span
                             class="inline-flex items-center text-[9px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded shadow-2xs">
-                            <i class="bi bi-x-circle-fill mr-1 text-[8px]"></i> Belum Verif
+                            <i class="bi bi-x-circle-fill mr-1 text-[8px]"></i> Belum Verifikasi
                         </span>
                     @else
                         <span
                             class="inline-flex items-center text-[9px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded shadow-2xs">
-                            <i class="bi bi-check-circle-fill mr-1 text-[8px]"></i> Email Terverif
+                            <i class="bi bi-check-circle-fill mr-1 text-[8px]"></i> Email Terverifikasi
                         </span>
                     @endif
                 @else
@@ -159,4 +158,3 @@
         {{ $administrators->links('vendor.pagination.custom') }}
     </div>
 @endif
-

@@ -1,7 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
+    <link rel="icon" type="image/x-icon" href="{{ asset(getSetting('app_logo', 'assets/LOGO MDT.png')) }}" />
     <meta charset="UTF-8">
     <title>Rekapitulasi Tagihan Per Wali Murid - {{ $tahunPelajaran->nama_hijriyah }}</title>
     <style>

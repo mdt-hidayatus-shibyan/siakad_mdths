@@ -125,7 +125,7 @@
                             class="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-800/60">
                             <span class="text-zinc-400 text-[11px] font-bold">Nomor KK</span>
                             <span
-                                class="font-mono font-bold text-zinc-800 dark:text-zinc-200">{{ $waliTerpilih->no_kk ?? '-' }}</span>
+                                class="font-mono font-bold text-zinc-800 dark:text-zinc-200">{{ mask_kk($waliTerpilih->no_kk) }}</span>
                         </div>
                         <div
                             class="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-800/60">

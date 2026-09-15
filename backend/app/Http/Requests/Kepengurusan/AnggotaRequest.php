@@ -32,7 +32,7 @@ class AnggotaRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:16',
-                Rule::unique('anggota', 'nik')->ignore($anggotaId)
+                new \App\Rules\UniqueEncrypted('anggota', 'nik_hash', $anggotaId)
             ],
             'nama_lengkap'  => 'required|string|max:255',
             'jenis_kelamin' => 'required|in:L,P',

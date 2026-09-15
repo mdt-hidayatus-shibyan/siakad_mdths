@@ -214,7 +214,7 @@
                                         </h4>
                                         <p class="text-[10px] text-zinc-500">
                                             {{ $row->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }} • NIK:
-                                            {{ $row->nik ?: '-' }}
+                                            {{ mask_nik($row->nik) }}
                                         </p>
                                     </div>
                                 </div>
@@ -226,7 +226,7 @@
                                     {{ $row->waliMurid->nama_kepala_keluarga ?? '-' }}
                                 </div>
                                 <p class="text-[10px] font-mono text-zinc-400">
-                                    KK: {{ $row->waliMurid->no_kk ?? '-' }} •
+                                    KK: {{ mask_kk($row->waliMurid->no_kk ?? null) }} •
                                     {{ $row->waliMurid->kampung->nama_kampung ?? '-' }}
                                 </p>
                             </td>

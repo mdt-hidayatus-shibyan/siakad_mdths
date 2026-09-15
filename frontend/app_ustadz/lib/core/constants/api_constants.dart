@@ -2,11 +2,8 @@ class ApiConstants {
   ApiConstants._();
 
   // Backend API URL
-  static const String defaultBaseUrl = 'http://116.212.73.16/api';
-  static const String webLocalUrl = 'http://116.212.73.16/api';
-  static const String physicalDeviceUrl = 'http://116.212.73.16/api';
+  static const String defaultBaseUrl = 'http://localhost:8000/api';
 
-  // Endpoints
   static const String login = '/login';
   static const String logout = '/logout';
   static const String profile = '/profile';

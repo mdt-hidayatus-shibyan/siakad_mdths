@@ -27,7 +27,7 @@ class AdministratorController extends Controller
         $administrators = Administrator::with('user.roles', 'tingkat')->when($search, function ($query, $search) {
             return $query->where(function ($q) use ($search) {
                 $q->where('nama_lengkap', 'like', '%' . $search . '%')
-                    ->orWhere('nik', 'like', '%' . $search . '%');
+                    ->orWhere('nik_hash', hash_sensitive($search));
             });
         })
             ->orderBy('nama_lengkap', 'asc')

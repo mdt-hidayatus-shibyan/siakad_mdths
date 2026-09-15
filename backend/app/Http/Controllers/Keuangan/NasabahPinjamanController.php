@@ -28,7 +28,7 @@ class NasabahPinjamanController extends Controller
                 $q->where(function ($sub) use ($search) {
                     $sub->where('kode_nasabah', 'like', "%{$search}%")
                         ->orWhere('nama_lengkap', 'like', "%{$search}%")
-                        ->orWhere('nik_ktp', 'like', "%{$search}%")
+                        ->orWhere('nik_ktp_hash', hash_sensitive($search))
                         ->orWhere('no_hp', 'like', "%{$search}%");
                 });
             })

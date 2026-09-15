@@ -1,4 +1,4 @@
-@php
+﻿@php
     // Normalisasi Data Dinamis Berdasarkan Tipe
     $namaLengkap = '';
     $fotoPath = null;
@@ -33,6 +33,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="antialiased dark">
 
 <head>
+    <link rel="icon" type="image/x-icon" href="{{ asset(getSetting('app_logo', 'assets/LOGO MDT.png')) }}" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">

@@ -45,7 +45,7 @@
                             {{ str_replace('_', ' ', $nasabah->tipe_nasabah) }}
                         </span>
                         <div class="text-[11px] text-zinc-500 font-mono">
-                            NIK: {{ $nasabah->nik_ktp ?? '-' }}
+                            NIK: {{ mask_nik($nasabah->nik_ktp) }}
                         </div>
                     </td>
                     <td class="py-3.5 px-4">

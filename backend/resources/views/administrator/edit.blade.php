@@ -306,7 +306,7 @@
                                 class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">Username
                                 Login</label>
                             <input type="text" name="username"
-                                value="{{ old('username', $administrator->user->username ?? '') }}"
+                                value="{{ old('username', $administrator->user?->username ?? '') }}"
                                 class="m3-input-glass w-full text-xs font-bold font-mono">
                         </div>
                         <div>
@@ -314,7 +314,7 @@
                                 class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">Email
                                 Login</label>
                             <input type="email" name="email"
-                                value="{{ old('email', $administrator->user->email ?? '') }}"
+                                value="{{ old('email', $administrator->user?->email ?? '') }}"
                                 class="m3-input-glass w-full text-xs font-bold font-mono">
                         </div>
                     </div>

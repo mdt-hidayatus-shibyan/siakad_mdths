@@ -1,7 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
+    <link rel="icon" type="image/x-icon" href="{{ asset(getSetting('app_logo', 'assets/LOGO MDT.png')) }}" />
     <meta charset="UTF-8">
     <title>Kwitansi Tagihan KK - {{ $tagihan->pembayaranTagihan->no_transaksi ?? 'KWITANSI' }}</title>
     <style>

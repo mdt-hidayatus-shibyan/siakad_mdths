@@ -58,7 +58,7 @@
                     <span
                         class="inline-flex items-center px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider shadow-2xs font-mono">
                         KK: <span
-                            class="text-zinc-900 dark:text-zinc-200 ml-1">{{ $wali->no_kk ? substr($wali->no_kk, 0, 6) . '********' : 'Belum Ada' }}</span>
+                            class="text-zinc-900 dark:text-zinc-200 ml-1">{{ $wali->no_kk ? mask_kk($wali->no_kk) : 'Belum Ada' }}</span>
                     </span>
 
                     <!-- No WhatsApp -->

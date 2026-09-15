@@ -22,7 +22,7 @@ readonly class UstadzRepository implements UstadzRepositoryInterface
             ->when($search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
                     $q->where('nama_lengkap', 'like', '%' . $search . '%')
-                        ->orWhere('nik', 'like', '%' . $search . '%')
+                        ->orWhere('nik_hash', hash_sensitive($search))
                         ->orWhere('nigm', 'like', '%' . $search . '%')
                         ->orWhere('kode_ustadz', 'like', '%' . $search . '%');
                 });
@@ -132,7 +132,7 @@ readonly class UstadzRepository implements UstadzRepositoryInterface
         }
 
         if (!$ustadz && $nik) {
-            $ustadz = Ustadz::where('nik', $nik)->first();
+            $ustadz = Ustadz::whereNik($nik)->first();
         }
 
         return $ustadz;

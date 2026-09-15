@@ -3,11 +3,15 @@
 namespace App\Models;
 
 use App\Models\KasRuangan\PembayaranKasRuangan;
+use App\Traits\HasEncryptedSensitiveData;
 use Illuminate\Database\Eloquent\Model;
 
 class Murid extends Model
 {
+    use HasEncryptedSensitiveData;
+
     protected $guarded = ['id'];
+    protected $encryptedFields = ['nik', 'nik_ayah', 'nik_ibu'];
 
     // Relasi balik ke Wali Murid
     public function waliMurid()

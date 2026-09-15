@@ -3,11 +3,15 @@
 namespace App\Models;
 
 use App\Models\Kepengurusan\Anggota;
+use App\Traits\HasEncryptedSensitiveData;
 use Illuminate\Database\Eloquent\Model;
 
 class Ustadz extends Model
 {
+    use HasEncryptedSensitiveData;
+
     protected $guarded = ['id'];
+    protected $encryptedFields = ['nik'];
 
     protected static function boot()
     {

@@ -3,9 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../../core/network/api_client.dart';
-import '../../../core/storage/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
@@ -1610,51 +1607,6 @@ class _AkunTabState extends State<AkunTab> {
   }
 
   // =========================================================================
-  // 7. DIALOG CONFIG SERVER
-  // =========================================================================
-  void _showServerConfigDialog() async {
-    final currentUrl =
-        await StorageService.getBaseUrl() ?? ApiConstants.defaultBaseUrl;
-    final controller = TextEditingController(text: currentUrl);
-
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Pengaturan URL Server'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'API Base URL',
-            hintText: 'http://192.168.1.100:8000/api',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await ApiClient().updateBaseUrl(controller.text.trim());
-              if (ctx.mounted) Navigator.pop(ctx);
-              HapticHelper.confirmSuccess();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('URL Server backend berhasil diperbarui!'),
-                  ),
-                );
-              }
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // =========================================================================
   // 8. LOGOUT
   // =========================================================================
   void _handleLogout() {
@@ -2363,35 +2315,6 @@ class _AkunTabState extends State<AkunTab> {
                     ),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: _showThemeDialog,
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: AppColors.skyBlueAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.dns_rounded,
-                        size: 16,
-                        color: AppColors.skyBlueAccent,
-                      ),
-                    ),
-                    title: const Text(
-                      'Konfigurasi URL Server',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: const Text(
-                      'Ganti alamat backend Laravel (Localhost / IP / Domain)',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: _showServerConfigDialog,
                   ),
                 ],
               ),

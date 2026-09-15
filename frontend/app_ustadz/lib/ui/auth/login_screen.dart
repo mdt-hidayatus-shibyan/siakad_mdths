@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/constants/api_constants.dart';
-import '../../core/network/api_client.dart';
-import '../../core/storage/storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/haptic_helper.dart';
 import '../../core/utils/session_helper.dart';
@@ -23,164 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _loginIdController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  String _currentBaseUrl = ApiConstants.defaultBaseUrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCurrentBaseUrl();
-  }
-
-  Future<void> _loadCurrentBaseUrl() async {
-    final saved = await StorageService.getBaseUrl();
-    if (saved != null && saved.isNotEmpty) {
-      setState(() => _currentBaseUrl = saved);
-    }
-  }
-
-  void _showServerConfigDialog() {
-    HapticHelper.light();
-    final urlController = TextEditingController(text: _currentBaseUrl);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF101710) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF43483E)
-                        : const Color(0xFFC3C8BC),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Pengaturan URL Backend Laravel',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Pilih preset atau masukkan host server API D:\\laragon\\www\\mdt-hidayatus-shibyan-v2:',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark
-                      ? const Color(0xFF8D9387)
-                      : const Color(0xFF73796E),
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              // Quick Presets Chips
-              const Text(
-                'Preset Cepat:',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  ActionChip(
-                    label: const Text(
-                      'Emulator (10.0.2.2:8000)',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    onPressed: () {
-                      urlController.text = 'http://10.0.2.2:8000/api';
-                    },
-                  ),
-                  ActionChip(
-                    label: const Text(
-                      'Laragon Apache (10.0.2.2)',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    onPressed: () {
-                      urlController.text =
-                          'http://10.0.2.2/mdt-hidayatus-shibyan-v2/public/api';
-                    },
-                  ),
-                  ActionChip(
-                    label: const Text(
-                      'Localhost PC (8000)',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    onPressed: () {
-                      urlController.text = 'http://localhost:8000/api';
-                    },
-                  ),
-                  ActionChip(
-                    label: const Text(
-                      'Laragon Localhost',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    onPressed: () {
-                      urlController.text =
-                          'http://localhost/mdt-hidayatus-shibyan-v2/public/api';
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              TextField(
-                controller: urlController,
-                decoration: const InputDecoration(
-                  labelText: 'API Base URL',
-                  hintText: 'http://10.0.2.2:8000/api',
-                  prefixIcon: Icon(Icons.dns_rounded),
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              ElevatedButton(
-                onPressed: () async {
-                  final newUrl = urlController.text.trim();
-                  if (newUrl.isNotEmpty) {
-                    await ApiClient().updateBaseUrl(newUrl);
-                    setState(() => _currentBaseUrl = newUrl);
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    HapticHelper.confirmSuccess();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('URL Backend diubah ke: $newUrl'),
-                          backgroundColor: AppColors.primaryLight,
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Simpan URL Server'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   @override
   void dispose() {
@@ -242,61 +81,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Server URL Badge / Switcher
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: InkWell(
-                      onTap: _showServerConfigDialog,
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF101710)
-                              : const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.outlineDark
-                                : AppColors.outlineLight,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.dns_rounded,
-                              size: 13,
-                              color: isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight,
-                            ),
-                            const SizedBox(width: 5),
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 160),
-                              child: Text(
-                                _currentBaseUrl,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            const Icon(Icons.edit_rounded, size: 12),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 12),
                   // Logo & App Title
                   Center(
@@ -330,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'MDT Hidayatus Shibyan',
+                    'Ustadz - MDTHS',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 22,
@@ -441,20 +225,60 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 16),
 
                         // Submit Button
-                        ElevatedButton(
-                          onPressed: authProvider.isLoading
-                              ? null
-                              : _handleLogin,
-                          child: authProvider.isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: authProvider.isLoading
+                                ? null
+                                : _handleLogin,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
+                              foregroundColor: isDark
+                                  ? AppColors.onPrimaryDark
+                                  : Colors.white,
+                              disabledBackgroundColor:
+                                  (isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight)
+                                      .withValues(alpha: 0.4),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                            ),
+                            child: authProvider.isLoading
+                                ? SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: isDark
+                                          ? AppColors.onPrimaryDark
+                                          : Colors.white,
+                                    ),
+                                  )
+                                : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Masuk Sekarang',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 20,
+                                      ),
+                                    ],
                                   ),
-                                )
-                              : const Text('Masuk Sekarang'),
+                          ),
                         ),
                       ],
                     ),

@@ -42,7 +42,7 @@ class UstadzRequest extends FormRequest
         return [
             'nama_lengkap'         => 'required|string|max:100',
             'nigm'                 => ['nullable', 'string', 'max:30', \Illuminate\Validation\Rule::unique('ustadzs', 'nigm')->ignore($ustadzId)],
-            'nik'                  => ['nullable', 'string', 'size:16', \Illuminate\Validation\Rule::unique('ustadzs', 'nik')->ignore($ustadzId)],
+            'nik'                  => ['nullable', 'string', 'size:16', new \App\Rules\UniqueEncrypted('ustadzs', 'nik_hash', $ustadzId)],
             'jenis_kelamin'        => 'required|in:L,P',
             'tempat_lahir'         => 'nullable|string|max:50',
             'tanggal_lahir'        => 'nullable|date',

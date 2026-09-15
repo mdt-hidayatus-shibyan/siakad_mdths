@@ -10,7 +10,7 @@
                 {{ $wali->nama_kepala_keluarga }}
             </h3>
             <p class="text-[10px] text-zinc-400 font-mono mt-0.5">
-                Reg: #{{ $wali->no_registrasi }} • KK: {{ $wali->no_kk ?: '-' }}
+                Reg: #{{ $wali->no_registrasi }} • KK: {{ mask_kk($wali->no_kk) }}
             </p>
         </div>
     </div>

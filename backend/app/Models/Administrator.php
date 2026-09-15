@@ -3,12 +3,15 @@
 namespace App\Models;
 
 
+use App\Traits\HasEncryptedSensitiveData;
 use Illuminate\Database\Eloquent\Model;
-
 
 class Administrator extends Model
 {
+    use HasEncryptedSensitiveData;
+
     protected $guarded = ['id'];
+    protected $encryptedFields = ['nik'];
     /**
      * The attributes that should be cast.
      *

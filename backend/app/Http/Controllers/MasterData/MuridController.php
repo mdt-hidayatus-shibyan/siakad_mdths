@@ -31,7 +31,7 @@ class MuridController extends Controller
                 return $query->where(function ($q) use ($search) {
                     $q->where('nama_lengkap', 'like', '%' . $search . '%')
                         ->orWhere('nism', 'like', '%' . $search . '%')
-                        ->orWhere('nik', 'like', '%' . $search . '%');
+                        ->orWhere('nik_hash', hash_sensitive($search));
                 });
             })
             ->orderBy('nism', 'desc')

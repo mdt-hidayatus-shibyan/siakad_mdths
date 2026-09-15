@@ -42,12 +42,13 @@ class SpmbAdminController extends Controller
                 return $q->where('level_id', $levelId);
             })
             ->when($search, function ($q) use ($search) {
-                return $q->where(function ($query) use ($search) {
+                $searchHash = hash_sensitive($search);
+                return $q->where(function ($query) use ($search, $searchHash) {
                     $query->where('nama_lengkap', 'like', "%{$search}%")
                         ->orWhere('nomor_pendaftaran', 'like', "%{$search}%")
-                        ->orWhere('nik', 'like', "%{$search}%")
-                        ->orWhereHas('waliMurid', function ($w) use ($search) {
-                            $w->where('no_kk', 'like', "%{$search}%")
+                        ->orWhere('nik_hash', $searchHash)
+                        ->orWhereHas('waliMurid', function ($w) use ($search, $searchHash) {
+                            $w->where('no_kk_hash', $searchHash)
                                 ->orWhere('nama_kepala_keluarga', 'like', "%{$search}%");
                         });
                 });

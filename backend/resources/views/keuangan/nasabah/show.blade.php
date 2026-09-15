@@ -45,7 +45,7 @@
                         <h3 class="font-bold text-zinc-900 dark:text-white text-base">
                             {{ $nasabah->nama_lengkap }}
                         </h3>
-                        <p class="text-xs text-zinc-400 font-mono">NIK: {{ $nasabah->nik_ktp ?? '-' }}</p>
+                        <p class="text-xs text-zinc-400 font-mono">NIK: {{ mask_nik($nasabah->nik_ktp) }}</p>
                     </div>
                 </div>
 

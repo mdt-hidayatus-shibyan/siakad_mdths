@@ -11,12 +11,10 @@
                 <i class="bi bi-arrow-left text-base"></i>
             </a>
             <div>
-                <h2
-                    class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
+                <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
                     Detail Anggota Keluarga
                 </h2>
-                <p
-                    class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
                     Kelola murid yang berada di bawah tanggungan Kartu Keluarga ini.
                 </p>
             </div>
@@ -56,7 +54,7 @@
                     <p
                         class="text-xs font-bold text-zinc-500 dark:text-zinc-400 tracking-wider flex items-center font-mono">
                         <i class="bi bi-credit-card-2-front mr-1.5 text-sm"></i>
-                        {{ $wali->no_kk ?: 'No KK Belum Diinput' }}
+                        {{ $wali->no_kk ? mask_kk($wali->no_kk) : 'No KK Belum Diinput' }}
                     </p>
                 </div>
 
@@ -64,8 +62,7 @@
                 <div class="space-y-2.5 pt-4 border-t border-zinc-200/80 dark:border-zinc-800">
                     <div
                         class="bg-zinc-50/70 dark:bg-zinc-950/50 p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
-                        <p
-                            class="text-[10px] uppercase font-black text-zinc-400 tracking-wider mb-0.5">
+                        <p class="text-[10px] uppercase font-black text-zinc-400 tracking-wider mb-0.5">
                             Zonasi Kampung</p>
                         <p class="text-xs font-bold text-zinc-900 dark:text-white flex items-center">
                             <i class="bi bi-geo-alt text-zinc-400 mr-1.5 text-xs"></i>
@@ -75,8 +72,7 @@
 
                     <div
                         class="bg-zinc-50/70 dark:bg-zinc-950/50 p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
-                        <p
-                            class="text-[10px] uppercase font-black text-zinc-400 tracking-wider mb-0.5">
+                        <p class="text-[10px] uppercase font-black text-zinc-400 tracking-wider mb-0.5">
                             Kontak WhatsApp</p>
                         <p class="text-xs font-bold text-zinc-900 dark:text-white flex items-center font-mono">
                             <i class="bi bi-whatsapp text-emerald-500 mr-1.5 text-xs"></i>
@@ -86,10 +82,10 @@
 
                     <div
                         class="bg-zinc-50/70 dark:bg-zinc-950/50 p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
-                        <p
-                            class="text-[10px] uppercase font-black text-zinc-400 tracking-wider mb-0.5">
+                        <p class="text-[10px] uppercase font-black text-zinc-400 tracking-wider mb-0.5">
                             Status Keluarga</p>
-                        <p class="text-xs font-bold flex items-center {{ $wali->is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                        <p
+                            class="text-xs font-bold flex items-center {{ $wali->is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
                             <i class="bi bi-circle-fill mr-1.5 text-[8px]"></i>
                             {{ $wali->is_active ? 'Aktif' : 'Tidak Aktif' }}
                         </p>
@@ -105,14 +101,16 @@
                 <div
                     class="m3-glass-card p-5 bg-primary/5 dark:bg-primary-dark/5 border-primary/20 dark:border-primary-dark/20 relative overflow-hidden shadow-2xs">
 
-                    <h3 class="text-base font-black text-primary dark:text-primary-dark tracking-tight mb-0.5 relative z-10">
+                    <h3
+                        class="text-base font-black text-primary dark:text-primary-dark tracking-tight mb-0.5 relative z-10">
                         Tautkan Murid Baru
                     </h3>
                     <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 mb-4 relative z-10">
                         Masukkan NISM untuk menarik data murid ke dalam Kartu Keluarga ini.
                     </p>
 
-                    <form action="{{ route('wali-murid.link-anak', $wali->id) }}" method="POST" class="relative z-10 space-y-3">
+                    <form action="{{ route('wali-murid.link-anak', $wali->id) }}" method="POST"
+                        class="relative z-10 space-y-3">
                         @csrf
                         <div>
                             <div class="relative group/input">
@@ -221,8 +219,10 @@
                                 class="w-12 h-12 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500 flex items-center justify-center text-xl mx-auto mb-2 shadow-2xs">
                                 <i class="bi bi-emoji-frown"></i>
                             </div>
-                            <h4 class="text-xs font-black text-zinc-900 dark:text-white tracking-tight">Belum Ada Tanggungan</h4>
-                            <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 mt-0.5">Gunakan form di atas untuk menautkan NISM murid.</p>
+                            <h4 class="text-xs font-black text-zinc-900 dark:text-white tracking-tight">Belum Ada
+                                Tanggungan</h4>
+                            <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 mt-0.5">Gunakan form di
+                                atas untuk menautkan NISM murid.</p>
                         </div>
                     @endforelse
                 </div>
@@ -231,38 +231,37 @@
         </div>
     </div>
 
-<!-- Scripts untuk SweetAlert -->
-@push('script')
-    <script>
-        const swalCustomClass = {
-            popup: 'rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl',
-            title: 'text-lg font-black text-zinc-900 dark:text-white tracking-tight',
-            htmlContainer: 'text-xs font-bold text-zinc-500 dark:text-zinc-400',
-            actions: "gap-3 mt-4",
-            confirmButton: "rounded-xl px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs transition-all shadow-2xs outline-none",
-            cancelButton: "rounded-xl px-5 py-2.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-black text-xs transition-all outline-none border border-transparent dark:border-zinc-700 shadow-2xs"
-        };
+    <!-- Scripts untuk SweetAlert -->
+    @push('script')
+        <script>
+            const swalCustomClass = {
+                popup: 'rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl',
+                title: 'text-lg font-black text-zinc-900 dark:text-white tracking-tight',
+                htmlContainer: 'text-xs font-bold text-zinc-500 dark:text-zinc-400',
+                actions: "gap-3 mt-4",
+                confirmButton: "rounded-xl px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs transition-all shadow-2xs outline-none",
+                cancelButton: "rounded-xl px-5 py-2.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-black text-xs transition-all outline-none border border-transparent dark:border-zinc-700 shadow-2xs"
+            };
 
-        // FUNGSI KONFIRMASI BATAL TAUTKAN
-        function confirmUnlink(muridId, namaAnak) {
-            Swal.fire({
-                title: 'Lepas Tautan?',
-                html: `Anda yakin ingin mengeluarkan <b class="text-rose-500">${namaAnak}</b> dari Kartu Keluarga ini?`,
-                icon: 'warning',
-                showCancelButton: true,
-                heightAuto: false,
-                buttonsStyling: false,
-                color: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1e293b',
-                customClass: swalCustomClass,
-                confirmButtonText: '<i class="bi bi-person-x-fill mr-1.5"></i> Ya, Lepaskan!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('form-unlink-' + muridId).submit();
-                }
-            });
-        }
-    </script>
-@endpush
+            // FUNGSI KONFIRMASI BATAL TAUTKAN
+            function confirmUnlink(muridId, namaAnak) {
+                Swal.fire({
+                    title: 'Lepas Tautan?',
+                    html: `Anda yakin ingin mengeluarkan <b class="text-rose-500">${namaAnak}</b> dari Kartu Keluarga ini?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    heightAuto: false,
+                    buttonsStyling: false,
+                    color: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1e293b',
+                    customClass: swalCustomClass,
+                    confirmButtonText: '<i class="bi bi-person-x-fill mr-1.5"></i> Ya, Lepaskan!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('form-unlink-' + muridId).submit();
+                    }
+                });
+            }
+        </script>
+    @endpush
 </x-app-layout>
-

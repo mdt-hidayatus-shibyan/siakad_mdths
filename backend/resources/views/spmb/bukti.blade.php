@@ -112,7 +112,7 @@
                     <div>
                         <span class="text-[10px] text-zinc-400 block font-bold">NIK / TTL:</span>
                         <span
-                            class="font-medium text-zinc-700 dark:text-zinc-300 font-mono">{{ $pendaftaran->nik ?: '-' }}
+                            class="font-medium text-zinc-700 dark:text-zinc-300 font-mono">{{ mask_nik($pendaftaran->nik) }}
                             • {{ $pendaftaran->tempat_lahir }},
                             {{ $pendaftaran->tanggal_lahir ? $pendaftaran->tanggal_lahir->format('d/m/Y') : '-' }}</span>
                     </div>
