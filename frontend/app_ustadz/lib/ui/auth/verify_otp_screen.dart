@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/haptic_helper.dart';
 import '../../providers/auth_provider.dart';
+import '../widgets/custom_app_bar.dart';
 import '../widgets/glass_card.dart';
 import 'new_password_screen.dart';
 
@@ -147,16 +148,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Verifikasi OTP',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: const CustomAppBar(titleText: 'Verifikasi OTP'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),

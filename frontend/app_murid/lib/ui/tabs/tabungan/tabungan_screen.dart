@@ -7,6 +7,7 @@ import '../../../data/models/tabungan_model.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../../providers/keuangan_provider.dart';
 import '../../widgets/child_switcher_bar.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/modern_header.dart';
@@ -91,10 +92,9 @@ class _TabunganScreenState extends State<TabunganScreen> {
             ? AppColors.surfaceDark
             : AppColors.surfaceLight,
         appBar: widget.isFullScreen
-            ? AppBar(
-                title: const Text('Tabungan Murid'),
-                backgroundColor: Colors.transparent,
-                elevation: 0,
+            ? const CustomAppBar(
+                titleText: 'Tabungan Murid',
+                subtitleText: 'Buku Tabungan & Mutasi Simpanan',
               )
             : null,
         body: const EmptyStateWidget(
@@ -115,11 +115,11 @@ class _TabunganScreenState extends State<TabunganScreen> {
               child: Row(
                 children: [
                   if (widget.isFullScreen || Navigator.canPop(context)) ...[
-                    IconButton(
+                    CircularIconButton(
+                      icon: Icons.chevron_left_rounded,
+                      iconSize: 26,
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      tooltip: 'Kembali',
                     ),
                     const SizedBox(width: 12),
                   ],
@@ -380,7 +380,7 @@ class _TabunganScreenState extends State<TabunganScreen> {
         gradient: LinearGradient(
           colors: isDark
               ? const [Color(0xFF162E1A), Color(0xFF0C1D0E)]
-              : const [AppColors.primaryLight, Color(0xFF166534)],
+              : [AppColors.primaryLight, const Color(0xFF166534)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

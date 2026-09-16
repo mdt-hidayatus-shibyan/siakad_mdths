@@ -6,6 +6,7 @@ import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../../providers/keuangan_provider.dart';
 import '../../widgets/child_switcher_bar.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/modern_header.dart';
@@ -71,10 +72,9 @@ class _TagihanTabState extends State<TagihanTab>
             ? AppColors.surfaceDark
             : AppColors.surfaceLight,
         appBar: widget.isFullScreen
-            ? AppBar(
-                title: const Text('Tagihan Murid'),
-                backgroundColor: Colors.transparent,
-                elevation: 0,
+            ? const CustomAppBar(
+                titleText: 'Tagihan Murid',
+                subtitleText: 'Monitoring SPP & Biaya Pendidikan',
               )
             : null,
         body: const EmptyStateWidget(
@@ -95,18 +95,20 @@ class _TagihanTabState extends State<TagihanTab>
               child: Row(
                 children: [
                   if (widget.isFullScreen || Navigator.canPop(context)) ...[
-                    IconButton(
+                    CircularIconButton(
+                      icon: Icons.chevron_left_rounded,
+                      iconSize: 26,
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      tooltip: 'Kembali',
                     ),
                     const SizedBox(width: 12),
                   ],
-                  Expanded(
+                  const Expanded(
                     child: ModernHeader(
                       title: 'Tagihan & Pembayaran',
-                      subtitle: 'Monitoring SPP, Tagihan Murid & Tagihan KK',
+                      subtitle:
+                          'Monitoring SPP, Tagihan Murid & Tagihan Wali Murid',
+                      icon: Icons.receipt_long_rounded,
                     ),
                   ),
                 ],
@@ -116,7 +118,7 @@ class _TagihanTabState extends State<TagihanTab>
             // Multi-Child Switcher Bar
             const ChildSwitcherBar(),
 
-            // 3 Segmented Tabs (SPP, Tagihan Murid, Tagihan KK)
+            // 3 Segmented Tabs (SPP, Tagihan Murid, Tagihan Wali Murid)
             SegmentedTabBar(
               controller: _tabController,
               tabs: const [
@@ -129,7 +131,7 @@ class _TagihanTabState extends State<TagihanTab>
                   icon: Icons.receipt_long_rounded,
                 ),
                 SegmentedTabBarItem(
-                  label: 'Tagihan KK',
+                  label: 'Tagihan Wali',
                   icon: Icons.family_restroom_rounded,
                 ),
               ],
@@ -559,7 +561,7 @@ class _TagihanTabState extends State<TagihanTab>
     if (waliList.isEmpty) {
       return const EmptyStateWidget(
         icon: Icons.family_restroom_rounded,
-        title: 'Belum Ada Tagihan KK',
+        title: 'Belum Ada Tagihan Wali Murid',
         subtitle:
             'Tidak ada tagihan keluarga (seperti infaq gedung, haflah, dll.) yang dibebankan kepada wali murid saat ini.',
       );
@@ -579,7 +581,7 @@ class _TagihanTabState extends State<TagihanTab>
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildSummaryColumn(
-                  'Total Tagihan KK',
+                  'Total Tagihan Wali Murid',
                   CurrencyFormatter.format(rekap.totalTagihan),
                   isDark ? Colors.white70 : Colors.black87,
                   isDark,

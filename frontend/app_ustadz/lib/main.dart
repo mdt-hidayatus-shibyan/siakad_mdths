@@ -57,8 +57,8 @@ class MDTHidayatusShibyanApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TagihanProvider()),
         ChangeNotifierProvider(create: (_) => MuridProvider()),
         ChangeNotifierProvider(create: (_) => AkademikProvider()),
-        ChangeNotifierProvider(create: (_) => LaporanProvider()),
         ChangeNotifierProvider(create: (_) => BantuanProvider()),
+        ChangeNotifierProvider(create: (_) => LaporanProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {

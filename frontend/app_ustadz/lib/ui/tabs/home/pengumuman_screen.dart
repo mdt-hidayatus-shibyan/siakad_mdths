@@ -5,6 +5,7 @@ import '../../../core/utils/file_download_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/dashboard_model.dart';
 import '../../../providers/dashboard_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
 
@@ -30,12 +31,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
     final dashboard = context.watch<DashboardProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Pengumuman Madrasah',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: const CustomAppBar(titleText: 'Pengumuman Madrasah'),
       body: RefreshIndicator(
         onRefresh: () => context.read<DashboardProvider>().fetchPengumuman(),
         child: ListView(

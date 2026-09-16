@@ -29,6 +29,16 @@ class _PresensiTabState extends State<PresensiTab> {
     });
   }
 
+  void _shiftDate(int days) {
+    HapticHelper.selection();
+    final presensi = context.read<PresensiProvider>();
+    final selectedAnak = context.read<DashboardProvider>().selectedAnak;
+    if (selectedAnak != null) {
+      final newDate = presensi.selectedDate.add(Duration(days: days));
+      presensi.setSelectedDate(newDate, selectedAnak.id);
+    }
+  }
+
   Future<void> _pickDate(BuildContext context) async {
     final presensi = context.read<PresensiProvider>();
     final selectedAnak = context.read<DashboardProvider>().selectedAnak;
@@ -233,89 +243,63 @@ class _PresensiTabState extends State<PresensiTab> {
                           const SizedBox(height: 14),
 
                           // Date Switcher Bar (Filter Tanggal seperti pada app_ustadz)
-                          GlassCard(
+                          Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF162016)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF263326)
+                                    : const Color(0xFFE2E8F0),
+                              ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today_rounded,
-                                      size: 18,
-                                      color: isDark
-                                          ? AppColors.primaryDark
-                                          : AppColors.primaryLight,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      presensi.isFilterSemua
-                                          ? 'Semua Riwayat Presensi'
-                                          : DateFormatter.formatIndonesian(
-                                              presensi.selectedDate,
-                                            ),
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  icon: const Icon(Icons.chevron_left_rounded),
+                                  onPressed: () => _shiftDate(-1),
+                                  tooltip: 'Hari Sebelumnya',
                                 ),
-                                Row(
-                                  children: [
-                                    if (!presensi.isFilterSemua) ...[
-                                      TextButton(
-                                        onPressed: () {
-                                          HapticHelper.light();
-                                          presensi.setFilterSemua(
-                                            selectedAnak.id,
-                                          );
-                                        },
-                                        style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          minimumSize: Size.zero,
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                        ),
-                                        child: Text(
-                                          'Semua',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 11,
-                                            color: isDark
-                                                ? Colors.white60
-                                                : Colors.black54,
-                                          ),
-                                        ),
+                                GestureDetector(
+                                  onTap: () => _pickDate(context),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today_rounded,
+                                        size: 14,
+                                        color: isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight,
                                       ),
-                                      const SizedBox(width: 4),
-                                    ],
-                                    TextButton(
-                                      onPressed: () => _pickDate(context),
-                                      style: TextButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 4,
-                                        ),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: const Text(
-                                        'Ganti Tanggal',
-                                        style: TextStyle(
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        presensi.isFilterSemua
+                                            ? 'Semua Riwayat Presensi'
+                                            : DateFormatter.formatIndonesian(
+                                                presensi.selectedDate,
+                                              ),
+                                        style: const TextStyle(
+                                          fontSize: 13,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 12,
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  icon: const Icon(Icons.chevron_right_rounded),
+                                  onPressed: () => _shiftDate(1),
+                                  tooltip: 'Hari Berikutnya',
                                 ),
                               ],
                             ),
@@ -345,6 +329,27 @@ class _PresensiTabState extends State<PresensiTab> {
                               subtitle: presensi.isFilterSemua
                                   ? 'Catatan presensi murid akan muncul di sini.'
                                   : 'Tidak ada catatan presensi pada ${DateFormatter.formatIndonesian(presensi.selectedDate)}.',
+                              action: !presensi.isFilterSemua
+                                  ? OutlinedButton.icon(
+                                      onPressed: () => _pickDate(context),
+                                      icon: const Icon(
+                                        Icons.edit_calendar_rounded,
+                                        size: 16,
+                                      ),
+                                      label: const Text('Pilih Tanggal Lain'),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 18,
+                                          vertical: 8,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : null,
                             )
                           else
                             ...presensi.riwayat.map((p) {

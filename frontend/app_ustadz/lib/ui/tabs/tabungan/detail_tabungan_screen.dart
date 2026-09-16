@@ -5,6 +5,7 @@ import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/tabungan_model.dart';
 import '../../../providers/tabungan_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
 import 'form_setor_tabungan_sheet.dart';
@@ -67,15 +68,14 @@ class _DetailTabunganScreenState extends State<DetailTabunganScreen> {
     final rekening = data?.rekening;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          rekening?.namaNasabah ?? widget.initialNama ?? 'Detail Tabungan',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+      appBar: CustomAppBar(
+        titleText:
+            rekening?.namaNasabah ?? widget.initialNama ?? 'Detail Tabungan',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+          CircularIconButton(
+            icon: Icons.refresh_rounded,
             tooltip: 'Segarkan Data',
+            iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
             onPressed: () {
               HapticHelper.light();
               provider.fetchDetailTabungan(
@@ -260,7 +260,7 @@ class _DetailTabunganScreenState extends State<DetailTabunganScreen> {
         gradient: LinearGradient(
           colors: isDark
               ? const [Color(0xFF1B381E), Color(0xFF0F2313)]
-              : const [AppColors.primaryLight, Color(0xFF1B6A35)],
+              : [AppColors.primaryLight, const Color(0xFF1B6A35)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

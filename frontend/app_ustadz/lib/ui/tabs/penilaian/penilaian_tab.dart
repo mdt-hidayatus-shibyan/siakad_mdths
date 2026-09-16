@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../ujian/input_nilai_tab_view.dart';
 
 class PenilaianTab extends StatelessWidget {
@@ -6,14 +7,9 @@ class PenilaianTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Input Nilai Ujian',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: const InputNilaiTabView(),
+    return const Scaffold(
+      appBar: CustomAppBar(titleText: 'Input Nilai Ujian'),
+      body: InputNilaiTabView(),
     );
   }
 }

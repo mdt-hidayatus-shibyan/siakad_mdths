@@ -228,7 +228,7 @@ class _CatatPelanggaranSheetState extends State<CatatPelanggaranSheet> {
                                   ),
                                 ),
                                 trailing: isSelected
-                                    ? const Icon(
+                                    ? Icon(
                                         Icons.check_circle_rounded,
                                         color: AppColors.primaryLight,
                                       )
@@ -298,12 +298,15 @@ class _CatatPelanggaranSheetState extends State<CatatPelanggaranSheet> {
     setState(() => _isSaving = false);
 
     if (success) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Pelanggaran #${_selectedReferensi!.id} berhasil dicatat ke Buku Kasus!',
           ),
-          backgroundColor: AppColors.amberAccent,
+          backgroundColor: isDark
+              ? AppColors.primaryDark
+              : AppColors.primaryLight,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -716,19 +719,25 @@ class _CatatPelanggaranSheetState extends State<CatatPelanggaranSheet> {
                     ? null
                     : _handleSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.amberAccent,
-                  foregroundColor: Colors.black,
+                  backgroundColor: isDark
+                      ? AppColors.primaryDark
+                      : AppColors.primaryLight,
+                  foregroundColor: isDark
+                      ? AppColors.onPrimaryDark
+                      : Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 child: _isSaving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.black,
+                          color: isDark
+                              ? AppColors.onPrimaryDark
+                              : Colors.white,
                         ),
                       )
                     : const Row(

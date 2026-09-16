@@ -14,18 +14,20 @@ import '../tabs/presensi/presensi_tab.dart';
 import '../tabs/tagihan/tagihan_tab.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex;
+  const MainScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initData();
     });
@@ -47,7 +49,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onTabChanged(int index) {
     if (_currentIndex == index) return;
-    HapticHelper.selection();
+    HapticHelper.segmentTick();
     setState(() {
       _currentIndex = index;
     });
@@ -64,132 +66,161 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  List<Widget> get _tabs => [
+    HomeTab(onNavigateTab: _onTabChanged),
+    const TagihanTab(),
+    const PresensiTab(),
+    const AkademikTab(),
+    const AkunTab(),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final List<Widget> screens = [
-      HomeTab(onNavigateTab: _onTabChanged),
-      const TagihanTab(),
-      const PresensiTab(),
-      const AkademikTab(),
-      const AkunTab(),
-    ];
-
     return Scaffold(
+      extendBody: true, // Content flows smoothly behind floating navigation
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-      body: Stack(
-        children: [
-          IndexedStack(index: _currentIndex, children: screens),
-
-          // Floating Pill Bottom Navigation Bar
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: _buildFloatingNavBar(isDark),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFloatingNavBar(bool isDark) {
-    final items = [
-      _NavItem(icon: Icons.home_rounded, label: 'Beranda'),
-      _NavItem(icon: Icons.receipt_long_rounded, label: 'Tagihan'),
-      _NavItem(icon: Icons.event_available_rounded, label: 'Presensi'),
-      _NavItem(icon: Icons.auto_stories_rounded, label: 'Akademik'),
-      _NavItem(icon: Icons.person_rounded, label: 'Akun'),
-    ];
-
-    final bgColor = isDark ? const Color(0xE6101710) : const Color(0xF2FFFFFF);
-    final borderColor = isDark ? AppColors.outlineDark : AppColors.outlineLight;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: borderColor, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(items.length, (index) {
-              final isSelected = _currentIndex == index;
-              final item = items[index];
-
-              return InkWell(
-                onTap: () => _onTabChanged(index),
-                borderRadius: BorderRadius.circular(20),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+      body: IndexedStack(index: _currentIndex, children: _tabs),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                height: 66,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF121712).withValues(alpha: 0.95)
+                      : Colors.white.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.outlineDark.withValues(alpha: 0.6)
+                        : const Color(0xFFE2E8F0),
+                    width: 1,
                   ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? (isDark
-                              ? AppColors.primaryDark.withValues(alpha: 0.2)
-                              : AppColors.primaryLight.withValues(alpha: 0.12))
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        item.icon,
-                        size: 22,
-                        color: isSelected
-                            ? (isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight)
-                            : (isDark ? Colors.white54 : Colors.black45),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.40 : 0.08,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.label,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: isSelected
-                              ? FontWeight.w900
-                              : FontWeight.w600,
-                          color: isSelected
-                              ? (isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight)
-                              : (isDark ? Colors.white54 : Colors.black45),
-                        ),
-                      ),
-                    ],
-                  ),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-              );
-            }),
+                child: Row(
+                  children: [
+                    _buildNavItem(
+                      index: 0,
+                      activeIcon: Icons.home_rounded,
+                      inactiveIcon: Icons.home_outlined,
+                      label: 'Beranda',
+                      isDark: isDark,
+                    ),
+                    _buildNavItem(
+                      index: 1,
+                      activeIcon: Icons.receipt_long_rounded,
+                      inactiveIcon: Icons.receipt_long_outlined,
+                      label: 'Tagihan',
+                      isDark: isDark,
+                    ),
+                    _buildNavItem(
+                      index: 2,
+                      activeIcon: Icons.event_available_rounded,
+                      inactiveIcon: Icons.event_available_outlined,
+                      label: 'Presensi',
+                      isDark: isDark,
+                    ),
+                    _buildNavItem(
+                      index: 3,
+                      activeIcon: Icons.auto_stories_rounded,
+                      inactiveIcon: Icons.auto_stories_outlined,
+                      label: 'Akademik',
+                      isDark: isDark,
+                    ),
+                    _buildNavItem(
+                      index: 4,
+                      activeIcon: Icons.person_rounded,
+                      inactiveIcon: Icons.person_outline_rounded,
+                      label: 'Akun',
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-class _NavItem {
-  final IconData icon;
-  final String label;
+  Widget _buildNavItem({
+    required int index,
+    required IconData activeIcon,
+    required IconData inactiveIcon,
+    required String label,
+    required bool isDark,
+  }) {
+    final isSelected = _currentIndex == index;
+    final primaryColor = isDark
+        ? AppColors.primaryDark
+        : AppColors.primaryLight;
+    final inactiveColor = isDark
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF64748B);
+    final activeBgColor = isDark
+        ? AppColors.primaryDark.withValues(alpha: 0.15)
+        : AppColors.primaryLight.withValues(alpha: 0.10);
 
-  _NavItem({required this.icon, required this.label});
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _onTabChanged(index),
+          borderRadius: BorderRadius.circular(20),
+          splashColor: primaryColor.withValues(alpha: 0.12),
+          highlightColor: primaryColor.withValues(alpha: 0.06),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              color: isSelected ? activeBgColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isSelected ? activeIcon : inactiveIcon,
+                  size: 22,
+                  color: isSelected ? primaryColor : inactiveColor,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? primaryColor : inactiveColor,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

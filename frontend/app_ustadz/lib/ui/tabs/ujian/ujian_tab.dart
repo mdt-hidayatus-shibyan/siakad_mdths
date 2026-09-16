@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'input_nilai_tab_view.dart';
 import 'presensi_ujian_tab_view.dart';
@@ -34,13 +35,10 @@ class _UjianTabState extends State<UjianTab>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Ujian Madrasah',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: const CustomAppBar(titleText: 'Ujian Madrasah'),
       body: Column(
         children: [
           // Segmented Navigation Pill
@@ -50,18 +48,22 @@ class _UjianTabState extends State<UjianTab>
               _tabController.animateTo(idx);
               setState(() {});
             },
-            items: const [
+            items: [
               SegmentedTabItem(
                 activeIcon: Icons.fact_check_rounded,
                 inactiveIcon: Icons.fact_check_outlined,
                 label: 'Presensi Ujian',
-                activeColor: AppColors.primaryLight,
+                activeColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
               ),
               SegmentedTabItem(
                 activeIcon: Icons.edit_document,
                 inactiveIcon: Icons.edit_note_rounded,
                 label: 'Input Nilai',
-                activeColor: AppColors.violetAccent,
+                activeColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
               ),
             ],
           ),

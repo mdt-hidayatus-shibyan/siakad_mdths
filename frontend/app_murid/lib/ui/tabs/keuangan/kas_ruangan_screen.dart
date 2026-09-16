@@ -7,6 +7,7 @@ import '../../../data/models/kas_ruangan_model.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../../providers/keuangan_provider.dart';
 import '../../widgets/child_switcher_bar.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/modern_header.dart';
@@ -61,10 +62,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen> {
             ? AppColors.surfaceDark
             : AppColors.surfaceLight,
         appBar: widget.isFullScreen
-            ? AppBar(
-                title: const Text('Kas Ruangan'),
-                backgroundColor: Colors.transparent,
-                elevation: 0,
+            ? const CustomAppBar(
+                titleText: 'Kas Ruangan',
+                subtitleText: 'Rincian Iuran & Kas Santri',
               )
             : null,
         body: const EmptyStateWidget(
@@ -88,11 +88,11 @@ class _KasRuanganScreenState extends State<KasRuanganScreen> {
               child: Row(
                 children: [
                   if (widget.isFullScreen || Navigator.canPop(context)) ...[
-                    IconButton(
+                    CircularIconButton(
+                      icon: Icons.chevron_left_rounded,
+                      iconSize: 26,
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      tooltip: 'Kembali',
                     ),
                     const SizedBox(width: 12),
                   ],

@@ -28,7 +28,12 @@ class _HarianTabViewState extends State<HarianTabView> {
   }
 
   void _loadData() {
-    context.read<PelanggaranProvider>().fetchHarian(
+    final provider = context.read<PelanggaranProvider>();
+    final ruanganList = provider.ruanganList;
+    if (_selectedRuanganId == null && ruanganList.isNotEmpty) {
+      _selectedRuanganId = ruanganList.first.id;
+    }
+    provider.fetchHarian(
       tanggal: DateHelper.toYmd(_currentDate),
       ruanganId: _selectedRuanganId,
     );
@@ -74,6 +79,10 @@ class _HarianTabViewState extends State<HarianTabView> {
     final ruanganList = provider.ruanganList;
     final list = harianData?.list ?? [];
 
+    if (_selectedRuanganId == null && ruanganList.isNotEmpty) {
+      _selectedRuanganId = ruanganList.first.id;
+    }
+
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
       child: ListView(
@@ -104,10 +113,12 @@ class _HarianTabViewState extends State<HarianTabView> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.calendar_today_rounded,
                         size: 14,
-                        color: AppColors.amberAccent,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -135,41 +146,25 @@ class _HarianTabViewState extends State<HarianTabView> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: [
-                  ChoiceChip(
-                    label: const Text(
-                      'Semua Ruangan',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    selected: _selectedRuanganId == null,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() => _selectedRuanganId = null);
-                        _loadData();
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 6),
-                  ...ruanganList.map((r) {
-                    final isSelected = _selectedRuanganId == r.id;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: ChoiceChip(
-                        label: Text(
-                          r.namaRuangan,
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(
-                            () => _selectedRuanganId = selected ? r.id : null,
-                          );
-                          _loadData();
-                        },
+                children: ruanganList.map((r) {
+                  final isSelected = _selectedRuanganId == r.id;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(
+                        r.namaRuangan,
+                        style: const TextStyle(fontSize: 11),
                       ),
-                    );
-                  }),
-                ],
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected && _selectedRuanganId != r.id) {
+                          setState(() => _selectedRuanganId = r.id);
+                          _loadData();
+                        }
+                      },
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           const SizedBox(height: 14),
@@ -187,10 +182,12 @@ class _HarianTabViewState extends State<HarianTabView> {
                     children: [
                       Text(
                         '${harianData?.totalKasus ?? 0}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.amberAccent,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -218,11 +215,11 @@ class _HarianTabViewState extends State<HarianTabView> {
                   child: Column(
                     children: [
                       Text(
-                        '+${harianData?.totalPoinFormatted ?? "0"}',
+                        '+${harianData?.totalPoin ?? 0}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFFF43F5E),
+                          color: AppColors.roseDanger,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -296,7 +293,9 @@ class _HarianTabViewState extends State<HarianTabView> {
                 ),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
-                  foregroundColor: AppColors.amberAccent,
+                  foregroundColor: isDark
+                      ? AppColors.primaryDark
+                      : AppColors.primaryLight,
                 ),
               ),
             ],

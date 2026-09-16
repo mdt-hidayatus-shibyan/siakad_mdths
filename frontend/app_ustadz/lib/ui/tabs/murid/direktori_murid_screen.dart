@@ -5,6 +5,7 @@ import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/murid_model.dart';
 import '../../../providers/murid_provider.dart';
 import '../../widgets/app_avatar.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
 
@@ -221,25 +222,11 @@ class _DirektoriMuridScreenState extends State<DirektoriMuridScreen> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Direktori Murid',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              provider.namaRuangan,
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark
-                    ? const Color(0xFF8D9387)
-                    : const Color(0xFF73796E),
-              ),
-            ),
-          ],
-        ),
+      appBar: CustomAppBar(
+        titleText: 'Direktori Murid',
+        subtitleText: provider.namaRuangan.isNotEmpty
+            ? provider.namaRuangan
+            : null,
       ),
       body: RefreshIndicator(
         onRefresh: () => context.read<MuridProvider>().fetchMuridRuangan(

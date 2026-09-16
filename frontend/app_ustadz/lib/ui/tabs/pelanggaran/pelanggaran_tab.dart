@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/pelanggaran_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'catat_pelanggaran_sheet.dart';
 import 'harian_tab_view.dart';
@@ -62,21 +63,23 @@ class _PelanggaranTabState extends State<PelanggaranTab>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Buku Kasus & Disiplin',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+      appBar: CustomAppBar(
+        titleText: 'Buku Kasus & Disiplin',
         actions: [
-          IconButton(
+          CircularIconButton(
             tooltip: 'Katalog Referensi Sanksi',
-            icon: const Icon(Icons.rule_folder_outlined),
+            icon: Icons.rule_folder_outlined,
+            iconSize: 20,
+            iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
             onPressed: _openReferensiScreen,
           ),
-          IconButton(
+          CircularIconButton(
             tooltip: 'Catat Pelanggaran',
-            icon: const Icon(Icons.add_moderator_rounded),
+            icon: Icons.add_moderator_rounded,
+            iconSize: 20,
+            iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
             onPressed: _openCatatSheet,
           ),
         ],
@@ -90,24 +93,30 @@ class _PelanggaranTabState extends State<PelanggaranTab>
               _tabController.animateTo(idx);
               setState(() {});
             },
-            items: const [
+            items: [
               SegmentedTabItem(
                 activeIcon: Icons.today_rounded,
                 inactiveIcon: Icons.today_outlined,
                 label: 'Harian',
-                activeColor: AppColors.amberAccent,
+                activeColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
               ),
               SegmentedTabItem(
                 activeIcon: Icons.group_add_rounded,
                 inactiveIcon: Icons.group_add_outlined,
                 label: 'Massal',
-                activeColor: AppColors.amberAccent,
+                activeColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
               ),
               SegmentedTabItem(
                 activeIcon: Icons.history_rounded,
                 inactiveIcon: Icons.history_outlined,
                 label: 'Riwayat',
-                activeColor: AppColors.amberAccent,
+                activeColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
               ),
             ],
           ),

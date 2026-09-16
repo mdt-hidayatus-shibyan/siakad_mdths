@@ -3,75 +3,61 @@ import '../data/models/laporan_model.dart';
 import '../data/repositories/laporan_repository.dart';
 
 class LaporanProvider extends ChangeNotifier {
-  final LaporanRepository _repository = LaporanRepository();
+  final LaporanRepository _repo = LaporanRepository();
 
-  // State 1: Laporan Presensi Murid
-  LaporanPresensiMuridModel? _presensiMurid;
+  // State Presensi Murid
+  LaporanPresensiMuridData? _presensiMuridData;
   bool _isLoadingPresensiMurid = false;
   String? _errorPresensiMurid;
 
-  LaporanPresensiMuridModel? get presensiMurid => _presensiMurid;
-  bool get isLoadingPresensiMurid => _isLoadingPresensiMurid;
-  String? get errorPresensiMurid => _errorPresensiMurid;
+  // State Pelanggaran Murid
+  LaporanPelanggaranData? _pelanggaranData;
+  bool _isLoadingPelanggaran = false;
+  String? _errorPelanggaran;
 
-  // State 2: Laporan Presensi Ustadz
-  LaporanPresensiUstadzModel? _presensiUstadz;
+  // State Presensi Ustadz
+  LaporanPresensiUstadzData? _presensiUstadzData;
   bool _isLoadingPresensiUstadz = false;
   String? _errorPresensiUstadz;
 
-  LaporanPresensiUstadzModel? get presensiUstadz => _presensiUstadz;
+  // Getters Presensi Murid
+  LaporanPresensiMuridData? get presensiMuridData => _presensiMuridData;
+  bool get isLoadingPresensiMurid => _isLoadingPresensiMurid;
+  String? get errorPresensiMurid => _errorPresensiMurid;
+
+  // Getters Pelanggaran Murid
+  LaporanPelanggaranData? get pelanggaranData => _pelanggaranData;
+  bool get isLoadingPelanggaran => _isLoadingPelanggaran;
+  String? get errorPelanggaran => _errorPelanggaran;
+
+  // Getters Presensi Ustadz
+  LaporanPresensiUstadzData? get presensiUstadzData => _presensiUstadzData;
   bool get isLoadingPresensiUstadz => _isLoadingPresensiUstadz;
   String? get errorPresensiUstadz => _errorPresensiUstadz;
 
-  // State 3: Laporan Pelanggaran Murid
-  LaporanPelanggaranMuridModel? _pelanggaranMurid;
-  bool _isLoadingPelanggaranMurid = false;
-  String? _errorPelanggaranMurid;
-
-  LaporanPelanggaranMuridModel? get pelanggaranMurid => _pelanggaranMurid;
-  bool get isLoadingPelanggaranMurid => _isLoadingPelanggaranMurid;
-  String? get errorPelanggaranMurid => _errorPelanggaranMurid;
-
-  // State 4: Laporan Ujian
-  LaporanUjianModel? _ujian;
-  bool _isLoadingUjian = false;
-  String? _errorUjian;
-
-  LaporanUjianModel? get ujian => _ujian;
-  bool get isLoadingUjian => _isLoadingUjian;
-  String? get errorUjian => _errorUjian;
-
-  // State 5: Laporan Kenaikan Kelas
-  LaporanKenaikanKelasModel? _kenaikanKelas;
-  bool _isLoadingKenaikanKelas = false;
-  String? _errorKenaikanKelas;
-
-  LaporanKenaikanKelasModel? get kenaikanKelas => _kenaikanKelas;
-  bool get isLoadingKenaikanKelas => _isLoadingKenaikanKelas;
-  String? get errorKenaikanKelas => _errorKenaikanKelas;
-
-  // =========================================================================
-  // ACTIONS
-  // =========================================================================
-
+  /// Memuat Laporan Presensi Murid
   Future<void> fetchPresensiMurid({
     int? ruanganId,
+    int? semesterId,
     int? bulanHijriyahId,
     String? semester,
     String? startDate,
     String? endDate,
+    int? jadwalId,
   }) async {
     _isLoadingPresensiMurid = true;
     _errorPresensiMurid = null;
     notifyListeners();
 
     try {
-      _presensiMurid = await _repository.getLaporanPresensiMurid(
+      _presensiMuridData = await _repo.getLaporanPresensiMurid(
         ruanganId: ruanganId,
+        semesterId: semesterId,
         bulanHijriyahId: bulanHijriyahId,
         semester: semester,
         startDate: startDate,
         endDate: endDate,
+        jadwalId: jadwalId,
       );
     } catch (e) {
       _errorPresensiMurid = e.toString().replaceAll('Exception: ', '');
@@ -81,95 +67,64 @@ class LaporanProvider extends ChangeNotifier {
     }
   }
 
+  /// Memuat Laporan Buku Kasus & Pelanggaran Murid
+  Future<void> fetchPelanggaranMurid({
+    int? ruanganId,
+    int? bulanHijriyahId,
+    String? startDate,
+    String? endDate,
+    String? kategori,
+  }) async {
+    _isLoadingPelanggaran = true;
+    _errorPelanggaran = null;
+    notifyListeners();
+
+    try {
+      _pelanggaranData = await _repo.getLaporanPelanggaranMurid(
+        ruanganId: ruanganId,
+        bulanHijriyahId: bulanHijriyahId,
+        startDate: startDate,
+        endDate: endDate,
+        kategori: kategori,
+      );
+    } catch (e) {
+      _errorPelanggaran = e.toString().replaceAll('Exception: ', '');
+    } finally {
+      _isLoadingPelanggaran = false;
+      notifyListeners();
+    }
+  }
+
+  /// Memuat Laporan Presensi Ustadz
   Future<void> fetchPresensiUstadz({
     int? ruanganId,
     int? ustadzId,
+    int? semesterId,
     int? bulanHijriyahId,
-    String? semester,
     String? status,
     String? startDate,
     String? endDate,
+    bool? isPribadi,
   }) async {
     _isLoadingPresensiUstadz = true;
     _errorPresensiUstadz = null;
     notifyListeners();
 
     try {
-      _presensiUstadz = await _repository.getLaporanPresensiUstadz(
+      _presensiUstadzData = await _repo.getLaporanPresensiUstadz(
         ruanganId: ruanganId,
         ustadzId: ustadzId,
+        semesterId: semesterId,
         bulanHijriyahId: bulanHijriyahId,
-        semester: semester,
         status: status,
         startDate: startDate,
         endDate: endDate,
+        isPribadi: isPribadi,
       );
     } catch (e) {
       _errorPresensiUstadz = e.toString().replaceAll('Exception: ', '');
     } finally {
       _isLoadingPresensiUstadz = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> fetchPelanggaranMurid({
-    int? ruanganId,
-    String? kategori,
-    int? bulanHijriyahId,
-    String? startDate,
-    String? endDate,
-  }) async {
-    _isLoadingPelanggaranMurid = true;
-    _errorPelanggaranMurid = null;
-    notifyListeners();
-
-    try {
-      _pelanggaranMurid = await _repository.getLaporanPelanggaranMurid(
-        ruanganId: ruanganId,
-        kategori: kategori,
-        bulanHijriyahId: bulanHijriyahId,
-        startDate: startDate,
-        endDate: endDate,
-      );
-    } catch (e) {
-      _errorPelanggaranMurid = e.toString().replaceAll('Exception: ', '');
-    } finally {
-      _isLoadingPelanggaranMurid = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> fetchUjian({int? ruanganId, int? ujianId}) async {
-    _isLoadingUjian = true;
-    _errorUjian = null;
-    notifyListeners();
-
-    try {
-      _ujian = await _repository.getLaporanUjian(
-        ruanganId: ruanganId,
-        ujianId: ujianId,
-      );
-    } catch (e) {
-      _errorUjian = e.toString().replaceAll('Exception: ', '');
-    } finally {
-      _isLoadingUjian = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> fetchKenaikanKelas({int? ruanganId}) async {
-    _isLoadingKenaikanKelas = true;
-    _errorKenaikanKelas = null;
-    notifyListeners();
-
-    try {
-      _kenaikanKelas = await _repository.getLaporanKenaikanKelas(
-        ruanganId: ruanganId,
-      );
-    } catch (e) {
-      _errorKenaikanKelas = e.toString().replaceAll('Exception: ', '');
-    } finally {
-      _isLoadingKenaikanKelas = false;
       notifyListeners();
     }
   }

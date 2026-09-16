@@ -6,7 +6,6 @@ import '../../core/utils/haptic_helper.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import '../main/main_screen.dart';
-import '../tabs/akun/pengaturan_server_screen.dart';
 import '../widgets/glass_card.dart';
 import 'ganti_pin_awal_screen.dart';
 
@@ -175,33 +174,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: _currentStep == 1
                       ? _buildStep1Identitas(auth, isDark)
                       : _buildStep2Pin(auth, isDark),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Link Pengaturan Server
-                TextButton.icon(
-                  onPressed: () {
-                    HapticHelper.light();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const PengaturanServerScreen(),
-                      ),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.dns_rounded,
-                    size: 16,
-                    color: isDark ? Colors.white60 : Colors.black54,
-                  ),
-                  label: Text(
-                    'Pengaturan Alamat Server API',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white60 : Colors.black54,
-                    ),
-                  ),
                 ),
               ],
             ),

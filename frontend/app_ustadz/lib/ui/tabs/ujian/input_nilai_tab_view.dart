@@ -43,7 +43,11 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.roseDanger),
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: AppColors.roseDanger,
+              ),
               const SizedBox(height: 12),
               Text(
                 provider.errorMessage!,
@@ -78,15 +82,17 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
                     Icon(
                       Icons.filter_list_rounded,
                       size: 18,
-                      color: AppColors.primaryLight,
+                      color: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
                     ),
-                    SizedBox(width: 8),
-                    Text(
+                    const SizedBox(width: 8),
+                    const Text(
                       'Pilih Ruangan Kelas & Agenda Ujian',
                       style: TextStyle(
                         fontSize: 13,
@@ -130,7 +136,9 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
 
                 // 1.2 Dropdown Agenda Ujian (Otomatis Filter sesuai Level Kelas)
                 DropdownButtonFormField<int>(
-                  key: ValueKey('ujian_${provider.selectedRuanganId}_${provider.selectedUjianId}'),
+                  key: ValueKey(
+                    'ujian_${provider.selectedRuanganId}_${provider.selectedUjianId}',
+                  ),
                   initialValue: provider.selectedUjianId,
                   decoration: const InputDecoration(
                     labelText: 'Agenda Ujian',
@@ -279,7 +287,9 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
             ...provider.jadwalList.map((j) {
               Color statusColor = Colors.grey;
               if (j.statusInput == 'Selesai') {
-                statusColor = AppColors.primaryLight;
+                statusColor = isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight;
               } else if (j.statusInput.contains('Draf')) {
                 statusColor = AppColors.amberAccent;
               }
@@ -314,10 +324,11 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight)
-                            .withValues(alpha: 0.15),
+                        color:
+                            (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight)
+                                .withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
@@ -467,10 +478,7 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
             const SizedBox(height: 16),
             Text(
               'Jadwal $tipeUjian Belum Dibuat',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -479,7 +487,9 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
               style: TextStyle(
                 fontSize: 13,
                 height: 1.4,
-                color: isDark ? const Color(0xFF8D9387) : const Color(0xFF73796E),
+                color: isDark
+                    ? const Color(0xFF8D9387)
+                    : const Color(0xFF73796E),
               ),
               textAlign: TextAlign.center,
             ),
@@ -542,22 +552,20 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppColors.amberAccent.withValues(alpha: 0.12),
+                color: (isDark ? AppColors.primaryDark : AppColors.primaryLight)
+                    .withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.pending_actions_rounded,
                 size: 48,
-                color: AppColors.amberAccent,
+                color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
               ),
             ),
             const SizedBox(height: 16),
             Text(
               'Agenda Ujian Belum Dibuat',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -566,7 +574,9 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
               style: TextStyle(
                 fontSize: 13,
                 height: 1.4,
-                color: isDark ? const Color(0xFF8D9387) : const Color(0xFF73796E),
+                color: isDark
+                    ? const Color(0xFF8D9387)
+                    : const Color(0xFF73796E),
               ),
               textAlign: TextAlign.center,
             ),

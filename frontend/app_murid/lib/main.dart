@@ -9,22 +9,25 @@ import 'providers/bantuan_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/keuangan_provider.dart';
 import 'providers/presensi_provider.dart';
+import 'providers/theme_provider.dart';
 import 'ui/auth/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Edge to edge immersive system UI
+  // Inisialisasi awal SharedPreferences & In-Memory Cache
+  await StorageService.init();
+
+  // Enforce Android Full Edge-to-Edge System Bar Transparency
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
     ),
   );
-
-  await StorageService.init();
 
   runApp(const WaliApp());
 }
@@ -36,6 +39,7 @@ class WaliApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => KeuanganProvider()),
@@ -43,14 +47,14 @@ class WaliApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AkademikProvider()),
         ChangeNotifierProvider(create: (_) => BantuanProvider()),
       ],
-      child: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
           return MaterialApp(
             title: 'Wali Murid - MDTHS',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: auth.themeMode,
+            themeMode: themeProvider.themeMode,
             home: const SplashScreen(),
           );
         },

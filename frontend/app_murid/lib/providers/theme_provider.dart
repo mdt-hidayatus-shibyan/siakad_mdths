@@ -21,7 +21,7 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Future<void> _loadTheme() async {
-    final savedMode = await StorageService.getThemeMode();
+    final savedMode = StorageService.getThemeMode();
     if (savedMode == 'dark') {
       _themeMode = ThemeMode.dark;
     } else if (savedMode == 'system') {
@@ -30,7 +30,7 @@ class ThemeProvider extends ChangeNotifier {
       _themeMode = ThemeMode.light; // Default Light Mode
     }
 
-    final savedPreset = await StorageService.getColorPreset();
+    final savedPreset = StorageService.getColorPreset();
     if (savedPreset != null && savedPreset != _colorPresetKey) {
       _colorPresetKey = savedPreset;
       AppColors.setPreset(savedPreset);
@@ -43,11 +43,11 @@ class ThemeProvider extends ChangeNotifier {
     _themeMode = mode;
     notifyListeners();
     if (mode == ThemeMode.dark) {
-      await StorageService.saveThemeMode('dark');
+      await StorageService.setThemeMode('dark');
     } else if (mode == ThemeMode.light) {
-      await StorageService.saveThemeMode('light');
+      await StorageService.setThemeMode('light');
     } else {
-      await StorageService.saveThemeMode('system');
+      await StorageService.setThemeMode('system');
     }
   }
 
@@ -63,6 +63,6 @@ class ThemeProvider extends ChangeNotifier {
     _colorPresetKey = presetKey;
     AppColors.setPreset(presetKey);
     notifyListeners();
-    await StorageService.saveColorPreset(presetKey);
+    await StorageService.setColorPreset(presetKey);
   }
 }

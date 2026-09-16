@@ -4,6 +4,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/tagihan_model.dart';
 import '../../../providers/tagihan_provider.dart';
+import '../../widgets/custom_app_bar.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
 
@@ -106,7 +108,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                         color: AppColors.primaryLight.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.receipt_long_rounded,
                         color: AppColors.primaryLight,
                         size: 22,
@@ -233,8 +235,24 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                   child: provider.isLoadingKartu
                       ? const ShimmerLoadingList(count: 4, height: 60)
                       : kartu == null
-                      ? const Center(
-                          child: Text('Gagal memuat rincian kartu SPP.'),
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: EmptyStateView(
+                            icon: Icons.credit_card_off_rounded,
+                            title: 'Tagihan SPP Belum Diterbitkan',
+                            description:
+                                'Data kartu SPP untuk santri ini belum diterbitkan atau belum diatur oleh Bendahara.',
+                          ),
+                        )
+                      : kartu.bulanItems.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: EmptyStateView(
+                            icon: Icons.credit_card_off_rounded,
+                            title: 'Bulan SPP Belum Diterbitkan',
+                            description:
+                                'Belum ada rincian bulan Syahriyah/SPP yang diterbitkan untuk santri ini.',
+                          ),
                         )
                       : ListView.builder(
                           itemCount: kartu.bulanItems.length,
@@ -344,7 +362,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.visibility_outlined,
                         size: 16,
                         color: AppColors.primaryLight,
@@ -380,26 +398,75 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
     final roomList = ringkasan?.ruanganList ?? [];
     final bulanList = ringkasan?.bulanList ?? [];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Monitoring SPP Murid',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              ringkasan?.namaRuangan ?? 'Kelas Binaan',
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark
-                    ? const Color(0xFF8D9387)
-                    : const Color(0xFF73796E),
-              ),
-            ),
-          ],
+    if (tagihan.isLoading && ringkasan == null) {
+      return Scaffold(
+        appBar: const CustomAppBar(titleText: 'Monitoring SPP Murid'),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: const [ShimmerLoadingList(count: 3, height: 110)],
         ),
+      );
+    }
+
+    if (tagihan.errorMessage != null && ringkasan == null) {
+      return Scaffold(
+        appBar: const CustomAppBar(titleText: 'Monitoring SPP Murid'),
+        body: RefreshIndicator(
+          onRefresh: () async => _loadData(),
+          child: ListView(
+            padding: const EdgeInsets.all(24),
+            children: [
+              const SizedBox(height: 60),
+              EmptyStateView(
+                icon: Icons.error_outline_rounded,
+                title: 'Gagal Memuat Data',
+                description: tagihan.errorMessage!,
+                actionLabel: 'Coba Lagi',
+                onActionTap: _loadData,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Kondisi tagihan SPP belum diterbitkan
+    final isSppBelumDiterbitkan =
+        ringkasan == null ||
+        ringkasan.totalTargetSpp == 0 ||
+        bulanList.isEmpty ||
+        tagihan.muridList.isEmpty;
+
+    if (isSppBelumDiterbitkan && !tagihan.isLoading) {
+      return Scaffold(
+        appBar: CustomAppBar(
+          titleText: 'Monitoring SPP Murid',
+          subtitleText: ringkasan?.namaRuangan ?? 'Ruangan Binaan',
+        ),
+        body: RefreshIndicator(
+          onRefresh: () async => _loadData(),
+          child: ListView(
+            padding: const EdgeInsets.all(24),
+            children: [
+              const SizedBox(height: 60),
+              EmptyStateView(
+                icon: Icons.pending_actions_rounded,
+                title: 'Tagihan SPP Belum Diterbitkan',
+                description:
+                    'Tagihan Syahriyah (SPP) untuk ${ringkasan?.namaRuangan ?? "Ruangan ini"} belum diterbitkan oleh Administrator Madrasah.',
+                actionLabel: 'Muat Ulang',
+                onActionTap: _loadData,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: CustomAppBar(
+        titleText: 'Monitoring SPP Murid',
+        subtitleText: ringkasan?.namaRuangan ?? 'Ruangan',
       ),
       body: RefreshIndicator(
         onRefresh: () async => _loadData(),
@@ -425,7 +492,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                     const Icon(Icons.meeting_room_outlined, size: 18),
                     const SizedBox(width: 8),
                     const Text(
-                      'Pilih Kelas: ',
+                      'Pilih Ruangan: ',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -479,7 +546,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                                 ),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.verified_rounded,
                                 color: AppColors.primaryLight,
                                 size: 20,
@@ -741,10 +808,29 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
             if (tagihan.isLoading)
               const ShimmerLoadingList(count: 4, height: 100)
             else if (tagihan.muridList.isEmpty)
-              const GlassCard(
-                padding: EdgeInsets.all(24),
-                child: Center(child: Text('Tidak ada data murid ditemukan.')),
-              )
+              _searchQuery.isNotEmpty ||
+                      _selectedStatus != 'Semua' ||
+                      _selectedBulanId != null
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: EmptyStateView(
+                        icon: Icons.search_off_rounded,
+                        title: 'Tidak Ada Data Ditemukan',
+                        description:
+                            'Tidak ada data murid yang sesuai dengan filter atau kata kunci pencarian.',
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: EmptyStateView(
+                        icon: Icons.credit_card_off_rounded,
+                        title: 'Tagihan SPP Belum Diterbitkan',
+                        description:
+                            'Belum ada rincian tagihan SPP santri yang diterbitkan di Ruangan ini.',
+                        actionLabel: 'Muat Ulang',
+                        onActionTap: _loadData,
+                      ),
+                    )
             else
               ...tagihan.muridList.map((m) {
                 final isLunas = m.statusKeseluruhan == 'Lunas';

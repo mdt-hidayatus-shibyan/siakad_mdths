@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/bantuan_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
@@ -181,12 +182,7 @@ class _HubungiAdminScreenState extends State<HubungiAdminScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Pusat Bantuan & Hubungi Admin',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: const CustomAppBar(titleText: 'Pusat Bantuan & Hubungi Admin'),
       body: Column(
         children: [
           // Segmented Navigation Tab Bar (Konsisten dengan modul lain)

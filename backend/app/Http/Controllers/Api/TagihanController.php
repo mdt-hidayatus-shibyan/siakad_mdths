@@ -70,13 +70,13 @@ class TagihanController extends Controller
             ->where('tipe', 'bulanan')
             ->first();
 
-        $nominalSpp = $masterSpp->nominal ?? 25000;
+        $nominalSpp = $masterSpp->nominal ?? 0;
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
         $totalMurid = $murids->count();
         $totalBulan = $bulanHijriyah->count() > 0 ? $bulanHijriyah->count() : 11;
 
-        // Ambil data tagihan SPP di ruangan ini
+        // Ambil data tagihan SPP di ruangan ini yang benar-benar diterbitkan
         $tagihans = TagihanMurid::where('ruangan_id', $ruangan->id)
             ->where(function ($q) use ($masterSpp) {
                 if ($masterSpp) {
@@ -88,27 +88,40 @@ class TagihanController extends Controller
             })
             ->get();
 
-        $totalLunasNominal = $tagihans->where('status_bayar', 'Lunas')->sum('nominal_tagihan');
-        $totalTargetNominal = $totalMurid * $totalBulan * $nominalSpp;
-        $totalTunggakanNominal = max(0, $totalTargetNominal - $totalLunasNominal);
+        $isTerbit = $tagihans->isNotEmpty();
 
-        // Hitung per murid
-        $grouped = $tagihans->groupBy('murid_id');
-        $muridLunasSemua = 0;
-        $muridBelumLunas = 0;
-        $muridBebasDonatur = 0;
+        if (!$isTerbit) {
+            $totalTargetNominal = 0;
+            $totalLunasNominal = 0;
+            $totalTunggakanNominal = 0;
+            $muridLunasSemua = 0;
+            $muridBelumLunas = 0;
+            $muridBebasDonatur = 0;
+        } else {
+            $totalLunasNominal = $tagihans->where('status_bayar', 'Lunas')->sum('nominal_tagihan');
+            $totalTargetNominal = $tagihans->sum('nominal_tagihan');
+            $totalTunggakanNominal = max(0, $totalTargetNominal - $totalLunasNominal);
 
-        foreach ($murids as $m) {
-            $mTags = $grouped->get($m->id, collect());
-            $lunasCount = $mTags->where('status_bayar', 'Lunas')->count();
-            $donaturCount = $mTags->whereIn('status_bayar', ['Ditanggung Donatur', 'Bebas SPP', 'Gratis'])->count();
+            // Hitung per murid
+            $grouped = $tagihans->groupBy('murid_id');
+            $muridLunasSemua = 0;
+            $muridBelumLunas = 0;
+            $muridBebasDonatur = 0;
 
-            if ($donaturCount >= $totalBulan && $totalBulan > 0) {
-                $muridBebasDonatur++;
-            } elseif ($lunasCount >= $totalBulan && $totalBulan > 0) {
-                $muridLunasSemua++;
-            } else {
-                $muridBelumLunas++;
+            foreach ($murids as $m) {
+                $mTags = $grouped->get($m->id, collect());
+                if ($mTags->isEmpty()) continue;
+                $lunasCount = $mTags->where('status_bayar', 'Lunas')->count();
+                $donaturCount = $mTags->whereIn('status_bayar', ['Ditanggung Donatur', 'Bebas SPP', 'Gratis'])->count();
+                $mTotalBulan = $mTags->count();
+
+                if ($donaturCount >= $mTotalBulan && $mTotalBulan > 0) {
+                    $muridBebasDonatur++;
+                } elseif ($lunasCount >= $mTotalBulan && $mTotalBulan > 0) {
+                    $muridLunasSemua++;
+                } else {
+                    $muridBelumLunas++;
+                }
             }
         }
 
@@ -170,23 +183,34 @@ class TagihanController extends Controller
             ->where('tipe', 'bulanan')
             ->first();
 
-        $nominalSpp = $masterSpp->nominal ?? 25000;
+        $nominalSpp = $masterSpp->nominal ?? 0;
         $totalBulan = $bulanHijriyah->count() > 0 ? $bulanHijriyah->count() : 11;
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
 
-        $tagihans = TagihanMurid::with('pembayaranTagihan')
-            ->where('ruangan_id', $ruangan->id)
-            ->where(function ($q) use ($masterSpp) {
-                if ($masterSpp) {
-                    $q->where('pengaturan_tagihan_id', $masterSpp->id);
-                } else {
-                    $q->where('nama_tagihan_spesifik', 'LIKE', '%SPP%')
-                        ->orWhere('nama_tagihan_spesifik', 'LIKE', '%Syahriyah%');
-                }
-            })
-            ->get()
-            ->groupBy('murid_id');
+        $tagihansQuery = TagihanMurid::with('pembayaranTagihan')
+            ->where('ruangan_id', $ruangan->id);
+
+        if ($masterSpp) {
+            $tagihansQuery->where('pengaturan_tagihan_id', $masterSpp->id);
+        } else {
+            $tagihansQuery->where(function ($q) {
+                $q->where('nama_tagihan_spesifik', 'LIKE', '%SPP%')
+                    ->orWhere('nama_tagihan_spesifik', 'LIKE', '%Syahriyah%');
+            });
+        }
+
+        $allTagihans = $tagihansQuery->get();
+
+        // JIKA BELUM ADA TAGIHAN SPP YANG DITERBITKAN DI RUANGAN INI
+        if ($allTagihans->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ], 200);
+        }
+
+        $tagihans = $allTagihans->groupBy('murid_id');
 
         $filterStatus = $request->status ?? 'Semua';
         $filterBulanId = $request->bulan_hijriyah_id;
@@ -205,6 +229,10 @@ class TagihanController extends Controller
             }
 
             $mTags = $tagihans->get($m->id, collect());
+            if ($mTags->isEmpty()) {
+                continue;
+            }
+
             $mTagsByBulan = $mTags->keyBy('bulan_hijriyah_id');
 
             $bulanItems = [];
@@ -215,11 +243,13 @@ class TagihanController extends Controller
 
             foreach ($bulanHijriyah as $b) {
                 $t = $mTagsByBulan->get($b->id);
-                $status = $t ? $t->status_bayar : 'Belum Lunas';
-                $nominal = $t ? (int) $t->nominal_tagihan : (int) $nominalSpp;
+                if (!$t) continue;
 
-                $noKwitansi = $t?->pembayaranTagihan?->no_transaksi;
-                $tglBayar = $t?->pembayaranTagihan?->tanggal_bayar;
+                $status = $t->status_bayar;
+                $nominal = (int) $t->nominal_tagihan;
+
+                $noKwitansi = $t->pembayaranTagihan?->no_transaksi;
+                $tglBayar = $t->pembayaranTagihan?->tanggal_bayar;
                 $hariTanggalBayar = null;
                 if ($tglBayar) {
                     try {
@@ -238,7 +268,7 @@ class TagihanController extends Controller
                 }
 
                 $bulanItems[] = [
-                    'tagihan_id' => $t->id ?? null,
+                    'tagihan_id' => $t->id,
                     'bulan_hijriyah_id' => $b->id,
                     'nama_bulan' => $b->nama_bulan,
                     'tahun_hijriyah' => $b->tahun_hijriyah ?? '',
@@ -250,13 +280,13 @@ class TagihanController extends Controller
                 ];
             }
 
-            $targetMurid = $totalBulan * $nominalSpp;
+            $targetMurid = $mTags->sum('nominal_tagihan');
             $sisaTunggakan = max(0, $targetMurid - $totalDibayar);
 
             $statusKeseluruhan = 'Belum Lunas';
-            if ($donaturCount >= $totalBulan && $totalBulan > 0) {
+            if ($donaturCount >= count($bulanItems) && count($bulanItems) > 0) {
                 $statusKeseluruhan = 'Ditanggung Donatur';
-            } elseif ($lunasCount >= $totalBulan && $totalBulan > 0) {
+            } elseif ($lunasCount >= count($bulanItems) && count($bulanItems) > 0) {
                 $statusKeseluruhan = 'Lunas';
             }
 
@@ -287,7 +317,7 @@ class TagihanController extends Controller
                 'foto' => $m->foto ? asset('storage/' . $m->foto) : null,
                 'wali' => $m->nama_ayah ?? $m->waliMurid->nama_kepala_keluarga ?? '-',
                 'nama_wali' => $m->nama_ayah ?? $m->waliMurid->nama_kepala_keluarga ?? '-',
-                'total_bulan' => $totalBulan,
+                'total_bulan' => count($bulanItems),
                 'bulan_lunas_count' => $lunasCount,
                 'bulan_belum_lunas_count' => $belumLunasCount,
                 'bulan_bebas_count' => $donaturCount,
@@ -326,21 +356,48 @@ class TagihanController extends Controller
             ->where('tipe', 'bulanan')
             ->first();
 
-        $nominalSpp = $masterSpp->nominal ?? 25000;
-        $totalBulan = $bulanHijriyah->count() > 0 ? $bulanHijriyah->count() : 11;
+        $nominalSpp = $masterSpp->nominal ?? 0;
 
-        $tagihans = TagihanMurid::with('pembayaranTagihan')
-            ->where('murid_id', $murid->id)
-            ->where(function ($q) use ($masterSpp) {
-                if ($masterSpp) {
-                    $q->where('pengaturan_tagihan_id', $masterSpp->id);
-                } else {
-                    $q->where('nama_tagihan_spesifik', 'LIKE', '%SPP%')
-                        ->orWhere('nama_tagihan_spesifik', 'LIKE', '%Syahriyah%');
-                }
-            })
-            ->get()
-            ->keyBy('bulan_hijriyah_id');
+        $tagihansQuery = TagihanMurid::with('pembayaranTagihan')
+            ->where('murid_id', $murid->id);
+
+        if ($masterSpp) {
+            $tagihansQuery->where('pengaturan_tagihan_id', $masterSpp->id);
+        } else {
+            $tagihansQuery->where(function ($q) {
+                $q->where('nama_tagihan_spesifik', 'LIKE', '%SPP%')
+                    ->orWhere('nama_tagihan_spesifik', 'LIKE', '%Syahriyah%');
+            });
+        }
+
+        $tagihans = $tagihansQuery->get()->keyBy('bulan_hijriyah_id');
+
+        if ($tagihans->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'murid_id' => $murid->id,
+                    'nama' => $murid->nama_lengkap ?? $murid->nama,
+                    'nism' => $murid->nism ?? '-',
+                    'jenis_kelamin' => $murid->jenis_kelamin ?? 'L',
+                    'foto' => $murid->foto ? asset('storage/' . $murid->foto) : null,
+                    'nama_ruangan' => $ruangan->nama_ruangan ?? '-',
+                    'level_nama' => $ruangan->level->nama_level ?? '-',
+                    'nama_wali' => $murid->nama_ayah ?? $murid->waliMurid->nama_kepala_keluarga ?? '-',
+                    'wali' => $murid->nama_ayah ?? $murid->waliMurid->nama_kepala_keluarga ?? '-',
+                    'alamat' => $murid->waliMurid->alamat_detail ?? $murid->waliMurid->kampung->nama_kampung ?? '-',
+                    'total_bulan' => 0,
+                    'bulan_lunas_count' => 0,
+                    'bulan_belum_lunas_count' => 0,
+                    'bulan_bebas_count' => 0,
+                    'total_target' => 0,
+                    'total_dibayar' => 0,
+                    'sisa_tunggakan' => 0,
+                    'status_keseluruhan' => 'Belum Diterbitkan',
+                    'bulan_items' => [],
+                ]
+            ], 200);
+        }
 
         $bulanItems = [];
         $lunasCount = 0;
@@ -350,11 +407,13 @@ class TagihanController extends Controller
 
         foreach ($bulanHijriyah as $b) {
             $t = $tagihans->get($b->id);
-            $status = $t ? $t->status_bayar : 'Belum Lunas';
-            $nominal = $t ? (int) $t->nominal_tagihan : (int) $nominalSpp;
+            if (!$t) continue;
 
-            $noKwitansi = $t?->pembayaranTagihan?->no_transaksi;
-            $tglBayar = $t?->pembayaranTagihan?->tanggal_bayar;
+            $status = $t->status_bayar;
+            $nominal = (int) $t->nominal_tagihan;
+
+            $noKwitansi = $t->pembayaranTagihan?->no_transaksi;
+            $tglBayar = $t->pembayaranTagihan?->tanggal_bayar;
             $hariTanggalBayar = null;
             if ($tglBayar) {
                 try {
@@ -373,7 +432,7 @@ class TagihanController extends Controller
             }
 
             $bulanItems[] = [
-                'tagihan_id' => $t->id ?? null,
+                'tagihan_id' => $t->id,
                 'bulan_hijriyah_id' => $b->id,
                 'nama_bulan' => $b->nama_bulan,
                 'tahun_hijriyah' => $b->tahun_hijriyah ?? '',
@@ -385,13 +444,13 @@ class TagihanController extends Controller
             ];
         }
 
-        $targetMurid = $totalBulan * $nominalSpp;
+        $targetMurid = $tagihans->sum('nominal_tagihan');
         $sisaTunggakan = max(0, $targetMurid - $totalDibayar);
 
         $statusKeseluruhan = 'Belum Lunas';
-        if ($donaturCount >= $totalBulan && $totalBulan > 0) {
+        if ($donaturCount >= count($bulanItems) && count($bulanItems) > 0) {
             $statusKeseluruhan = 'Ditanggung Donatur';
-        } elseif ($lunasCount >= $totalBulan && $totalBulan > 0) {
+        } elseif ($lunasCount >= count($bulanItems) && count($bulanItems) > 0) {
             $statusKeseluruhan = 'Lunas';
         }
 
@@ -408,7 +467,7 @@ class TagihanController extends Controller
                 'nama_wali' => $murid->nama_ayah ?? $murid->waliMurid->nama_kepala_keluarga ?? '-',
                 'wali' => $murid->nama_ayah ?? $murid->waliMurid->nama_kepala_keluarga ?? '-',
                 'alamat' => $murid->waliMurid->alamat_detail ?? $murid->waliMurid->kampung->nama_kampung ?? '-',
-                'total_bulan' => $totalBulan,
+                'total_bulan' => count($bulanItems),
                 'bulan_lunas_count' => $lunasCount,
                 'bulan_belum_lunas_count' => $belumLunasCount,
                 'bulan_bebas_count' => $donaturCount,
@@ -509,11 +568,21 @@ class TagihanController extends Controller
         }
 
         $nominalPerMurid = $selectedMaster->nominal ?? 0;
-        $totalTarget = $totalMurid * $nominalPerMurid;
-        $totalLunas = $tagihans->where('status_bayar', 'Lunas')->sum('nominal_tagihan');
-        $totalTunggakan = max(0, $totalTarget - $totalLunas);
-        $totalMuridLunas = $tagihans->where('status_bayar', 'Lunas')->count();
-        $totalMuridBelumLunas = max(0, $totalMurid - $totalMuridLunas);
+        $isTerbit = $tagihans->isNotEmpty();
+
+        if (!$isTerbit) {
+            $totalTarget = 0;
+            $totalLunas = 0;
+            $totalTunggakan = 0;
+            $totalMuridLunas = 0;
+            $totalMuridBelumLunas = 0;
+        } else {
+            $totalTarget = $tagihans->sum('nominal_tagihan');
+            $totalLunas = $tagihans->where('status_bayar', 'Lunas')->sum('nominal_tagihan');
+            $totalTunggakan = max(0, $totalTarget - $totalLunas);
+            $totalMuridLunas = $tagihans->where('status_bayar', 'Lunas')->count();
+            $totalMuridBelumLunas = max(0, $tagihans->count() - $totalMuridLunas);
+        }
 
         return response()->json([
             'success' => true,
@@ -569,17 +638,30 @@ class TagihanController extends Controller
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
 
-        $tagihans = TagihanMurid::with('pembayaranTagihan')
+        $allTagihans = TagihanMurid::with('pembayaranTagihan')
             ->where('ruangan_id', $ruangan->id)
             ->where('pengaturan_tagihan_id', $master->id)
-            ->get()
-            ->keyBy('murid_id');
+            ->get();
+
+        if ($allTagihans->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ], 200);
+        }
+
+        $tagihans = $allTagihans->keyBy('murid_id');
 
         $filterStatus = $request->status ?? 'Semua';
         $search = strtolower(trim($request->search ?? ''));
 
         $data = [];
         foreach ($murids as $m) {
+            $t = $tagihans->get($m->id);
+            if (!$t) {
+                continue;
+            }
+
             $nama = $m->nama_lengkap ?? $m->nama;
             $nism = $m->nism ?? '';
 
@@ -589,7 +671,6 @@ class TagihanController extends Controller
                 }
             }
 
-            $t = $tagihans->get($m->id);
             $status = ($t && $t->status_bayar === 'Lunas') ? 'Lunas' : 'Belum Lunas';
             $nominal = $t ? (int) $t->nominal_tagihan : (int) $master->nominal;
 

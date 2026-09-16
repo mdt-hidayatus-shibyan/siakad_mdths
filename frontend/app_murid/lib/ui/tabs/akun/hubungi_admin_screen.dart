@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/bantuan_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 
 class HubungiAdminScreen extends StatefulWidget {
@@ -41,12 +42,9 @@ class _HubungiAdminScreenState extends State<HubungiAdminScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-      appBar: AppBar(
-        title: const Text('Pusat Bantuan & Kontak'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+      appBar: const CustomAppBar(
+        titleText: 'Pusat Bantuan & Kontak',
+        subtitleText: 'Layanan Hotline & Bantuan Madrasah',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

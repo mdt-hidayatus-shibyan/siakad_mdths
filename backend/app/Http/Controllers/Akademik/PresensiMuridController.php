@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 
 use App\Models\BulanHijriyah;
 use App\Models\JadwalPelajaran;
+use App\Models\MataPelajaran;
 use App\Models\PengaturanAkademik;
 use App\Models\PresensiMurid;
 use App\Models\Ruangan;
@@ -193,20 +194,16 @@ class PresensiMuridController extends Controller
             return back()->with('error', 'Tidak ada data presensi yang diproses.');
         }
 
-        // --- TAMBAHAN BARU: Cari Semester Berdasarkan Tanggal ---
-        $bulan = BulanHijriyah::where('tanggal_mulai_masehi', '<=', $tanggal)
-            ->where('tanggal_selesai_masehi', '>=', $tanggal)
+        // Cari Semester Berdasarkan Tanggal
+        $semester = Semester::where('tanggal_mulai', '<=', $tanggal)
+            ->where('tanggal_selesai', '>=', $tanggal)
             ->first();
 
-        // Langsung ambil tahun_pelajaran_id dari bulan
-        if ($bulan) {
-            $tahun_pelajaran_id = $bulan->tahun_pelajaran_id;
-        } else {
-            // Fallback: Jika tanggal di luar rentang, ambil dari semester aktif
-            $semesterAktif = Semester::where('is_active', 1)->first();
-            $tahun_pelajaran_id = $semesterAktif ? $semesterAktif->tahun_pelajaran_id : null;
+        if (!$semester) {
+            $semester = Semester::where('is_active', 1)->first() ?? Semester::latest('id')->first();
         }
-        // -------------------------------------------------------
+
+        $semesterId = $semester ? $semester->id : null;
 
         foreach ($dataPresensi as $murid_id => $status) {
             PresensiMurid::updateOrCreate(
@@ -217,7 +214,7 @@ class PresensiMuridController extends Controller
                 ],
                 [
                     'status' => $status,
-                    'semester_id' => $semesterAktif->id // SIMPAN SEMESTER ID
+                    'semester_id' => $semesterId
                 ]
             );
         }
@@ -304,15 +301,15 @@ class PresensiMuridController extends Controller
 
         $semester_id = $request->semester_id;
         $ruangan_id = $request->ruangan_id;
-        $bulan_id = $request->bulan_id; // 1. Tambahan parameter Bulan
+        $bulan_id = $request->bulan_id;
+        $jadwal_pelajaran_id = $request->jadwal_pelajaran_id;
 
-        // 2. Jika semester dipilih, ambil daftar bulan yang ada di semester tersebut
+        // Ambil daftar bulan yang bersinggungan dengan semester
         $bulans = collect();
         if ($semester_id) {
             $semesterDicari = Semester::find($semester_id);
 
             if ($semesterDicari && $semesterDicari->tanggal_mulai && $semesterDicari->tanggal_selesai) {
-                // MENCARI BULAN YANG BERSINGGUNGAN DENGAN SEMESTER (RUMUS OVERLAP)
                 $bulans = BulanHijriyah::where('tahun_pelajaran_id', $semesterDicari->tahun_pelajaran_id)
                     ->where('tanggal_selesai_masehi', '>=', $semesterDicari->tanggal_mulai)
                     ->where('tanggal_mulai_masehi', '<=', $semesterDicari->tanggal_selesai)
@@ -323,9 +320,22 @@ class PresensiMuridController extends Controller
 
         $murids = collect();
         $rekap = [];
+        $rekapPerJadwal = [];
+        $jadwalsRuangan = collect();
         $konfig = PengaturanAkademik::first();
         $semesterTerpilih = null;
-        $bulanTerpilih = null; // Tambahan
+        $bulanTerpilih = null;
+        $ruanganTerpilih = null;
+        $jadwalTerpilih = null;
+
+        if ($ruangan_id) {
+            $ruanganTerpilih = Ruangan::with(['level', 'waliRuangan'])->find($ruangan_id);
+            $jadwalsRuangan = JadwalPelajaran::with(['mataPelajaran', 'ustadz'])
+                ->where('ruangan_id', $ruangan_id)
+                ->orderByRaw("FIELD(hari, 'Sabtu', 'Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis')")
+                ->orderBy('jam_ke')
+                ->get();
+        }
 
         if ($semester_id && $ruangan_id) {
             $semesterTerpilih = Semester::findOrFail($semester_id);
@@ -335,25 +345,30 @@ class PresensiMuridController extends Controller
                 $bulanTerpilih = BulanHijriyah::find($bulan_id);
             }
 
-            // Ambil murid yang aktif di kelas & tahun ajaran tersebut
-            $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan_id, $tahun_pelajaran_id);
+            if ($jadwal_pelajaran_id) {
+                $jadwalTerpilih = JadwalPelajaran::with(['mataPelajaran', 'ustadz'])->find($jadwal_pelajaran_id);
+            }
 
-            // QUERY PRESENSI (Dinamis: Bisa se-semester, bisa per bulan)
-            // =========================================================
+            // Ambil murid yang aktif di kelas & tahun ajaran tersebut
+            $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan_id, $tahun_pelajaran_id, 'Aktif');
+
+            // QUERY PRESENSI (Dinamis: Bisa se-semester, bisa per bulan, bisa per jadwal pelajaran)
             $presensiQuery = PresensiMurid::whereIn('murid_id', $murids->pluck('id'))
                 ->where('semester_id', $semester_id);
-            if ($bulan_id && $bulanTerpilih) {
 
+            if ($bulan_id && $bulanTerpilih && isset($bulanTerpilih->tanggal_mulai_masehi) && isset($bulanTerpilih->tanggal_selesai_masehi)) {
+                $presensiQuery->whereBetween('tanggal', [
+                    $bulanTerpilih->tanggal_mulai_masehi,
+                    $bulanTerpilih->tanggal_selesai_masehi
+                ]);
+            }
 
-                if (isset($bulanTerpilih->tanggal_mulai_masehi) && isset($bulanTerpilih->tanggal_selesai_masehi)) {
-                    $presensiQuery->whereBetween('tanggal', [
-                        $bulanTerpilih->tanggal_mulai_masehi,
-                        $bulanTerpilih->tanggal_selesai_masehi
-                    ]);
-                }
+            if ($jadwal_pelajaran_id) {
+                $presensiQuery->where('jadwal_pelajaran_id', $jadwal_pelajaran_id);
             }
 
             $presensiDb = $presensiQuery->get();
+
             foreach ($murids as $murid) {
                 $pMurid = $presensiDb->where('murid_id', $murid->id);
 
@@ -365,8 +380,9 @@ class PresensiMuridController extends Controller
 
                 $poinAlpha = $a * ($konfig->poin_alpha ?? 1);
                 $poinIzin = $i * ($konfig->poin_izin ?? 0.16);
-
                 $totalPoin = $poinAlpha + $poinIzin;
+                $totalPertemuan = $h + $s + $i + $a + $d;
+                $persenHadir = $totalPertemuan > 0 ? round(($h / $totalPertemuan) * 100, 1) : 0;
 
                 $rekap[$murid->id] = [
                     'H' => $h,
@@ -374,34 +390,83 @@ class PresensiMuridController extends Controller
                     'I' => $i,
                     'A' => $a,
                     'D' => $d,
-                    'total_pertemuan' => $h + $s + $i + $a + $d,
+                    'total_pertemuan' => $totalPertemuan,
+                    'persen_hadir' => $persenHadir,
                     'akumulasi_poin' => round($totalPoin, 2)
                 ];
             }
+
+            // Hitung Rekapitulasi Ringkasan Per Jadwal Pelajaran di Ruangan ini (jika melihat semua jadwal)
+            if (!$jadwal_pelajaran_id && $jadwalsRuangan->isNotEmpty()) {
+                $presensiSemuaQuery = PresensiMurid::whereIn('murid_id', $murids->pluck('id'))
+                    ->where('semester_id', $semester_id)
+                    ->whereIn('jadwal_pelajaran_id', $jadwalsRuangan->pluck('id'));
+
+                if ($bulan_id && $bulanTerpilih && isset($bulanTerpilih->tanggal_mulai_masehi) && isset($bulanTerpilih->tanggal_selesai_masehi)) {
+                    $presensiSemuaQuery->whereBetween('tanggal', [
+                        $bulanTerpilih->tanggal_mulai_masehi,
+                        $bulanTerpilih->tanggal_selesai_masehi
+                    ]);
+                }
+                $presensiSemuaDb = $presensiSemuaQuery->get();
+
+                foreach ($jadwalsRuangan as $j) {
+                    $pJadwal = $presensiSemuaDb->where('jadwal_pelajaran_id', $j->id);
+
+                    $hJadwal = $pJadwal->where('status', 'Hadir')->count();
+                    $sJadwal = $pJadwal->where('status', 'Sakit')->count();
+                    $iJadwal = $pJadwal->where('status', 'Izin')->count();
+                    $aJadwal = $pJadwal->where('status', 'Alpha')->count();
+                    $dJadwal = $pJadwal->where('status', 'Dispensasi')->count();
+                    $totJadwal = $hJadwal + $sJadwal + $iJadwal + $aJadwal + $dJadwal;
+                    $persenJadwal = $totJadwal > 0 ? round(($hJadwal / $totJadwal) * 100, 1) : 0;
+                    $totalSesi = $pJadwal->pluck('tanggal')->unique()->count();
+
+                    $rekapPerJadwal[] = [
+                        'jadwal' => $j,
+                        'nama_mapel' => $j->mataPelajaran->nama_mapel ?? '-',
+                        'ustadz' => $j->ustadz->nama_lengkap ?? $j->ustadz->nama ?? '-',
+                        'hari' => $j->hari,
+                        'jam_ke' => $j->jam_ke,
+                        'total_sesi' => $totalSesi,
+                        'H' => $hJadwal,
+                        'S' => $sJadwal,
+                        'I' => $iJadwal,
+                        'A' => $aJadwal,
+                        'D' => $dJadwal,
+                        'total_log' => $totJadwal,
+                        'persen_hadir' => $persenJadwal
+                    ];
+                }
+            }
         }
 
-        // 4. Pastikan $bulans, $bulan_id, dan $bulanTerpilih di-compact ke view
         return view('presensi-murid.rekap', compact(
             'semesters',
             'ruangans',
             'bulans',
+            'jadwalsRuangan',
             'semester_id',
             'ruangan_id',
             'bulan_id',
+            'jadwal_pelajaran_id',
             'murids',
             'rekap',
+            'rekapPerJadwal',
             'semesterTerpilih',
             'bulanTerpilih',
+            'ruanganTerpilih',
+            'jadwalTerpilih',
             'konfig'
         ));
     }
-
 
     public function cetakRekap(Request $request)
     {
         $semester_id = $request->semester_id;
         $ruangan_id = $request->ruangan_id;
         $bulan_id = $request->bulan_id;
+        $jadwal_pelajaran_id = $request->jadwal_pelajaran_id;
 
         // Jika tidak ada data yang dipilih, tendang balik
         if (!$semester_id || !$ruangan_id) {
@@ -412,6 +477,7 @@ class PresensiMuridController extends Controller
         $ruanganTerpilih = Ruangan::findOrFail($ruangan_id);
         $konfig = PengaturanAkademik::first();
         $bulanTerpilih = $bulan_id ? BulanHijriyah::find($bulan_id) : null;
+        $jadwalTerpilih = $jadwal_pelajaran_id ? JadwalPelajaran::with(['mataPelajaran', 'ustadz'])->find($jadwal_pelajaran_id) : null;
         $tahun_pelajaran_id = $semesterTerpilih->tahun_pelajaran_id;
 
         // Ambil murid
@@ -428,6 +494,11 @@ class PresensiMuridController extends Controller
                 $bulanTerpilih->tanggal_selesai_masehi
             ]);
         }
+
+        if ($jadwal_pelajaran_id) {
+            $presensiQuery->where('jadwal_pelajaran_id', $jadwal_pelajaran_id);
+        }
+
         $presensiDb = $presensiQuery->get();
 
         // Hitung Data
@@ -443,6 +514,8 @@ class PresensiMuridController extends Controller
 
             $poinAlpha = $a * ($konfig->poin_alpha ?? 1);
             $poinIzin = $i * ($konfig->poin_izin ?? 0.16);
+            $totalPertemuan = $h + $s + $i + $a + $d;
+            $persenHadir = $totalPertemuan > 0 ? round(($h / $totalPertemuan) * 100, 1) : 0;
 
             $rekap[$murid->id] = [
                 'H' => $h,
@@ -450,6 +523,8 @@ class PresensiMuridController extends Controller
                 'I' => $i,
                 'A' => $a,
                 'D' => $d,
+                'total_pertemuan' => $totalPertemuan,
+                'persen_hadir' => $persenHadir,
                 'akumulasi_poin' => round($poinAlpha + $poinIzin, 2)
             ];
         }
@@ -458,6 +533,7 @@ class PresensiMuridController extends Controller
             'semesterTerpilih',
             'ruanganTerpilih',
             'bulanTerpilih',
+            'jadwalTerpilih',
             'murids',
             'rekap',
             'konfig'

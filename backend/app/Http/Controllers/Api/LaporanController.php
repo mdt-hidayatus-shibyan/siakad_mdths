@@ -11,6 +11,7 @@ use App\Models\PengaturanAkademik;
 use App\Models\PresensiMurid;
 use App\Models\PresensiUstadz;
 use App\Models\Ruangan;
+use App\Models\Semester;
 use App\Models\TahunPelajaran;
 use App\Models\Ujian\NilaiUjian;
 use App\Models\Ujian\RiwayatKenaikan;
@@ -40,19 +41,54 @@ class LaporanController extends Controller
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $tahunId = $tahunAktif->id ?? 1;
 
-        $accessibleRuangans = Ruangan::with('level')
-            ->where('tahun_pelajaran_id', $tahunId)
-            ->where('ustadz_id', $ustadzId)
-            ->get();
+        // Ambil daftar ruangan yang diampu ustadz:
+        // 1. Ustadz sebagai Wali Ruangan (ruangans.ustadz_id)
+        // 2. Ustadz sebagai Pengajar Mata Pelajaran (jadwal_pelajarans.ustadz_id)
+        $ruanganIdsWali = Ruangan::where('ustadz_id', $ustadzId)->pluck('id')->toArray();
+        $ruanganIdsJadwal = JadwalPelajaran::where('ustadz_id', $ustadzId)->pluck('ruangan_id')->toArray();
+        $accessibleIds = array_values(array_unique(array_filter(array_merge($ruanganIdsWali, $ruanganIdsJadwal))));
 
+        $accessibleRuangans = collect();
+
+        if (!empty($accessibleIds)) {
+            $accessibleRuangans = Ruangan::with('level')
+                ->whereIn('id', $accessibleIds)
+                ->when($tahunAktif, function ($q) use ($tahunAktif) {
+                    $q->where(function ($sub) use ($tahunAktif) {
+                        $sub->where('tahun_pelajaran_id', $tahunAktif->id)
+                            ->orWhereNull('tahun_pelajaran_id');
+                    });
+                })
+                ->orderBy('level_id')
+                ->orderBy('nama_ruangan')
+                ->get();
+
+            if ($accessibleRuangans->isEmpty()) {
+                $accessibleRuangans = Ruangan::with('level')
+                    ->whereIn('id', $accessibleIds)
+                    ->orderBy('level_id')
+                    ->orderBy('nama_ruangan')
+                    ->get();
+            }
+        }
+
+        // Fallback jika ustadz belum memiliki penugasan ruangan/jadwal (misal akun baru atau admin)
         if ($accessibleRuangans->isEmpty()) {
             $accessibleRuangans = Ruangan::with('level')
-                ->where('ustadz_id', $ustadzId)
+                ->when($tahunAktif, function ($q) use ($tahunAktif) {
+                    $q->where('tahun_pelajaran_id', $tahunAktif->id);
+                })
+                ->orderBy('level_id')
+                ->orderBy('nama_ruangan')
                 ->get();
+
+            if ($accessibleRuangans->isEmpty()) {
+                $accessibleRuangans = Ruangan::with('level')->orderBy('level_id')->orderBy('nama_ruangan')->get();
+            }
         }
 
         if ($request->filled('ruangan_id')) {
-            $ruangan = $accessibleRuangans->firstWhere('id', $request->ruangan_id) ?? Ruangan::with('level')->find($request->ruangan_id);
+            $ruangan = $accessibleRuangans->firstWhere('id', (int) $request->ruangan_id) ?? Ruangan::with('level')->find($request->ruangan_id);
         } else {
             $ruangan = $accessibleRuangans->first();
         }
@@ -69,7 +105,7 @@ class LaporanController extends Controller
     // =========================================================================
     public function getLaporanPresensiMurid(Request $request)
     {
-        [$tahunAktif, $tahunId, $accessibleRuangans, $ruangan] = $this->getContextRuangans($request);
+        [$tahunAktif, $tahunId, $accessibleRuangans, $ruangan, $ustadzId] = $this->getContextRuangans($request);
 
         if (!$ruangan) {
             return response()->json([
@@ -81,53 +117,193 @@ class LaporanController extends Controller
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
         $muridIds = $murids->pluck('id');
 
-        $query = PresensiMurid::whereIn('murid_id', $muridIds);
+        $queryAll = PresensiMurid::whereIn('murid_id', $muridIds);
 
-        // Filter Bulan Hijriyah jika ada
+        // Ambil daftar semester pada tahun pelajaran aktif
+        $semesterList = Semester::where('tahun_pelajaran_id', $tahunId)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $selectedSemesterId = $request->filled('semester_id') ? (int) $request->semester_id : null;
+        if (!$selectedSemesterId && !$request->filled('bulan_hijriyah_id')) {
+            $semesterAktif = $semesterList->firstWhere('is_active', true) ?? $semesterList->first();
+            $selectedSemesterId = $semesterAktif ? $semesterAktif->id : null;
+        }
+
+        // Filter Bulan Hijriyah / Semester / Rentang Tanggal jika ada
         $bulanHijriyahList = BulanHijriyah::where('tahun_pelajaran_id', $tahunId)
             ->orderBy('urutan', 'asc')
             ->get();
 
         if ($request->filled('bulan_hijriyah_id')) {
-            $bulan = $bulanHijriyahList->firstWhere('id', $request->bulan_hijriyah_id);
+            $bulan = $bulanHijriyahList->firstWhere('id', (int) $request->bulan_hijriyah_id);
             if ($bulan && $bulan->tanggal_mulai_masehi && $bulan->tanggal_selesai_masehi) {
-                $query->whereBetween('tanggal', [$bulan->tanggal_mulai_masehi, $bulan->tanggal_selesai_masehi]);
+                $queryAll->whereBetween('tanggal', [$bulan->tanggal_mulai_masehi, $bulan->tanggal_selesai_masehi]);
+            }
+        } elseif ($selectedSemesterId) {
+            $sem = $semesterList->firstWhere('id', $selectedSemesterId);
+            if ($sem) {
+                $queryAll->where(function ($q) use ($sem) {
+                    $q->where('semester_id', $sem->id);
+                    if ($sem->tanggal_mulai && $sem->tanggal_selesai) {
+                        $q->orWhereBetween('tanggal', [$sem->tanggal_mulai, $sem->tanggal_selesai]);
+                    }
+                });
             }
         } elseif ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('tanggal', [$request->start_date, $request->end_date]);
-        } elseif ($request->filled('semester')) {
-            $sem = (string)$request->semester;
-            $bulanSem = $bulanHijriyahList->filter(function ($b) use ($sem) {
-                return $sem === '1'
-                    ? in_array((string)$b->semester, ['1', 'Ganjil', 'Semester 1'])
-                    : in_array((string)$b->semester, ['2', 'Genap', 'Semester 2']);
-            });
-            $tglMulai = $bulanSem->min('tanggal_mulai_masehi');
-            $tglSelesai = $bulanSem->max('tanggal_selesai_masehi');
-            if ($tglMulai && $tglSelesai) {
-                $query->whereBetween('tanggal', [$tglMulai, $tglSelesai]);
+            $queryAll->whereBetween('tanggal', [$request->start_date, $request->end_date]);
+        }
+
+        // 1. Ambil seluruh Jadwal Pelajaran di Ruangan ini (semua mapel jika wali, atau mapel yang diajarkan jika ustadz pengampu)
+        $isWaliOfThisRoom = ($ruangan->ustadz_id == $ustadzId);
+
+        $jadwalQuery = JadwalPelajaran::with(['mataPelajaran', 'ustadz'])
+            ->where('ruangan_id', $ruangan->id);
+
+        if (!$isWaliOfThisRoom && !empty($ustadzId)) {
+            $hasJadwalInRoom = (clone $jadwalQuery)->where('ustadz_id', $ustadzId)->exists();
+            if ($hasJadwalInRoom) {
+                $jadwalQuery->where('ustadz_id', $ustadzId);
             }
         }
 
-        $presensiData = $query->get();
+        $jadwalList = $jadwalQuery
+            ->orderByRaw("FIELD(hari, 'Sabtu', 'Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis')")
+            ->orderBy('jam_ke')
+            ->get();
+
+        if ($jadwalList->isNotEmpty()) {
+            $queryAll->whereIn('jadwal_pelajaran_id', $jadwalList->pluck('id'));
+        }
+
+        $konfig = PengaturanAkademik::first();
+        $poinAlphaRate = (float) ($konfig->poin_alpha ?? 1.0);
+        $poinIzinRate = (float) ($konfig->poin_izin ?? 0.16);
+
+        $allPresensiInPeriod = $queryAll->get();
+
+        $rekapJadwalList = $jadwalList->map(function ($j) use ($allPresensiInPeriod) {
+            $pJadwal = $allPresensiInPeriod->where('jadwal_pelajaran_id', $j->id);
+            $pertemuan = $pJadwal->pluck('tanggal')->unique()->count();
+            $h = $pJadwal->where('status', 'Hadir')->count();
+            $s = $pJadwal->where('status', 'Sakit')->count();
+            $i = $pJadwal->where('status', 'Izin')->count();
+            $a = $pJadwal->where('status', 'Alpha')->count();
+            $d = $pJadwal->where('status', 'Dispensasi')->count();
+            $tot = $h + $s + $i + $a + $d;
+            $persen = $tot > 0 ? round(($h / $tot) * 100, 1) : 0;
+
+            $jamText = match ($j->jam_ke) {
+                'Nadzoman' => '13:45 - 14:00 WIB',
+                '1' => '14:00 - 14:45 WIB',
+                '2' => '15:30 - 16:15 WIB',
+                'Ekstra' => '20:00 - 21:00 WIB',
+                default => 'Jam Ke-' . $j->jam_ke,
+            };
+
+            return [
+                'id' => $j->id,
+                'hari' => $j->hari,
+                'jam_ke' => $j->jam_ke,
+                'jam_mulai' => $j->jam_mulai,
+                'jam_selesai' => $j->jam_selesai,
+                'jam_text' => $jamText,
+                'mata_pelajaran_id' => $j->mata_pelajaran_id,
+                'nama_mapel' => $j->mataPelajaran->nama_mapel ?? 'Mata Pelajaran',
+                'kode_mapel' => $j->mataPelajaran->kode_mapel ?? '-',
+                'ustadz_id' => $j->ustadz_id,
+                'nama_ustadz' => $j->ustadz->nama_lengkap ?? ($j->ustadz->nama ?? '-'),
+                'total_pertemuan' => $pertemuan,
+                'total_hadir' => $h,
+                'total_sakit' => $s,
+                'total_izin' => $i,
+                'total_alpha' => $a,
+                'total_dispensasi' => $d,
+                'total_presensi' => $tot,
+                'persentase_kehadiran' => $persen,
+            ];
+        });
+
+        // 2. Filter data presensi jika memilih jadwal spesifik
+        $selectedJadwalId = $request->filled('jadwal_pelajaran_id') ? (int) $request->jadwal_pelajaran_id : null;
+        $selectedJadwal = null;
+
+        if ($selectedJadwalId) {
+            $presensiData = $allPresensiInPeriod->where('jadwal_pelajaran_id', $selectedJadwalId);
+            $selectedJadwal = $rekapJadwalList->firstWhere('id', $selectedJadwalId);
+        } else {
+            $presensiData = $allPresensiInPeriod;
+        }
 
         $totalPertemuan = $presensiData->pluck('tanggal')->unique()->count();
         $totalHadir = $presensiData->where('status', 'Hadir')->count();
-        $totalIzin = $presensiData->where('status', 'Izin')->count();
         $totalSakit = $presensiData->where('status', 'Sakit')->count();
+        $totalIzin = $presensiData->where('status', 'Izin')->count();
         $totalAlpha = $presensiData->where('status', 'Alpha')->count();
-        $totalSemua = $totalHadir + $totalIzin + $totalSakit + $totalAlpha;
+        $totalDispensasi = $presensiData->where('status', 'Dispensasi')->count();
+        $totalSemua = $totalHadir + $totalSakit + $totalIzin + $totalAlpha + $totalDispensasi;
         $persentaseKelas = $totalSemua > 0 ? round(($totalHadir / $totalSemua) * 100, 1) : 0;
 
+        // 3. Riwayat Pertemuan per Tanggal (Khusus jika jadwal tertentu dipilih)
+        $riwayatPertemuan = [];
+        if ($selectedJadwalId && $presensiData->isNotEmpty()) {
+            $groupedByDate = $presensiData->groupBy('tanggal')->sortKeysDesc();
+            foreach ($groupedByDate as $tgl => $items) {
+                $tglHadir = $items->where('status', 'Hadir')->count();
+                $tglSakit = $items->where('status', 'Sakit')->count();
+                $tglIzin = $items->where('status', 'Izin')->count();
+                $tglAlpha = $items->where('status', 'Alpha')->count();
+                $tglDispen = $items->where('status', 'Dispensasi')->count();
+
+                $hariTanggal = null;
+                try {
+                    $hariTanggal = Carbon::parse($tgl)->locale('id')->isoFormat('dddd, D MMMM YYYY');
+                } catch (\Exception $e) {
+                    $hariTanggal = $tgl;
+                }
+
+                $muridAbsen = $items->whereIn('status', ['Alpha', 'Sakit', 'Izin', 'Dispensasi'])->map(function ($it) use ($murids) {
+                    $m = $murids->firstWhere('id', $it->murid_id);
+                    return [
+                        'murid_id' => $it->murid_id,
+                        'nama' => $m->nama_lengkap ?? $m->nama ?? 'Murid',
+                        'nism' => $m->nism ?? '',
+                        'status' => $it->status,
+                    ];
+                })->values();
+
+                $riwayatPertemuan[] = [
+                    'tanggal' => $tgl,
+                    'hari_tanggal' => $hariTanggal,
+                    'total_hadir' => $tglHadir,
+                    'total_sakit' => $tglSakit,
+                    'total_izin' => $tglIzin,
+                    'total_alpha' => $tglAlpha,
+                    'total_dispensasi' => $tglDispen,
+                    'total_absen' => $tglIzin + $tglSakit + $tglAlpha + $tglDispen,
+                    'murid_absen' => $muridAbsen,
+                ];
+            }
+        }
+
+        // 4. Rekap Presensi per Murid (Perhitungan persis seperti presensi-murid.rekap)
         $rekapMurid = [];
+        $totalPoinKelas = 0;
+
         foreach ($murids as $m) {
             $pMurid = $presensiData->where('murid_id', $m->id);
             $h = $pMurid->where('status', 'Hadir')->count();
-            $i = $pMurid->where('status', 'Izin')->count();
             $s = $pMurid->where('status', 'Sakit')->count();
+            $i = $pMurid->where('status', 'Izin')->count();
             $a = $pMurid->where('status', 'Alpha')->count();
-            $tot = $h + $i + $s + $a;
+            $d = $pMurid->where('status', 'Dispensasi')->count();
+            $tot = $h + $s + $i + $a + $d;
             $persen = $tot > 0 ? round(($h / $tot) * 100, 1) : 0;
+
+            $poinAlpha = $a * $poinAlphaRate;
+            $poinIzin = $i * $poinIzinRate;
+            $totalPoin = round($poinAlpha + $poinIzin, 2);
+            $totalPoinKelas += $totalPoin;
 
             $predikat = 'Sangat Baik';
             if ($persen < 60 || $a >= 5) {
@@ -146,11 +322,13 @@ class LaporanController extends Controller
                 'foto' => $m->foto ? asset('storage/' . $m->foto) : null,
                 'wali' => $m->nama_ayah ?? $m->waliMurid->nama_kepala_keluarga ?? '-',
                 'hadir_count' => $h,
-                'izin_count' => $i,
                 'sakit_count' => $s,
+                'izin_count' => $i,
                 'alpha_count' => $a,
+                'dispensasi_count' => $d,
                 'total_presensi' => $tot,
                 'persentase_kehadiran' => $persen,
+                'akumulasi_poin' => $totalPoin,
                 'predikat' => $predikat,
             ];
         }
@@ -161,25 +339,55 @@ class LaporanController extends Controller
                 'ruangan_id' => $ruangan->id,
                 'nama_ruangan' => $ruangan->nama_ruangan,
                 'level_nama' => $ruangan->level->nama_level ?? '-',
+                'is_wali_ruangan' => (bool) $isWaliOfThisRoom,
+                'wali_ruangan_nama' => $ruangan->waliRuangan->nama_lengkap ?? ($ruangan->waliRuangan->nama ?? '-'),
                 'tahun_pelajaran' => $tahunAktif->nama_lengkap ?? ($tahunAktif->nama_masehi ?? 'Tahun Aktif'),
+                'selected_jadwal_id' => $selectedJadwalId,
+                'selected_jadwal' => $selectedJadwal,
+                'poin_alpha_rate' => $poinAlphaRate,
+                'poin_izin_rate' => $poinIzinRate,
                 'total_murid' => $murids->count(),
                 'total_hari_efektif' => $totalPertemuan,
                 'total_hadir' => $totalHadir,
-                'total_izin' => $totalIzin,
                 'total_sakit' => $totalSakit,
+                'total_izin' => $totalIzin,
                 'total_alpha' => $totalAlpha,
+                'total_dispensasi' => $totalDispensasi,
+                'total_poin_kelas' => round($totalPoinKelas, 2),
                 'persentase_kehadiran_kelas' => $persentaseKelas,
+                'selected_semester_id' => $selectedSemesterId,
+                'semester_list' => $semesterList->map(fn($s) => [
+                    'id' => $s->id,
+                    'nama_semester' => $s->nama_semester,
+                    'is_active' => (bool) $s->is_active,
+                ]),
                 'ruangan_list' => $accessibleRuangans->map(fn($r) => [
                     'id' => $r->id,
                     'nama_ruangan' => $r->nama_ruangan,
                     'level_nama' => $r->level->nama_level ?? '-',
                 ]),
-                'bulan_hijriyah_list' => $bulanHijriyahList->map(fn($b) => [
-                    'id' => $b->id,
-                    'nama_bulan' => $b->nama_bulan,
-                    'tahun_hijriyah' => $b->tahun_hijriyah,
-                    'semester' => $b->semester,
-                ]),
+                'bulan_hijriyah_list' => $bulanHijriyahList->map(function ($b) use ($semesterList) {
+                    $matchingSem = $semesterList->first(function ($s) use ($b) {
+                        if ($s->tanggal_mulai && $s->tanggal_selesai && $b->tanggal_mulai_masehi && $b->tanggal_selesai_masehi) {
+                            return $b->tanggal_selesai_masehi >= $s->tanggal_mulai && $b->tanggal_mulai_masehi <= $s->tanggal_selesai;
+                        }
+                        return false;
+                    });
+                    if (!$matchingSem && $semesterList->count() >= 2) {
+                        $matchingSem = $b->urutan <= 5 ? $semesterList[0] : $semesterList[1];
+                    }
+
+                    return [
+                        'id' => $b->id,
+                        'nama_bulan' => $b->nama_bulan,
+                        'tahun_hijriyah' => $b->tahun_hijriyah,
+                        'urutan' => $b->urutan,
+                        'semester_id' => $matchingSem ? $matchingSem->id : ($b->semester_id ?? null),
+                        'semester_nama' => $matchingSem ? $matchingSem->nama_semester : $b->semester,
+                    ];
+                }),
+                'jadwal_pelajaran_list' => $rekapJadwalList,
+                'riwayat_pertemuan' => $riwayatPertemuan,
                 'rekap_murid' => $rekapMurid,
             ]
         ], 200);
@@ -194,166 +402,360 @@ class LaporanController extends Controller
         $currentUstadz = $user->ustadz;
         [$tahunAktif, $tahunId, $accessibleRuangans, $ruangan, $ustadzId] = $this->getContextRuangans($request);
 
-        if (!$ruangan) {
+        if (!$ruangan && !$currentUstadz) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ruangan tidak ditemukan.'
+                'message' => 'Data ustadz / ruangan tidak ditemukan.'
             ], 404);
         }
 
-        // 1. Ambil daftar Ustadz yang mengajar di ruangan tersebut (via Jadwal Pelajaran atau Wali Ruangan)
-        $teacherIdsFromJadwal = JadwalPelajaran::where('ruangan_id', $ruangan->id)
-            ->whereNotNull('ustadz_id')
-            ->pluck('ustadz_id')
-            ->toArray();
+        $isWaliOfThisRoom = ($ruangan && $ruangan->ustadz_id == $ustadzId);
+        $isPribadi = $request->has('is_pribadi')
+            ? filter_var($request->is_pribadi, FILTER_VALIDATE_BOOLEAN)
+            : !$isWaliOfThisRoom;
 
-        $teacherIds = $teacherIdsFromJadwal;
-        if ($ruangan->ustadz_id) {
-            $teacherIds[] = $ruangan->ustadz_id;
-        }
+        $semesterList = Semester::where('tahun_pelajaran_id', $tahunId)
+            ->orderBy('id', 'asc')
+            ->get();
 
-        // Ambil ustadz dari riwayat presensi yang jadwalnya di ruangan ini
-        $presensiTeacherIds = PresensiUstadz::whereHas('jadwalPelajaran', function ($q) use ($ruangan) {
-            $q->where('ruangan_id', $ruangan->id);
-        })->pluck('ustadz_id')->toArray();
-
-        $allTeacherIds = array_unique(array_filter(array_merge($teacherIds, $presensiTeacherIds)));
-
-        if (!empty($allTeacherIds)) {
-            $daftarUstadzQuery = Ustadz::whereIn('id', $allTeacherIds)->where('is_active', true)->orderBy('nama_lengkap', 'asc')->get();
-        } else {
-            $daftarUstadzQuery = Ustadz::where('id', $ruangan->ustadz_id ?? ($currentUstadz->id ?? 0))->get();
-        }
-
-        if ($daftarUstadzQuery->isEmpty() && $currentUstadz) {
-            $daftarUstadzQuery = collect([$currentUstadz]);
-        }
-
-        // 2. Tentukan target Ustadz yang dipilih
-        $targetUstadzId = $request->ustadz_id;
-        if ($targetUstadzId && $daftarUstadzQuery->contains('id', $targetUstadzId)) {
-            $ustadz = $daftarUstadzQuery->firstWhere('id', $targetUstadzId);
-        } elseif ($currentUstadz && $daftarUstadzQuery->contains('id', $currentUstadz->id)) {
-            $ustadz = $daftarUstadzQuery->firstWhere('id', $currentUstadz->id);
-        } else {
-            $ustadz = $daftarUstadzQuery->first() ?? $currentUstadz ?? Ustadz::first();
-        }
-
-        if (!$ustadz) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data Ustadz tidak ditemukan.'
-            ], 404);
+        $selectedSemesterId = $request->filled('semester_id') ? (int) $request->semester_id : null;
+        if (!$selectedSemesterId && !$request->filled('bulan_hijriyah_id')) {
+            $semesterAktif = $semesterList->firstWhere('is_active', true) ?? $semesterList->first();
+            $selectedSemesterId = $semesterAktif ? $semesterAktif->id : null;
         }
 
         $bulanList = BulanHijriyah::where('tahun_pelajaran_id', $tahunId)
             ->orderBy('urutan', 'asc')
             ->get();
 
-        // 3. Query presensi ustadz KHUSUS yang mengajar di ruangan tersebut
-        $query = PresensiUstadz::with(['jadwalPelajaran.mataPelajaran', 'jadwalPelajaran.ruangan'])
-            ->where('ustadz_id', $ustadz->id)
-            ->whereHas('jadwalPelajaran', function ($q) use ($ruangan) {
+        if ($isPribadi) {
+            // === MODE PRIBADI (PRESENSI MENGAJAR SAYA - GURU PENGAMPU) ===
+            $queryAll = PresensiUstadz::with(['jadwalPelajaran.mataPelajaran', 'jadwalPelajaran.ruangan', 'ustadz'])
+                ->where('ustadz_id', $ustadzId);
+
+            if ($request->filled('ruangan_id') && $ruangan) {
+                $queryAll->whereHas('jadwalPelajaran', function ($q) use ($ruangan) {
+                    $q->where('ruangan_id', $ruangan->id);
+                });
+            }
+
+            if ($request->filled('bulan_hijriyah_id')) {
+                $bulan = $bulanList->firstWhere('id', (int) $request->bulan_hijriyah_id);
+                if ($bulan && $bulan->tanggal_mulai_masehi && $bulan->tanggal_selesai_masehi) {
+                    $queryAll->whereBetween('tanggal', [$bulan->tanggal_mulai_masehi, $bulan->tanggal_selesai_masehi]);
+                }
+            } elseif ($selectedSemesterId) {
+                $sem = $semesterList->firstWhere('id', $selectedSemesterId);
+                if ($sem && $sem->tanggal_mulai && $sem->tanggal_selesai) {
+                    $queryAll->whereBetween('tanggal', [$sem->tanggal_mulai, $sem->tanggal_selesai]);
+                }
+            } elseif ($request->filled('start_date') && $request->filled('end_date')) {
+                $queryAll->whereBetween('tanggal', [$request->start_date, $request->end_date]);
+            }
+
+            if ($request->filled('status') && $request->status !== 'Semua') {
+                $queryAll->where('status', $request->status);
+            }
+
+            $allPresensiInPeriod = $queryAll->orderBy('tanggal', 'desc')->get();
+            $filteredPresensi = $allPresensiInPeriod;
+
+            $h = $filteredPresensi->where('status', 'Hadir')->count();
+            $i = $filteredPresensi->where('status', 'Izin')->count();
+            $s = $filteredPresensi->where('status', 'Sakit')->count();
+            $t = $filteredPresensi->where('status', 'Tugas')->count();
+            $a = $filteredPresensi->where('status', 'Alpha')->count();
+            $totalSesi = $filteredPresensi->count();
+            $persen = $totalSesi > 0 ? round((($h + $t) / $totalSesi) * 100, 1) : 0;
+
+            // Mapel yang diampu ustadz ini
+            $jadwalUstadz = JadwalPelajaran::with('mataPelajaran')
+                ->where('ustadz_id', $ustadzId)
+                ->when($request->filled('ruangan_id') && $ruangan, function ($q) use ($ruangan) {
+                    $q->where('ruangan_id', $ruangan->id);
+                })
+                ->get();
+
+            $mapelList = $jadwalUstadz->pluck('mataPelajaran.nama_mapel')->filter()->unique()->values()->toArray();
+
+            $rekapUstadz = collect([
+                [
+                    'ustadz_id' => $currentUstadz->id ?? $ustadzId,
+                    'nama' => $currentUstadz->nama_lengkap ?? ($currentUstadz->nama ?? ($user->name ?? 'Ustadz')),
+                    'niup' => $currentUstadz->niup ?? '-',
+                    'foto' => $currentUstadz?->foto ? asset('storage/' . $currentUstadz->foto) : null,
+                    'mapel_list' => $mapelList,
+                    'total_sesi' => $totalSesi,
+                    'total_hadir' => $h,
+                    'total_tugas' => $t,
+                    'total_izin' => $i,
+                    'total_sakit' => $s,
+                    'total_alpha' => $a,
+                    'persentase_kehadiran' => $persen,
+                ]
+            ]);
+
+            $riwayat = $filteredPresensi->map(function ($p) use ($ruangan) {
+                $hariTgl = null;
+                try {
+                    $hariTgl = Carbon::parse($p->tanggal)->locale('id')->isoFormat('dddd, D MMMM YYYY');
+                } catch (\Exception $e) {
+                }
+
+                return [
+                    'id' => $p->id,
+                    'ustadz_id' => $p->ustadz_id,
+                    'nama_ustadz' => $p->ustadz->nama_lengkap ?? ($p->ustadz->nama ?? 'Ustadz'),
+                    'niup_ustadz' => $p->ustadz->niup ?? '-',
+                    'foto_ustadz' => $p->ustadz?->foto ? asset('storage/' . $p->ustadz->foto) : null,
+                    'tanggal' => (string) $p->tanggal,
+                    'hari_tanggal' => $hariTgl,
+                    'status' => $p->status,
+                    'jam_masuk' => $p->jam_masuk ? substr($p->jam_masuk, 0, 5) : '-',
+                    'jam_keluar' => $p->jam_keluar ? substr($p->jam_keluar, 0, 5) : null,
+                    'mapel' => $p->jadwalPelajaran->mataPelajaran->nama_mapel ?? '-',
+                    'nama_ruangan' => $p->jadwalPelajaran->ruangan->nama_ruangan ?? ($ruangan->nama_ruangan ?? '-'),
+                    'keterangan' => $p->keterangan ?? '-',
+                    'foto' => $p->foto ? asset('storage/' . $p->foto) : null,
+                ];
+            })->values();
+
+            $daftarUstadz = $rekapUstadz->map(fn($u) => [
+                'id' => $u['ustadz_id'],
+                'nama' => $u['nama'],
+                'niup' => $u['niup'],
+                'foto' => $u['foto'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'ruangan_id' => $ruangan->id ?? null,
+                    'nama_ruangan' => $ruangan->nama_ruangan ?? 'Semua Kelas',
+                    'level_nama' => $ruangan->level->nama_level ?? '-',
+                    'is_wali_ruangan' => false,
+                    'selected_semester_id' => $selectedSemesterId,
+                    'selected_ustadz_id' => $ustadzId,
+                    'semester_list' => $semesterList->map(fn($s) => [
+                        'id' => $s->id,
+                        'nama_semester' => $s->nama_semester,
+                        'is_active' => (bool) $s->is_active,
+                    ]),
+                    'ruangan_list' => $accessibleRuangans->map(fn($r) => [
+                        'id' => $r->id,
+                        'nama_ruangan' => $r->nama_ruangan,
+                        'level_nama' => $r->level->nama_level ?? '-',
+                    ]),
+                    'daftar_ustadz' => $daftarUstadz,
+                    'tahun_pelajaran' => $tahunAktif->nama_lengkap ?? ($tahunAktif->nama_masehi ?? 'Tahun Aktif'),
+                    'total_sesi' => $totalSesi,
+                    'total_hadir' => $h,
+                    'total_tugas' => $t,
+                    'total_izin' => $i,
+                    'total_sakit' => $s,
+                    'total_alpha' => $a,
+                    'persentase_kehadiran' => $persen,
+                    'bulan_hijriyah_list' => $bulanList->map(function ($b) use ($semesterList) {
+                        $matchingSem = $semesterList->first(function ($s) use ($b) {
+                            if ($s->tanggal_mulai && $s->tanggal_selesai && $b->tanggal_mulai_masehi && $b->tanggal_selesai_masehi) {
+                                return $b->tanggal_selesai_masehi >= $s->tanggal_mulai && $b->tanggal_mulai_masehi <= $s->tanggal_selesai;
+                            }
+                            return false;
+                        });
+                        if (!$matchingSem && $semesterList->count() >= 2) {
+                            $matchingSem = $b->urutan <= 5 ? $semesterList[0] : $semesterList[1];
+                        }
+
+                        return [
+                            'id' => $b->id,
+                            'nama_bulan' => $b->nama_bulan,
+                            'tahun_hijriyah' => $b->tahun_hijriyah,
+                            'urutan' => $b->urutan,
+                            'semester_id' => $matchingSem ? $matchingSem->id : ($b->semester_id ?? null),
+                            'semester_nama' => $matchingSem ? $matchingSem->nama_semester : $b->semester,
+                        ];
+                    }),
+                    'rekap_ustadz' => $rekapUstadz,
+                    'riwayat' => $riwayat,
+                ]
+            ], 200);
+        } else {
+            // === MODE WALI RUANGAN (LAPORAN PRESENSI USTADZ PENGAJAR KELAS BINAAN) ===
+            $jadwalRuangan = JadwalPelajaran::with(['mataPelajaran', 'ustadz'])
+                ->where('ruangan_id', $ruangan->id)
+                ->get();
+
+            $teacherIdsFromJadwal = $jadwalRuangan->whereNotNull('ustadz_id')->pluck('ustadz_id')->toArray();
+            $presensiTeacherIds = PresensiUstadz::whereHas('jadwalPelajaran', function ($q) use ($ruangan) {
                 $q->where('ruangan_id', $ruangan->id);
-            });
+            })->pluck('ustadz_id')->toArray();
 
-        $minDate = $bulanList->min('tanggal_mulai_masehi');
-        $maxDate = $bulanList->max('tanggal_selesai_masehi');
-        if ($minDate && $maxDate) {
-            $query->whereBetween('tanggal', [$minDate, $maxDate]);
-        }
+            $allTeacherIds = array_unique(array_filter(array_merge($teacherIdsFromJadwal, $presensiTeacherIds, [$ruangan->ustadz_id])));
 
-        if ($request->filled('bulan_hijriyah_id')) {
-            $bulan = $bulanList->firstWhere('id', $request->bulan_hijriyah_id);
-            if ($bulan && $bulan->tanggal_mulai_masehi && $bulan->tanggal_selesai_masehi) {
-                $query->whereBetween('tanggal', [$bulan->tanggal_mulai_masehi, $bulan->tanggal_selesai_masehi]);
-            }
-        } elseif ($request->filled('semester')) {
-            $sem = (string)$request->semester;
-            $bulanSem = $bulanList->filter(function ($b) use ($sem) {
-                return $sem === '1'
-                    ? in_array((string)$b->semester, ['1', 'Ganjil', 'Semester 1'])
-                    : in_array((string)$b->semester, ['2', 'Genap', 'Semester 2']);
-            });
-            $tglMulai = $bulanSem->min('tanggal_mulai_masehi');
-            $tglSelesai = $bulanSem->max('tanggal_selesai_masehi');
-            if ($tglMulai && $tglSelesai) {
-                $query->whereBetween('tanggal', [$tglMulai, $tglSelesai]);
-            }
-        } elseif ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('tanggal', [$request->start_date, $request->end_date]);
-        }
-
-        if ($request->filled('status') && $request->status !== 'Semua') {
-            $query->where('status', $request->status);
-        }
-
-        $presensiList = $query->orderBy('tanggal', 'desc')->get();
-
-        $h = $presensiList->where('status', 'Hadir')->count();
-        $i = $presensiList->where('status', 'Izin')->count();
-        $s = $presensiList->where('status', 'Sakit')->count();
-        $t = $presensiList->where('status', 'Tugas')->count();
-        $a = $presensiList->where('status', 'Alpha')->count();
-        $totalSesi = $presensiList->count();
-        $persen = $totalSesi > 0 ? round((($h + $t) / $totalSesi) * 100, 1) : 0;
-
-        $riwayat = $presensiList->map(function ($p) use ($ruangan) {
-            $hariTgl = null;
-            try {
-                $hariTgl = Carbon::parse($p->tanggal)->locale('id')->isoFormat('dddd, D MMMM YYYY');
-            } catch (\Exception $e) {
+            if (!empty($allTeacherIds)) {
+                $daftarUstadzQuery = Ustadz::whereIn('id', $allTeacherIds)->where('is_active', true)->orderBy('nama_lengkap', 'asc')->get();
+            } else {
+                $daftarUstadzQuery = Ustadz::where('id', $ruangan->ustadz_id ?? ($currentUstadz->id ?? 0))->get();
             }
 
-            return [
-                'id' => $p->id,
-                'tanggal' => (string)$p->tanggal,
-                'hari_tanggal' => $hariTgl,
-                'status' => $p->status,
-                'jam_masuk' => $p->jam_masuk ? substr($p->jam_masuk, 0, 5) : '-',
-                'jam_keluar' => $p->jam_keluar ? substr($p->jam_keluar, 0, 5) : null,
-                'mapel' => $p->jadwalPelajaran->mataPelajaran->nama_mapel ?? '-',
-                'nama_ruangan' => $p->jadwalPelajaran->ruangan->nama_ruangan ?? $ruangan->nama_ruangan,
-                'keterangan' => $p->keterangan ?? '-',
-                'foto' => $p->foto ? asset('storage/' . $p->foto) : null,
-            ];
-        });
+            if ($daftarUstadzQuery->isEmpty() && $currentUstadz) {
+                $daftarUstadzQuery = collect([$currentUstadz]);
+            }
 
-        $daftarUstadz = $daftarUstadzQuery->map(fn($u) => [
-            'id' => $u->id,
-            'nama' => $u->nama_lengkap,
-            'niup' => $u->niup ?? '-',
-            'foto' => $u->foto ? asset('storage/' . $u->foto) : null,
-        ]);
+            $queryAll = PresensiUstadz::with(['jadwalPelajaran.mataPelajaran', 'jadwalPelajaran.ruangan', 'ustadz'])
+                ->whereHas('jadwalPelajaran', function ($q) use ($ruangan) {
+                    $q->where('ruangan_id', $ruangan->id);
+                });
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'ruangan_id' => $ruangan->id,
-                'nama_ruangan' => $ruangan->nama_ruangan,
-                'ustadz' => [
-                    'id' => $ustadz->id,
-                    'nama' => $ustadz->nama_lengkap,
-                    'niup' => $ustadz->niup ?? '-',
-                    'foto' => $ustadz->foto ? asset('storage/' . $ustadz->foto) : null,
-                ],
-                'tahun_pelajaran' => $tahunAktif->nama_lengkap ?? ($tahunAktif->nama_masehi ?? 'Tahun Aktif'),
-                'total_sesi' => $totalSesi,
-                'total_hadir' => $h,
-                'total_tugas' => $t,
-                'total_izin' => $i,
-                'total_sakit' => $s,
-                'total_alpha' => $a,
-                'persentase_kehadiran' => $persen,
-                'daftar_ustadz' => $daftarUstadz,
-                'bulan_hijriyah_list' => $bulanList->map(fn($b) => [
-                    'id' => $b->id,
-                    'nama_bulan' => $b->nama_bulan,
-                    'tahun_hijriyah' => $b->tahun_hijriyah,
-                ]),
-                'riwayat' => $riwayat,
-            ]
-        ], 200);
+            if ($request->filled('bulan_hijriyah_id')) {
+                $bulan = $bulanList->firstWhere('id', (int) $request->bulan_hijriyah_id);
+                if ($bulan && $bulan->tanggal_mulai_masehi && $bulan->tanggal_selesai_masehi) {
+                    $queryAll->whereBetween('tanggal', [$bulan->tanggal_mulai_masehi, $bulan->tanggal_selesai_masehi]);
+                }
+            } elseif ($selectedSemesterId) {
+                $sem = $semesterList->firstWhere('id', $selectedSemesterId);
+                if ($sem && $sem->tanggal_mulai && $sem->tanggal_selesai) {
+                    $queryAll->whereBetween('tanggal', [$sem->tanggal_mulai, $sem->tanggal_selesai]);
+                }
+            } elseif ($request->filled('start_date') && $request->filled('end_date')) {
+                $queryAll->whereBetween('tanggal', [$request->start_date, $request->end_date]);
+            }
+
+            if ($request->filled('status') && $request->status !== 'Semua') {
+                $queryAll->where('status', $request->status);
+            }
+
+            $allPresensiInPeriod = $queryAll->orderBy('tanggal', 'desc')->get();
+
+            $selectedUstadzId = $request->filled('ustadz_id') ? (int) $request->ustadz_id : null;
+            $filteredPresensi = $selectedUstadzId ? $allPresensiInPeriod->where('ustadz_id', $selectedUstadzId) : $allPresensiInPeriod;
+
+            $h = $filteredPresensi->where('status', 'Hadir')->count();
+            $i = $filteredPresensi->where('status', 'Izin')->count();
+            $s = $filteredPresensi->where('status', 'Sakit')->count();
+            $t = $filteredPresensi->where('status', 'Tugas')->count();
+            $a = $filteredPresensi->where('status', 'Alpha')->count();
+            $totalSesi = $filteredPresensi->count();
+            $persen = $totalSesi > 0 ? round((($h + $t) / $totalSesi) * 100, 1) : 0;
+
+            $rekapUstadz = $daftarUstadzQuery->map(function ($u) use ($allPresensiInPeriod, $jadwalRuangan) {
+                $pU = $allPresensiInPeriod->where('ustadz_id', $u->id);
+                $uTotal = $pU->count();
+                $uH = $pU->where('status', 'Hadir')->count();
+                $uT = $pU->where('status', 'Tugas')->count();
+                $uI = $pU->where('status', 'Izin')->count();
+                $uS = $pU->where('status', 'Sakit')->count();
+                $uA = $pU->where('status', 'Alpha')->count();
+                $uPersen = $uTotal > 0 ? round((($uH + $uT) / $uTotal) * 100, 1) : 0;
+
+                $mapelList = $jadwalRuangan->where('ustadz_id', $u->id)
+                    ->pluck('mataPelajaran.nama_mapel')
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->toArray();
+
+                return [
+                    'ustadz_id' => $u->id,
+                    'nama' => $u->nama_lengkap,
+                    'niup' => $u->niup ?? '-',
+                    'foto' => $u->foto ? asset('storage/' . $u->foto) : null,
+                    'mapel_list' => $mapelList,
+                    'total_sesi' => $uTotal,
+                    'total_hadir' => $uH,
+                    'total_tugas' => $uT,
+                    'total_izin' => $uI,
+                    'total_sakit' => $uS,
+                    'total_alpha' => $uA,
+                    'persentase_kehadiran' => $uPersen,
+                ];
+            })->values();
+
+            $riwayat = $filteredPresensi->map(function ($p) use ($ruangan) {
+                $hariTgl = null;
+                try {
+                    $hariTgl = Carbon::parse($p->tanggal)->locale('id')->isoFormat('dddd, D MMMM YYYY');
+                } catch (\Exception $e) {
+                }
+
+                return [
+                    'id' => $p->id,
+                    'ustadz_id' => $p->ustadz_id,
+                    'nama_ustadz' => $p->ustadz->nama_lengkap ?? ($p->ustadz->nama ?? 'Ustadz'),
+                    'niup_ustadz' => $p->ustadz->niup ?? '-',
+                    'foto_ustadz' => $p->ustadz?->foto ? asset('storage/' . $p->ustadz->foto) : null,
+                    'tanggal' => (string) $p->tanggal,
+                    'hari_tanggal' => $hariTgl,
+                    'status' => $p->status,
+                    'jam_masuk' => $p->jam_masuk ? substr($p->jam_masuk, 0, 5) : '-',
+                    'jam_keluar' => $p->jam_keluar ? substr($p->jam_keluar, 0, 5) : null,
+                    'mapel' => $p->jadwalPelajaran->mataPelajaran->nama_mapel ?? '-',
+                    'nama_ruangan' => $p->jadwalPelajaran->ruangan->nama_ruangan ?? $ruangan->nama_ruangan,
+                    'keterangan' => $p->keterangan ?? '-',
+                    'foto' => $p->foto ? asset('storage/' . $p->foto) : null,
+                ];
+            })->values();
+
+            $daftarUstadz = $daftarUstadzQuery->map(fn($u) => [
+                'id' => $u->id,
+                'nama' => $u->nama_lengkap,
+                'niup' => $u->niup ?? '-',
+                'foto' => $u->foto ? asset('storage/' . $u->foto) : null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'ruangan_id' => $ruangan->id,
+                    'nama_ruangan' => $ruangan->nama_ruangan,
+                    'level_nama' => $ruangan->level->nama_level ?? '-',
+                    'is_wali_ruangan' => true,
+                    'selected_semester_id' => $selectedSemesterId,
+                    'selected_ustadz_id' => $selectedUstadzId,
+                    'semester_list' => $semesterList->map(fn($s) => [
+                        'id' => $s->id,
+                        'nama_semester' => $s->nama_semester,
+                        'is_active' => (bool) $s->is_active,
+                    ]),
+                    'ruangan_list' => $accessibleRuangans->map(fn($r) => [
+                        'id' => $r->id,
+                        'nama_ruangan' => $r->nama_ruangan,
+                        'level_nama' => $r->level->nama_level ?? '-',
+                    ]),
+                    'daftar_ustadz' => $daftarUstadz,
+                    'tahun_pelajaran' => $tahunAktif->nama_lengkap ?? ($tahunAktif->nama_masehi ?? 'Tahun Aktif'),
+                    'total_sesi' => $totalSesi,
+                    'total_hadir' => $h,
+                    'total_tugas' => $t,
+                    'total_izin' => $i,
+                    'total_sakit' => $s,
+                    'total_alpha' => $a,
+                    'persentase_kehadiran' => $persen,
+                    'bulan_hijriyah_list' => $bulanList->map(function ($b) use ($semesterList) {
+                        $matchingSem = $semesterList->first(function ($s) use ($b) {
+                            if ($s->tanggal_mulai && $s->tanggal_selesai && $b->tanggal_mulai_masehi && $b->tanggal_selesai_masehi) {
+                                return $b->tanggal_selesai_masehi >= $s->tanggal_mulai && $b->tanggal_mulai_masehi <= $s->tanggal_selesai;
+                            }
+                            return false;
+                        });
+                        if (!$matchingSem && $semesterList->count() >= 2) {
+                            $matchingSem = $b->urutan <= 5 ? $semesterList[0] : $semesterList[1];
+                        }
+
+                        return [
+                            'id' => $b->id,
+                            'nama_bulan' => $b->nama_bulan,
+                            'tahun_hijriyah' => $b->tahun_hijriyah,
+                            'urutan' => $b->urutan,
+                            'semester_id' => $matchingSem ? $matchingSem->id : ($b->semester_id ?? null),
+                            'semester_nama' => $matchingSem ? $matchingSem->nama_semester : $b->semester,
+                        ];
+                    }),
+                    'rekap_ustadz' => $rekapUstadz,
+                    'riwayat' => $riwayat,
+                ]
+            ], 200);
+        }
     }
 
     // =========================================================================

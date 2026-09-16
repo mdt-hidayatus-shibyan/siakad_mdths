@@ -17,7 +17,7 @@
 /public/build
 /public/fonts-manifest.dev.json
 /public/hot
-/public/storage
+!/public/storage
 /storage/*.key
 /storage/pail
 /vendor
@@ -25,7 +25,12 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
-aturan_version.md
-redesign.md
-aplikasi_mobile.md
-tahapan_pengembangan_mobile.md
+BACKEND_GUIDELINES.md
+FRONTEND_APP_MURID.md
+FRONTEND_APP_USTADZ.md
+KEUANGAN_MADRASAH.md
+KOPERASI_MADRASAH.md
+PRD.md
+PROJECT_BLUEPRINT.md
+TABUNGAN_MADRASAH.md
+TRUNCATE DATABASE.txt

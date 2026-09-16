@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/akademik_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
 
@@ -40,12 +41,7 @@ class _ReferensiPelanggaranScreenState
     final list = akademik.referensiData?.list ?? [];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Referensi Pelanggaran',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: const CustomAppBar(titleText: 'Referensi Pelanggaran'),
       body: RefreshIndicator(
         onRefresh: () => akademik.fetchReferensiPelanggaran(),
         color: isDark ? AppColors.primaryDark : AppColors.primaryLight,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/nilai_ujian_model.dart';
 import '../../../providers/nilai_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
 
@@ -66,20 +67,10 @@ class _LegerRuanganScreenState extends State<LegerRuanganScreen> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Leger Nilai ${widget.ruanganName}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '${widget.ujianName ?? nilai.selectedUjian?.namaUjian ?? "Ujian"} • Ranking Otomatis',
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
-            ),
-          ],
-        ),
+      appBar: CustomAppBar(
+        titleText: 'Leger Nilai ${widget.ruanganName}',
+        subtitleText:
+            '${widget.ujianName ?? nilai.selectedUjian?.namaUjian ?? "Ujian"} • Ranking Otomatis',
       ),
       body: RefreshIndicator(
         onRefresh: _loadData,
@@ -212,15 +203,15 @@ class _LegerRuanganScreenState extends State<LegerRuanganScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(
                 Icons.analytics_rounded,
                 size: 18,
                 color: AppColors.primaryLight,
               ),
-              SizedBox(width: 8),
-              Text(
+              const SizedBox(width: 8),
+              const Text(
                 'Ringkasan Nilai Kelas',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
@@ -534,7 +525,7 @@ class _LegerRuanganScreenState extends State<LegerRuanganScreen> {
                     children: [
                       Text(
                         row.rataRata.toStringAsFixed(1),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryLight,
@@ -552,7 +543,7 @@ class _LegerRuanganScreenState extends State<LegerRuanganScreen> {
                         ),
                         child: Text(
                           row.predikat,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: AppColors.primaryLight,

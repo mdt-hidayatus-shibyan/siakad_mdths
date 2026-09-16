@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/network/api_client.dart';
+import '../core/constants/app_constants.dart';
 import '../core/storage/storage_service.dart';
 import '../data/models/wali_model.dart';
 import '../data/repositories/auth_repository.dart';
@@ -10,15 +10,13 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   WaliModel? _currentWali;
-  String _baseUrl = StorageService.getBaseUrl();
-  ThemeMode _themeMode = ThemeMode.light; // Default Light Mode
+  final String _baseUrl = AppConstants.baseUrl;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   WaliModel? get currentWali => _currentWali;
   bool get isAuthenticated => StorageService.getToken() != null;
   String get baseUrl => _baseUrl;
-  ThemeMode get themeMode => _themeMode;
 
   AuthProvider() {
     _loadSavedSession();
@@ -28,16 +26,6 @@ class AuthProvider extends ChangeNotifier {
     final waliJson = StorageService.getWaliData();
     if (waliJson != null) {
       _currentWali = WaliModel.fromJson(waliJson);
-    }
-    _baseUrl = StorageService.getBaseUrl();
-
-    final savedTheme = StorageService.getThemeMode();
-    if (savedTheme == 'dark') {
-      _themeMode = ThemeMode.dark;
-    } else if (savedTheme == 'system') {
-      _themeMode = ThemeMode.system;
-    } else {
-      _themeMode = ThemeMode.light;
     }
   }
 
@@ -100,22 +88,6 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     await _authRepo.logout();
     _currentWali = null;
-    notifyListeners();
-  }
-
-  void setBaseUrl(String newUrl) {
-    _baseUrl = newUrl;
-    StorageService.setCustomBaseUrl(newUrl);
-    ApiClient.instance.updateBaseUrl(newUrl);
-    notifyListeners();
-  }
-
-  void setThemeMode(ThemeMode mode) {
-    _themeMode = mode;
-    String modeStr = 'light';
-    if (mode == ThemeMode.dark) modeStr = 'dark';
-    if (mode == ThemeMode.system) modeStr = 'system';
-    StorageService.setThemeMode(modeStr);
     notifyListeners();
   }
 }

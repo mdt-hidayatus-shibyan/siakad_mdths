@@ -5,6 +5,7 @@ import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/tabungan_model.dart';
 import '../../../providers/tabungan_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
 import 'detail_tabungan_screen.dart';
@@ -34,15 +35,13 @@ class _TabunganScreenState extends State<TabunganScreen> {
     final provider = context.watch<TabunganProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Tabungan Pribadi',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+      appBar: CustomAppBar(
+        titleText: 'Tabungan Pribadi',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+          CircularIconButton(
+            icon: Icons.refresh_rounded,
             tooltip: 'Segarkan',
+            iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
             onPressed: () {
               HapticHelper.light();
               provider.fetchTabunganUstadz();
@@ -370,7 +369,7 @@ class _TabunganScreenState extends State<TabunganScreen> {
                     ),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'Lihat Buku Lengkap',
                   style: TextStyle(
                     fontSize: 12,

@@ -5,6 +5,7 @@ import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/jadwal_model.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../widgets/child_switcher_bar.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass_card.dart';
 
@@ -38,12 +39,9 @@ class _SemuaJadwalScreenState extends State<SemuaJadwalScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-      appBar: AppBar(
-        title: const Text('Semua Jadwal Pelajaran'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+      appBar: const CustomAppBar(
+        titleText: 'Jadwal Pelajaran',
+        subtitleText: 'Jadwal KBM Mingguan Murid',
       ),
       body: selectedAnak == null
           ? const EmptyStateWidget(

@@ -5,6 +5,7 @@ import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/presensi_model.dart';
 import '../../../providers/presensi_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/shimmer_loading.dart';
@@ -47,6 +48,18 @@ class _PresensiTabState extends State<PresensiTab>
     super.dispose();
   }
 
+  void _shiftDateMurid(int days) {
+    HapticHelper.selection();
+    final p = context.read<PresensiProvider>();
+    p.setSelectedDate(p.selectedDate.add(Duration(days: days)));
+  }
+
+  void _shiftDateUstadz(int days) {
+    HapticHelper.selection();
+    final p = context.read<PresensiProvider>();
+    p.setSelectedDateUstadz(p.selectedDateUstadz.add(Duration(days: days)));
+  }
+
   Future<void> _pickDateMurid(BuildContext context) async {
     final provider = context.read<PresensiProvider>();
     final picked = await showDatePicker(
@@ -85,12 +98,7 @@ class _PresensiTabState extends State<PresensiTab>
     final presensi = context.watch<PresensiProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Modul Presensi',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: const CustomAppBar(titleText: 'Presensi'),
       body: Column(
         children: [
           // Segmented Navigation Pill (Consistent with Bottom Navigation)
@@ -133,53 +141,60 @@ class _PresensiTabState extends State<PresensiTab>
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     children: [
-                      // Date Switcher Bar
-                      GlassCard(
+                      // 1. DATE PICKER SELECTOR BAR
+                      Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF162016)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF263326)
+                                : const Color(0xFFE2E8F0),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 18,
-                                  color: isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  DateHelper.formatIndonesian(
-                                    presensi.selectedDate,
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              icon: const Icon(Icons.chevron_left_rounded),
+                              onPressed: () => _shiftDateMurid(-1),
                             ),
-                            TextButton(
-                              onPressed: () => _pickDateMurid(context),
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            GestureDetector(
+                              onTap: () => _pickDateMurid(context),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 14,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    DateHelper.formatTanggalIndo(
+                                      presensi.selectedDate,
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: const Text(
-                                'Ganti Tanggal',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
+                            ),
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              icon: const Icon(Icons.chevron_right_rounded),
+                              onPressed: () => _shiftDateMurid(1),
                             ),
                           ],
                         ),
@@ -523,8 +538,13 @@ class _PresensiTabState extends State<PresensiTab>
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                           color: isDark
-                                              ? AppColors.violetAccent
-                                              : const Color(0xFF6D28D9),
+                                              ? AppColors.primaryDark
+                                              : const Color.fromARGB(
+                                                  255,
+                                                  35,
+                                                  180,
+                                                  47,
+                                                ),
                                         ),
                                       ),
                                     ),
@@ -578,53 +598,60 @@ class _PresensiTabState extends State<PresensiTab>
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     children: [
-                      // Date Switcher Bar
-                      GlassCard(
+                      // 1. DATE PICKER SELECTOR BAR
+                      Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF162016)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF263326)
+                                : const Color(0xFFE2E8F0),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_month_rounded,
-                                  size: 18,
-                                  color: isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  DateHelper.formatIndonesian(
-                                    presensi.selectedDateUstadz,
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              icon: const Icon(Icons.chevron_left_rounded),
+                              onPressed: () => _shiftDateUstadz(-1),
                             ),
-                            TextButton(
-                              onPressed: () => _pickDateUstadz(context),
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            GestureDetector(
+                              onTap: () => _pickDateUstadz(context),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 14,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    DateHelper.formatTanggalIndo(
+                                      presensi.selectedDateUstadz,
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: const Text(
-                                'Ganti Tanggal',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
+                            ),
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              icon: const Icon(Icons.chevron_right_rounded),
+                              onPressed: () => _shiftDateUstadz(1),
                             ),
                           ],
                         ),
@@ -968,18 +995,18 @@ class _PresensiTabState extends State<PresensiTab>
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
                                           color: isDark
-                                              ? AppColors.violetAccent
+                                              ? AppColors.primaryDark
                                                     .withValues(alpha: 0.4)
                                               : const Color(0xFFD8B4FE),
                                         ),
                                       ),
                                       child: Text(
-                                        '⭐ Ruangan Binaan (Tanggung Jawab Wali Ruangan)',
+                                        'Ruangan Binaan (Tanggung Jawab Wali Ruangan)',
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                           color: isDark
-                                              ? AppColors.violetAccent
+                                              ? AppColors.primaryDark
                                               : const Color(0xFF6D28D9),
                                         ),
                                       ),

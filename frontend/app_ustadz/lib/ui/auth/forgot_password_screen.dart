@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/haptic_helper.dart';
 import '../../providers/auth_provider.dart';
+import '../widgets/custom_app_bar.dart';
 import '../widgets/glass_card.dart';
 import 'verify_otp_screen.dart';
 
@@ -89,16 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Lupa Kata Sandi',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: const CustomAppBar(titleText: 'Lupa Kata Sandi'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),

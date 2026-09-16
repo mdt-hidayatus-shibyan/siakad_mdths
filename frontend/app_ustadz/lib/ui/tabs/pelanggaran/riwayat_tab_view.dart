@@ -34,10 +34,15 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
   }
 
   void _loadData() {
+    final provider = context.read<PelanggaranProvider>();
+    final ruanganList = provider.ruanganList;
+    if (_selectedRuanganId == null && ruanganList.isNotEmpty) {
+      _selectedRuanganId = ruanganList.first.id;
+    }
     final kategoriParam = _selectedKategori == 'Semua'
         ? null
         : _selectedKategori;
-    context.read<PelanggaranProvider>().fetchRiwayat(
+    provider.fetchRiwayat(
       search: _searchController.text.trim(),
       kategori: kategoriParam,
       ruanganId: _selectedRuanganId,
@@ -50,6 +55,10 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
     final provider = context.watch<PelanggaranProvider>();
     final riwayatList = provider.riwayatList;
     final ruanganList = provider.ruanganList;
+
+    if (_selectedRuanganId == null && ruanganList.isNotEmpty) {
+      _selectedRuanganId = ruanganList.first.id;
+    }
 
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
@@ -116,7 +125,7 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
                 }),
                 const SizedBox(width: 6),
                 if (ruanganList.isNotEmpty)
-                  PopupMenuButton<int?>(
+                  PopupMenuButton<int>(
                     tooltip: 'Filter Ruangan',
                     initialValue: _selectedRuanganId,
                     onSelected: (val) {
@@ -124,15 +133,8 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
                       _loadData();
                     },
                     itemBuilder: (ctx) => [
-                      const PopupMenuItem<int?>(
-                        value: null,
-                        child: Text(
-                          'Semua Ruangan',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ),
                       ...ruanganList.map(
-                        (r) => PopupMenuItem<int?>(
+                        (r) => PopupMenuItem<int>(
                           value: r.id,
                           child: Text(
                             r.namaRuangan,
@@ -147,18 +149,18 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: _selectedRuanganId != null
-                            ? AppColors.amberAccent.withValues(alpha: 0.15)
-                            : (isDark
-                                  ? const Color(0xFF1E293B)
-                                  : const Color(0xFFF1F5F9)),
+                        color:
+                            (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight)
+                                .withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: _selectedRuanganId != null
-                              ? AppColors.amberAccent.withValues(alpha: 0.4)
-                              : (isDark
-                                    ? const Color(0xFF334155)
-                                    : const Color(0xFFE2E8F0)),
+                          color:
+                              (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  .withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
@@ -167,30 +169,34 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
                           Icon(
                             Icons.meeting_room_rounded,
                             size: 14,
-                            color: _selectedRuanganId != null
-                                ? AppColors.amberAccent
-                                : null,
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _selectedRuanganId != null
-                                ? (ruanganList
-                                      .firstWhere(
-                                        (r) => r.id == _selectedRuanganId,
-                                        orElse: () => ruanganList.first,
-                                      )
-                                      .namaRuangan)
-                                : 'Pilih Ruangan',
+                            ruanganList
+                                .firstWhere(
+                                  (r) => r.id == _selectedRuanganId,
+                                  orElse: () => ruanganList.first,
+                                )
+                                .namaRuangan,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: _selectedRuanganId != null
-                                  ? AppColors.amberAccent
-                                  : null,
+                              color: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
                             ),
                           ),
                           const SizedBox(width: 2),
-                          const Icon(Icons.arrow_drop_down_rounded, size: 16),
+                          Icon(
+                            Icons.arrow_drop_down_rounded,
+                            size: 16,
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                          ),
                         ],
                       ),
                     ),

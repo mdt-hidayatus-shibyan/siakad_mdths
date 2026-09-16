@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/presensi_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
-
 import '../../widgets/shimmer_loading.dart';
 import '../../widgets/status_presensi_chip.dart';
 
@@ -71,81 +71,90 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
     final presensi = context.watch<PresensiProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.mapel,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '${widget.ruangan} • ${widget.jam}',
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark
-                    ? const Color(0xFF8D9387)
-                    : const Color(0xFF73796E),
-              ),
-            ),
-          ],
-        ),
+      appBar: CustomAppBar(
+        titleText: widget.mapel,
+        subtitleText: '${widget.ruangan} • ${widget.jam}',
         actions: [
-          // Quick Actions Menu
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded),
-            tooltip: 'Aksi Cepat',
-            onSelected: (val) {
-              if (val == 'hadir') {
-                presensi.setSemuaHadir();
-              } else if (val == 'kosong') {
-                presensi.setSemuaKosong();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'hadir',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.done_all_rounded,
-                      size: 18,
-                      color: AppColors.hadirTextLight,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Hadirkan Semua',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDark ? const Color(0xFF1A211A) : Colors.white,
+              border: Border.all(
+                color: isDark ? AppColors.outlineDark : const Color(0xFFE2E8F0),
+                width: 1,
               ),
-              const PopupMenuItem(
-                value: 'kosong',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.clear_all_rounded,
-                      size: 18,
-                      color: AppColors.amberAccent,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Kosongkan Semua',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
+              ],
+            ),
+            child: PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                Icons.more_vert_rounded,
+                size: 20,
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
               ),
-            ],
+              tooltip: 'Aksi Cepat',
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              onSelected: (val) {
+                if (val == 'hadir') {
+                  presensi.setSemuaHadir();
+                } else if (val == 'kosong') {
+                  presensi.setSemuaKosong();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'hadir',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.done_all_rounded,
+                        size: 18,
+                        color: AppColors.hadirTextLight,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Hadirkan Semua',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'kosong',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.clear_all_rounded,
+                        size: 18,
+                        color: AppColors.amberAccent,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Kosongkan Semua',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 4),
         ],
       ),
       body: Stack(

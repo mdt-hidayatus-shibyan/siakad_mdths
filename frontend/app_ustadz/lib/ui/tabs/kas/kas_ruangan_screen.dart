@@ -5,6 +5,7 @@ import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/kas_ruangan_model.dart';
 import '../../../providers/kas_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/shimmer_loading.dart';
@@ -128,7 +129,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                         color: AppColors.primaryLight.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.tune_rounded,
                         color: AppColors.primaryLight,
                         size: 20,
@@ -384,7 +385,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                         ),
                         label: Text(
                           'Lunasi Sisa (${_formatRupiah(sisa)})',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.primaryLight,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1047,13 +1048,13 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       children: [
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.info_outline_rounded,
                               color: AppColors.primaryLight,
                               size: 18,
                             ),
                             const SizedBox(width: 8),
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 'Uang Fisik Kas di Tangan Wali:',
                                 style: TextStyle(
@@ -1065,7 +1066,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                             ),
                             Text(
                               _formatRupiah(sisaDiWali),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.primaryLight,
@@ -1174,7 +1175,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                         ),
                         label: Text(
                           'Setor Semua (${_formatRupiah(sisaDiWali)})',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.primaryLight,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1554,29 +1555,14 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
     final roomList = kas.ringkasan?.ruanganList ?? [];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Kas Ruangan',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              kas.ringkasan?.namaRuangan ?? 'Kelas Binaan',
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark
-                    ? const Color(0xFF8D9387)
-                    : const Color(0xFF73796E),
-              ),
-            ),
-          ],
-        ),
+      appBar: CustomAppBar(
+        titleText: 'Kas Ruangan',
+        subtitleText: kas.ringkasan?.namaRuangan ?? 'Kelas Binaan',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_rounded),
+          CircularIconButton(
+            icon: Icons.tune_rounded,
             tooltip: 'Pengaturan Target Kas',
+            iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
             onPressed: _openPengaturanSheet,
           ),
         ],
@@ -1648,18 +1634,22 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
               _tabController.animateTo(idx);
               setState(() {});
             },
-            items: const [
+            items: [
               SegmentedTabItem(
                 activeIcon: Icons.payments_rounded,
                 inactiveIcon: Icons.payments_outlined,
                 label: 'Bayar Kas',
-                activeColor: AppColors.primaryLight,
+                activeColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
               ),
               SegmentedTabItem(
                 activeIcon: Icons.account_balance_rounded,
                 inactiveIcon: Icons.account_balance_outlined,
                 label: 'Setor ke Tabungan',
-                activeColor: AppColors.skyBlueAccent,
+                activeColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
               ),
             ],
           ),
@@ -1720,7 +1710,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               ),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.account_balance_wallet_rounded,
                               color: AppColors.primaryLight,
                               size: 20,
@@ -2240,7 +2230,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       gradient: LinearGradient(
                         colors: isDark
                             ? const [Color(0xFF1B381E), Color(0xFF0F2313)]
-                            : const [AppColors.primaryLight, Color(0xFF1B6A35)],
+                            : [AppColors.primaryLight, const Color(0xFF1B6A35)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),

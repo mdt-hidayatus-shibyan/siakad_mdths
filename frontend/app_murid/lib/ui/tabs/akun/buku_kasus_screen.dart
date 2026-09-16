@@ -7,6 +7,7 @@ import '../../../data/models/pelanggaran_model.dart';
 import '../../../providers/akademik_provider.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../widgets/child_switcher_bar.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass_card.dart';
 import 'hubungi_admin_screen.dart';
@@ -31,15 +32,13 @@ class _BukuKasusScreenState extends State<BukuKasusScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-      appBar: AppBar(
-        title: const Text('Buku Kasus & Kedisiplinan'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+      appBar: CustomAppBar(
+        titleText: 'Buku Kasus & Kedisiplinan',
+        subtitleText: 'Riwayat Catatan Disiplin Murid',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline_rounded, size: 20),
+          CircularIconButton(
+            icon: Icons.info_outline_rounded,
+            iconSize: 20,
             tooltip: 'Pedoman Poin Kedisiplinan',
             onPressed: () => _showPedomanPoinModal(context, isDark),
           ),

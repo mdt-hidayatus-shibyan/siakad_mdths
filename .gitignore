@@ -52,6 +52,7 @@ backend/.phpstorm.meta.php
 **/ios/Flutter/Generated.xcconfig
 **/ios/Flutter/flutter_export_environment.sh
 
+# Internal Documentation & Notes
 BACKEND_GUIDELINES.md
 FRONTEND_APP_MURID.md
 FRONTEND_APP_USTADZ.md

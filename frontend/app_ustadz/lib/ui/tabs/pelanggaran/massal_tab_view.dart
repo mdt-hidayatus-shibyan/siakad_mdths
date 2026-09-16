@@ -218,7 +218,7 @@ class _MassalTabViewState extends State<MassalTabView> {
                                   ),
                                 ),
                                 trailing: isSelected
-                                    ? const Icon(
+                                    ? Icon(
                                         Icons.check_circle_rounded,
                                         color: AppColors.primaryLight,
                                       )
@@ -352,12 +352,16 @@ class _MassalTabViewState extends State<MassalTabView> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.amberAccent.withValues(alpha: 0.15),
+                  color:
+                      (isDark ? AppColors.primaryDark : AppColors.primaryLight)
+                          .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.group_add_rounded,
-                  color: AppColors.amberAccent,
+                  color: isDark
+                      ? AppColors.primaryDark
+                      : AppColors.primaryLight,
                   size: 22,
                 ),
               ),
@@ -582,8 +586,12 @@ class _MassalTabViewState extends State<MassalTabView> {
                     return CheckboxListTile(
                       dense: true,
                       value: isChecked,
-                      activeColor: AppColors.amberAccent,
-                      checkColor: Colors.black,
+                      activeColor: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
+                      checkColor: isDark
+                          ? AppColors.onPrimaryDark
+                          : Colors.white,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 0,
@@ -805,19 +813,21 @@ class _MassalTabViewState extends State<MassalTabView> {
                 ? null
                 : _handleSubmitMassal,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.amberAccent,
-              foregroundColor: Colors.black,
+              backgroundColor: isDark
+                  ? AppColors.primaryDark
+                  : AppColors.primaryLight,
+              foregroundColor: isDark ? AppColors.onPrimaryDark : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
             child: _isSaving
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.black,
+                      color: isDark ? AppColors.onPrimaryDark : Colors.white,
                     ),
                   )
                 : Row(

@@ -1,11 +1,13 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
     <link rel="icon" type="image/x-icon" href="{{ asset(getSetting('app_logo', 'assets/LOGO MDT.png')) }}" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cetak Rekap Kehadiran - {{ $ruanganTerpilih->nama_ruangan }}</title>
+    <title>Cetak Rekap Kehadiran - {{ $ruanganTerpilih->nama_ruangan }}
+        {{ $jadwalTerpilih ? '(' . ($jadwalTerpilih->mataPelajaran->nama_mapel ?? 'Jadwal') . ' - ' . $jadwalTerpilih->hari . ' Jam ' . $jadwalTerpilih->jam_ke . ')' : '' }}
+    </title>
     <!-- Font Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -39,7 +41,7 @@
             print-color-adjust: exact;
         }
 
-        /* Kop Surat (Sesuai Referensi) */
+        /* Kop Surat */
         .kop-surat {
             display: flex;
             justify-content: space-between;
@@ -165,11 +167,20 @@
             <img src="{{ asset(getSetting('kop_logo')) }}" alt="Logo Madrasah" class="kop-logo" />
         </div>
         <div class="kop-right">
-            <h1>REKAPITULASI PRESENSI MURID</h1>
+            <h1>{{ $jadwalTerpilih ? 'REKAPITULASI PRESENSI JADWAL PELAJARAN' : 'REKAPITULASI PRESENSI MURID' }}</h1>
             <p>Tahun Pelajaran: <strong>{{ $semesterTerpilih->tahunPelajaran->nama_hijriyah ?? '-' }} H |
                     {{ $semesterTerpilih->tahunPelajaran->nama_masehi ?? '-' }} M</strong></p>
             <p>Semester: <strong>{{ strtoupper($semesterTerpilih->nama_semester) }}</strong></p>
-            <p>Kelas / Ruang: <strong>{{ strtoupper($ruanganTerpilih->nama_ruangan) }}</strong></p>
+            <p>Ruangan: <strong>{{ strtoupper($ruanganTerpilih->nama_ruangan) }}</strong></p>
+            @if ($jadwalTerpilih)
+                <p>Mata Pelajaran: <strong>{{ strtoupper($jadwalTerpilih->mataPelajaran->nama_mapel ?? '-') }}</strong>
+                </p>
+                <p>Jadwal Pertemuan: <strong>{{ $jadwalTerpilih->hari }} (Jam
+                        Ke-{{ $jadwalTerpilih->jam_ke }})</strong></p>
+                <p>Guru Pengampu: <strong>{{ $jadwalTerpilih->ustadz->nama ?? '-' }}</strong></p>
+            @else
+                <p>Jadwal Pelajaran: <strong>SEMUA JADWAL PELAJARAN (AKUMULASI)</strong></p>
+            @endif
             <p>Bulan:
                 <strong>{{ $bulanTerpilih ? 'Bulan ' . $bulanTerpilih->nama_bulan : 'Satu Semester Penuh' }}</strong>
             </p>
@@ -184,7 +195,9 @@
                 <th rowspan="2" class="w-3">NISM</th>
                 <th rowspan="2" style="text-align: left; padding-left: 10px;">Nama Murid</th>
                 <th rowspan="2" class="w-1">L/P</th>
-                <th colspan="5">Akumulasi Kehadiran</th>
+                <th rowspan="2" class="w-1">Sesi</th>
+                <th colspan="5">Kehadiran</th>
+                <th rowspan="2" class="w-1">% Hadir</th>
                 <th rowspan="2" class="w-1">Poin</th>
             </tr>
             <tr>
@@ -197,28 +210,43 @@
         </thead>
         <tbody>
             @forelse ($murids as $murid)
-                @php $data = $rekap[$murid->id] ?? ['H'=>0,'S'=>0,'I'=>0,'A'=>0,'D'=>0,'akumulasi_poin'=>0]; @endphp
+                @php
+                    $data = $rekap[$murid->id] ?? [
+                        'H' => 0,
+                        'S' => 0,
+                        'I' => 0,
+                        'A' => 0,
+                        'D' => 0,
+                        'total_pertemuan' => 0,
+                        'persen_hadir' => 0,
+                        'akumulasi_poin' => 0,
+                    ];
+                @endphp
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td>{{ $murid->nism }}</td>
+                    <td>{{ $murid->nism ?? '-' }}</td>
                     <td class="text-left" style="padding-left: 10px;">
                         <div style="font-weight: 800; font-size: 12px; margin-bottom: 2px;">{{ $murid->nama_lengkap }}
                         </div>
                     </td>
                     <td>{{ $murid->jenis_kelamin }}</td>
+                    <td>{{ $data['total_pertemuan'] > 0 ? $data['total_pertemuan'] : '-' }}</td>
                     <td>{{ $data['H'] > 0 ? $data['H'] : '-' }}</td>
                     <td>{{ $data['S'] > 0 ? $data['S'] : '-' }}</td>
                     <td>{{ $data['I'] > 0 ? $data['I'] : '-' }}</td>
                     <td>{{ $data['A'] > 0 ? $data['A'] : '-' }}</td>
                     <td>{{ $data['D'] > 0 ? $data['D'] : '-' }}</td>
+                    <td style="font-weight: 700;">
+                        {{ $data['total_pertemuan'] > 0 ? $data['persen_hadir'] . '%' : '-' }}
+                    </td>
                     <td
-                        style="font-weight: 800; font-size: 12px; {{ $data['akumulasi_poin'] >= 5 ? 'color: #dc2626;' : '' }}">
-                        {{ $data['akumulasi_poin'] > 0 ? number_format($data['akumulasi_poin'], 1) : '-' }}
+                        style="font-weight: 800; font-size: 12px; {{ ($data['akumulasi_poin'] ?? 0) >= 5 ? 'color: #dc2626;' : '' }}">
+                        {{ ($data['akumulasi_poin'] ?? 0) > 0 ? number_format($data['akumulasi_poin'], 1) : '-' }}
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="10" style="padding: 20px; text-align: center; color: #64748b;">
+                    <td colspan="12" style="padding: 20px; text-align: center; color: #64748b;">
                         Tidak ada data murid di ruangan ini.
                     </td>
                 </tr>
@@ -253,13 +281,19 @@
                 </p>
             </td>
 
-            <!-- Kolom TTD Kanan (Wali Kelas) -->
+            <!-- Kolom TTD Kanan (Guru Pengampu / Wali Ruangan) -->
             <td style="width: 50%; border: none; text-align: center; vertical-align: top; padding-bottom: 0;">
                 <p style="margin: 0; font-size: 12px;">Somor Koneng,
                     {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
-                <p style="margin: 2px 0 6px 0; font-size: 12px; font-weight: bold;">Wali Kelas / Ruangan</p>
+                <p style="margin: 2px 0 6px 0; font-size: 12px; font-weight: bold;">
+                    {{ $jadwalTerpilih ? 'Guru / Ustadz Pengampu' : 'Wali Kelas / Ruangan' }}
+                </p>
                 <div style="min-height: 65px; display: flex; justify-content: center; align-items: center;">
-                    @if (!empty($waliUstadz?->id))
+                    @if ($jadwalTerpilih && !empty($jadwalTerpilih->ustadz?->id))
+                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(65)->generate(
+                            URL::signedRoute('profil.publik', ['tipe' => 'ustadz', 'id' => $jadwalTerpilih->ustadz->id]),
+                        ) !!}
+                    @elseif (!empty($waliUstadz?->id))
                         {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(65)->generate(
                             URL::signedRoute('profil.publik', ['tipe' => 'ustadz', 'id' => $waliUstadz->id]),
                         ) !!}
@@ -269,7 +303,7 @@
                 </div>
                 <p
                     style="margin: 6px 0 0 0; font-size: 12px; font-weight: bold; text-decoration: underline; text-transform: uppercase;">
-                    {{ $waliUstadz?->nama_lengkap ?? 'Nama Wali Kelas Belum Diatur' }}
+                    {{ $jadwalTerpilih ? $jadwalTerpilih->ustadz->nama ?? 'Nama Guru Belum Diatur' : $waliUstadz?->nama_lengkap ?? 'Nama Wali Kelas Belum Diatur' }}
                 </p>
             </td>
         </tr>

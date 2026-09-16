@@ -5,12 +5,14 @@ class StorageService {
   static const String _keyToken = 'auth_token';
   static const String _keyUser = 'auth_user';
   static const String _keyTheme = 'app_theme_mode';
+  static const String _keyColorPreset = 'app_color_preset';
   static const String _keyBaseUrl = 'custom_base_url';
 
   static SharedPreferences? _prefs;
   static String? _cachedToken;
   static Map<String, dynamic>? _cachedUser;
   static String? _cachedTheme;
+  static String? _cachedColorPreset;
   static String? _cachedBaseUrl;
 
   /// Inisialisasi awal SharedPreferences & populate in-memory cache saat app start
@@ -18,6 +20,7 @@ class StorageService {
     _prefs = await SharedPreferences.getInstance();
     _cachedToken = _prefs?.getString(_keyToken);
     _cachedTheme = _prefs?.getString(_keyTheme);
+    _cachedColorPreset = _prefs?.getString(_keyColorPreset);
     _cachedBaseUrl = _prefs?.getString(_keyBaseUrl);
 
     final userStr = _prefs?.getString(_keyUser);
@@ -93,6 +96,22 @@ class StorageService {
     _cachedTheme = prefs.getString(_keyTheme);
     return _cachedTheme;
   }
+
+  // --- COLOR PRESET ---
+  static Future<void> saveColorPreset(String presetKey) async {
+    _cachedColorPreset = presetKey;
+    final prefs = await _getPrefs();
+    await prefs.setString(_keyColorPreset, presetKey);
+  }
+
+  static Future<String?> getColorPreset() async {
+    if (_cachedColorPreset != null) return _cachedColorPreset;
+    final prefs = await _getPrefs();
+    _cachedColorPreset = prefs.getString(_keyColorPreset);
+    return _cachedColorPreset;
+  }
+
+  static String? getCachedColorPreset() => _cachedColorPreset;
 
   // --- BASE URL ---
   static Future<void> saveBaseUrl(String url) async {

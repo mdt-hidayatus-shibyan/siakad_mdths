@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/nilai_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
 
@@ -100,20 +101,10 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
     final nilai = context.watch<NilaiProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.mapelName,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '${widget.ruanganName} • ${widget.ujianName ?? nilai.selectedUjian?.namaUjian ?? "Ujian"}',
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
-            ),
-          ],
-        ),
+      appBar: CustomAppBar(
+        titleText: widget.mapelName,
+        subtitleText:
+            '${widget.ruanganName} • ${widget.ujianName ?? nilai.selectedUjian?.namaUjian ?? "Ujian"}',
       ),
       body: Stack(
         children: [
@@ -124,7 +115,7 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
             )
           else if (nilai.muridNilaiList.isEmpty)
             const Center(
-              child: Text('Tidak ada santri ditemukan untuk ruangan ini.'),
+              child: Text('Tidak ada murid ditemukan untuk ruangan ini.'),
             )
           else
             ListView.builder(

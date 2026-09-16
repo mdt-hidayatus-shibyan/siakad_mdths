@@ -73,6 +73,14 @@ class Ustadz extends Model
     }
 
     /**
+     * Accessor alias nama agar kompatibel untuk pemanggilan $ustadz->nama
+     */
+    public function getNamaAttribute()
+    {
+        return $this->nama_lengkap ?? null;
+    }
+
+    /**
      * Accessor URL foto ustadz yang konsisten untuk Web & Mobile
      */
     public function getFotoUrlAttribute()

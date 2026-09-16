@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/haptic_helper.dart';
 import '../../providers/auth_provider.dart';
+import '../widgets/custom_app_bar.dart';
 import '../widgets/glass_card.dart';
 import 'login_screen.dart';
 
@@ -92,12 +93,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Buat Kata Sandi Baru',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: const CustomAppBar(titleText: 'Buat Kata Sandi Baru'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),

@@ -129,15 +129,15 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
                     Icon(
                       Icons.filter_list_rounded,
                       size: 18,
                       color: AppColors.primaryLight,
                     ),
-                    SizedBox(width: 8),
-                    Text(
+                    const SizedBox(width: 8),
+                    const Text(
                       'Pilih Ruangan Kelas & Agenda Ujian',
                       style: TextStyle(
                         fontSize: 13,
@@ -617,7 +617,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                         }
                       },
                       itemBuilder: (ctx) => [
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'hadir',
                           child: Row(
                             children: [
@@ -626,8 +626,8 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                                 size: 18,
                                 color: AppColors.primaryLight,
                               ),
-                              SizedBox(width: 8),
-                              Text(
+                              const SizedBox(width: 8),
+                              const Text(
                                 'Hadirkan Semua',
                                 style: TextStyle(fontSize: 12),
                               ),
@@ -873,8 +873,8 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                         if (context.mounted) {
                           if (success) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
+                              SnackBar(
+                                content: const Text(
                                   'Presensi Ujian murid dan pengawas berhasil disimpan!',
                                 ),
                                 backgroundColor: AppColors.primaryLight,
@@ -1044,13 +1044,14 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppColors.amberAccent.withValues(alpha: 0.12),
+                color: (isDark ? AppColors.primaryDark : AppColors.primaryLight)
+                    .withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.pending_actions_rounded,
                 size: 48,
-                color: AppColors.amberAccent,
+                color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
               ),
             ),
             const SizedBox(height: 16),

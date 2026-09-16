@@ -71,8 +71,10 @@ class _GantiPinAwalScreenState extends State<GantiPinAwalScreen> {
     if (res['success'] == true) {
       HapticHelper.heavy();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PIN Keamanan baru berhasil disimpan! Selamat datang.'),
+        SnackBar(
+          content: const Text(
+            'PIN Keamanan baru berhasil disimpan! Selamat datang.',
+          ),
           backgroundColor: AppColors.primaryLight,
           behavior: SnackBarBehavior.floating,
         ),

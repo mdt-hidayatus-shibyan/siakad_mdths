@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/anak_model.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 
 class BiodataAnakScreen extends StatelessWidget {
@@ -16,12 +17,9 @@ class BiodataAnakScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-      appBar: AppBar(
-        title: const Text('Biodata Murid'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+      appBar: const CustomAppBar(
+        titleText: 'Biodata Murid',
+        subtitleText: 'Identitas & Informasi Lengkap',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

@@ -9,7 +9,7 @@ class AppTheme {
 
   // === LIGHT THEME (Material 3 Expressive) ===
   static ThemeData get lightTheme {
-    const primaryColor = AppColors.primaryLight;
+    final primaryColor = AppColors.primaryLight;
     const surfaceColor = AppColors.surfaceLight;
     const onSurfaceColor = Color(0xFF191C19);
 
@@ -17,7 +17,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-      colorScheme: const ColorScheme.light(
+      colorScheme: ColorScheme.light(
         primary: primaryColor,
         onPrimary: AppColors.onPrimaryLight,
         primaryContainer: AppColors.primaryContainerLight,
@@ -57,7 +57,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        showDragHandle: true,
+        showDragHandle: false,
         dragHandleColor: Color(0xFFC3C8BC),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -77,7 +77,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
@@ -104,7 +104,7 @@ class AppTheme {
 
   // === DARK THEME (Super AMOLED True Black OLED) ===
   static ThemeData get darkTheme {
-    const primaryColor = AppColors.primaryDark;
+    final primaryColor = AppColors.primaryDark;
     const surfaceColor = AppColors.surfaceDark; // #000000 True Black
     const onSurfaceColor = Color(0xFFE2E3DD);
 
@@ -112,7 +112,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.dark(
         primary: primaryColor,
         onPrimary: AppColors.onPrimaryDark,
         primaryContainer: AppColors.primaryContainerDark,
@@ -152,7 +152,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        showDragHandle: true,
+        showDragHandle: false,
         dragHandleColor: Color(0xFF43483E),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -172,7 +172,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),

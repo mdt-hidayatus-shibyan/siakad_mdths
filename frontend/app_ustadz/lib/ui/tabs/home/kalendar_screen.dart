@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../core/utils/hijri_calendar_helper.dart';
 import '../../../data/models/akademik_model.dart';
 import '../../../providers/akademik_provider.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
 
@@ -129,15 +131,14 @@ class _KalendarScreenState extends State<KalendarScreen> {
     final selectedEvents = _getEventsForDate(_selectedDate, allEvents);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Kalender Pendidikan',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-        ),
+      appBar: CustomAppBar(
+        titleText: 'Kalender Pendidikan',
         actions: [
-          IconButton(
+          CircularIconButton(
             tooltip: 'Hari Ini',
-            icon: const Icon(Icons.today_rounded, size: 22),
+            icon: Icons.today_rounded,
+            iconSize: 20,
+            iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
             onPressed: _jumpToToday,
           ),
         ],
@@ -179,8 +180,8 @@ class _KalendarScreenState extends State<KalendarScreen> {
                               if (_mode == CalendarMode.hijri) ...[
                                 Text(
                                   '${HijriCalendarHelper.hijriMonthsMeta[_viewHMonthIndex - 1].ar} ${HijriCalendarHelper.toArabicDigits(_viewHYear)} هـ',
-                                  style: const TextStyle(
-                                    fontSize: 16,
+                                  style: GoogleFonts.amiri(
+                                    fontSize: 17,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: -0.3,
                                   ),
@@ -352,14 +353,18 @@ class _KalendarScreenState extends State<KalendarScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF0C2413)
-                          : const Color(0xFFDCFCE7),
+                      color:
+                          (isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight)
+                              .withValues(alpha: isDark ? 0.15 : 0.12),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark
-                            ? AppColors.primaryDark.withValues(alpha: 0.3)
-                            : AppColors.primaryLight.withValues(alpha: 0.2),
+                        color:
+                            (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight)
+                                .withValues(alpha: isDark ? 0.35 : 0.25),
                       ),
                     ),
                     child: Column(
@@ -387,8 +392,8 @@ class _KalendarScreenState extends State<KalendarScreen> {
                         const SizedBox(height: 4),
                         Text(
                           selectedHijri.fullArabicText,
-                          style: TextStyle(
-                            fontSize: 16,
+                          style: GoogleFonts.amiri(
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: isDark
                                 ? AppColors.primaryDark
@@ -683,15 +688,16 @@ class _KalendarScreenState extends State<KalendarScreen> {
     required bool isDark,
     required VoidCallback onTap,
   }) {
+    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
+    final onPrimary = isDark ? AppColors.onPrimaryDark : Colors.white;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
-          color: isActive
-              ? (isDark ? const Color(0xFF34D399) : const Color(0xFF10B981))
-              : Colors.transparent,
+          color: isActive ? primary : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -700,7 +706,7 @@ class _KalendarScreenState extends State<KalendarScreen> {
             fontSize: 11,
             fontWeight: FontWeight.bold,
             color: isActive
-                ? Colors.black
+                ? onPrimary
                 : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
           ),
         ),
@@ -892,28 +898,21 @@ class _KalendarScreenState extends State<KalendarScreen> {
     final events = _getEventsForDate(gDate, allEvents);
     final isFriday = (gDate.weekday == DateTime.friday);
     final hasHoliday = isFriday || events.any((e) => e.tipe == 'libur');
+    // Dynamic theme primary color
+    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
 
-    // Colors matching Web index.blade.php
     Color bgColor;
     Color textColor;
     Border? border;
 
     if (isToday) {
-      // Web: bg-primary/10 border-primary/30 text-primary
-      bgColor = isDark ? const Color(0xFF0F2B14) : const Color(0xFFDCFCE7);
-      textColor = isDark ? const Color(0xFF34D399) : const Color(0xFF059669);
-      border = Border.all(
-        color: isDark ? const Color(0xFF059669) : const Color(0xFF10B981),
-        width: 1.2,
-      );
+      bgColor = primary.withValues(alpha: isDark ? 0.20 : 0.12);
+      textColor = primary;
+      border = Border.all(color: primary, width: 1.3);
     } else if (isSelected) {
-      // Web: bg-zinc-800 dark:bg-zinc-100 border-zinc-800 dark:border-zinc-100 text-white dark:text-zinc-900
       bgColor = isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B);
       textColor = isDark ? const Color(0xFF0F172A) : Colors.white;
-      border = Border.all(
-        color: isDark ? Colors.white : const Color(0xFF0F172A),
-        width: 1.2,
-      );
+      border = Border.all(color: primary, width: 1.3);
     } else {
       // Default cell
       bgColor = isDark ? const Color(0xFF111827) : Colors.white;
@@ -986,11 +985,17 @@ class _KalendarScreenState extends State<KalendarScreen> {
                 Center(
                   child: Text(
                     mainNumber,
-                    style: TextStyle(
-                      fontSize: isArabicMain ? 17 : 13,
-                      fontWeight: FontWeight.w900,
-                      color: textColor,
-                    ),
+                    style: isArabicMain
+                        ? GoogleFonts.amiri(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          )
+                        : TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            color: textColor,
+                          ),
                   ),
                 ),
 

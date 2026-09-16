@@ -12,8 +12,11 @@ import '../../../providers/kas_provider.dart';
 import '../../../providers/theme_provider.dart';
 import '../../auth/login_screen.dart';
 import '../../widgets/app_avatar.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/digital_signature_pad.dart';
 import '../../widgets/glass_card.dart';
+import '../laporan/laporan_pengampu_screen.dart';
+import '../laporan/laporan_ruangan_screen.dart';
 import 'hubungi_admin_screen.dart';
 
 class AkunTab extends StatefulWidget {
@@ -101,6 +104,158 @@ class _AkunTabState extends State<AkunTab> {
               isDark: isDark,
             ),
           ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showColorPresetDialog() {
+    HapticHelper.medium();
+    final themeProvider = context.read<ThemeProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.surfaceContainerDark : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.color_lens_rounded,
+              size: 22,
+              color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Pilih Warna Aplikasi',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: AppColors.presets.map((preset) {
+                final isSelected = themeProvider.colorPresetKey == preset.key;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: InkWell(
+                    onTap: () {
+                      HapticHelper.selection();
+                      themeProvider.setColorPreset(preset.key);
+                      Navigator.of(ctx).pop();
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? (isDark
+                                  ? preset.primaryDark.withValues(alpha: 0.2)
+                                  : preset.primaryLight.withValues(alpha: 0.1))
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected
+                              ? (isDark
+                                    ? preset.primaryDark
+                                    : preset.primaryLight)
+                              : (isDark ? Colors.white12 : Colors.black12),
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? preset.primaryDark
+                                  : preset.primaryLight,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      (isDark
+                                              ? preset.primaryDark
+                                              : preset.primaryLight)
+                                          .withValues(alpha: 0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: isSelected
+                                ? const Icon(
+                                    Icons.check_rounded,
+                                    size: 16,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  preset.name,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w900
+                                        : FontWeight.w700,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  preset.subtitle,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: isDark
+                                        ? Colors.white54
+                                        : Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 18,
+                              color: isDark
+                                  ? preset.primaryDark
+                                  : preset.primaryLight,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -256,7 +411,7 @@ class _AkunTabState extends State<AkunTab> {
                     color: AppColors.primaryLight.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.camera_alt_rounded,
                     color: AppColors.primaryLight,
                   ),
@@ -354,8 +509,8 @@ class _AkunTabState extends State<AkunTab> {
     if (success) {
       HapticHelper.confirmSuccess();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Foto profil berhasil diperbarui!'),
+        SnackBar(
+          content: const Text('Foto profil berhasil diperbarui!'),
           backgroundColor: AppColors.primaryLight,
         ),
       );
@@ -707,8 +862,8 @@ class _AkunTabState extends State<AkunTab> {
                                 Navigator.pop(ctx);
                                 HapticHelper.confirmSuccess();
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
+                                  SnackBar(
+                                    content: const Text(
                                       'Biodata Ustadz berhasil diperbarui!',
                                     ),
                                     backgroundColor: AppColors.primaryLight,
@@ -876,8 +1031,8 @@ class _AkunTabState extends State<AkunTab> {
                                 Navigator.pop(ctx);
                                 HapticHelper.confirmSuccess();
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
+                                  SnackBar(
+                                    content: const Text(
                                       'Data akun login berhasil diperbarui!',
                                     ),
                                     backgroundColor: AppColors.primaryLight,
@@ -1071,8 +1226,8 @@ class _AkunTabState extends State<AkunTab> {
                               if (success) {
                                 HapticHelper.confirmSuccess();
                                 messenger.showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
+                                  SnackBar(
+                                    content: const Text(
                                       'Tanda tangan digital berhasil diperbarui!',
                                     ),
                                     backgroundColor: AppColors.primaryLight,
@@ -1138,8 +1293,8 @@ class _AkunTabState extends State<AkunTab> {
                               HapticHelper.confirmSuccess();
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
+                                  SnackBar(
+                                    content: const Text(
                                       'Tanda tangan digital berhasil disimpan!',
                                     ),
                                     backgroundColor: AppColors.primaryLight,
@@ -1253,7 +1408,7 @@ class _AkunTabState extends State<AkunTab> {
                             ),
                           ),
                           Text(
-                            'Ruangan: ${pengaturan?.namaRuangan ?? "Kelas Binaan"}',
+                            'Ruangan: ${pengaturan?.namaRuangan ?? "Ruangan Binaan"}',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -1277,11 +1432,13 @@ class _AkunTabState extends State<AkunTab> {
                   TextFormField(
                     controller: nominalLakiController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Nominal Kas Murid Putra (Rp) *',
                       prefixIcon: Icon(
                         Icons.payments_rounded,
-                        color: AppColors.skyBlueAccent,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
                       ),
                       hintText: 'Contoh: 50000',
                     ),
@@ -1301,11 +1458,13 @@ class _AkunTabState extends State<AkunTab> {
                   TextFormField(
                     controller: nominalPerempuanController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Nominal Kas Murid Putri (Rp) *',
                       prefixIcon: Icon(
                         Icons.payments_rounded,
-                        color: Color(0xFFF43F5E),
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
                       ),
                       hintText: 'Contoh: 50000',
                     ),
@@ -1347,11 +1506,13 @@ class _AkunTabState extends State<AkunTab> {
                                 Navigator.pop(ctx);
                                 HapticHelper.confirmSuccess();
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
+                                  SnackBar(
+                                    content: const Text(
                                       'Pengaturan nominal kas ruangan berhasil disimpan!',
                                     ),
-                                    backgroundColor: AppColors.primaryLight,
+                                    backgroundColor: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
                                   ),
                                 );
                               } else {
@@ -1566,8 +1727,8 @@ class _AkunTabState extends State<AkunTab> {
                                 Navigator.pop(ctx);
                                 HapticHelper.confirmSuccess();
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
+                                  SnackBar(
+                                    content: const Text(
                                       'Kata sandi akun berhasil diperbarui!',
                                     ),
                                     backgroundColor: AppColors.primaryLight,
@@ -1722,12 +1883,7 @@ class _AkunTabState extends State<AkunTab> {
     final pengaturanKas = kasProvider.pengaturan;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Akun & Pengaturan',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: const CustomAppBar(titleText: 'Akun & Pengaturan'),
       body: RefreshIndicator(
         onRefresh: () async {
           final auth = context.read<AuthProvider>();
@@ -1753,7 +1909,7 @@ class _AkunTabState extends State<AkunTab> {
                       AppAvatar(
                         radius: 38,
                         imageUrl: user?.photo,
-                        name: user?.name ?? 'Ustadz',
+                        name: user?.name ?? '-',
                         cacheDimension: 200,
                       ),
                       Positioned(
@@ -1829,8 +1985,8 @@ class _AkunTabState extends State<AkunTab> {
                           ),
                           child: Text(
                             user?.isWaliRuangan == true
-                                ? '⭐ Wali Ruangan: ${user?.ruanganWali ?? "-"}'
-                                : 'Pengajar Mata Pelajaran',
+                                ? 'Wali Ruangan: ${user?.ruanganWali ?? "-"}'
+                                : 'Ustadz',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -2007,7 +2163,7 @@ class _AkunTabState extends State<AkunTab> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.verified_rounded,
                           size: 15,
                           color: AppColors.primaryLight,
@@ -2111,7 +2267,6 @@ class _AkunTabState extends State<AkunTab> {
                     label: 'Username Login',
                     value: user?.username != null ? '@${user!.username}' : '-',
                     isDark: isDark,
-                    iconColor: AppColors.skyBlueAccent,
                     onCopy: user?.username != null
                         ? () => _copyToClipboard(user!.username!, 'Username')
                         : null,
@@ -2122,7 +2277,6 @@ class _AkunTabState extends State<AkunTab> {
                     label: 'Alamat Email Terdaftar',
                     value: user?.email ?? '-',
                     isDark: isDark,
-                    iconColor: AppColors.skyBlueAccent,
                     onCopy: user?.email != null
                         ? () => _copyToClipboard(user!.email!, 'Email')
                         : null,
@@ -2133,13 +2287,19 @@ class _AkunTabState extends State<AkunTab> {
                     leading: Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: AppColors.amberAccent.withValues(alpha: 0.12),
+                        color:
+                            (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight)
+                                .withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.lock_reset_rounded,
                         size: 16,
-                        color: AppColors.amberAccent,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
                       ),
                     ),
                     title: const Text(
@@ -2165,6 +2325,138 @@ class _AkunTabState extends State<AkunTab> {
             // 5. KARTU PENGATURAN KAS RUANGAN (KHUSUS WALI RUANGAN)
             // =================================================================
             if (user?.isWaliRuangan == true) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Pusat Laporan Ruangan',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          (isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight)
+                              .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'Wali Ruangan',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              GlassCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                child: Column(
+                  children: [
+                    if (user?.isWaliRuangan == true) ...[
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.admin_panel_settings_rounded,
+                            size: 18,
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                          ),
+                        ),
+                        title: Text(
+                          'Laporan ${user?.ruanganWali ?? "Ruangan"}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Presensi kelas, ustadz pengajar, leger, & pelanggaran',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () {
+                          HapticHelper.light();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LaporanRuanganScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                    ],
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color:
+                              (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.assessment_rounded,
+                          size: 18,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
+                      ),
+                      title: const Text(
+                        'Laporan Pengampu',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Presensi murid diampu, kehadiran mengajar, & nilai ujian',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () {
+                        HapticHelper.light();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const LaporanPengampuScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -2196,7 +2488,6 @@ class _AkunTabState extends State<AkunTab> {
                       label: 'Ruangan Binaan',
                       value: user?.ruanganWali ?? 'Kelas Binaan',
                       isDark: isDark,
-                      iconColor: AppColors.primaryLight,
                     ),
                     const Divider(height: 1),
                     _buildDetailRow(
@@ -2206,7 +2497,6 @@ class _AkunTabState extends State<AkunTab> {
                         pengaturanKas?.nominalLaki ?? 50000,
                       ),
                       isDark: isDark,
-                      iconColor: AppColors.skyBlueAccent,
                     ),
                     const Divider(height: 1),
                     _buildDetailRow(
@@ -2216,7 +2506,6 @@ class _AkunTabState extends State<AkunTab> {
                         pengaturanKas?.nominalPerempuan ?? 50000,
                       ),
                       isDark: isDark,
-                      iconColor: const Color(0xFFF43F5E),
                     ),
                   ],
                 ),
@@ -2239,13 +2528,19 @@ class _AkunTabState extends State<AkunTab> {
                 leading: Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    color:
+                        (isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight)
+                            .withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.support_agent_rounded,
                     size: 18,
-                    color: Color(0xFF10B981),
+                    color: isDark
+                        ? AppColors.primaryDark
+                        : AppColors.primaryLight,
                   ),
                 ),
                 title: const Text(
@@ -2295,7 +2590,7 @@ class _AkunTabState extends State<AkunTab> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
-                        Icons.palette_outlined,
+                        Icons.brightness_6_rounded,
                         size: 16,
                         color: isDark
                             ? AppColors.primaryDark
@@ -2315,6 +2610,73 @@ class _AkunTabState extends State<AkunTab> {
                     ),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: _showThemeDialog,
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? themeProvider.activePreset.primaryDark
+                            : themeProvider.activePreset.primaryLight,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? Colors.white24 : Colors.black12,
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                (isDark
+                                        ? themeProvider.activePreset.primaryDark
+                                        : themeProvider
+                                              .activePreset
+                                              .primaryLight)
+                                    .withValues(alpha: 0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.palette_rounded,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                    title: const Text(
+                      'Warna Aksen Aplikasi',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      '${themeProvider.activePreset.name} • ${themeProvider.activePreset.subtitle}',
+                      style: const TextStyle(fontSize: 11),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? themeProvider.activePreset.primaryDark
+                                : themeProvider.activePreset.primaryLight,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.chevron_right_rounded),
+                      ],
+                    ),
+                    onTap: _showColorPresetDialog,
                   ),
                 ],
               ),

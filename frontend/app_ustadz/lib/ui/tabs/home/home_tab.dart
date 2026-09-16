@@ -13,13 +13,14 @@ import '../../widgets/shimmer_loading.dart';
 import '../akademik/jadwal_pelajaran_screen.dart';
 import '../akademik/mata_pelajaran_screen.dart';
 import '../kas/kas_ruangan_screen.dart';
-import '../laporan/pusat_laporan_screen.dart';
 import '../murid/direktori_murid_screen.dart';
 import '../pelanggaran/referensi_pelanggaran_screen.dart';
 import '../presensi/form_presensi_screen.dart';
 import '../tagihan/tagihan_screen.dart';
 import '../tabungan/tabungan_screen.dart';
 import '../akun/hubungi_admin_screen.dart';
+import '../laporan/laporan_pengampu_screen.dart';
+import '../laporan/laporan_ruangan_screen.dart';
 import 'kalendar_screen.dart';
 import 'pengumuman_screen.dart';
 
@@ -71,18 +72,16 @@ class _HomeTabState extends State<HomeTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Assalamu\'alaikum,',
+                            user?.name ?? '-',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? const Color(0xFF8D9387)
-                                  : const Color(0xFF73796E),
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            user?.name ?? 'Ust. Ahmad Fauzi, S.Pd.I',
+                            'Wali Ruangan: ${user?.ruanganWali ?? "-"}',
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                             maxLines: 1,
@@ -95,15 +94,19 @@ class _HomeTabState extends State<HomeTab> {
                       icon: Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF10B981,
-                          ).withValues(alpha: 0.12),
+                          color:
+                              (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  .withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.support_agent_rounded,
                           size: 20,
-                          color: Color(0xFF10B981),
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
                         ),
                       ),
                       tooltip: 'Hubungi Admin & Pusat Bantuan',
@@ -141,45 +144,99 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                       ),
                       child: Text(
-                        '🕌 ${user?.tahunPelajaran ?? "1447/1448 H • Ganjil"}',
+                        user?.tahunPelajaran ?? '1447/1448 H • Ganjil',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    if (user?.isWaliRuangan ?? false)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF241538)
-                              : const Color(0xFFF3E8FF),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.violetAccent.withValues(alpha: 0.4)
-                                : const Color(0xFFD8B4FE),
-                          ),
-                        ),
-                        child: Text(
-                          '⭐ Wali Ruangan: ${user?.ruanganWali ?? "2 B TPQ"}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? AppColors.violetAccent
-                                : const Color(0xFF6D28D9),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
                 const SizedBox(height: 18),
 
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.campaign_rounded,
+                          size: 19,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Pengumuman Terkini',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        HapticHelper.light();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PengumumanScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Lihat Semua',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                if (dashboard.isLoading)
+                  const ShimmerLoadingList(count: 2, height: 85)
+                else if (dashboard.dashboardData?.pengumumanList.isEmpty ??
+                    true)
+                  GlassCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 18,
+                            color: isDark
+                                ? const Color(0xFF8D9387)
+                                : const Color(0xFF73796E),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Belum ada pengumuman baru saat ini.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? const Color(0xFF8D9387)
+                                  : const Color(0xFF73796E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ...dashboard.dashboardData!.pengumumanList.map(
+                    (p) => _buildPengumumanCard(context, p, isDark),
+                  ),
+                const SizedBox(height: 10),
                 // 2. Jadwal Mengajar Hari Ini
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -330,141 +387,187 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                 const SizedBox(height: 22),
 
-                // 3. Menu Cepat 4-Grid (Ustadz Umum & Wali Ruangan)
-                const Text(
-                  'Menu Cepat',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                // 3. Menu Cepat (Ustadz Umum & Wali Ruangan)
+                Row(
+                  children: [
+                    Icon(
+                      Icons.widgets_rounded,
+                      size: 19,
+                      color: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Menu Cepat',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _buildQuickAction(
-                      Icons.event_note_rounded,
-                      'Kalender',
-                      isDark
-                          ? const Color(0xFF0C243B)
-                          : const Color(0xFFE0F2FE),
-                      isDark
-                          ? AppColors.skyBlueAccent
-                          : const Color(0xFF0284C7),
-                      () {
-                        HapticHelper.light();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const KalendarScreen(),
+                GlassCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 14,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          _buildQuickAction(
+                            icon: Icons.calendar_month_rounded,
+                            label: 'Kalender',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const KalendarScreen(),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildQuickAction(
-                      Icons.gavel_rounded,
-                      'Ref. Sanksi',
-                      isDark
-                          ? const Color(0xFF380C14)
-                          : const Color(0xFFFFE4E6),
-                      isDark ? const Color(0xFFF87171) : AppColors.roseDanger,
-                      () {
-                        HapticHelper.light();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ReferensiPelanggaranScreen(),
+                          _buildQuickAction(
+                            icon: Icons.gavel_rounded,
+                            label: 'Ref. Sanksi',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const ReferensiPelanggaranScreen(),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildQuickAction(
-                      Icons.menu_book_rounded,
-                      'Mapel',
-                      isDark
-                          ? const Color(0xFF241538)
-                          : const Color(0xFFF3E8FF),
-                      AppColors.violetAccent,
-                      () {
-                        HapticHelper.light();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MataPelajaranScreen(),
+                          _buildQuickAction(
+                            icon: Icons.menu_book_rounded,
+                            label: 'Mapel',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const MataPelajaranScreen(),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildQuickAction(
-                      Icons.schedule_rounded,
-                      'Jadwal',
-                      isDark
-                          ? const Color(0xFF0F2313)
-                          : AppColors.primaryContainerLight,
-                      isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                      () {
-                        HapticHelper.light();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const JadwalPelajaranScreen(),
+                          _buildQuickAction(
+                            icon: Icons.schedule_rounded,
+                            label: 'Jadwal',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const JadwalPelajaranScreen(),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          _buildQuickAction(
+                            icon: Icons.assessment_rounded,
+                            label: 'Laporan Pengampu',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const LaporanPengampuScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildQuickAction(
+                            icon: Icons.account_balance_wallet_rounded,
+                            label: 'Tabungan',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const TabunganScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildQuickAction(
+                            icon: Icons.campaign_rounded,
+                            label: 'Pengumuman',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PengumumanScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildQuickAction(
+                            icon: Icons.support_agent_rounded,
+                            label: 'Bantuan',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const HubungiAdminScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _buildQuickAction(
-                      Icons.account_balance_wallet_rounded,
-                      'Tabungan',
-                      isDark
-                          ? const Color(0xFF0F2313)
-                          : const Color(0xFFE8F5E9),
-                      isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                      () {
-                        HapticHelper.light();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const TabunganScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(child: SizedBox()),
-                    const SizedBox(width: 8),
-                    const Expanded(child: SizedBox()),
-                    const SizedBox(width: 8),
-                    const Expanded(child: SizedBox()),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
 
                 // Menu Tambahan Khusus Wali Ruangan
                 if (user?.isWaliRuangan ?? false) ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Wali Ruangan (${user?.ruanganWali ?? "Kelas Binaan"})',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.admin_panel_settings_rounded,
+                            size: 19,
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Wali Ruangan (${user?.ruanganWali ?? "-"})',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
-                          vertical: 2,
+                          vertical: 3,
                         ),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? const Color(0xFF241538)
-                              : const Color(0xFFF3E8FF),
-                          borderRadius: BorderRadius.circular(6),
+                              ? AppColors.primaryContainerDark
+                              : AppColors.primaryContainerLight,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           'Akses Khusus',
@@ -472,182 +575,83 @@ class _HomeTabState extends State<HomeTab> {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: isDark
-                                ? AppColors.violetAccent
-                                : const Color(0xFF6D28D9),
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
                           ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      _buildQuickAction(
-                        Icons.account_balance_wallet_rounded,
-                        'Kas Ruangan',
-                        isDark
-                            ? const Color(0xFF382305)
-                            : const Color(0xFFFEF3C7),
-                        isDark
-                            ? AppColors.amberAccent
-                            : const Color(0xFFD97706),
-                        () {
-                          HapticHelper.light();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const KasRuanganScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickAction(
-                        Icons.receipt_long_rounded,
-                        'Tagihan',
-                        isDark
-                            ? const Color(0xFF0C243B)
-                            : const Color(0xFFE0F2FE),
-                        isDark
-                            ? AppColors.skyBlueAccent
-                            : const Color(0xFF0284C7),
-                        () {
-                          HapticHelper.light();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => TagihanScreen(
-                                initialRuanganId: user?.ruanganWaliId,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickAction(
-                        Icons.people_alt_rounded,
-                        'Anggota Murid',
-                        isDark
-                            ? const Color(0xFF182218)
-                            : const Color(0xFFE8F5E9),
-                        isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                        () {
-                          HapticHelper.light();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DirektoriMuridScreen(
-                                ruanganId: user?.ruanganWaliId,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickAction(
-                        Icons.assessment_rounded,
-                        'Laporan',
-                        isDark
-                            ? const Color(0xFF0F2313)
-                            : AppColors.primaryContainerLight,
-                        isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                        () {
-                          HapticHelper.light();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => PusatLaporanScreen(
-                                initialRuanganId: user?.ruanganWaliId,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // 4. Pengumuman Madrasah
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
+                  GlassCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 14,
+                    ),
+                    child: Row(
                       children: [
-                        Icon(
-                          Icons.campaign_rounded,
-                          size: 19,
-                          color: AppColors.roseDanger,
+                        _buildQuickAction(
+                          icon: Icons.money_rounded,
+                          label: 'Kas Ruangan',
+                          isDark: isDark,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const KasRuanganScreen(),
+                              ),
+                            );
+                          },
                         ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Pengumuman Terkini',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        _buildQuickAction(
+                          icon: Icons.receipt_long_rounded,
+                          label: 'Tagihan',
+                          isDark: isDark,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => TagihanScreen(
+                                  initialRuanganId: user?.ruanganWaliId,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildQuickAction(
+                          icon: Icons.people_alt_rounded,
+                          label: 'Anggota Murid',
+                          isDark: isDark,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => DirektoriMuridScreen(
+                                  ruanganId: user?.ruanganWaliId,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildQuickAction(
+                          icon: Icons.admin_panel_settings_rounded,
+                          label: 'Laporan ${user?.ruanganWali ?? "Ruangan"}',
+                          isDark: isDark,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const LaporanRuanganScreen(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
-                    TextButton(
-                      onPressed: () {
-                        HapticHelper.light();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const PengumumanScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Lihat Semua',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                if (dashboard.isLoading)
-                  const ShimmerLoadingList(count: 2, height: 85)
-                else if (dashboard.dashboardData?.pengumumanList.isEmpty ??
-                    true)
-                  GlassCard(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 18,
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: 18,
-                            color: isDark
-                                ? const Color(0xFF8D9387)
-                                : const Color(0xFF73796E),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Belum ada pengumuman baru saat ini.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? const Color(0xFF8D9387)
-                                  : const Color(0xFF73796E),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  ...dashboard.dashboardData!.pengumumanList.map(
-                    (p) => _buildPengumumanCard(context, p, isDark),
                   ),
+                  const SizedBox(height: 20),
+                ],
+
                 const SizedBox(height: 20),
               ],
             ),
@@ -657,36 +661,69 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Widget _buildQuickAction(
-    IconData icon,
-    String label,
-    Color bg,
-    Color iconColor,
-    VoidCallback onTap,
-  ) {
+  Widget _buildQuickAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
+    final containerBg = isDark
+        ? AppColors.primaryContainerDark.withValues(alpha: 0.55)
+        : AppColors.primaryContainerLight.withValues(alpha: 0.85);
+    final borderColor = isDark
+        ? AppColors.primaryDark.withValues(alpha: 0.22)
+        : AppColors.primaryLight.withValues(alpha: 0.25);
+    final textColor = isDark
+        ? const Color(0xFFE2E8F0)
+        : const Color(0xFF1E293B);
+
     return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, size: 24, color: iconColor),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: iconColor,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticHelper.light();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: containerBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor, width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withValues(alpha: isDark ? 0.08 : 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(child: Icon(icon, size: 23, color: primary)),
                 ),
-              ),
-            ],
+                const SizedBox(height: 7),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

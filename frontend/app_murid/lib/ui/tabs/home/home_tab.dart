@@ -340,109 +340,105 @@ class HomeTab extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 10,
+                      vertical: 8,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'AKSES CEPAT',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.8,
-                            color: isDark ? Colors.white60 : Colors.black54,
-                          ),
-                        ),
-                        // Row 1: Keuangan & Koperasi
                         Row(
                           children: [
-                            Expanded(
-                              child: _buildQuickActionBtn(
-                                label: 'Kartu SPP',
-                                icon: Icons.credit_card_rounded,
-                                color: const Color(0xFF10B981),
-                                onTap: () => onNavigateTab?.call(1),
-                                isDark: isDark,
+                            Icon(
+                              Icons.widgets_rounded,
+                              size: 19,
+                              color: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'Akses Cepat',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildQuickActionBtn(
-                                label: 'Tabungan',
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        GlassCard(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 14,
+                          ),
+                          child: Row(
+                            children: [
+                              _buildQuickAction(
+                                icon: Icons.credit_card_rounded,
+                                label: 'Kartu SPP',
+                                isDark: isDark,
+                                onTap: () => onNavigateTab?.call(1),
+                              ),
+                              _buildQuickAction(
                                 icon: Icons.account_balance_wallet_rounded,
-                                color: const Color(0xFF0D9488),
+                                label: 'Tabungan',
+                                isDark: isDark,
                                 onTap: () {
-                                  HapticHelper.light();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (_) => const TabunganScreen(),
                                     ),
                                   );
                                 },
-                                isDark: isDark,
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildQuickActionBtn(
-                                label: 'Kas Ruangan',
+                              _buildQuickAction(
                                 icon: Icons.meeting_room_rounded,
-                                color: const Color(0xFF6366F1),
+                                label: 'Kas Ruangan',
+                                isDark: isDark,
                                 onTap: () {
-                                  HapticHelper.light();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (_) => const KasRuanganScreen(),
                                     ),
                                   );
                                 },
-                                isDark: isDark,
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildQuickActionBtn(
-                                label: 'Koperasi',
+                              _buildQuickAction(
                                 icon: Icons.storefront_rounded,
-                                color: const Color(0xFFEA580C),
+                                label: 'Koperasi',
+                                isDark: isDark,
                                 onTap: () {
-                                  HapticHelper.light();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (_) => const KoperasiScreen(),
                                     ),
                                   );
                                 },
-                                isDark: isDark,
                               ),
-                            ),
-
-                            const SizedBox(width: 8),
-                            Consumer<AkademikProvider>(
-                              builder: (ctx, akademik, _) {
-                                final rekap = akademik.rekapPelanggaran;
-                                String? badgeText;
-                                Color? badgeColor;
-                                if (rekap != null) {
-                                  if (rekap.totalPoin > 0) {
-                                    badgeText = '+${rekap.totalPoinFormatted}';
-                                    badgeColor = AppColors.roseDanger;
-                                  } else {
-                                    badgeText = '0';
-                                    badgeColor = const Color(0xFF10B981);
+                              Consumer<AkademikProvider>(
+                                builder: (ctx, akademik, _) {
+                                  final rekap = akademik.rekapPelanggaran;
+                                  String? badgeText;
+                                  Color? badgeColor;
+                                  if (rekap != null) {
+                                    if (rekap.totalPoin > 0) {
+                                      badgeText =
+                                          '+${rekap.totalPoinFormatted}';
+                                      badgeColor = AppColors.roseDanger;
+                                    } else {
+                                      badgeText = '0';
+                                      badgeColor = isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight;
+                                    }
                                   }
-                                }
 
-                                return Expanded(
-                                  child: _buildQuickActionBtn(
-                                    label: 'Buku Kasus',
+                                  return _buildQuickAction(
                                     icon: Icons.warning_amber_rounded,
-                                    color: AppColors.amberAccent,
+                                    label: 'Buku Kasus',
                                     badgeText: badgeText,
                                     badgeColor: badgeColor,
+                                    isDark: isDark,
                                     onTap: () {
-                                      HapticHelper.light();
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
                                           builder: (_) =>
@@ -450,12 +446,11 @@ class HomeTab extends StatelessWidget {
                                         ),
                                       );
                                     },
-                                    isDark: isDark,
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -504,84 +499,116 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionBtn({
-    required String label,
+  Widget _buildQuickAction({
     required IconData icon,
-    required Color color,
+    required String label,
     required VoidCallback onTap,
     required bool isDark,
+    Color? color,
     String? badgeText,
     Color? badgeColor,
   }) {
-    return InkWell(
-      onTap: () {
-        HapticHelper.light();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: GlassCard(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
-        borderRadius: 20,
-        child: Stack(
-          alignment: Alignment.topCenter,
-          clipBehavior: Clip.none,
-          children: [
-            Column(
+    final primary =
+        color ?? (isDark ? AppColors.primaryDark : AppColors.primaryLight);
+    final containerBg = isDark
+        ? AppColors.primaryContainerDark.withValues(alpha: 0.55)
+        : AppColors.primaryContainerLight.withValues(alpha: 0.85);
+    final borderColor = isDark
+        ? AppColors.primaryDark.withValues(alpha: 0.22)
+        : AppColors.primaryLight.withValues(alpha: 0.25);
+    final textColor = isDark
+        ? const Color(0xFFE2E8F0)
+        : const Color(0xFF1E293B);
+
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticHelper.light();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: containerBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: borderColor, width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primary.withValues(
+                              alpha: isDark ? 0.08 : 0.04,
+                            ),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(icon, size: 23, color: primary),
+                      ),
+                    ),
+                    if (badgeText != null)
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                badgeColor ??
+                                (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF1A211A)
+                                  : Colors.white,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Text(
+                            badgeText,
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 7),
                 Text(
                   label,
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ],
             ),
-            if (badgeText != null)
-              Positioned(
-                top: -6,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: badgeColor ?? color,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (badgeColor ?? color).withValues(alpha: 0.4),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    badgeText,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );

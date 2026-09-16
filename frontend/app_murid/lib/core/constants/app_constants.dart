@@ -9,11 +9,10 @@ class AppConstants {
   static const String keyToken = 'auth_token';
   static const String keyWaliData = 'wali_data';
   static const String keySelectedAnakId = 'selected_anak_id';
-  static const String keyCustomBaseUrl = 'custom_base_url';
-  static const String keyThemeMode = 'theme_mode';
+  static const String keyThemeMode = 'app_theme_mode';
+  static const String keyColorPreset = 'app_color_preset';
 
-  // Default Backend URL
-  static const String defaultBaseUrl = 'http://10.0.2.2:8000/api';
-  static const String productionBaseUrl =
-      'https://mdthidayatusshibyan.sch.id/api';
+  // Backend API Base URL (Edit alamat server Anda di sini)
+  static const String baseUrl = 'http://localhost:8000/api';
+  static const String defaultBaseUrl = baseUrl;
 }
