@@ -13,6 +13,6 @@ class AppConstants {
   static const String keyColorPreset = 'app_color_preset';
 
   // Backend API Base URL (Edit alamat server Anda di sini)
-  static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = 'https://mdt-hidayatus-shibyan.sch.id/api';
   static const String defaultBaseUrl = baseUrl;
 }
