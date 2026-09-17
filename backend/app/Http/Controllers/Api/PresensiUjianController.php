@@ -161,26 +161,31 @@ class PresensiUjianController extends Controller
                 ->where('ujian_id', $selectedUjianId)
                 ->where('level_id', $ruangan->level_id);
 
-            // Filter ketat: Hanya tampilkan mata pelajaran yang diampu atau diawasi oleh ustadz tersebut di ruangan ini
+            // Filter:
+            // Jika Ustadz adalah Wali Ruangan di ruangan ini: Tampilkan SELURUH mapel ujian di ruangan ini
+            // Jika Ustadz BUKAN Wali Ruangan: Hanya mapel yang diampunya di ruangan ini ATAU jadwal di mana ia menjadi pengawas / badal
             if ($ustadz) {
-                $mapelDiampuIds = JadwalPelajaran::where('ruangan_id', $ruangan->id)
-                    ->where('ustadz_id', $ustadz->id)
-                    ->pluck('mata_pelajaran_id')
-                    ->toArray();
+                $isWaliRuangan = ($ruangan->ustadz_id == $ustadz->id);
+                if (!$isWaliRuangan) {
+                    $mapelDiampuIds = JadwalPelajaran::where('ruangan_id', $ruangan->id)
+                        ->where('ustadz_id', $ustadz->id)
+                        ->pluck('mata_pelajaran_id')
+                        ->toArray();
 
-                $jadwalPengawasIds = PresensiPengawasUjian::where('ruangan_id', $ruangan->id)
-                    ->where(function ($q) use ($ustadz) {
-                        $q->where('ustadz_id', $ustadz->id)
-                            ->orWhere('ustadz_pengganti_id', $ustadz->id);
-                    })
-                    ->pluck('jadwal_ujian_id')
-                    ->toArray();
+                    $jadwalPengawasIds = PresensiPengawasUjian::where('ruangan_id', $ruangan->id)
+                        ->where(function ($q) use ($ustadz) {
+                            $q->where('ustadz_id', $ustadz->id)
+                                ->orWhere('ustadz_pengganti_id', $ustadz->id);
+                        })
+                        ->pluck('jadwal_ujian_id')
+                        ->toArray();
 
-                $queryJadwals->where(function ($q) use ($mapelDiampuIds, $jadwalPengawasIds, $ustadz) {
-                    $q->whereIn('mata_pelajaran_id', $mapelDiampuIds)
-                        ->orWhereIn('id', $jadwalPengawasIds)
-                        ->orWhere('ustadz_id', $ustadz->id);
-                });
+                    $queryJadwals->where(function ($q) use ($mapelDiampuIds, $jadwalPengawasIds, $ustadz) {
+                        $q->whereIn('mata_pelajaran_id', $mapelDiampuIds)
+                            ->orWhereIn('id', $jadwalPengawasIds)
+                            ->orWhere('ustadz_id', $ustadz->id);
+                    });
+                }
             }
 
             $jadwals = $queryJadwals->orderBy('tanggal_ujian', 'asc')
