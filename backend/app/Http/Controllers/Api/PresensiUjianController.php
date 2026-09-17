@@ -155,10 +155,36 @@ class PresensiUjianController extends Controller
 
         // 3. Ambil Jadwal Ujian untuk level ruangan ini
         if ($selectedUjianId && $ruangan) {
-            $jadwals = JadwalUjian::with(['mataPelajaran', 'pengawas'])
+            $ustadz = $user->ustadz;
+            $isWaliRuangan = ($ustadz && $ruangan->ustadz_id == $ustadz->id);
+
+            $queryJadwals = JadwalUjian::with(['mataPelajaran', 'pengawas'])
                 ->where('ujian_id', $selectedUjianId)
-                ->where('level_id', $ruangan->level_id)
-                ->orderBy('tanggal_ujian', 'asc')
+                ->where('level_id', $ruangan->level_id);
+
+            // Jika bukan wali ruangan, hanya tampilkan mata pelajaran yang diampu atau diawasi oleh ustadz tersebut
+            if (!$isWaliRuangan && $ustadz) {
+                $mapelDiampuIds = JadwalPelajaran::where('ruangan_id', $ruangan->id)
+                    ->where('ustadz_id', $ustadz->id)
+                    ->pluck('mata_pelajaran_id')
+                    ->toArray();
+
+                $jadwalPengawasIds = PresensiPengawasUjian::where('ruangan_id', $ruangan->id)
+                    ->where(function ($q) use ($ustadz) {
+                        $q->where('ustadz_id', $ustadz->id)
+                            ->orWhere('ustadz_pengganti_id', $ustadz->id);
+                    })
+                    ->pluck('jadwal_ujian_id')
+                    ->toArray();
+
+                $queryJadwals->where(function ($q) use ($mapelDiampuIds, $jadwalPengawasIds, $ustadz) {
+                    $q->whereIn('mata_pelajaran_id', $mapelDiampuIds)
+                        ->orWhereIn('id', $jadwalPengawasIds)
+                        ->orWhere('pengawas_id', $ustadz->id);
+                });
+            }
+
+            $jadwals = $queryJadwals->orderBy('tanggal_ujian', 'asc')
                 ->orderBy('waktu_mulai', 'asc')
                 ->get();
 

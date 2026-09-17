@@ -163,10 +163,21 @@ class NilaiUjianController extends Controller
             $totalMurid = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunPelajaranId)->count();
 
             if ($selectedUjianId) {
-                $jadwals = JadwalUjian::with(['mataPelajaran', 'pengawas'])
+                $queryJadwals = JadwalUjian::with(['mataPelajaran', 'pengawas'])
                     ->where('ujian_id', $selectedUjianId)
-                    ->where('level_id', $ruangan->level_id)
-                    ->orderBy('tanggal_ujian', 'asc')
+                    ->where('level_id', $ruangan->level_id);
+
+                // Jika bukan wali ruangan, hanya tampilkan mata pelajaran yang diampu oleh ustadz tersebut
+                if (!$isWaliRuangan && $user->ustadz) {
+                    $mapelDiampuIds = JadwalPelajaran::where('ruangan_id', $ruangan->id)
+                        ->where('ustadz_id', $user->ustadz->id)
+                        ->pluck('mata_pelajaran_id')
+                        ->toArray();
+
+                    $queryJadwals->whereIn('mata_pelajaran_id', $mapelDiampuIds);
+                }
+
+                $jadwals = $queryJadwals->orderBy('tanggal_ujian', 'asc')
                     ->get();
 
                 $jadwalList = $jadwals->map(function ($j) use ($selectedUjianId, $ruangan, $totalMurid) {
