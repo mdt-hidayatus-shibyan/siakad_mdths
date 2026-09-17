@@ -167,8 +167,8 @@ class NilaiUjianController extends Controller
                     ->where('ujian_id', $selectedUjianId)
                     ->where('level_id', $ruangan->level_id);
 
-                // Jika bukan wali ruangan, hanya tampilkan mata pelajaran yang diampu oleh ustadz tersebut
-                if (!$isWaliRuangan && $user->ustadz) {
+                // Filter ketat: Hanya tampilkan mata pelajaran yang diampu oleh ustadz tersebut di ruangan ini
+                if ($user->ustadz) {
                     $mapelDiampuIds = JadwalPelajaran::where('ruangan_id', $ruangan->id)
                         ->where('ustadz_id', $user->ustadz->id)
                         ->pluck('mata_pelajaran_id')
