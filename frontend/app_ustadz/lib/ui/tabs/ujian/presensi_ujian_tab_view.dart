@@ -122,7 +122,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 140),
         children: [
           // ===================================================================
-          // 1. FILTER RUANGAN KELAS (UTAMA) & AGENDA UJIAN
+          // 1. FILTER RUANGAN KELAS (UTAMA), AGENDA UJIAN & MATA PELAJARAN
           // ===================================================================
           GlassCard(
             padding: const EdgeInsets.all(16),
@@ -138,7 +138,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      'Pilih Ruangan Kelas & Agenda Ujian',
+                      'Pilih Ruangan, Agenda & Mata Pelajaran',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -210,6 +210,52 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                     }
                   },
                 ),
+
+                // 1.3 Dropdown Mata Pelajaran Ujian
+                if (provider.jadwalList.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    key: ValueKey(
+                      'jadwal_${provider.selectedRuanganId}_${provider.selectedUjianId}_${provider.selectedJadwalId}',
+                    ),
+                    initialValue:
+                        provider.jadwalList.any(
+                          (j) => j.id == provider.selectedJadwalId,
+                        )
+                        ? provider.selectedJadwalId
+                        : (provider.jadwalList.isNotEmpty
+                              ? provider.jadwalList.first.id
+                              : null),
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Mata Pelajaran Ujian',
+                      prefixIcon: Icon(Icons.quiz_rounded, size: 18),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    items: provider.jadwalList.map((j) {
+                      final dateStr =
+                          j.hariTanggalSingkat ?? j.tanggalUjian ?? '-';
+                      final timeStr = '${j.waktuMulai} - ${j.waktuSelesai}';
+                      return DropdownMenuItem<int>(
+                        value: j.id,
+                        child: Text(
+                          '${j.namaMapel} ($dateStr • $timeStr)',
+                          style: const TextStyle(fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        HapticHelper.light();
+                        provider.selectJadwal(val);
+                      }
+                    },
+                  ),
+                ],
               ],
             ),
           ),
@@ -224,164 +270,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
             _buildBelumAdaJadwalEmptyState(context, isDark, provider)
           else ...[
             // ===================================================================
-            // 3. PILIH MATA PELAJARAN / JADWAL UJIAN (Horizontal Selector)
-            // ===================================================================
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Mata Pelajaran Ujian',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  '${provider.jadwalList.length} Sesi Terjadwal',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark
-                        ? const Color(0xFF8D9387)
-                        : const Color(0xFF73796E),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            SizedBox(
-              height: 82,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: provider.jadwalList.length,
-                itemBuilder: (ctx, idx) {
-                  final j = provider.jadwalList[idx];
-                  final isSelected = provider.selectedJadwalId == j.id;
-
-                  return Container(
-                    width: 195,
-                    margin: const EdgeInsets.only(right: 10),
-                    child: InkWell(
-                      onTap: () {
-                        HapticHelper.segmentTick();
-                        provider.selectJadwal(j.id);
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 9,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? (isDark
-                                    ? const Color(0xFF0F2B14)
-                                    : AppColors.primaryContainerLight)
-                              : (isDark
-                                    ? const Color(0xFF101710)
-                                    : Colors.white),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isSelected
-                                ? (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight)
-                                : (isDark
-                                      ? AppColors.outlineDark
-                                      : AppColors.outlineLight),
-                            width: isSelected ? 1.8 : 1,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color:
-                                        (isDark
-                                                ? AppColors.primaryDark
-                                                : AppColors.primaryLight)
-                                            .withValues(alpha: 0.25),
-                                    blurRadius: 10,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              j.namaMapel,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected
-                                    ? (isDark
-                                          ? AppColors.primaryDark
-                                          : AppColors.primaryLight)
-                                    : null,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 11,
-                                  color: isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E),
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    j.hariTanggalSingkat ??
-                                        j.tanggalUjian ??
-                                        '-',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: isDark
-                                          ? const Color(0xFF8D9387)
-                                          : const Color(0xFF73796E),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.access_time_rounded,
-                                  size: 11,
-                                  color: isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${j.waktuMulai} - ${j.waktuSelesai}',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: isDark
-                                        ? const Color(0xFF8D9387)
-                                        : const Color(0xFF73796E),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // ===================================================================
-            // 4. CARD PENGAWAS UJIAN & BERITA ACARA
+            // 3. CARD PENGAWAS UJIAN & BERITA ACARA
             // ===================================================================
             if (provider.pengawas != null) ...[
               GlassCard(

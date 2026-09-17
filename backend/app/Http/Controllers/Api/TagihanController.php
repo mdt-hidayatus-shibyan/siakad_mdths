@@ -489,13 +489,49 @@ class TagihanController extends Controller
      */
     public function getNonSppMasterList(Request $request)
     {
+        $user = $request->user();
+        $ustadzId = $user->ustadz->id ?? null;
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $tahunId = $tahunAktif->id ?? 1;
 
-        $masters = PengaturanTagihan::where('tahun_pelajaran_id', $tahunId)
+        $ruangan = null;
+        if ($request->filled('ruangan_id')) {
+            $ruangan = Ruangan::with('level')->find($request->ruangan_id);
+        } elseif ($ustadzId) {
+            $ruangan = Ruangan::with('level')
+                ->where('tahun_pelajaran_id', $tahunId)
+                ->where('ustadz_id', $ustadzId)
+                ->first();
+        }
+
+        $mastersQuery = PengaturanTagihan::where('tahun_pelajaran_id', $tahunId)
             ->where('tipe', '!=', 'bulanan')
-            ->orderBy('id', 'asc')
-            ->get();
+            ->where(function ($q) {
+                $q->whereNull('sasaran')->orWhere('sasaran', 'murid');
+            });
+
+        if ($ruangan) {
+            $publishedMasterIds = TagihanMurid::where('ruangan_id', $ruangan->id)
+                ->whereNotNull('pengaturan_tagihan_id')
+                ->pluck('pengaturan_tagihan_id')
+                ->unique()
+                ->filter()
+                ->toArray();
+
+            $mastersQuery->where(function ($q) use ($ruangan, $publishedMasterIds) {
+                $q->where(function ($sq) use ($ruangan) {
+                    $sq->whereNull('level_id');
+                    if ($ruangan->level_id) {
+                        $sq->orWhere('level_id', $ruangan->level_id);
+                    }
+                });
+                if (!empty($publishedMasterIds)) {
+                    $q->orWhereIn('id', $publishedMasterIds);
+                }
+            });
+        }
+
+        $masters = $mastersQuery->orderBy('id', 'asc')->get();
 
         $data = $masters->map(fn($m) => [
             'id' => $m->id,
@@ -512,7 +548,7 @@ class TagihanController extends Controller
     }
 
     /**
-     * Ringkasan Tagihan Non-SPP Ruangan Binaan
+     * Ringkasan Tagihan Non-SPP Ruangan Binaan (Khusus Ruangan & Level Wali Terkait)
      */
     public function getNonSppRingkasan(Request $request)
     {
@@ -521,19 +557,27 @@ class TagihanController extends Controller
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $tahunId = $tahunAktif->id ?? 1;
 
+        // 1. Ambil ruangan binaan Ustadz (Wali Ruangan)
         $accessibleRuangans = Ruangan::with('level')
             ->where('tahun_pelajaran_id', $tahunId)
             ->where('ustadz_id', $ustadzId)
             ->get();
 
-        if ($accessibleRuangans->isEmpty()) {
+        if ($accessibleRuangans->isEmpty() && $ustadzId) {
             $accessibleRuangans = Ruangan::with('level')
                 ->where('ustadz_id', $ustadzId)
                 ->get();
         }
 
+        if ($accessibleRuangans->isEmpty()) {
+            $accessibleRuangans = Ruangan::with('level')
+                ->where('tahun_pelajaran_id', $tahunId)
+                ->get();
+        }
+
         if ($request->filled('ruangan_id')) {
-            $ruangan = $accessibleRuangans->firstWhere('id', $request->ruangan_id) ?? Ruangan::with('level')->find($request->ruangan_id);
+            $ruangan = $accessibleRuangans->firstWhere('id', $request->ruangan_id)
+                ?? Ruangan::with('level')->find($request->ruangan_id);
         } else {
             $ruangan = $accessibleRuangans->first();
         }
@@ -549,13 +593,42 @@ class TagihanController extends Controller
             ], 404);
         }
 
+        // 2. Filter Master Tagihan Non-SPP KHUSUS untuk Ruangan & Level ini saja
+        $publishedMasterIds = TagihanMurid::where('ruangan_id', $ruangan->id)
+            ->whereNotNull('pengaturan_tagihan_id')
+            ->pluck('pengaturan_tagihan_id')
+            ->unique()
+            ->filter()
+            ->toArray();
+
         $masters = PengaturanTagihan::where('tahun_pelajaran_id', $tahunId)
             ->where('tipe', '!=', 'bulanan')
+            ->where(function ($q) {
+                $q->whereNull('sasaran')->orWhere('sasaran', 'murid');
+            })
+            ->where(function ($q) use ($ruangan, $publishedMasterIds) {
+                $q->where(function ($sq) use ($ruangan) {
+                    $sq->whereNull('level_id');
+                    if ($ruangan->level_id) {
+                        $sq->orWhere('level_id', $ruangan->level_id);
+                    }
+                });
+                if (!empty($publishedMasterIds)) {
+                    $q->orWhereIn('id', $publishedMasterIds);
+                }
+            })
             ->orderBy('id', 'asc')
             ->get();
 
-        $selectedMasterId = $request->pengaturan_tagihan_id ?? ($masters->first()->id ?? null);
-        $selectedMaster = $masters->firstWhere('id', $selectedMasterId) ?? $masters->first();
+        // 3. Tentukan Master Tagihan yang dipilih
+        $selectedMasterId = $request->pengaturan_tagihan_id;
+        $selectedMaster = null;
+        if ($selectedMasterId) {
+            $selectedMaster = $masters->firstWhere('id', $selectedMasterId);
+        }
+        if (!$selectedMaster) {
+            $selectedMaster = $masters->first();
+        }
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
         $totalMurid = $murids->count();

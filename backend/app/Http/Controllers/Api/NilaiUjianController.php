@@ -12,6 +12,7 @@ use App\Models\Ujian\JadwalUjian;
 use App\Models\Ujian\NilaiUjian;
 use App\Models\Ujian\Ujian;
 use App\Repositories\MuridRuanganRepository;
+use App\Services\NilaiUjianService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -19,10 +20,12 @@ use Illuminate\Support\Facades\Validator;
 class NilaiUjianController extends Controller
 {
     protected $muridRuanganRepo;
+    protected $nilaiUjianService;
 
-    public function __construct(MuridRuanganRepository $muridRuanganRepo)
+    public function __construct(MuridRuanganRepository $muridRuanganRepo, NilaiUjianService $nilaiUjianService)
     {
         $this->muridRuanganRepo = $muridRuanganRepo;
+        $this->nilaiUjianService = $nilaiUjianService;
     }
 
     protected function getAccessibleRuanganIds($user, $tahunPelajaranId)
@@ -250,6 +253,7 @@ class NilaiUjianController extends Controller
         $tahunId = $tahunAktif->id ?? $ruangan->tahun_pelajaran_id;
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId);
+        $muridsWithStatus = $this->nilaiUjianService->evaluasiSyaratAdmin($ujian, $ruangan, $murids);
 
         // Ambil nilai yang sudah tersimpan untuk jadwal_ujian_id ini
         $queryNilai = NilaiUjian::where('ujian_id', $ujian->id)
@@ -261,24 +265,17 @@ class NilaiUjianController extends Controller
 
         $nilaiTersimpan = $queryNilai->get()->keyBy('murid_id');
 
-        $formattedMurids = $murids->map(function ($m) use ($ujian, $nilaiTersimpan) {
-            $existing = $nilaiTersimpan->get($m->id);
-
-            // Cek apakah ada dispensasi ujian jika ada tunggakan
-            $dispensasi = DispensasiUjian::where('ujian_id', $ujian->id)
-                ->where('murid_id', $m->id)
-                ->first();
-
-            $isLocked = false;
-            $lockReason = null;
+        $formattedMurids = $muridsWithStatus->map(function ($m) use ($nilaiTersimpan) {
+            $muridModel = $m->murid ?? $m;
+            $existing = $nilaiTersimpan->get($muridModel->id);
 
             return [
-                'murid_id' => $m->id,
-                'nism' => $m->nism,
-                'nama' => $m->nama_lengkap ?? $m->nama,
-                'jenis_kelamin' => $m->jenis_kelamin ?? 'L',
-                'is_locked' => $isLocked,
-                'lock_reason' => $lockReason,
+                'murid_id' => $muridModel->id,
+                'nism' => $muridModel->nism ?? '-',
+                'nama' => $muridModel->nama_lengkap ?? $muridModel->nama,
+                'jenis_kelamin' => $muridModel->jenis_kelamin ?? 'L',
+                'is_locked' => $m->is_locked ?? false,
+                'lock_reason' => $m->lock_reason ?? null,
                 'nilai' => $existing ? (float) $existing->nilai : null,
                 'is_published' => $existing ? (bool) $existing->is_published : false,
             ];
@@ -493,6 +490,65 @@ class NilaiUjianController extends Controller
                 ],
                 'leger' => $rankedLeger,
             ]
+        ], 200);
+    }
+
+    public function beriDispensasi(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ujian_id' => 'required|exists:ujians,id',
+            'murid_id' => 'required|exists:murids,id',
+            'alasan_izin' => 'nullable|string|max:200'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data dispensasi tidak valid.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $dispensasi = DispensasiUjian::updateOrCreate(
+            [
+                'ujian_id' => $request->ujian_id,
+                'murid_id' => $request->murid_id,
+            ],
+            [
+                'alasan_izin' => $request->alasan_izin ?: 'Dispensasi Ujian dari Ustadz / Wali Ruangan',
+                'diizinkan_oleh' => $request->user()?->id ?? 1
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dispensasi ujian berhasil diberikan. Akses input nilai terbuka.',
+            'data' => $dispensasi
+        ], 200);
+    }
+
+    public function batalkanDispensasi(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ujian_id' => 'required|exists:ujians,id',
+            'murid_id' => 'required|exists:murids,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DispensasiUjian::where('ujian_id', $request->ujian_id)
+            ->where('murid_id', $request->murid_id)
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dispensasi ujian berhasil dibatalkan.'
         ], 200);
     }
 }

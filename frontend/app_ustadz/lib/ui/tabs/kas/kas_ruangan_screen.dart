@@ -76,10 +76,10 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
     final kas = context.read<KasProvider>();
     final pengaturan = kas.pengaturan;
     final nominalLakiCtrl = TextEditingController(
-      text: (pengaturan?.nominalLaki ?? 50000).toString(),
+      text: (pengaturan?.nominalLaki ?? 0).toString(),
     );
     final nominalPerempuanCtrl = TextEditingController(
-      text: (pengaturan?.nominalPerempuan ?? 50000).toString(),
+      text: (pengaturan?.nominalPerempuan ?? 0).toString(),
     );
     bool isSaving = false;
 

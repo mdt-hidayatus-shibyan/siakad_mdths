@@ -128,6 +128,15 @@ class AkademikProvider extends ChangeNotifier {
         levelId: _selectedLevelId,
         search: _searchMapel,
       );
+
+      // Jika level belum dipilih (0) dan ada daftar level, otomatis pilih level pertama
+      if (_selectedLevelId == 0 && (_mapelData?.levels.isNotEmpty ?? false)) {
+        _selectedLevelId = _mapelData!.levels.first.id;
+        _mapelData = await _repository.getMataPelajaran(
+          levelId: _selectedLevelId,
+          search: _searchMapel,
+        );
+      }
     } catch (e) {
       _mapelError = e.toString().replaceAll('Exception: ', '');
     } finally {
@@ -182,6 +191,12 @@ class AkademikProvider extends ChangeNotifier {
     _referensiError = null;
     _referensiData = null;
     _selectedKategori = 'Semua';
+
+    _isLoadingMapel = false;
+    _mapelError = null;
+    _mapelData = null;
+    _selectedLevelId = 0;
+    _searchMapel = '';
 
     _isLoadingJadwal = false;
     _jadwalError = null;

@@ -73,10 +73,20 @@ class NilaiUjianService
      */
     public function evaluasiSyaratAdmin($ujianTerpilih, $ruanganTerpilih, $murids)
     {
-        $namaSemester = $ujianTerpilih->semester_relasi->nama_semester ?? '';
-        $bulanSemester = (str_contains($namaSemester, '1') || str_contains(strtolower($namaSemester), 'ganjil'))
-            ? ['Syawal', 'Dzul Qadah', 'Dzul Hijjah', 'Muharram', 'Shafar']
-            : ['Rabiul Awal', 'Rabiul Tsani', 'Jumadal Ula', 'Jumadal Akhir', 'Rajab'];
+        $semesterUjian = $ujianTerpilih->semester_relasi;
+        $bulanIds = [];
+
+        if ($semesterUjian && $semesterUjian->tanggal_mulai && $semesterUjian->tanggal_selesai) {
+            $bulanIds = \App\Models\BulanHijriyah::where('tahun_pelajaran_id', $ujianTerpilih->tahun_pelajaran_id)
+                ->where('tanggal_selesai_masehi', '>=', $semesterUjian->tanggal_mulai)
+                ->where('tanggal_mulai_masehi', '<=', $semesterUjian->tanggal_selesai)
+                ->pluck('id')
+                ->toArray();
+        } else {
+            $bulanIds = \App\Models\BulanHijriyah::where('tahun_pelajaran_id', $ujianTerpilih->tahun_pelajaran_id)
+                ->pluck('id')
+                ->toArray();
+        }
 
         $muridIds = $murids->pluck('id')->toArray();
 
@@ -85,9 +95,10 @@ class NilaiUjianService
             ->pluck('murid_id')
             ->toArray();
 
+        $tipeUjian = $ujianTerpilih->tipe_ujian ?? 'IMDA';
         $jenis_tagihan_id = PengaturanTagihan::where('tahun_pelajaran_id', $ujianTerpilih->tahun_pelajaran_id)
             ->where('level_id', $ruanganTerpilih->level_id)
-            ->where('nama_tagihan', 'LIKE', '%' . $ujianTerpilih->tipe_ujian . '%')
+            ->where('nama_tagihan', 'LIKE', '%' . $tipeUjian . '%')
             ->value('id');
 
         $imdaLunasMuridIds = TagihanMurid::whereIn('murid_id', $muridIds)
@@ -99,17 +110,27 @@ class NilaiUjianService
             ->pluck('murid_id')
             ->toArray();
 
-        $sppMenunggakMuridIds = TagihanMurid::whereIn('murid_id', $muridIds)
+        $sppQuery = TagihanMurid::whereIn('murid_id', $muridIds)
             ->where('ruangan_id', $ruanganTerpilih->id)
-            ->where('status_bayar', 'Belum Lunas')
-            ->where(function ($q) use ($bulanSemester) {
+            ->where('status_bayar', 'Belum Lunas');
+
+        if (!empty($bulanIds)) {
+            $sppQuery->whereNotNull('bulan_hijriyah_id')
+                ->whereIn('bulan_hijriyah_id', $bulanIds);
+        } else {
+            $namaSemester = $semesterUjian->nama_semester ?? '';
+            $bulanSemester = (str_contains($namaSemester, '1') || str_contains(strtolower($namaSemester), 'ganjil'))
+                ? ['Syawal', 'Dzul Qadah', 'Dzul Hijjah', 'Muharram', 'Shafar']
+                : ['Rabiul Awal', 'Rabiul Tsani', 'Jumadal Ula', 'Jumadal Akhir', 'Rajab'];
+            $sppQuery->where(function ($q) use ($bulanSemester) {
                 foreach ($bulanSemester as $bulan) {
                     $q->orWhere('nama_tagihan_spesifik', 'like', "%SPP $bulan%")
                         ->orWhere('nama_tagihan_spesifik', 'like', "%Syahriyah $bulan%");
                 }
-            })
-            ->pluck('murid_id')
-            ->toArray();
+            });
+        }
+
+        $sppMenunggakMuridIds = $sppQuery->pluck('murid_id')->toArray();
 
         foreach ($murids as $murid) {
             $hasDispensasi = in_array($murid->id, $dispensasiMuridIds);
@@ -123,7 +144,7 @@ class NilaiUjianService
                 if (!$imdaLunas || $sppMenunggak) {
                     $murid->is_locked = true;
                     $alasan = [];
-                    if (!$imdaLunas) $alasan[] = 'Iuran Ujian (IMDA/IMNI)';
+                    if (!$imdaLunas) $alasan[] = 'Iuran Ujian (' . $tipeUjian . ')';
                     if ($sppMenunggak) $alasan[] = 'SPP Semester';
                     $murid->lock_reason = 'Tunggakan: ' . implode(' & ', $alasan);
                 } else {

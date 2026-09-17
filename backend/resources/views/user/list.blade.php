@@ -171,6 +171,13 @@
                     <i class="bi bi-whatsapp text-sm"></i>
                 </a>
 
+                {{-- Hak Akses & Role Pengguna (Direct Permissions) --}}
+                <a href="{{ route('user-permissions.index', ['user_id' => $user->id]) }}"
+                    class="w-9 h-9 rounded-xl md:rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center hover:bg-purple-500/20 border border-purple-500/20 transition-all duration-150 hover:scale-105 active:scale-90 shadow-2xs outline-none"
+                    title="Atur Hak Akses Khusus & Role">
+                    <i class="bi bi-person-lock text-sm"></i>
+                </a>
+
                 {{-- Reset Password --}}
                 <button type="button"
                     onclick="openResetPasswordModal({{ $user->id }}, '{{ addslashes($user->name) }}')"

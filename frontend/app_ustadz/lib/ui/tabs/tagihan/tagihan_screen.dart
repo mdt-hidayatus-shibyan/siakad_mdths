@@ -2142,6 +2142,7 @@ class _TagihanScreenState extends State<TagihanScreen>
                             if (newId != null) {
                               setState(() {
                                 _selectedRuanganId = newId;
+                                _selectedMasterTagihanId = null;
                                 _selectedTagihanIds.clear();
                               });
                               context.read<TagihanProvider>().fetchSppRingkasan(
@@ -2151,8 +2152,7 @@ class _TagihanScreenState extends State<TagihanScreen>
                                   .read<TagihanProvider>()
                                   .fetchNonSppRingkasan(
                                     ruanganId: newId,
-                                    pengaturanTagihanId:
-                                        _selectedMasterTagihanId,
+                                    pengaturanTagihanId: null,
                                   );
                             }
                           },

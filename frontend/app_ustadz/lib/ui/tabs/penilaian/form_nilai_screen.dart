@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
+import '../../../data/models/nilai_ujian_model.dart';
 import '../../../providers/nilai_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
@@ -95,6 +96,246 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
     }
   }
 
+  void _showDispensasiDialog(MuridNilaiItem murid) {
+    HapticHelper.light();
+    final reasonCtrl = TextEditingController(
+      text: 'Dispensasi Ujian dari Ustadz / Wali Ruangan',
+    );
+    final provider = context.read<NilaiProvider>();
+    final uId =
+        widget.ujianId ??
+        provider.selectedUjianId ??
+        provider.daftarUjian.firstOrNull?.id ??
+        0;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.amberAccent.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.verified_user_rounded,
+                color: AppColors.amberAccent,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Beri Dispensasi Ujian',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Beri dispensasi ujian untuk santri:',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF8D9387)
+                    : const Color(0xFF73796E),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${murid.nama} (${murid.nism})',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            if (murid.lockReason != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.roseDanger.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.roseDanger.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      size: 14,
+                      color: AppColors.roseDanger,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        murid.lockReason!,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.roseDanger,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+            const Text(
+              'Alasan / Kebijakan Dispensasi:',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: reasonCtrl,
+              decoration: InputDecoration(
+                hintText: 'Masukkan alasan pemberian izin ujian...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ),
+              maxLines: 2,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await provider.beriDispensasi(
+                ujianId: uId,
+                muridId: murid.muridId,
+                ruanganId: widget.ruanganId,
+                jadwalUjianId: widget.jadwalUjianId,
+                alasanIzin: reasonCtrl.text.trim().isEmpty
+                    ? 'Dispensasi Ujian dari Ustadz / Wali Ruangan'
+                    : reasonCtrl.text.trim(),
+              );
+
+              if (!mounted) return;
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Dispensasi berhasil diberikan untuk ${murid.nama}. Akses input nilai telah dibuka.',
+                    ),
+                    backgroundColor: AppColors.hadirTextLight,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      provider.errorMessage ?? 'Gagal memberikan dispensasi.',
+                    ),
+                    backgroundColor: AppColors.roseDanger,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryLight,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Beri Dispensasi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBatalDispensasiDialog(MuridNilaiItem murid) {
+    HapticHelper.light();
+    final provider = context.read<NilaiProvider>();
+    final uId =
+        widget.ujianId ??
+        provider.selectedUjianId ??
+        provider.daftarUjian.firstOrNull?.id ??
+        0;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Batalkan Dispensasi?'),
+        content: Text(
+          'Apakah Anda yakin ingin membatalkan dispensasi ujian untuk santri ${murid.nama}?',
+          style: const TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Tutup'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await provider.batalkanDispensasi(
+                ujianId: uId,
+                muridId: murid.muridId,
+                ruanganId: widget.ruanganId,
+                jadwalUjianId: widget.jadwalUjianId,
+              );
+
+              if (!mounted) return;
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Dispensasi untuk ${murid.nama} telah dibatalkan.',
+                    ),
+                    backgroundColor: AppColors.amberAccent,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.roseDanger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Batalkan Dispensasi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -174,7 +415,8 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                                     : const Color(0xFF73796E),
                               ),
                             ),
-                            if (murid.isLocked)
+                            const SizedBox(height: 3),
+                            if (murid.isLocked) ...[
                               Text(
                                 '🔒 ${murid.lockReason ?? "Terkunci Administrasi"}',
                                 style: const TextStyle(
@@ -182,8 +424,99 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                                   color: AppColors.roseDanger,
                                   fontWeight: FontWeight.bold,
                                 ),
-                              )
-                            else
+                              ),
+                              const SizedBox(height: 4),
+                              // Tombol Beri Dispensasi
+                              InkWell(
+                                onTap: () => _showDispensasiDialog(murid),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.amberAccent.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.amberAccent.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.verified_user_rounded,
+                                        size: 13,
+                                        color: AppColors.amberAccent,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Beri Dispensasi',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.amberAccent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ] else if (murid.lockReason?.contains(
+                                  'Dispensasi',
+                                ) ??
+                                false) ...[
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.violetAccent.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.verified_rounded,
+                                          size: 11,
+                                          color: AppColors.violetAccent,
+                                        ),
+                                        SizedBox(width: 3),
+                                        Text(
+                                          'Dispensasi',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.violetAccent,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  InkWell(
+                                    onTap: () =>
+                                        _showBatalDispensasiDialog(murid),
+                                    child: const Icon(
+                                      Icons.cancel_outlined,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ] else
                               Text(
                                 murid.isPublished
                                     ? '✓ Terbit di Rapor'
@@ -207,6 +540,9 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                       SizedBox(
                         width: 80,
                         child: TextFormField(
+                          key: ValueKey(
+                            'nilai_${murid.muridId}_${murid.isLocked}_${murid.nilai}',
+                          ),
                           initialValue: murid.nilai?.toString() ?? '',
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
@@ -218,10 +554,12 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                           decoration: InputDecoration(
-                            hintText: '0-100',
-                            hintStyle: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
+                            hintText: murid.isLocked ? 'Kunci' : '0-100',
+                            hintStyle: TextStyle(
+                              fontSize: 11,
+                              color: murid.isLocked
+                                  ? AppColors.roseDanger
+                                  : Colors.grey,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -229,7 +567,9 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                             ),
                             filled: true,
                             fillColor: (isDark ? Colors.white : Colors.black)
-                                .withValues(alpha: 0.05),
+                                .withValues(
+                                  alpha: murid.isLocked ? 0.02 : 0.05,
+                                ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
@@ -246,6 +586,16 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                                     : (isDark
                                           ? AppColors.outlineDark
                                           : AppColors.outlineLight),
+                              ),
+                            ),
+                            disabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color:
+                                    (isDark
+                                            ? AppColors.outlineDark
+                                            : AppColors.outlineLight)
+                                        .withValues(alpha: 0.5),
                               ),
                             ),
                           ),

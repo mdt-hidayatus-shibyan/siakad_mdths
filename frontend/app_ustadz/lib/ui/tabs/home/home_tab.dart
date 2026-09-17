@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/file_download_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/dashboard_model.dart';
 import '../../../providers/auth_provider.dart';
@@ -23,6 +22,7 @@ import '../laporan/laporan_pengampu_screen.dart';
 import '../laporan/laporan_ruangan_screen.dart';
 import 'kalendar_screen.dart';
 import 'pengumuman_screen.dart';
+import 'detail_pengumuman_screen.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -32,12 +32,78 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DashboardProvider>().fetchDashboard();
     });
+  }
+
+  Future<void> _refreshData() async {
+    if (_isRefreshing) return;
+    setState(() {
+      _isRefreshing = true;
+    });
+    HapticHelper.light();
+
+    try {
+      await Future.wait([
+        context.read<DashboardProvider>().fetchDashboard(),
+        context.read<AuthProvider>().fetchProfile(),
+      ]);
+      if (!mounted) return;
+      HapticHelper.medium();
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 10),
+              Text(
+                'Data aplikasi berhasil diperbarui',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : AppColors.primaryLight,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          duration: const Duration(seconds: 2),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memperbarui data: $e'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
   }
 
   @override
@@ -50,7 +116,7 @@ class _HomeTabState extends State<HomeTab> {
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          onRefresh: () => context.read<DashboardProvider>().fetchDashboard(),
+          onRefresh: _refreshData,
           color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -73,10 +139,12 @@ class _HomeTabState extends State<HomeTab> {
                         children: [
                           Text(
                             user?.name ?? '-',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             'Wali Ruangan: ${user?.ruanganWali ?? "-"}',
@@ -89,6 +157,41 @@ class _HomeTabState extends State<HomeTab> {
                           ),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color:
+                              (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  .withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: _isRefreshing || dashboard.isLoading
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight,
+                                ),
+                              )
+                            : Icon(
+                                Icons.refresh_rounded,
+                                size: 20,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                      ),
+                      tooltip: 'Perbarui & Sinkronisasi Data',
+                      onPressed: (_isRefreshing || dashboard.isLoading)
+                          ? null
+                          : _refreshData,
                     ),
                     IconButton(
                       icon: Container(
@@ -768,7 +871,12 @@ class _HomeTabState extends State<HomeTab> {
       padding: const EdgeInsets.all(14),
       onTap: () {
         HapticHelper.light();
-        _showPengumumanDetail(context, p, isDark);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetailPengumumanScreen(pengumuman: p),
+          ),
+        );
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -893,151 +1001,6 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showPengumumanDetail(
-    BuildContext context,
-    PengumumanItem p,
-    bool isDark,
-  ) {
-    final hasPdf = p.lampiranPdfUrl != null && p.lampiranPdfUrl!.isNotEmpty;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF141914) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(
-              color: isDark ? AppColors.outlineDark : AppColors.outlineLight,
-            ),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.primaryContainerDark
-                          : AppColors.primaryContainerLight,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      p.tipe,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    p.tanggalMulai,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark
-                          ? const Color(0xFF8D9387)
-                          : const Color(0xFF73796E),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                p.judul,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  height: 1.3,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Divider(
-                color: isDark ? AppColors.outlineDark : AppColors.outlineLight,
-              ),
-              const SizedBox(height: 10),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Text(
-                    p.konten,
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.6,
-                      color: isDark
-                          ? const Color(0xFFE4E4E7)
-                          : const Color(0xFF27272A),
-                    ),
-                  ),
-                ),
-              ),
-              if (hasPdf) ...[
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE11D48),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      HapticHelper.medium();
-                      FileDownloadHelper.downloadAndOpen(
-                        context,
-                        url: p.lampiranPdfUrl!,
-                        fileName: p.namaFilePdf ?? 'Pengumuman_${p.id}.pdf',
-                      );
-                    },
-                    icon: const Icon(Icons.download_rounded, size: 20),
-                    label: Text(
-                      'Unduh & Buka PDF (${p.namaFilePdf ?? "Lampiran.pdf"})',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
     );
   }
 }

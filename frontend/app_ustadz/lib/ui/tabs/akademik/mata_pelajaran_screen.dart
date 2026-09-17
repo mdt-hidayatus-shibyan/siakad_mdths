@@ -81,14 +81,15 @@ class _MataPelajaranScreenState extends State<MataPelajaranScreen> {
             const SizedBox(height: 14),
 
             // 2. Filter Level / Kelas Horisontal Chips
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildLevelChip(0, 'Semua Level', isDark, akademik),
-                  ...levels.map((lvl) {
+            if (levels.isNotEmpty)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: levels.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final lvl = entry.value;
                     return Padding(
-                      padding: const EdgeInsets.only(left: 8),
+                      padding: EdgeInsets.only(left: index == 0 ? 0 : 8),
                       child: _buildLevelChip(
                         lvl.id,
                         lvl.namaLevel,
@@ -96,10 +97,9 @@ class _MataPelajaranScreenState extends State<MataPelajaranScreen> {
                         akademik,
                       ),
                     );
-                  }),
-                ],
+                  }).toList(),
+                ),
               ),
-            ),
             const SizedBox(height: 16),
 
             // 3. Daftar Mata Pelajaran

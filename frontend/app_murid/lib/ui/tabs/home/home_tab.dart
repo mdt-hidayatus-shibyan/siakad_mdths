@@ -18,10 +18,101 @@ import '../koperasi/koperasi_screen.dart';
 import '../tabungan/tabungan_screen.dart';
 import 'semua_jadwal_screen.dart';
 
-class HomeTab extends StatelessWidget {
+class HomeTab extends StatefulWidget {
   final Function(int tabIndex)? onNavigateTab;
 
   const HomeTab({super.key, this.onNavigateTab});
+
+  @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> {
+  bool _isRefreshing = false;
+
+  Future<void> _refreshData() async {
+    if (_isRefreshing) return;
+    setState(() {
+      _isRefreshing = true;
+    });
+    HapticHelper.light();
+
+    try {
+      final dashboard = context.read<DashboardProvider>();
+      await dashboard.fetchDashboard();
+      if (!mounted) return;
+
+      if (dashboard.selectedAnak != null) {
+        final id = dashboard.selectedAnak!.id;
+        final keuangan = context.read<KeuanganProvider>();
+        if (dashboard.anakList.length >= 2) {
+          await Future.wait([
+            keuangan.fetchAllKeuangan(id, force: true),
+            keuangan.fetchAllChildrenTabungan(
+              dashboard.anakList.map((a) => a.id).toList(),
+              force: true,
+            ),
+          ]);
+        } else {
+          await keuangan.fetchAllKeuangan(id, force: true);
+        }
+        if (!mounted) return;
+        await Future.wait([
+          context.read<PresensiProvider>().fetchPresensi(id, force: true),
+          context.read<AkademikProvider>().fetchAkademik(id, force: true),
+        ]);
+      }
+      if (!mounted) return;
+      HapticHelper.medium();
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 10),
+              Text(
+                'Data aplikasi berhasil diperbarui',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : AppColors.primaryLight,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          duration: const Duration(seconds: 2),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memperbarui data: $e'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,29 +148,7 @@ class HomeTab extends StatelessWidget {
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async {
-            HapticHelper.light();
-            await dashboard.fetchDashboard();
-            if (!context.mounted) return;
-            if (dashboard.selectedAnak != null) {
-              final id = dashboard.selectedAnak!.id;
-              final keuangan = context.read<KeuanganProvider>();
-              if (dashboard.anakList.length >= 2) {
-                await Future.wait([
-                  keuangan.fetchAllKeuangan(id, force: true),
-                  keuangan.fetchAllChildrenTabungan(
-                    dashboard.anakList.map((a) => a.id).toList(),
-                    force: true,
-                  ),
-                ]);
-              } else {
-                await keuangan.fetchAllKeuangan(id, force: true);
-              }
-              if (!context.mounted) return;
-              context.read<PresensiProvider>().fetchPresensi(id, force: true);
-              context.read<AkademikProvider>().fetchAkademik(id, force: true);
-            }
-          },
+          onRefresh: _refreshData,
           color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(
@@ -93,30 +162,70 @@ class HomeTab extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Assalamu'alaikum,",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white60 : Colors.black54,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Assalamu'alaikum,",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white60 : Colors.black54,
+                              ),
                             ),
-                          ),
-                          Text(
-                            data.wali.namaKepalaKeluarga,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.3,
-                              color: isDark ? Colors.white : Colors.black87,
+                            Text(
+                              data.wali.namaKepalaKeluarga,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.3,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: _isRefreshing || dashboard.isLoading
+                              ? SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.refresh_rounded,
+                                  size: 18,
+                                  color: isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight,
+                                ),
+                        ),
+                        tooltip: 'Perbarui & Sinkronisasi Data',
+                        onPressed: (_isRefreshing || dashboard.isLoading)
+                            ? null
+                            : _refreshData,
+                      ),
+                      const SizedBox(width: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -376,7 +485,7 @@ class HomeTab extends StatelessWidget {
                                 icon: Icons.credit_card_rounded,
                                 label: 'Kartu SPP',
                                 isDark: isDark,
-                                onTap: () => onNavigateTab?.call(1),
+                                onTap: () => widget.onNavigateTab?.call(1),
                               ),
                               _buildQuickAction(
                                 icon: Icons.account_balance_wallet_rounded,

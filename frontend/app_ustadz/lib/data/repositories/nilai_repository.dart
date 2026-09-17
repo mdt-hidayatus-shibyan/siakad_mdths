@@ -151,4 +151,57 @@ class NilaiRepository {
       throw Exception('Gagal memuat leger nilai: ${e.message}');
     }
   }
+
+  Future<bool> beriDispensasi({
+    required int ujianId,
+    required int muridId,
+    String? alasanIzin,
+  }) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.ujianBeriDispensasi,
+        data: {
+          'ujian_id': ujianId,
+          'murid_id': muridId,
+          'alasan_izin': alasanIzin,
+        },
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal memberikan dispensasi ujian',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal memberikan dispensasi ujian: ${e.message}');
+    }
+  }
+
+  Future<bool> batalkanDispensasi({
+    required int ujianId,
+    required int muridId,
+  }) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.ujianBatalDispensasi,
+        data: {'ujian_id': ujianId, 'murid_id': muridId},
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal membatalkan dispensasi ujian',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal membatalkan dispensasi ujian: ${e.message}');
+    }
+  }
 }

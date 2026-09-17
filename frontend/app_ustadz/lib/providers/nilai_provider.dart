@@ -198,6 +198,76 @@ class NilaiProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> beriDispensasi({
+    required int ujianId,
+    required int muridId,
+    required int ruanganId,
+    int? jadwalUjianId,
+    String? alasanIzin,
+  }) async {
+    _isSaving = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await _repo.beriDispensasi(
+        ujianId: ujianId,
+        muridId: muridId,
+        alasanIzin: alasanIzin,
+      );
+      if (success) {
+        HapticHelper.confirmSuccess();
+        await fetchInputData(
+          ujianId: ujianId,
+          ruanganId: ruanganId,
+          jadwalUjianId: jadwalUjianId,
+        );
+      }
+      return success;
+    } catch (e) {
+      HapticHelper.warning();
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> batalkanDispensasi({
+    required int ujianId,
+    required int muridId,
+    required int ruanganId,
+    int? jadwalUjianId,
+  }) async {
+    _isSaving = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await _repo.batalkanDispensasi(
+        ujianId: ujianId,
+        muridId: muridId,
+      );
+      if (success) {
+        HapticHelper.confirmSuccess();
+        await fetchInputData(
+          ujianId: ujianId,
+          ruanganId: ruanganId,
+          jadwalUjianId: jadwalUjianId,
+        );
+      }
+      return success;
+    } catch (e) {
+      HapticHelper.warning();
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
   // Compatibility method
   Future<void> fetchUjianList({int? ruanganId}) async {
     await fetchMapelJadwal(ruanganId: ruanganId);

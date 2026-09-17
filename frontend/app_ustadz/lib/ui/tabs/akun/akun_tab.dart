@@ -1346,10 +1346,10 @@ class _AkunTabState extends State<AkunTab> {
 
     final pengaturan = kasProvider.pengaturan;
     final nominalLakiController = TextEditingController(
-      text: (pengaturan?.nominalLaki ?? 50000).toString(),
+      text: (pengaturan?.nominalLaki ?? 0).toString(),
     );
     final nominalPerempuanController = TextEditingController(
-      text: (pengaturan?.nominalPerempuan ?? 50000).toString(),
+      text: (pengaturan?.nominalPerempuan ?? 0).toString(),
     );
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
@@ -1440,7 +1440,7 @@ class _AkunTabState extends State<AkunTab> {
                             ? AppColors.primaryDark
                             : AppColors.primaryLight,
                       ),
-                      hintText: 'Contoh: 50000',
+                      hintText: 'Contoh: 0',
                     ),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
@@ -1466,7 +1466,7 @@ class _AkunTabState extends State<AkunTab> {
                             ? AppColors.primaryDark
                             : AppColors.primaryLight,
                       ),
-                      hintText: 'Contoh: 50000',
+                      hintText: 'Contoh: 0',
                     ),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
@@ -2494,7 +2494,7 @@ class _AkunTabState extends State<AkunTab> {
                       icon: Icons.boy_rounded,
                       label: 'Target Kas Murid Putra (Per Murid)',
                       value: DateHelper.formatRupiah(
-                        pengaturanKas?.nominalLaki ?? 50000,
+                        pengaturanKas?.nominalLaki ?? 0,
                       ),
                       isDark: isDark,
                     ),
@@ -2503,7 +2503,7 @@ class _AkunTabState extends State<AkunTab> {
                       icon: Icons.girl_rounded,
                       label: 'Target Kas Murid Putri (Per Murid)',
                       value: DateHelper.formatRupiah(
-                        pengaturanKas?.nominalPerempuan ?? 50000,
+                        pengaturanKas?.nominalPerempuan ?? 0,
                       ),
                       isDark: isDark,
                     ),

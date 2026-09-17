@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/file_download_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/dashboard_model.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
+import 'detail_pengumuman_screen.dart';
 
 class PengumumanScreen extends StatefulWidget {
   const PengumumanScreen({super.key});
@@ -117,7 +117,12 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
       padding: const EdgeInsets.all(16),
       onTap: () {
         HapticHelper.light();
-        _showDetailSheet(context, p, isDark);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetailPengumumanScreen(pengumuman: p),
+          ),
+        );
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,147 +254,6 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
           ],
         ],
       ),
-    );
-  }
-
-  void _showDetailSheet(BuildContext context, PengumumanItem p, bool isDark) {
-    final hasPdf = p.lampiranPdfUrl != null && p.lampiranPdfUrl!.isNotEmpty;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF141914) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(
-              color: isDark ? AppColors.outlineDark : AppColors.outlineLight,
-            ),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.primaryContainerDark
-                          : AppColors.primaryContainerLight,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      p.tipe,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    p.tanggalMulai,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark
-                          ? const Color(0xFF8D9387)
-                          : const Color(0xFF73796E),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                p.judul,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  height: 1.3,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Divider(
-                color: isDark ? AppColors.outlineDark : AppColors.outlineLight,
-              ),
-              const SizedBox(height: 10),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Text(
-                    p.konten,
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.6,
-                      color: isDark
-                          ? const Color(0xFFE4E4E7)
-                          : const Color(0xFF27272A),
-                    ),
-                  ),
-                ),
-              ),
-              if (hasPdf) ...[
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE11D48),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      HapticHelper.medium();
-                      FileDownloadHelper.downloadAndOpen(
-                        context,
-                        url: p.lampiranPdfUrl!,
-                        fileName: p.namaFilePdf ?? 'Pengumuman_${p.id}.pdf',
-                      );
-                    },
-                    icon: const Icon(Icons.download_rounded, size: 20),
-                    label: Text(
-                      'Unduh & Buka PDF (${p.namaFilePdf ?? "Lampiran.pdf"})',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
     );
   }
 }

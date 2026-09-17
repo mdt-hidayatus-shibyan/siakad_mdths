@@ -78,6 +78,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/ujian/mapel-jadwal', [NilaiUjianController::class, 'getMapelJadwal']);
     Route::get('/ujian/input-data', [NilaiUjianController::class, 'getInputData']);
     Route::post('/ujian/simpan-nilai', [NilaiUjianController::class, 'simpanNilai']);
+    Route::post('/ujian/beri-dispensasi', [NilaiUjianController::class, 'beriDispensasi']);
+    Route::post('/ujian/batal-dispensasi', [NilaiUjianController::class, 'batalkanDispensasi']);
     Route::get('/ujian/leger', [NilaiUjianController::class, 'getLeger']);
 
     // 2.7 Presensi Ujian Murid & Pengawas

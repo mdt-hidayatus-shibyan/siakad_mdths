@@ -118,8 +118,8 @@ class KasRuanganController extends Controller
         $tahunId = $tahunAktif->id ?? $ruangan->tahun_pelajaran_id;
 
         $pengaturan = PengaturanKasRuangan::where('ruangan_id', $ruangan->id)->first();
-        $targetLaki = $pengaturan->nominal_laki ?? 50000;
-        $targetPerempuan = $pengaturan->nominal_perempuan ?? 50000;
+        $targetLaki = $pengaturan->nominal_laki ?? 0;
+        $targetPerempuan = $pengaturan->nominal_perempuan ?? 0;
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
 
@@ -678,8 +678,8 @@ class KasRuanganController extends Controller
         $pengaturan = PengaturanKasRuangan::firstOrCreate(
             ['ruangan_id' => $ruangan->id],
             [
-                'nominal_laki' => 50000,
-                'nominal_perempuan' => 50000,
+                'nominal_laki' => 0,
+                'nominal_perempuan' => 0,
             ]
         );
 

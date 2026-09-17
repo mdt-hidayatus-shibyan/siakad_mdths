@@ -120,18 +120,27 @@
                             {{ number_format($jenisTagihanTerpilih->nominal, 0, ',', '.') }}
                         </p>
                     </div>
-                    <!-- Legend Singkat -->
-                    <div
-                        class="flex items-center gap-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider bg-zinc-100/50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                            Tunggakan</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            Lunas</span>
+                    <!-- Legend & Badge -->
+                    <div class="flex items-center flex-wrap gap-2">
+                        <!-- Mode Geser Info Badge -->
+                        <span
+                            class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                            <i class="bi bi-hand-index-thumb text-xs animate-pulse"></i> Mode Geser Aktif
+                        </span>
+                        <div
+                            class="flex items-center gap-3 text-[10px] font-bold text-zinc-500 uppercase tracking-wider bg-zinc-100/50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50">
+                            <span class="flex items-center gap-1"><span
+                                    class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                Tunggakan</span>
+                            <span class="flex items-center gap-1"><span
+                                    class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Lunas</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- LIST CARDS (Daftar Murid) -->
-                <div class="flex flex-col gap-2.5 pb-28">
+                <div id="containerListUjian" class="flex flex-col gap-2.5 pb-28">
                     @foreach ($murids as $murid)
                         @php
                             $namaSpesifik = $jenisTagihanTerpilih->nama_tagihan;
@@ -413,8 +422,173 @@
                 });
             }
 
+            // === DRAG TO SELECT (GESER / SWIPE TO SELECT) ===
+            let isDragging = false;
+            let dragTargetState = true;
+            let visitedBoxes = new Set();
+            let suppressClickUntil = 0;
+
+            function getCheckboxFromEventTarget(target) {
+                if (!target) return null;
+                if (target.closest('a, button, select, input[type="text"], input[type="search"]')) return null;
+
+                const label = target.closest('label');
+                if (label) {
+                    const chk = label.querySelector('.chk-tunggakan, .chk-row');
+                    if (chk && !chk.disabled) return chk;
+                }
+                const card = target.closest('.group');
+                if (card) {
+                    const chk = card.querySelector('.chk-tunggakan:not([disabled]), .chk-row:not([disabled])');
+                    if (chk) return chk;
+                }
+                return null;
+            }
+
+            function animateCheckboxFeedback(chk) {
+                if (!chk) return;
+                const label = chk.closest('label');
+                const visualBox = label ? label.querySelector('div') : null;
+                if (visualBox) {
+                    visualBox.classList.remove('scale-125', 'ring-4', 'ring-amber-500/50');
+                    void visualBox.offsetWidth;
+                    visualBox.classList.add('scale-125', 'ring-4', 'ring-amber-500/50');
+                    setTimeout(() => {
+                        visualBox.classList.remove('scale-125', 'ring-4', 'ring-amber-500/50');
+                    }, 180);
+                }
+            }
+
+            function initDragToSelect() {
+                const container = document.getElementById('containerListUjian') || document.querySelector('.pb-28');
+                if (!container) return;
+
+                // 1. Mouse Down
+                container.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    const chk = getCheckboxFromEventTarget(e.target);
+                    if (chk) {
+                        isDragging = true;
+                        dragTargetState = !chk.checked;
+                        visitedBoxes.clear();
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        if (chk.classList.contains('chk-row')) {
+                            toggleCentangBaris(chk, chk.dataset.row);
+                        } else {
+                            hitungCeklis();
+                        }
+
+                        animateCheckboxFeedback(chk);
+                        document.body.classList.add('select-none');
+                        suppressClickUntil = Date.now() + 300;
+                        e.preventDefault();
+                    }
+                });
+
+                // 2. Mouse Over / Move
+                const handleMove = (e) => {
+                    if (!isDragging) return;
+                    const chk = getCheckboxFromEventTarget(e.target);
+                    if (chk && !visitedBoxes.has(chk)) {
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        if (chk.classList.contains('chk-row')) {
+                            toggleCentangBaris(chk, chk.dataset.row);
+                        } else {
+                            hitungCeklis();
+                        }
+
+                        animateCheckboxFeedback(chk);
+                    }
+                };
+
+                container.addEventListener('mouseover', handleMove);
+                container.addEventListener('mousemove', handleMove);
+
+                // 3. Mouse Up (Global)
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        visitedBoxes.clear();
+                        document.body.classList.remove('select-none');
+                    }
+                });
+
+                // 4. Suppress duplicate synthetic click
+                container.addEventListener('click', (e) => {
+                    if (Date.now() < suppressClickUntil) {
+                        const chk = getCheckboxFromEventTarget(e.target);
+                        if (chk) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }
+                }, true);
+
+                // 5. Touch Events (HP / Tablet)
+                container.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1) return;
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const chk = getCheckboxFromEventTarget(target);
+                    if (chk) {
+                        isDragging = true;
+                        dragTargetState = !chk.checked;
+                        visitedBoxes.clear();
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        if (chk.classList.contains('chk-row')) {
+                            toggleCentangBaris(chk, chk.dataset.row);
+                        } else {
+                            hitungCeklis();
+                        }
+
+                        animateCheckboxFeedback(chk);
+                        suppressClickUntil = Date.now() + 400;
+                    }
+                }, {
+                    passive: true
+                });
+
+                container.addEventListener('touchmove', (e) => {
+                    if (!isDragging || e.touches.length !== 1) return;
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const chk = getCheckboxFromEventTarget(target);
+                    if (chk && !visitedBoxes.has(chk)) {
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        if (chk.classList.contains('chk-row')) {
+                            toggleCentangBaris(chk, chk.dataset.row);
+                        } else {
+                            hitungCeklis();
+                        }
+
+                        animateCheckboxFeedback(chk);
+                    }
+                    if (isDragging && e.cancelable && chk) {
+                        e.preventDefault();
+                    }
+                }, {
+                    passive: false
+                });
+
+                container.addEventListener('touchend', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        visitedBoxes.clear();
+                    }
+                });
+            }
+
             document.addEventListener('DOMContentLoaded', () => {
                 hitungCeklis();
+                initDragToSelect();
             });
         </script>
     @else

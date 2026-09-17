@@ -161,7 +161,7 @@
             <!-- TABEL MATRIKS LEGER KK PER DUSUN -->
             <div
                 class="m3-glass-card rounded-3xl overflow-hidden border border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 shadow-2xs">
-                <div class="overflow-x-auto custom-scrollbar">
+                <div id="containerTabelKasirLeger" class="overflow-x-auto custom-scrollbar select-none">
                     <table class="w-full text-left text-xs border-collapse min-w-[900px]">
                         <thead>
                             <tr
@@ -796,8 +796,154 @@
                 }
             }
 
+            // === DRAG TO SELECT (GESER / SWIPE TO SELECT) ===
+            let isDragging = false;
+            let dragTargetState = true;
+            let visitedBoxes = new Set();
+            let suppressClickUntil = 0;
+
+            function getCheckboxFromEventTarget(target) {
+                if (!target) return null;
+                if (target.closest('a, button, select, input[type="text"], input[type="search"]')) return null;
+
+                const label = target.closest('label');
+                if (label) {
+                    const chk = label.querySelector('.chk-leger-item');
+                    if (chk && !chk.disabled) return chk;
+                }
+                const td = target.closest('td');
+                if (td) {
+                    const chk = td.querySelector('.chk-leger-item');
+                    if (chk && !chk.disabled) return chk;
+                }
+                return null;
+            }
+
+            function animateCheckboxFeedback(chk) {
+                if (!chk) return;
+                const label = chk.closest('label');
+                const visualBox = label ? label.querySelector('div') : null;
+                if (visualBox) {
+                    visualBox.classList.remove('scale-125', 'ring-4', 'ring-amber-500/50');
+                    void visualBox.offsetWidth;
+                    visualBox.classList.add('scale-125', 'ring-4', 'ring-amber-500/50');
+                    setTimeout(() => {
+                        visualBox.classList.remove('scale-125', 'ring-4', 'ring-amber-500/50');
+                    }, 180);
+                }
+            }
+
+            function initDragToSelect() {
+                const container = document.getElementById('containerTabelKasirLeger') || document.querySelector(
+                    '.overflow-x-auto');
+                if (!container) return;
+
+                // 1. Mouse Down
+                container.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    const chk = getCheckboxFromEventTarget(e.target);
+                    if (chk) {
+                        isDragging = true;
+                        dragTargetState = !chk.checked;
+                        visitedBoxes.clear();
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        hitungTotalLeger();
+                        animateCheckboxFeedback(chk);
+                        document.body.classList.add('select-none');
+                        suppressClickUntil = Date.now() + 300;
+                        e.preventDefault();
+                    }
+                });
+
+                // 2. Mouse Over / Move
+                const handleMove = (e) => {
+                    if (!isDragging) return;
+                    const chk = getCheckboxFromEventTarget(e.target);
+                    if (chk && !visitedBoxes.has(chk)) {
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        hitungTotalLeger();
+                        animateCheckboxFeedback(chk);
+                    }
+                };
+
+                container.addEventListener('mouseover', handleMove);
+                container.addEventListener('mousemove', handleMove);
+
+                // 3. Mouse Up (Global)
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        visitedBoxes.clear();
+                        document.body.classList.remove('select-none');
+                    }
+                });
+
+                // 4. Suppress duplicate synthetic click
+                container.addEventListener('click', (e) => {
+                    if (Date.now() < suppressClickUntil) {
+                        const chk = getCheckboxFromEventTarget(e.target);
+                        if (chk) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }
+                }, true);
+
+                // 5. Touch Events (HP / Tablet)
+                container.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1) return;
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const chk = getCheckboxFromEventTarget(target);
+                    if (chk) {
+                        isDragging = true;
+                        dragTargetState = !chk.checked;
+                        visitedBoxes.clear();
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        hitungTotalLeger();
+                        animateCheckboxFeedback(chk);
+                        suppressClickUntil = Date.now() + 400;
+                    }
+                }, {
+                    passive: true
+                });
+
+                container.addEventListener('touchmove', (e) => {
+                    if (!isDragging || e.touches.length !== 1) return;
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const chk = getCheckboxFromEventTarget(target);
+                    if (chk && !visitedBoxes.has(chk)) {
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        hitungTotalLeger();
+                        animateCheckboxFeedback(chk);
+                    }
+                    if (isDragging && e.cancelable && chk) {
+                        e.preventDefault();
+                    }
+                }, {
+                    passive: false
+                });
+
+                container.addEventListener('touchend', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        visitedBoxes.clear();
+                    }
+                });
+            }
+
             document.addEventListener('DOMContentLoaded', () => {
                 hitungTotalLeger();
+                initDragToSelect();
             });
         </script>
     @endpush

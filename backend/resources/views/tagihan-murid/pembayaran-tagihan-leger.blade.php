@@ -31,7 +31,8 @@
                             </option>
                         @endforeach
                     </select>
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-10 text-zinc-400">
+                    <div
+                        class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-10 text-zinc-400">
                         <i class="bi bi-chevron-down text-[10px] font-black"></i>
                     </div>
                 </div>
@@ -60,7 +61,8 @@
                             @endforeach
                         @endif
                     </select>
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400 z-10">
+                    <div
+                        class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400 z-10">
                         <i class="bi bi-chevron-down text-[10px] font-black"></i>
                     </div>
                 </div>
@@ -91,12 +93,15 @@
                             <i class="bi bi-grid-1x2-fill text-sm"></i>
                         </div>
                         <div>
-                            <h3 class="font-black text-zinc-900 dark:text-white text-base uppercase tracking-tight leading-none mb-0.5">
+                            <h3
+                                class="font-black text-zinc-900 dark:text-white text-base uppercase tracking-tight leading-none mb-0.5">
                                 Leger {{ $ruanganTerpilih->nama_ruangan }}
                             </h3>
-                            <p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center">
+                            <p
+                                class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center">
                                 <i class="bi bi-tags-fill mr-1 opacity-70"></i>
-                                <span class="text-zinc-600 dark:text-zinc-400">{{ $jenisTagihanTerpilih->nama_tagihan }}</span>
+                                <span
+                                    class="text-zinc-600 dark:text-zinc-400">{{ $jenisTagihanTerpilih->nama_tagihan }}</span>
                             </p>
                         </div>
                     </div>
@@ -104,14 +109,16 @@
                     <!-- Actions & Counter -->
                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto shrink-0">
                         <!-- Tombol Check All Global -->
-                        <button type="button" id="btnCentangGlobal" data-state="none" onclick="toggleCentangSemuaLeger()"
+                        <button type="button" id="btnCentangGlobal" data-state="none"
+                            onclick="toggleCentangSemuaLeger()"
                             class="h-9 px-4 w-full sm:w-auto bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-2xs outline-none">
                             <i class="bi bi-check-all text-sm"></i> <span>Centang Semua</span>
                         </button>
 
                         <!-- Total Terpilih -->
                         <div class="text-right hidden sm:flex flex-col justify-center px-2">
-                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-wider">TOTAL TERPILIH</span>
+                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-wider">TOTAL
+                                TERPILIH</span>
                             <span class="text-base font-black text-zinc-900 dark:text-white leading-none mt-0.5"
                                 id="teksTotalLeger">Rp 0</span>
                         </div>
@@ -125,10 +132,11 @@
                 </div>
 
                 <!-- 2. GRID TABLE MATRIX LEGER -->
-                <div class="overflow-x-auto custom-scrollbar pb-4">
+                <div id="containerTabelLeger" class="overflow-x-auto custom-scrollbar pb-4 select-none">
                     <table class="w-full text-left text-xs border-separate border-spacing-y-2 min-w-[1000px]">
                         <thead class="sticky top-0 z-30">
-                            <tr class="text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                            <tr
+                                class="text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
 
                                 <!-- STICKY CHECKBOX HEADER -->
                                 <th
@@ -166,7 +174,9 @@
                             @foreach ($murids as $murid)
                                 @php
                                     $wali = $murid->waliMurid ?? $murid->wali_murid;
-                                    $isAsatidz = $wali ? (bool) ($wali->is_asatidz ?? ($wali->is_ustadz ?? false)) : false;
+                                    $isAsatidz = $wali
+                                        ? (bool) ($wali->is_asatidz ?? ($wali->is_ustadz ?? false))
+                                        : false;
                                 @endphp
 
                                 <!-- BARIS KARTU MELAYANG -->
@@ -230,7 +240,8 @@
                                                         <!-- 🟢 SUDAH LUNAS -->
                                                         <div class="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-2xs"
                                                             title="Lunas ({{ $tagihan->pembayaranTagihan->no_kwitansi ?? 'Lunas' }})">
-                                                            <i class="bi bi-check-lg text-xs font-black leading-none"></i>
+                                                            <i
+                                                                class="bi bi-check-lg text-xs font-black leading-none"></i>
                                                         </div>
                                                     @elseif($tagihan->status_bayar === 'Belum Lunas')
                                                         @php
@@ -270,7 +281,8 @@
                                                     @endif
                                                 @else
                                                     <!-- ⚪ BELUM TERBIT -->
-                                                    <span class="text-zinc-300 dark:text-zinc-700 font-black select-none text-[10px]">—</span>
+                                                    <span
+                                                        class="text-zinc-300 dark:text-zinc-700 font-black select-none text-[10px]">—</span>
                                                 @endif
                                             </td>
                                         @endforeach
@@ -310,7 +322,8 @@
                                                     </label>
                                                 @endif
                                             @else
-                                                <span class="text-zinc-300 dark:text-zinc-700 font-black select-none text-[10px]">—</span>
+                                                <span
+                                                    class="text-zinc-300 dark:text-zinc-700 font-black select-none text-[10px]">—</span>
                                             @endif
                                         </td>
                                     @endif
@@ -324,32 +337,211 @@
                 <!-- 3. FOOTER INFO & SHORTCUT -->
                 <div
                     class="m3-glass-card p-3.5 md:px-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs text-xs">
-                    <div class="flex items-center gap-4 flex-wrap text-zinc-500 dark:text-zinc-400 text-[10px] font-black uppercase tracking-wider">
+                    <div
+                        class="flex items-center gap-4 flex-wrap text-zinc-500 dark:text-zinc-400 text-[10px] font-black uppercase tracking-wider">
                         <span class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded-md bg-emerald-500/20 border border-emerald-500/40 inline-block"></span>
+                            <span
+                                class="w-3 h-3 rounded-md bg-emerald-500/20 border border-emerald-500/40 inline-block"></span>
                             Lunas
                         </span>
                         <span class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded-md bg-rose-500/20 border border-rose-500/40 inline-block"></span>
+                            <span
+                                class="w-3 h-3 rounded-md bg-rose-500/20 border border-rose-500/40 inline-block"></span>
                             Tunggakan (Klik untuk Bayar)
                         </span>
                         <span class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded-md bg-purple-500/20 border border-purple-500/40 inline-block"></span>
+                            <span
+                                class="w-3 h-3 rounded-md bg-purple-500/20 border border-purple-500/40 inline-block"></span>
                             Jalur Donatur
                         </span>
                     </div>
 
-                    <div class="sm:hidden w-full flex items-center justify-between pt-2 border-t border-zinc-200/60 dark:border-zinc-800">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-black">
+                            <i class="bi bi-arrows-move text-xs"></i> Mode Geser Aktif: Tahan & geser mouse / jari
+                            untuk pilih banyak
+                        </span>
+                    </div>
+
+                    <div
+                        class="sm:hidden w-full flex items-center justify-between pt-2 border-t border-zinc-200/60 dark:border-zinc-800">
                         <span class="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Total</span>
-                        <span class="text-base font-black text-zinc-900 dark:text-white" id="teksTotalLegerMobile">Rp 0</span>
+                        <span class="text-base font-black text-zinc-900 dark:text-white" id="teksTotalLegerMobile">Rp
+                            0</span>
                     </div>
                 </div>
 
             </form>
         </div>
 
-        <!-- SCRIPT LOGIKA CHECKBOX LEGER & SUBMISSION -->
+        <!-- SCRIPT LOGIKA CHECKBOX LEGER, DRAG-TO-SELECT & SUBMISSION -->
         <script>
+            // === 1. DRAG TO SELECT (GESER / SWIPE TO SELECT) ===
+            let isDragging = false;
+            let dragTargetState = true;
+            let visitedBoxes = new Set();
+            let suppressClickUntil = 0;
+
+            function getCheckboxFromEventTarget(target) {
+                if (!target) return null;
+                if (target.closest('a, button, select, input[type="text"], input[type="search"]')) return null;
+
+                const label = target.closest('label');
+                if (label) {
+                    const chk = label.querySelector('.chk-leger-item, .chk-row-leger');
+                    if (chk && !chk.disabled) return chk;
+                }
+                const td = target.closest('td');
+                if (td) {
+                    const chk = td.querySelector('.chk-leger-item, .chk-row-leger');
+                    if (chk && !chk.disabled) return chk;
+                }
+                return null;
+            }
+
+            function animateCheckboxFeedback(chk) {
+                if (!chk) return;
+                const label = chk.closest('label');
+                const visualBox = label ? label.querySelector('div') : null;
+                if (visualBox) {
+                    visualBox.classList.remove('scale-125', 'ring-4', 'ring-amber-500/50');
+                    void visualBox.offsetWidth;
+                    visualBox.classList.add('scale-125', 'ring-4', 'ring-amber-500/50');
+                    setTimeout(() => {
+                        visualBox.classList.remove('scale-125', 'ring-4', 'ring-amber-500/50');
+                    }, 180);
+                }
+            }
+
+            function initDragToSelect() {
+                const container = document.getElementById('containerTabelLeger') || document.querySelector('.overflow-x-auto');
+                if (!container) return;
+
+                // 1. Mouse Down
+                container.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    const chk = getCheckboxFromEventTarget(e.target);
+                    if (chk) {
+                        isDragging = true;
+                        dragTargetState = !chk.checked;
+                        visitedBoxes.clear();
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        if (chk.classList.contains('chk-row-leger')) {
+                            toggleCentangBarisLeger(chk, chk.dataset.row);
+                        } else {
+                            hitungTotalLeger();
+                        }
+
+                        animateCheckboxFeedback(chk);
+                        document.body.classList.add('select-none');
+                        suppressClickUntil = Date.now() + 300;
+                        e.preventDefault();
+                    }
+                });
+
+                // 2. Mouse Over / Move
+                const handleMove = (e) => {
+                    if (!isDragging) return;
+                    const chk = getCheckboxFromEventTarget(e.target);
+                    if (chk && !visitedBoxes.has(chk)) {
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        if (chk.classList.contains('chk-row-leger')) {
+                            toggleCentangBarisLeger(chk, chk.dataset.row);
+                        } else {
+                            hitungTotalLeger();
+                        }
+
+                        animateCheckboxFeedback(chk);
+                    }
+                };
+
+                container.addEventListener('mouseover', handleMove);
+                container.addEventListener('mousemove', handleMove);
+
+                // 3. Mouse Up (Global)
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        visitedBoxes.clear();
+                        document.body.classList.remove('select-none');
+                    }
+                });
+
+                // 4. Suppress duplicate synthetic click
+                container.addEventListener('click', (e) => {
+                    if (Date.now() < suppressClickUntil) {
+                        const chk = getCheckboxFromEventTarget(e.target);
+                        if (chk) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }
+                }, true);
+
+                // 5. Touch Events (HP / Tablet)
+                container.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1) return;
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const chk = getCheckboxFromEventTarget(target);
+                    if (chk) {
+                        isDragging = true;
+                        dragTargetState = !chk.checked;
+                        visitedBoxes.clear();
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        if (chk.classList.contains('chk-row-leger')) {
+                            toggleCentangBarisLeger(chk, chk.dataset.row);
+                        } else {
+                            hitungTotalLeger();
+                        }
+
+                        animateCheckboxFeedback(chk);
+                        suppressClickUntil = Date.now() + 400;
+                    }
+                }, {
+                    passive: true
+                });
+
+                container.addEventListener('touchmove', (e) => {
+                    if (!isDragging || e.touches.length !== 1) return;
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const chk = getCheckboxFromEventTarget(target);
+                    if (chk && !visitedBoxes.has(chk)) {
+                        visitedBoxes.add(chk);
+                        chk.checked = dragTargetState;
+
+                        if (chk.classList.contains('chk-row-leger')) {
+                            toggleCentangBarisLeger(chk, chk.dataset.row);
+                        } else {
+                            hitungTotalLeger();
+                        }
+
+                        animateCheckboxFeedback(chk);
+                    }
+                    if (isDragging && e.cancelable && chk) {
+                        e.preventDefault();
+                    }
+                }, {
+                    passive: false
+                });
+
+                container.addEventListener('touchend', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        visitedBoxes.clear();
+                    }
+                });
+            }
+
+            // === 2. KALKULASI & SINKRONISASI LEGER ===
             function hitungTotalLeger() {
                 let total = 0;
                 let checkedCount = 0;
@@ -458,14 +650,15 @@
 
             document.addEventListener('DOMContentLoaded', () => {
                 hitungTotalLeger();
+                initDragToSelect();
             });
         </script>
     @else
         <!-- STATE KOSONG / AWAL -->
         <div class="col-span-full">
-            <x-empty-state icon="bi-grid-1x2" title="Menunggu Parameter Leger" message="Silakan pilih Ruangan dan Kriteria Tagihan pada filter di atas untuk menampilkan leger pembayaran." />
+            <x-empty-state icon="bi-grid-1x2" title="Menunggu Parameter Leger"
+                message="Silakan pilih Ruangan dan Kriteria Tagihan pada filter di atas untuk menampilkan leger pembayaran." />
         </div>
     @endif
 
 </x-app-layout>
-

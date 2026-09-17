@@ -2,7 +2,7 @@ class ApiConstants {
   ApiConstants._();
 
   // Backend API URL
-  static const String defaultBaseUrl = 'http://localhost:8000/api';
+  static const String defaultBaseUrl = 'http://10.91.178.1:8000/api';
 
   static const String login = '/login';
   static const String logout = '/logout';
@@ -42,6 +42,8 @@ class ApiConstants {
   static const String ujianMapelJadwal = '/ujian/mapel-jadwal';
   static const String ujianInputData = '/ujian/input-data';
   static const String ujianSimpanNilai = '/ujian/simpan-nilai';
+  static const String ujianBeriDispensasi = '/ujian/beri-dispensasi';
+  static const String ujianBatalDispensasi = '/ujian/batal-dispensasi';
   static const String ujianLeger = '/ujian/leger';
   static const String presensiUjianData = '/presensi-ujian/data';
   static const String presensiUjianSimpan = '/presensi-ujian/simpan';

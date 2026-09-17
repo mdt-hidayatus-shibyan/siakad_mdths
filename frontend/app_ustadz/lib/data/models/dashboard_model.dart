@@ -76,7 +76,12 @@ class PengumumanItem {
   final String konten;
   final String? kontenHtml;
   final String tipe;
+  final String status;
+  final String targetAudience;
+  final String penulis;
+  final String? periodeBerlaku;
   final String tanggalMulai;
+  final String? createdAtFormat;
   final String? lampiranPdfUrl;
   final String? namaFilePdf;
 
@@ -86,7 +91,12 @@ class PengumumanItem {
     required this.konten,
     this.kontenHtml,
     required this.tipe,
+    this.status = 'Terbit',
+    this.targetAudience = 'Semua',
+    this.penulis = 'Administrator',
+    this.periodeBerlaku,
     required this.tanggalMulai,
+    this.createdAtFormat,
     this.lampiranPdfUrl,
     this.namaFilePdf,
   });
@@ -98,7 +108,12 @@ class PengumumanItem {
       konten: json['konten'] ?? json['isi'] ?? '',
       kontenHtml: json['konten_html'],
       tipe: json['tipe'] ?? json['kategori'] ?? 'Informasi',
+      status: json['status'] ?? 'Terbit',
+      targetAudience: json['target_audience'] ?? 'Semua',
+      penulis: json['penulis'] ?? 'Administrator',
+      periodeBerlaku: json['periode_berlaku'],
       tanggalMulai: json['tanggal_mulai'] ?? json['created_at'] ?? '',
+      createdAtFormat: json['created_at_format'],
       lampiranPdfUrl: json['lampiran_pdf_url'],
       namaFilePdf: json['nama_file_pdf'],
     );

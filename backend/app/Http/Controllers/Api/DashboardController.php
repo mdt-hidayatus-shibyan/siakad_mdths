@@ -115,7 +115,8 @@ class DashboardController extends Controller
 
         // Pengumuman Aktif (Rentang tanggal terbit sampai tanggal selesai)
         $today = date('Y-m-d');
-        $pengumuman = Pengumuman::where('status', 'Terbit')
+        $pengumuman = Pengumuman::with('user')
+            ->where('status', 'Terbit')
             ->where(function ($q) use ($today) {
                 $q->whereNull('tanggal_mulai')
                     ->orWhere('tanggal_mulai', '<=', $today);
@@ -129,15 +130,28 @@ class DashboardController extends Controller
             ->take(5)
             ->get()
             ->map(function ($p) {
+                $penulis = $p->user?->name ?? 'Administrator';
+                $tglMulai = $p->tanggal_mulai ? $p->tanggal_mulai->translatedFormat('d M Y') : null;
+                $tglSelesai = $p->tanggal_selesai ? $p->tanggal_selesai->translatedFormat('d M Y') : null;
+                $periodeBerlaku = 'Selamanya (Tanpa Batas)';
+                if ($tglMulai || $tglSelesai) {
+                    $periodeBerlaku = ($tglMulai ?? 'Seterusnya') . ' - ' . ($tglSelesai ?? 'Seterusnya');
+                }
+
                 return [
                     'id'                => $p->id,
                     'judul'             => $p->judul,
                     'konten_html'       => $p->konten,
                     'konten'            => strip_tags($p->konten ?? ''),
                     'tipe'              => $p->tipe ?? 'Informasi',
+                    'status'            => $p->status ?? 'Terbit',
+                    'target_audience'   => $p->target_audience ?? 'Ustadz',
+                    'penulis'           => $penulis,
+                    'periode_berlaku'   => $periodeBerlaku,
                     'lampiran_pdf_url'  => $p->lampiran_pdf_url,
                     'nama_file_pdf'     => $p->nama_file_pdf,
                     'tanggal_mulai'     => $p->tanggal_mulai ? $p->tanggal_mulai->format('d-m-Y') : ($p->created_at ? $p->created_at->format('d-m-Y') : date('d-m-Y')),
+                    'created_at_format' => $p->created_at ? $p->created_at->translatedFormat('d F Y, H:i') : null,
                 ];
             });
 
@@ -161,7 +175,8 @@ class DashboardController extends Controller
     public function pengumuman()
     {
         $today = date('Y-m-d');
-        $pengumuman = Pengumuman::where('status', 'Terbit')
+        $pengumuman = Pengumuman::with('user')
+            ->where('status', 'Terbit')
             ->where(function ($q) use ($today) {
                 $q->whereNull('tanggal_mulai')
                     ->orWhere('tanggal_mulai', '<=', $today);
@@ -173,15 +188,28 @@ class DashboardController extends Controller
             ->latest()
             ->get()
             ->map(function ($p) {
+                $penulis = $p->user?->name ?? 'Administrator';
+                $tglMulai = $p->tanggal_mulai ? $p->tanggal_mulai->translatedFormat('d M Y') : null;
+                $tglSelesai = $p->tanggal_selesai ? $p->tanggal_selesai->translatedFormat('d M Y') : null;
+                $periodeBerlaku = 'Selamanya (Tanpa Batas)';
+                if ($tglMulai || $tglSelesai) {
+                    $periodeBerlaku = ($tglMulai ?? 'Seterusnya') . ' - ' . ($tglSelesai ?? 'Seterusnya');
+                }
+
                 return [
                     'id'                => $p->id,
                     'judul'             => $p->judul,
                     'konten_html'       => $p->konten,
                     'konten'            => strip_tags($p->konten ?? ''),
                     'tipe'              => $p->tipe ?? 'Informasi',
+                    'status'            => $p->status ?? 'Terbit',
+                    'target_audience'   => $p->target_audience ?? 'Semua',
+                    'penulis'           => $penulis,
+                    'periode_berlaku'   => $periodeBerlaku,
                     'lampiran_pdf_url'  => $p->lampiran_pdf_url,
                     'nama_file_pdf'     => $p->nama_file_pdf,
                     'tanggal_mulai'     => $p->tanggal_mulai ? $p->tanggal_mulai->format('d-m-Y') : ($p->created_at ? $p->created_at->format('d-m-Y') : date('d-m-Y')),
+                    'created_at_format' => $p->created_at ? $p->created_at->translatedFormat('d F Y, H:i') : null,
                 ];
             });
 

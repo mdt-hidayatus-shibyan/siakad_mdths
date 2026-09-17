@@ -17,7 +17,6 @@ node_modules/
 *.log
 *.sqlite
 *.sqlite3
-*.sql
 
 # IDE & OS
 .DS_Store

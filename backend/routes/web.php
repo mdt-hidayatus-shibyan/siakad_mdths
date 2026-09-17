@@ -104,6 +104,7 @@ use App\Http\Controllers\Koperasi\LaporanKoperasiController;
 use App\Http\Controllers\PengaturanMenu\MenuController;
 use App\Http\Controllers\PengaturanMenu\RoleController;
 use App\Http\Controllers\PengaturanMenu\PermissionController;
+use App\Http\Controllers\PengaturanMenu\UserPermissionController;
 use App\Http\Controllers\Pengaturan\UserController;
 use App\Http\Controllers\Pengaturan\PengumumanController;
 use App\Http\Controllers\Pengaturan\TahunPelajaranController;
@@ -254,17 +255,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{ruangan_id}/upload-foto/{murid_id}', [KartuPelajarController::class, 'modalUpload'])->name('uploadFoto');
     });
 
-    // -- Manajemen Akun Pengguna (Khusus Administrator) --
-    Route::middleware('role:administrator')->group(function () {
-        Route::prefix('pengguna')->name('pengguna.')->group(function () {
-            Route::post('/{id}/force-logout', [UserController::class, 'forceLogout'])->name('force-logout');
-            Route::get('/{id}/whatsapp', [UserController::class, 'hubungiWhatsApp'])->name('whatsapp');
-            Route::post('/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
-            Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
-        });
-        Route::resource('pengguna', UserController::class);
-        Route::get('/user', fn() => redirect()->route('pengguna.index'))->name('user.index');
+    // -- Manajemen Akun Pengguna --
+    Route::prefix('pengguna')->name('pengguna.')->group(function () {
+        Route::post('/{id}/force-logout', [UserController::class, 'forceLogout'])->name('force-logout');
+        Route::get('/{id}/whatsapp', [UserController::class, 'hubungiWhatsApp'])->name('whatsapp');
+        Route::post('/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
     });
+    Route::resource('pengguna', UserController::class);
+    Route::get('/user', fn() => redirect()->route('pengguna.index'))->name('user.index');
 
 
     // ==========================================
@@ -859,33 +858,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     // ==========================================
-    // 10. PENGATURAN SISTEM & RBAC (Khusus Administrator)
+    // 10. PENGATURAN SISTEM & RBAC
     // ==========================================
-    Route::middleware('role:administrator')->group(function () {
-        // -- Manajemen Menu Navigasi --
-        Route::post('/menu/update-order', [MenuController::class, 'updateOrder'])->name('menu.update-order');
-        Route::post('/menu/{id}/toggle-active', [MenuController::class, 'toggleActive'])->name('menu.toggle-active');
-        Route::resource('menu', MenuController::class);
+    // -- Manajemen Menu Navigasi --
+    Route::post('/menu/update-order', [MenuController::class, 'updateOrder'])->name('menu.update-order');
+    Route::post('/menu/{id}/toggle-active', [MenuController::class, 'toggleActive'])->name('menu.toggle-active');
+    Route::resource('menu', MenuController::class);
 
-        // -- Role & Permissions (RBAC) --
-        Route::post('roles/{id}/give-permissions', [RoleController::class, 'givePermissions'])->name('roles.give-permissions');
-        Route::resource('roles', RoleController::class);
-        Route::resource('permissions', PermissionController::class)->except(['show']);
+    // -- Role & Permissions (RBAC) --
+    Route::post('roles/{id}/give-permissions', [RoleController::class, 'givePermissions'])->name('roles.give-permissions');
+    Route::resource('roles', RoleController::class);
+    Route::resource('permissions', PermissionController::class)->except(['show']);
 
-        // -- Tahun Pelajaran --
-        Route::post('/tahun-pelajaran/{id}/toggle-status', [TahunPelajaranController::class, 'toggleStatus'])->name('tahun-pelajaran.toggle-status');
-        Route::resource('tahun-pelajaran', TahunPelajaranController::class);
+    // -- Hak Akses & Role Pengguna (Per-User RBAC & Direct Permissions) --
+    Route::prefix('user-permissions')->name('user-permissions.')->controller(UserPermissionController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/{id}/give-permissions', 'givePermissions')->name('give-permissions');
+        Route::post('/{id}/sync-roles', 'syncRoles')->name('sync-roles');
+        Route::post('/{id}/reset-direct', 'resetDirectPermissions')->name('reset-direct');
+        Route::post('/{id}/copy-role-permissions', 'copyRolePermissions')->name('copy-role-permissions');
+    });
 
-        // -- Pengaturan Aplikasi --
-        Route::get('/pengaturan-aplikasi', [SettingController::class, 'index'])->name('pengaturan-aplikasi.index');
-        Route::post('/pengaturan-aplikasi', [SettingController::class, 'update'])->name('pengaturan-aplikasi.update');
+    // -- Tahun Pelajaran --
+    Route::post('/tahun-pelajaran/{id}/toggle-status', [TahunPelajaranController::class, 'toggleStatus'])->name('tahun-pelajaran.toggle-status');
+    Route::resource('tahun-pelajaran', TahunPelajaranController::class);
 
-        // -- Backup & Restore Database --
-        Route::prefix('backup')->name('backup.')->controller(BackupController::class)->group(function () {
-            Route::get('/', 'index')->name('database');
-            Route::post('/process', 'process')->name('process');
-            Route::post('/restore', 'restore')->name('restore');
-        });
+    // -- Pengaturan Aplikasi --
+    Route::get('/pengaturan-aplikasi', [SettingController::class, 'index'])->name('pengaturan-aplikasi.index');
+    Route::post('/pengaturan-aplikasi', [SettingController::class, 'update'])->name('pengaturan-aplikasi.update');
+
+    // -- Backup & Restore Database --
+    Route::prefix('backup')->name('backup.')->controller(BackupController::class)->group(function () {
+        Route::get('/', 'index')->name('database');
+        Route::post('/process', 'process')->name('process');
+        Route::post('/restore', 'restore')->name('restore');
     });
 
 

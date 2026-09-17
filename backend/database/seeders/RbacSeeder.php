@@ -779,6 +779,13 @@ class RbacSeeder extends Seeder
                         'orders'      => 3,
                         'permissions' => ['read', 'create', 'update', 'delete'],
                     ],
+                    [
+                        'name'        => 'Hak Akses Pengguna',
+                        'url'         => 'user-permissions.index',
+                        'icon'        => 'bi-person-lock',
+                        'orders'      => 4,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
                 ],
             ],
             [

@@ -102,7 +102,23 @@ class PresensiMuridController extends Controller
             $query->where('ustadz_id', $ustadzId);
         }
 
-        $jadwals = $query->orderBy('jam_ke')->get();
+        $jadwals = $query->get()->sortBy([
+            fn($a, $b) => strnatcasecmp($a->ruangan?->nama_ruangan ?? '', $b->ruangan?->nama_ruangan ?? ''),
+            fn($a, $b) => (match ($a->jam_ke) {
+                'Nadzoman' => 1,
+                '1' => 2,
+                '2' => 3,
+                'Ekstra' => 4,
+                default => 5
+            })
+                <=> (match ($b->jam_ke) {
+                    'Nadzoman' => 1,
+                    '1' => 2,
+                    '2' => 3,
+                    'Ekstra' => 4,
+                    default => 5
+                }),
+        ])->values();
 
         // 4. Cek apakah tanggal bertepatan dengan masa / jadwal Ujian Madrasah
         $ujian = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)

@@ -59,6 +59,7 @@ class PresensiProvider extends ChangeNotifier {
       final dateStr = DateHelper.toYmd(_selectedDate);
       final response = await _repo.getSesiHarian(dateStr);
       _sesiList = response.sesiList;
+      _sortSesiList();
       _isLibur = response.isLibur;
       _keteranganLibur = response.keteranganLibur;
       _isUjian = response.isUjian;
@@ -185,6 +186,7 @@ class PresensiProvider extends ChangeNotifier {
       final dateStr = DateHelper.toYmd(_selectedDateUstadz);
       final response = await _repo.getSesiUstadzHarian(dateStr);
       _sesiUstadzList = response.sesiList;
+      _sortSesiUstadzList();
       _isLiburUstadz = response.isLibur;
       _keteranganLiburUstadz = response.keteranganLibur;
       _isUjianUstadz = response.isUjian;
@@ -196,6 +198,61 @@ class PresensiProvider extends ChangeNotifier {
       _isLoadingUstadz = false;
       notifyListeners();
     }
+  }
+
+  // === SORTING HELPERS (URUT BERDASARKAN RUANGAN & JAM) ===
+  int _getJamWeight(String jamText, [String? jamKe]) {
+    final jk = (jamKe ?? '').trim().toLowerCase();
+    if (jk == 'nadzoman') return 1;
+    if (jk == '1') return 2;
+    if (jk == '2') return 3;
+    if (jk == 'ekstra') return 4;
+
+    final lower = jamText.toLowerCase();
+    if (lower.contains('nadzoman') || lower.startsWith('13:')) {
+      return 1;
+    }
+    if (lower.contains('jam ke-1') ||
+        lower.contains('14:00') ||
+        lower.startsWith('14:')) {
+      return 2;
+    }
+    if (lower.contains('jam ke-2') ||
+        lower.contains('15:30') ||
+        lower.startsWith('15:')) {
+      return 3;
+    }
+    if (lower.contains('ekstra') ||
+        lower.contains('20:00') ||
+        lower.startsWith('20:')) {
+      return 4;
+    }
+
+    return 99;
+  }
+
+  void _sortSesiList() {
+    _sesiList.sort((a, b) {
+      final roomCmp = a.kelas.toLowerCase().compareTo(b.kelas.toLowerCase());
+      if (roomCmp != 0) return roomCmp;
+      final weightA = _getJamWeight(a.jam);
+      final weightB = _getJamWeight(b.jam);
+      if (weightA != weightB) return weightA.compareTo(weightB);
+      return a.jam.compareTo(b.jam);
+    });
+  }
+
+  void _sortSesiUstadzList() {
+    _sesiUstadzList.sort((a, b) {
+      final roomCmp = a.ruangan.toLowerCase().compareTo(
+        b.ruangan.toLowerCase(),
+      );
+      if (roomCmp != 0) return roomCmp;
+      final weightA = _getJamWeight(a.jam, a.jamKe);
+      final weightB = _getJamWeight(b.jam, b.jamKe);
+      if (weightA != weightB) return weightA.compareTo(weightB);
+      return a.jam.compareTo(b.jam);
+    });
   }
 
   Future<void> fetchDaftarBadal() async {

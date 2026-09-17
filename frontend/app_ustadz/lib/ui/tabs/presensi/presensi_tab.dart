@@ -576,8 +576,8 @@ class _PresensiTabState extends State<PresensiTab>
                                       ),
                                       label: Text(
                                         sesi.sudahAbsen
-                                            ? 'Edit Presensi Kelas'
-                                            : 'Buka Absensi Kelas',
+                                            ? 'Edit Presensi'
+                                            : 'Buka Presensi',
                                       ),
                                     ),
                                   ),
@@ -1099,7 +1099,7 @@ class _PresensiTabState extends State<PresensiTab>
                                               sesi,
                                             ),
                                             child: const Text(
-                                              'Badal / Izin',
+                                              'Pengganti',
                                               style: TextStyle(fontSize: 12),
                                             ),
                                           ),
