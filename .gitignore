@@ -28,7 +28,6 @@ Thumbs.db
 
 # Laravel Backend specifics
 backend/public/storage
-backend/public/build
 backend/public/hot
 backend/storage/*.key
 backend/storage/pail
@@ -43,7 +42,8 @@ backend/.phpstorm.meta.php
 **/.packages
 **/.pub-cache/
 **/.pub/
-**/build/
+frontend/**/build/
+!backend/public/build/
 **/android/.gradle
 **/android/local.properties
 **/ios/Pods/
