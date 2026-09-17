@@ -160,7 +160,7 @@ class NilaiUjianController extends Controller
 
         if ($ruangan) {
             $isWaliRuangan = ($user->ustadz && $ruangan->ustadz_id == $user->ustadz->id);
-            $totalMurid = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunPelajaranId)->count();
+            $totalMurid = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunPelajaranId, 'Aktif')->count();
 
             if ($selectedUjianId) {
                 $queryJadwals = JadwalUjian::with(['mataPelajaran', 'pengawas'])
@@ -265,7 +265,7 @@ class NilaiUjianController extends Controller
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $tahunId = $tahunAktif->id ?? $ruangan->tahun_pelajaran_id;
 
-        $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId);
+        $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
         $muridsWithStatus = $this->nilaiUjianService->evaluasiSyaratAdmin($ujian, $ruangan, $murids);
 
         // Ambil nilai yang sudah tersimpan untuk jadwal_ujian_id ini
@@ -347,10 +347,23 @@ class NilaiUjianController extends Controller
         $isPublished = ($request->action === 'publish');
         $userId = $request->user()->id;
 
+        $ujian = Ujian::findOrFail($ujianId);
+        $ruangan = Ruangan::findOrFail($ruanganId);
+        $tahunId = $ujian->tahun_pelajaran_id ?? $ruangan->tahun_pelajaran_id;
+        $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
+        $muridsEvaluated = $this->nilaiUjianService->evaluasiSyaratAdmin($ujian, $ruangan, $murids)->keyBy('id');
+
         DB::beginTransaction();
         try {
+            $tersimpanCount = 0;
             foreach ($request->nilai as $muridId => $score) {
                 if ($score !== null && $score !== '') {
+                    $mEval = $muridsEvaluated->get($muridId);
+                    // Jika murid terkunci syarat ujian (belum lunas & tanpa dispensasi), tolak input nilainya
+                    if ($mEval && $mEval->is_locked) {
+                        continue;
+                    }
+
                     NilaiUjian::updateOrCreate(
                         [
                             'ujian_id' => $ujianId,
@@ -364,6 +377,7 @@ class NilaiUjianController extends Controller
                             'diinput_oleh' => $userId,
                         ]
                     );
+                    $tersimpanCount++;
                 }
             }
 
@@ -371,7 +385,7 @@ class NilaiUjianController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $isPublished ? 'Nilai resmi berhasil dipublikasikan ke rapor!' : 'Draf nilai berhasil disimpan.'
+                'message' => $isPublished ? "Nilai {$tersimpanCount} murid resmi dipublikasikan ke rapor!" : "Draf nilai {$tersimpanCount} murid berhasil disimpan."
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -419,7 +433,7 @@ class NilaiUjianController extends Controller
             ];
         }
 
-        $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId);
+        $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
 
         $allNilai = NilaiUjian::where('ujian_id', $ujian->id)
             ->where('ruangan_id', $ruangan->id)
@@ -522,20 +536,44 @@ class NilaiUjianController extends Controller
             ], 422);
         }
 
+        $user = $request->user();
+        $ujian = Ujian::findOrFail($request->ujian_id);
+        $tahunId = $ujian->tahun_pelajaran_id ?? TahunPelajaran::where('is_active', true)->value('id');
+
+        // Pastikan hanya Wali Ruangan dari kelas murid ini yang berwenang memberi dispensasi (atau Admin)
+        if ($user->ustadz) {
+            $ruanganId = $request->ruangan_id;
+            if (!$ruanganId) {
+                $ruanganId = DB::table('murid_ruangans')
+                    ->where('murid_id', $request->murid_id)
+                    ->where('tahun_pelajaran_id', $tahunId)
+                    ->value('ruangan_id');
+            }
+
+            $ruangan = $ruanganId ? Ruangan::with('waliRuangan')->find($ruanganId) : null;
+            if ($ruangan && $ruangan->ustadz_id != $user->ustadz->id) {
+                $namaWali = $ruangan->waliRuangan?->nama_lengkap ?? 'Wali Ruangan';
+                return response()->json([
+                    'success' => false,
+                    'message' => "Hanya Wali Ruangan kelas ini ({$namaWali}) yang berhak memberikan dispensasi ujian.",
+                ], 403);
+            }
+        }
+
         $dispensasi = DispensasiUjian::updateOrCreate(
             [
                 'ujian_id' => $request->ujian_id,
                 'murid_id' => $request->murid_id,
             ],
             [
-                'alasan_izin' => $request->alasan_izin ?: 'Dispensasi Ujian dari Ustadz / Wali Ruangan',
-                'diizinkan_oleh' => $request->user()?->id ?? 1
+                'alasan_izin' => $request->alasan_izin ?: 'Dispensasi Ujian dari Wali Ruangan',
+                'diizinkan_oleh' => $user->id,
             ]
         );
 
         return response()->json([
             'success' => true,
-            'message' => 'Dispensasi ujian berhasil diberikan. Akses input nilai terbuka.',
+            'message' => 'Dispensasi ujian berhasil diberikan oleh Wali Ruangan. Akses input nilai terbuka.',
             'data' => $dispensasi
         ], 200);
     }
@@ -555,6 +593,30 @@ class NilaiUjianController extends Controller
             ], 422);
         }
 
+        $user = $request->user();
+        $ujian = Ujian::findOrFail($request->ujian_id);
+        $tahunId = $ujian->tahun_pelajaran_id ?? TahunPelajaran::where('is_active', true)->value('id');
+
+        // Pastikan hanya Wali Ruangan dari kelas murid ini yang berwenang membatalkan dispensasi (atau Admin)
+        if ($user->ustadz) {
+            $ruanganId = $request->ruangan_id;
+            if (!$ruanganId) {
+                $ruanganId = DB::table('murid_ruangans')
+                    ->where('murid_id', $request->murid_id)
+                    ->where('tahun_pelajaran_id', $tahunId)
+                    ->value('ruangan_id');
+            }
+
+            $ruangan = $ruanganId ? Ruangan::with('waliRuangan')->find($ruanganId) : null;
+            if ($ruangan && $ruangan->ustadz_id != $user->ustadz->id) {
+                $namaWali = $ruangan->waliRuangan?->nama_lengkap ?? 'Wali Ruangan';
+                return response()->json([
+                    'success' => false,
+                    'message' => "Hanya Wali Ruangan kelas ini ({$namaWali}) yang berhak membatalkan dispensasi ujian.",
+                ], 403);
+            }
+        }
+
         DispensasiUjian::where('ujian_id', $request->ujian_id)
             ->where('murid_id', $request->murid_id)
             ->delete();
@@ -562,6 +624,155 @@ class NilaiUjianController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Dispensasi ujian berhasil dibatalkan.'
+        ], 200);
+    }
+
+    /**
+     * Data Persyaratan Ujian Mobile (Status Administrasi Santri & Kelola Dispensasi)
+     * GET /api/ujian/syarat-ujian
+     */
+    public function getSyaratUjian(Request $request)
+    {
+        $user = $request->user();
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        $tahunPelajaranId = $request->tahun_id ?? $tahunAktif?->id ?? TahunPelajaran::orderBy('id', 'desc')->value('id');
+
+        // 1. Daftar Ruangan yang dapat diakses Ustadz
+        $accessibleRuanganIds = $this->getAccessibleRuanganIds($user, $tahunPelajaranId);
+        $daftarRuangan = Ruangan::whereIn('id', $accessibleRuanganIds)
+            ->with(['level', 'waliRuangan'])
+            ->orderBy('level_id', 'asc')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'nama_ruangan' => $r->nama_ruangan,
+                    'level_id' => $r->level_id,
+                    'nama_level' => $r->level->nama_level ?? '-',
+                    'wali_ruangan_nama' => $r->waliRuangan?->nama_lengkap ?? '-',
+                ];
+            });
+
+        $selectedRuanganId = $request->ruangan_id ? (int) $request->ruangan_id : ($daftarRuangan->first()['id'] ?? null);
+
+        $ruangan = null;
+        if ($selectedRuanganId) {
+            $ruangan = Ruangan::with(['level', 'waliRuangan'])->find($selectedRuanganId);
+        }
+
+        // 2. Daftar Agenda Ujian berdasarkan level ruangan
+        $queryUjian = Ujian::with('semester')->where('tahun_pelajaran_id', $tahunPelajaranId);
+
+        if ($ruangan && $ruangan->level) {
+            $levelNama = $ruangan->level->nama_level ?? '';
+            $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
+
+            if ($isKelasAkhir) {
+                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+            } else {
+                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
+            }
+        }
+
+        $daftarUjian = $queryUjian->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'nama_ujian' => $u->nama_ujian,
+                    'tipe_ujian' => $u->tipe_ujian ?? $u->jenis_ujian ?? 'IMDA 1',
+                    'semester' => $u->semester->nama_semester ?? ($u->semester_id == 9 ? 'Semester 1 (Ganjil)' : 'Semester 2 (Genap)'),
+                    'tanggal_mulai' => $u->tanggal_mulai ? (is_string($u->tanggal_mulai) ? $u->tanggal_mulai : $u->tanggal_mulai->format('Y-m-d')) : date('Y-m-d'),
+                    'tanggal_selesai' => $u->tanggal_selesai ? (is_string($u->tanggal_selesai) ? $u->tanggal_selesai : $u->tanggal_selesai->format('Y-m-d')) : date('Y-m-d'),
+                ];
+            });
+
+        $selectedUjianId = $request->ujian_id ? (int) $request->ujian_id : ($daftarUjian->first()['id'] ?? null);
+        if (!$daftarUjian->contains('id', $selectedUjianId)) {
+            $selectedUjianId = $daftarUjian->first()['id'] ?? null;
+        }
+
+        $muridList = collect();
+        $isWaliRuangan = false;
+        $summary = [
+            'total' => 0,
+            'lunas' => 0,
+            'dispensasi' => 0,
+            'terkunci' => 0,
+        ];
+
+        if ($ruangan && $selectedUjianId) {
+            $isWaliRuangan = ($user->ustadz && $ruangan->ustadz_id == $user->ustadz->id);
+            $ujianModel = Ujian::find($selectedUjianId);
+            $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunPelajaranId, 'Aktif');
+            $evaluated = $this->nilaiUjianService->evaluasiSyaratAdmin($ujianModel, $ruangan, $murids);
+
+            // Ambil data dispensasi dengan relasi pemberi izin
+            $dispensasiMap = DispensasiUjian::with('pemberiIzin')
+                ->where('ujian_id', $selectedUjianId)
+                ->whereIn('murid_id', $murids->pluck('id'))
+                ->get()
+                ->keyBy('murid_id');
+
+            $lunasCount = 0;
+            $dispensasiCount = 0;
+            $terkunciCount = 0;
+
+            $muridList = $evaluated->map(function ($m) use ($dispensasiMap, &$lunasCount, &$dispensasiCount, &$terkunciCount) {
+                $muridModel = $m->murid ?? $m;
+                $disp = $dispensasiMap->get($muridModel->id);
+                $hasDispensasi = ($disp !== null);
+
+                $isLocked = $m->is_locked ?? false;
+                $lockReason = $m->lock_reason ?? null;
+
+                if ($hasDispensasi) {
+                    $statusSyarat = 'Dispensasi';
+                    $dispensasiCount++;
+                } elseif ($isLocked) {
+                    $statusSyarat = 'Terkunci';
+                    $terkunciCount++;
+                } else {
+                    $statusSyarat = 'Lunas';
+                    $lunasCount++;
+                }
+
+                return [
+                    'murid_id' => $muridModel->id,
+                    'nism' => $muridModel->nism ?? '-',
+                    'nama' => $muridModel->nama_lengkap ?? $muridModel->nama,
+                    'jenis_kelamin' => $muridModel->jenis_kelamin ?? 'L',
+                    'is_locked' => $isLocked,
+                    'lock_reason' => $lockReason,
+                    'has_dispensasi' => $hasDispensasi,
+                    'alasan_dispensasi' => $disp?->alasan_izin,
+                    'dispensasi_oleh' => $disp?->pemberiIzin?->nama_lengkap ?? $disp?->pemberiIzin?->name ?? 'Wali Ruangan',
+                    'status_syarat' => $statusSyarat,
+                ];
+            });
+
+            $summary = [
+                'total' => $muridList->count(),
+                'lunas' => $lunasCount,
+                'dispensasi' => $dispensasiCount,
+                'terkunci' => $terkunciCount,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'daftar_ruangan' => $daftarRuangan,
+                'selected_ruangan_id' => $selectedRuanganId,
+                'selected_ruangan_nama' => $ruangan?->nama_ruangan ?? '',
+                'nama_level' => $ruangan?->level?->nama_level ?? '',
+                'is_wali_ruangan' => $isWaliRuangan,
+                'wali_ruangan_nama' => $ruangan?->waliRuangan?->nama_lengkap ?? '-',
+                'daftar_ujian' => $daftarUjian,
+                'selected_ujian_id' => $selectedUjianId,
+                'summary' => $summary,
+                'murid_list' => $muridList,
+            ]
         ], 200);
     }
 }

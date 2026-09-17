@@ -81,6 +81,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/ujian/beri-dispensasi', [NilaiUjianController::class, 'beriDispensasi']);
     Route::post('/ujian/batal-dispensasi', [NilaiUjianController::class, 'batalkanDispensasi']);
     Route::get('/ujian/leger', [NilaiUjianController::class, 'getLeger']);
+    Route::get('/ujian/syarat-ujian', [NilaiUjianController::class, 'getSyaratUjian']);
 
     // 2.7 Presensi Ujian Murid & Pengawas
     Route::get('/presensi-ujian/data', [PresensiUjianController::class, 'getData']);

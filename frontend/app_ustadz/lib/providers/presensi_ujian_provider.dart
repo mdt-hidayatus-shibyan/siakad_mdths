@@ -59,6 +59,11 @@ class PresensiUjianProvider extends ChangeNotifier {
     );
   }
 
+  bool get isWaliRuangan => _data?.isWaliRuangan ?? false;
+  String get selectedRuanganNama => _data?.selectedRuanganNama ?? '';
+  String get namaLevel => _data?.namaLevel ?? '';
+  String get waliRuanganNama => _data?.waliRuanganNama ?? '-';
+
   // Live Summary Counters
   int get totalMurid => _muridList.length;
   int get countBelumDiisi =>

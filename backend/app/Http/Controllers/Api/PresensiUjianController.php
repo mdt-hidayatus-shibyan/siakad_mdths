@@ -101,7 +101,7 @@ class PresensiUjianController extends Controller
 
         $ruangan = null;
         if ($selectedRuanganId) {
-            $ruangan = Ruangan::with('level')->find($selectedRuanganId);
+            $ruangan = Ruangan::with(['level', 'waliRuangan'])->find($selectedRuanganId);
         }
 
         // 2. Daftar Ujian berdasarkan level ruangan (Kelas Akhir: IMDA 1 & IMNI, Selainnya: IMDA 1 & IMDA 2)
@@ -304,6 +304,11 @@ class PresensiUjianController extends Controller
                 ];
             });
 
+        $isWaliRuangan = false;
+        if ($ruangan && $user->ustadz) {
+            $isWaliRuangan = ($ruangan->ustadz_id == $user->ustadz->id);
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -311,6 +316,10 @@ class PresensiUjianController extends Controller
                 'selected_ujian_id' => $selectedUjianId,
                 'daftar_ruangan' => $daftarRuangan,
                 'selected_ruangan_id' => $selectedRuanganId,
+                'selected_ruangan_nama' => $ruangan?->nama_ruangan ?? '',
+                'nama_level' => $ruangan?->level?->nama_level ?? '',
+                'is_wali_ruangan' => $isWaliRuangan,
+                'wali_ruangan_nama' => $ruangan?->waliRuangan?->nama_lengkap ?? '-',
                 'jadwal_list' => $jadwalList,
                 'selected_jadwal_id' => $selectedJadwalId,
                 'pengawas' => $pengawasData,

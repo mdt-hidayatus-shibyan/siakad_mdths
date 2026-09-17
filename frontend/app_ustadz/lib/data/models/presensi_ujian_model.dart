@@ -238,6 +238,10 @@ class PresensiUjianDataResponse {
   final int? selectedUjianId;
   final List<RuanganOptionItem> daftarRuangan;
   final int? selectedRuanganId;
+  final String selectedRuanganNama;
+  final String namaLevel;
+  final bool isWaliRuangan;
+  final String waliRuanganNama;
   final List<JadwalUjianItem> jadwalList;
   final int? selectedJadwalId;
   final PengawasUjianData? pengawas;
@@ -250,6 +254,10 @@ class PresensiUjianDataResponse {
     this.selectedUjianId,
     required this.daftarRuangan,
     this.selectedRuanganId,
+    this.selectedRuanganNama = '',
+    this.namaLevel = '',
+    this.isWaliRuangan = false,
+    this.waliRuanganNama = '-',
     required this.jadwalList,
     this.selectedJadwalId,
     this.pengawas,
@@ -274,6 +282,10 @@ class PresensiUjianDataResponse {
               .toList() ??
           [],
       selectedRuanganId: json['selected_ruangan_id'],
+      selectedRuanganNama: json['selected_ruangan_nama'] ?? '',
+      namaLevel: json['nama_level'] ?? '',
+      isWaliRuangan: json['is_wali_ruangan'] ?? false,
+      waliRuanganNama: json['wali_ruangan_nama'] ?? '-',
       jadwalList:
           (json['jadwal_list'] as List<dynamic>?)
               ?.map((e) => JadwalUjianItem.fromJson(e as Map<String, dynamic>))

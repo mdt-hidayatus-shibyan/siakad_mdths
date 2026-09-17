@@ -108,6 +108,14 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
         provider.daftarUjian.firstOrNull?.id ??
         0;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark
+        ? AppColors.primaryDark
+        : AppColors.primaryLight;
+    final onPrimaryColor = isDark
+        ? AppColors.onPrimaryDark
+        : AppColors.onPrimaryLight;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -117,12 +125,12 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.amberAccent.withValues(alpha: 0.15),
+                color: primaryColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.verified_user_rounded,
-                color: AppColors.amberAccent,
+                color: primaryColor,
                 size: 22,
               ),
             ),
@@ -237,7 +245,7 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                     content: Text(
                       'Dispensasi berhasil diberikan untuk ${murid.nama}. Akses input nilai telah dibuka.',
                     ),
-                    backgroundColor: AppColors.hadirTextLight,
+                    backgroundColor: primaryColor,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -260,8 +268,8 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryLight,
-              foregroundColor: Colors.white,
+              backgroundColor: primaryColor,
+              foregroundColor: onPrimaryColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -426,47 +434,67 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              // Tombol Beri Dispensasi
-                              InkWell(
-                                onTap: () => _showDispensasiDialog(murid),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.amberAccent.withValues(
-                                      alpha: 0.15,
+                              // Tombol Beri Dispensasi (Hanya Wali Ruangan)
+                              if (nilai.isWaliRuangan)
+                                InkWell(
+                                  onTap: () => _showDispensasiDialog(murid),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
                                     ),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: AppColors.amberAccent.withValues(
-                                        alpha: 0.6,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          (isDark
+                                                  ? AppColors.primaryDark
+                                                  : AppColors.primaryLight)
+                                              .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color:
+                                            (isDark
+                                                    ? AppColors.primaryDark
+                                                    : AppColors.primaryLight)
+                                                .withValues(alpha: 0.5),
                                       ),
                                     ),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.verified_user_rounded,
-                                        size: 13,
-                                        color: AppColors.amberAccent,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Beri Dispensasi',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.amberAccent,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.verified_user_rounded,
+                                          size: 13,
+                                          color: isDark
+                                              ? AppColors.primaryDark
+                                              : AppColors.primaryLight,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Beri Dispensasi',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDark
+                                                ? AppColors.primaryDark
+                                                : AppColors.primaryLight,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                Text(
+                                  'Hubungi Wali Ruangan untuk izin',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontStyle: FontStyle.italic,
+                                    color: isDark
+                                        ? const Color(0xFF8D9387)
+                                        : const Color(0xFF73796E),
                                   ),
                                 ),
-                              ),
                             ] else if (murid.lockReason?.contains(
                                   'Dispensasi',
                                 ) ??
@@ -479,41 +507,56 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.violetAccent.withValues(
-                                        alpha: 0.15,
-                                      ),
+                                      color: isDark
+                                          ? AppColors.dispensasiBgDark
+                                          : AppColors.dispensasiBgLight,
                                       borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color:
+                                            (isDark
+                                                    ? AppColors
+                                                          .dispensasiTextDark
+                                                    : AppColors
+                                                          .dispensasiTextLight)
+                                                .withValues(alpha: 0.3),
+                                      ),
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
                                           Icons.verified_rounded,
                                           size: 11,
-                                          color: AppColors.violetAccent,
+                                          color: isDark
+                                              ? AppColors.dispensasiTextDark
+                                              : AppColors.dispensasiTextLight,
                                         ),
-                                        SizedBox(width: 3),
+                                        const SizedBox(width: 3),
                                         Text(
                                           'Dispensasi',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
-                                            color: AppColors.violetAccent,
+                                            color: isDark
+                                                ? AppColors.dispensasiTextDark
+                                                : AppColors.dispensasiTextLight,
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  InkWell(
-                                    onTap: () =>
-                                        _showBatalDispensasiDialog(murid),
-                                    child: const Icon(
-                                      Icons.cancel_outlined,
-                                      size: 14,
-                                      color: Colors.grey,
+                                  if (nilai.isWaliRuangan) ...[
+                                    const SizedBox(width: 6),
+                                    InkWell(
+                                      onTap: () =>
+                                          _showBatalDispensasiDialog(murid),
+                                      child: const Icon(
+                                        Icons.cancel_outlined,
+                                        size: 14,
+                                        color: Colors.grey,
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ] else

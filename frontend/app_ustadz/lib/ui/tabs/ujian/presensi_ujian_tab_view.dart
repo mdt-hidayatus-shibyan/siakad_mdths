@@ -262,6 +262,114 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
           const SizedBox(height: 14),
 
           // ===================================================================
+          // 1.5. CARD KETERANGAN RUANGAN & STATUS HAK AKSES USTADZ
+          // ===================================================================
+          if (provider.selectedRuanganId != null &&
+              provider.selectedRuanganNama.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: provider.isWaliRuangan
+                    ? AppColors.primaryLight.withValues(
+                        alpha: isDark ? 0.15 : 0.08,
+                      )
+                    : AppColors.skyBlueAccent.withValues(
+                        alpha: isDark ? 0.15 : 0.08,
+                      ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: provider.isWaliRuangan
+                      ? AppColors.primaryLight.withValues(alpha: 0.3)
+                      : AppColors.skyBlueAccent.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    provider.isWaliRuangan
+                        ? Icons.verified_user_rounded
+                        : Icons.info_outline_rounded,
+                    size: 18,
+                    color: provider.isWaliRuangan
+                        ? AppColors.primaryLight
+                        : AppColors.skyBlueAccent,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                provider.isWaliRuangan
+                                    ? 'Wali Ruangan: ${provider.selectedRuanganNama}'
+                                    : 'Ruangan: ${provider.selectedRuanganNama}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: provider.isWaliRuangan
+                                      ? (isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight)
+                                      : AppColors.skyBlueAccent,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: provider.isWaliRuangan
+                                    ? AppColors.amberAccent.withValues(
+                                        alpha: 0.2,
+                                      )
+                                    : AppColors.skyBlueAccent.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                provider.isWaliRuangan
+                                    ? '⭐ Wali Ruangan'
+                                    : '📘 Pengajar / Pengawas',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: provider.isWaliRuangan
+                                      ? AppColors.amberAccent
+                                      : AppColors.skyBlueAccent,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          provider.isWaliRuangan
+                              ? 'Anda adalah Wali Ruangan kelas ${provider.selectedRuanganNama}. Menampilkan seluruh mata pelajaran ujian (${provider.jadwalList.length} mapel).'
+                              : 'Wali Ruangan: ${provider.waliRuanganNama}. Menampilkan ${provider.jadwalList.length} mata pelajaran yang Anda ampu / awasi di kelas ini.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? const Color(0xFF8D9387)
+                                : const Color(0xFF555555),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // ===================================================================
           // 2. KONDISI: JIKA JADWAL BELUM DIBUAT OLEH ADMINISTRATOR
           // ===================================================================
           if (provider.daftarUjian.isEmpty)
@@ -269,6 +377,95 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
           else if (provider.jadwalList.isEmpty)
             _buildBelumAdaJadwalEmptyState(context, isDark, provider)
           else ...[
+            // ===================================================================
+            // 2.5. CARD KETERANGAN MATA PELAJARAN UJIAN YANG SEDANG DIPRESENSI
+            // ===================================================================
+            if (provider.currentJadwal != null) ...[
+              GlassCard(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color:
+                            (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight)
+                                .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.quiz_rounded,
+                        size: 22,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            provider.currentJadwal!.namaMapel,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.event_note_rounded,
+                                size: 12,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${provider.currentJadwal!.hariTanggalSingkat ?? provider.currentJadwal!.tanggalUjian ?? "-"} • ${provider.currentJadwal!.waktuMulai} - ${provider.currentJadwal!.waktuSelesai}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark
+                                      ? const Color(0xFF8D9387)
+                                      : const Color(0xFF73796E),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.badge_outlined,
+                                size: 12,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'Pengawas: ${provider.currentJadwal!.pengawasNama ?? provider.pengawas?.ustadzNama ?? "Belum Ditentukan"}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? const Color(0xFF8D9387)
+                                        : const Color(0xFF73796E),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             // ===================================================================
             // 3. CARD PENGAWAS UJIAN & BERITA ACARA
             // ===================================================================

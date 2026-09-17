@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'input_nilai_tab_view.dart';
+import 'persyaratan_ujian_tab_view.dart';
 import 'presensi_ujian_tab_view.dart';
 
 class UjianTab extends StatefulWidget {
@@ -19,7 +20,7 @@ class _UjianTabState extends State<UjianTab>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {});
@@ -41,7 +42,7 @@ class _UjianTabState extends State<UjianTab>
       appBar: const CustomAppBar(titleText: 'Ujian Madrasah'),
       body: Column(
         children: [
-          // Segmented Navigation Pill
+          // Segmented Navigation Pill (3 Tabs)
           SegmentedTabBar(
             selectedIndex: _tabController.index,
             onTabChanged: (idx) {
@@ -50,9 +51,17 @@ class _UjianTabState extends State<UjianTab>
             },
             items: [
               SegmentedTabItem(
+                activeIcon: Icons.verified_user_rounded,
+                inactiveIcon: Icons.verified_user_outlined,
+                label: 'Syarat Ujian',
+                activeColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
+              ),
+              SegmentedTabItem(
                 activeIcon: Icons.fact_check_rounded,
                 inactiveIcon: Icons.fact_check_outlined,
-                label: 'Presensi Ujian',
+                label: 'Presensi',
                 activeColor: isDark
                     ? AppColors.primaryDark
                     : AppColors.primaryLight,
@@ -72,7 +81,11 @@ class _UjianTabState extends State<UjianTab>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [PresensiUjianTabView(), InputNilaiTabView()],
+              children: const [
+                PersyaratanUjianTabView(),
+                PresensiUjianTabView(),
+                InputNilaiTabView(),
+              ],
             ),
           ),
         ],
