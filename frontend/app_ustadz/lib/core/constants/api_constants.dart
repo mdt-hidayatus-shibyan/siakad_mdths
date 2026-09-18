@@ -115,19 +115,25 @@ class ApiConstants {
 
     final targetHostAuthority = '${baseUri.scheme}://${baseUri.authority}';
 
-    // Jika URL adalah URL penuh dengan localhost atau 127.0.0.1
+    // Jika URL adalah URL penuh (misalnya http://localhost:8000/storage/... atau https://domain/storage/...)
     final rawUri = Uri.tryParse(trimmed);
-    if (rawUri != null &&
-        rawUri.hasScheme &&
-        (rawUri.host == 'localhost' || rawUri.host == '127.0.0.1')) {
-      final pathAndQuery =
-          '${rawUri.path}${rawUri.hasQuery ? '?${rawUri.query}' : ''}';
-      return '$targetHostAuthority$pathAndQuery';
+    if (rawUri != null && rawUri.hasScheme && rawUri.hasAuthority) {
+      if (rawUri.host == 'localhost' ||
+          rawUri.host == '127.0.0.1' ||
+          rawUri.host != baseUri.host) {
+        final pathAndQuery =
+            '${rawUri.path}${rawUri.hasQuery ? '?${rawUri.query}' : ''}';
+        return '$targetHostAuthority$pathAndQuery';
+      }
+      return trimmed;
     }
 
-    // Jika path relatif (misalnya 'storage/uploads/...' atau '/storage/uploads/...')
+    // Jika path relatif (misalnya 'uploads/murid/...' atau '/storage/uploads/...')
     if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
       final cleanPath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+      if (!cleanPath.startsWith('/storage/')) {
+        return '$targetHostAuthority/storage$cleanPath';
+      }
       return '$targetHostAuthority$cleanPath';
     }
 

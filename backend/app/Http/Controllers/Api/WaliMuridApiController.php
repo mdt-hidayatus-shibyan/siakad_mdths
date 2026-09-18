@@ -152,6 +152,7 @@ class WaliMuridApiController extends Controller
                 'id'             => $anak->id,
                 'nism'           => $anak->nism,
                 'nisn'           => $anak->nisn,
+                'nik'            => $anak->nik,
                 'nama_lengkap'   => $anak->nama_lengkap,
                 'nama_panggilan' => $anak->nama_panggilan,
                 'jenis_kelamin'  => $anak->jenis_kelamin,

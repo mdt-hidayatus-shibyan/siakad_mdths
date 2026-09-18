@@ -170,10 +170,20 @@
                                     title="{{ $anak->nama_lengkap }}">
                                     {{ $anak->nama_lengkap }}
                                 </h4>
-                                <p
-                                    class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 mb-1.5 flex items-center tracking-wider uppercase font-mono">
-                                    <i class="bi bi-upc-scan mr-1 text-[10px]"></i> {{ $anak->nism }}
-                                </p>
+                                <div
+                                    class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] font-bold text-zinc-500 dark:text-zinc-400 mb-1.5 font-mono">
+                                    <span class="flex items-center tracking-wider uppercase">
+                                        <i class="bi bi-upc-scan mr-1 text-[10px] text-zinc-400"></i> NISM:
+                                        {{ $anak->nism ?: '-' }}
+                                    </span>
+                                    <span class="text-zinc-300 dark:text-zinc-700 font-sans">•</span>
+                                    <span
+                                        class="flex items-center tracking-wider uppercase text-zinc-700 dark:text-zinc-300">
+                                        <i
+                                            class="bi bi-person-vcard mr-1 text-[11px] text-primary dark:text-primary-dark"></i>
+                                        NIK: {{ $anak->nik ?: '-' }}
+                                    </span>
+                                </div>
 
                                 <div class="flex flex-wrap items-center gap-1.5">
                                     <!-- Badge L/P -->

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -10,6 +10,11 @@ class AppAvatar extends StatelessWidget {
   final Color? textColor;
   final Border? border;
   final int? cacheDimension;
+  final BoxShape shape;
+  final BorderRadius? borderRadius;
+  final BoxFit fit;
+  final Alignment alignment;
+  final VoidCallback? onTap;
 
   const AppAvatar({
     super.key,
@@ -20,6 +25,11 @@ class AppAvatar extends StatelessWidget {
     this.textColor,
     this.border,
     this.cacheDimension,
+    this.shape = BoxShape.circle,
+    this.borderRadius,
+    this.fit = BoxFit.cover,
+    this.alignment = Alignment.topCenter,
+    this.onTap,
   });
 
   String get _initial {
@@ -33,7 +43,8 @@ class AppAvatar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final resolvedUrl = ApiClient.resolveImageUrl(imageUrl);
     final size = radius * 2;
-    final int memCacheSize = cacheDimension ?? (size * 2.5).toInt().clamp(60, 400);
+    final int memCacheSize =
+        cacheDimension ?? (size * 2.5).toInt().clamp(60, 400);
 
     final defaultBg = isDark
         ? const Color(0xFF0F2313)
@@ -42,12 +53,14 @@ class AppAvatar extends StatelessWidget {
         ? AppColors.primaryDark
         : AppColors.primaryLight;
 
-    Widget fallbackChild = Text(
-      _initial,
-      style: TextStyle(
-        fontSize: radius * 0.85,
-        fontWeight: FontWeight.bold,
-        color: textColor ?? defaultTextColor,
+    Widget fallbackChild = Center(
+      child: Text(
+        _initial,
+        style: TextStyle(
+          fontSize: radius * 0.85,
+          fontWeight: FontWeight.bold,
+          color: textColor ?? defaultTextColor,
+        ),
       ),
     );
 
@@ -58,7 +71,8 @@ class AppAvatar extends StatelessWidget {
         resolvedUrl,
         width: size,
         height: size,
-        fit: BoxFit.cover,
+        fit: fit,
+        alignment: alignment,
         cacheWidth: memCacheSize,
         cacheHeight: memCacheSize,
         errorBuilder: (context, error, stackTrace) => fallbackChild,
@@ -73,7 +87,7 @@ class AppAvatar extends StatelessWidget {
                 color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
                 value: loadingProgress.expectedTotalBytes != null
                     ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
+                          loadingProgress.expectedTotalBytes!
                     : null,
               ),
             ),
@@ -84,17 +98,26 @@ class AppAvatar extends StatelessWidget {
       avatarContent = fallbackChild;
     }
 
-    return Container(
+    final avatarBox = Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: backgroundColor ?? defaultBg,
-        shape: BoxShape.circle,
+        shape: shape,
+        borderRadius: shape == BoxShape.circle
+            ? null
+            : (borderRadius ?? BorderRadius.circular(radius * 0.5)),
         border: border,
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: avatarContent,
     );
+
+    if (onTap != null) {
+      return GestureDetector(onTap: onTap, child: avatarBox);
+    }
+
+    return avatarBox;
   }
 }

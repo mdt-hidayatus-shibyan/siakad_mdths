@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -362,8 +362,8 @@
                                         <li class="anak-item">
                                             <div>
                                                 <span class="anak-nama">{{ $anak->nama_lengkap }}</span>
-                                                <span class="anak-meta">({{ $anak->jenis_kelamin }} - NISM:
-                                                    {{ $anak->nism }})</span>
+                                                <span class="anak-meta">({{ $anak->jenis_kelamin }} &bull; NISM:
+                                                    {{ $anak->nism }}{{ $anak->nik ? ' &bull; NIK: ' . $anak->nik : '' }})</span>
                                             </div>
                                             <div>
                                                 <span class="ruangan-badge">

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/murid_model.dart';
@@ -28,6 +29,101 @@ class _DirektoriMuridScreenState extends State<DirektoriMuridScreen> {
         ruanganId: widget.ruanganId,
       );
     });
+  }
+
+  void _showFullPhotoDialog(
+    BuildContext context,
+    String? imageUrl,
+    String name,
+  ) {
+    HapticHelper.medium();
+    final resolvedUrl = ApiClient.resolveImageUrl(imageUrl);
+    if (resolvedUrl == null || resolvedUrl.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black.withValues(alpha: 0.92),
+        insetPadding: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header Dialog
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white24, height: 1),
+
+            // Interactive Full Image
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 0.8,
+                  maxScale: 4.0,
+                  child: Image.network(
+                    resolvedUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 220,
+                      color: Colors.white10,
+                      child: const Center(
+                        child: Text(
+                          'Gagal memuat foto',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 220,
+                        color: Colors.white10,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                'Cubit layar untuk memperbesar (Zoom)',
+                style: TextStyle(color: Colors.white60, fontSize: 11),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showDetailSantri(MuridModel murid) {
@@ -64,10 +160,54 @@ class _DirektoriMuridScreenState extends State<DirektoriMuridScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  AppAvatar(
-                    radius: 28,
-                    name: murid.namaLengkap,
-                    imageUrl: murid.foto,
+                  Stack(
+                    children: [
+                      AppAvatar(
+                        radius: 34,
+                        name: murid.namaLengkap,
+                        imageUrl: murid.foto,
+                        shape: BoxShape.rectangle,
+                        borderRadius: BorderRadius.circular(16),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                        cacheDimension: 250,
+                        onTap: murid.foto != null
+                            ? () => _showFullPhotoDialog(
+                                context,
+                                murid.foto,
+                                murid.namaLengkap,
+                              )
+                            : null,
+                      ),
+                      if (murid.foto != null)
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: GestureDetector(
+                            onTap: () => _showFullPhotoDialog(
+                              context,
+                              murid.foto,
+                              murid.namaLengkap,
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color:
+                                    (isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight)
+                                        .withValues(alpha: 0.9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.fullscreen_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -288,10 +428,14 @@ class _DirektoriMuridScreenState extends State<DirektoriMuridScreen> {
                   child: Row(
                     children: [
                       AppAvatar(
-                        radius: 20,
+                        radius: 23,
                         name: murid.namaLengkap,
                         imageUrl: murid.foto,
-                        cacheDimension: 80,
+                        shape: BoxShape.rectangle,
+                        borderRadius: BorderRadius.circular(13),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                        cacheDimension: 120,
                       ),
                       const SizedBox(width: 12),
                       Expanded(

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -64,13 +64,13 @@
 
     <table>
         <tr>
-            <td colspan="15" class="header-title">DATA WALI MURID AKTIF PER KAMPUNG / ZONASI</td>
+            <td colspan="16" class="header-title">DATA WALI MURID AKTIF PER KAMPUNG / ZONASI</td>
         </tr>
         <tr>
-            <td colspan="15" class="header-sub">MADRASAH DINIYAH TAKMILIYAH HIDAYATUS SHIBYAN</td>
+            <td colspan="16" class="header-sub">MADRASAH DINIYAH TAKMILIYAH HIDAYATUS SHIBYAN</td>
         </tr>
         <tr>
-            <td colspan="15" class="header-meta">
+            <td colspan="16" class="header-meta">
                 Tahun Pelajaran: {{ $tahunAktif->nama_hijriyah ?? '-' }} H | {{ $tahunAktif->nama_masehi ?? '-' }} M
                 &bull;
                 Wilayah:
@@ -80,7 +80,7 @@
             </td>
         </tr>
         <tr>
-            <td colspan="15"></td>
+            <td colspan="16"></td>
         </tr>
     </table>
 
@@ -101,6 +101,7 @@
                 <th>Nama Putra / Putri (Murid)</th>
                 <th>L/P</th>
                 <th>NISM</th>
+                <th>NIK Murid</th>
                 <th>Ruangan / Kelas</th>
             </tr>
         </thead>
@@ -121,7 +122,7 @@
                 @endphp
 
                 <tr class="group-row">
-                    <td colspan="15">
+                    <td colspan="16">
                         KAMPUNG: {{ strtoupper($groupNama) }} (Total: {{ $walis->count() }} KK, {{ $totalAnakGroup }}
                         Murid Aktif)
                     </td>
@@ -160,6 +161,7 @@
                                 <td>{{ $anak->nama_lengkap }}</td>
                                 <td align="center">{{ $anak->jenis_kelamin }}</td>
                                 <td class="num-text" align="center">{{ $anak->nism }}</td>
+                                <td class="num-text" align="center">{{ $anak->nik ?? '-' }}</td>
                                 <td align="center"><b>{{ $anak->nama_ruangan_aktif }}</b></td>
                             </tr>
                         @endforeach
@@ -176,14 +178,14 @@
                             <td class="num-text" align="center">{{ $wali->no_hp ?: '-' }}</td>
                             <td>{{ $wali->alamat_detail ?: '-' }}</td>
                             <td align="center">0</td>
-                            <td colspan="4" align="center" style="color: #94a3b8; font-style: italic;">Tidak ada
+                            <td colspan="5" align="center" style="color: #94a3b8; font-style: italic;">Tidak ada
                                 murid aktif</td>
                         </tr>
                     @endif
                 @endforeach
             @empty
                 <tr>
-                    <td colspan="15" align="center">Tidak ada data wali murid aktif ditemukan.</td>
+                    <td colspan="16" align="center">Tidak ada data wali murid aktif ditemukan.</td>
                 </tr>
             @endforelse
 
@@ -191,7 +193,7 @@
                 <td colspan="6" align="right"><b>TOTAL KESELURUHAN:</b></td>
                 <td colspan="4"><b>{{ $grandTotalWali }} Kepala Keluarga (Wali Aktif)</b></td>
                 <td align="center"><b>{{ $grandTotalMurid }}</b></td>
-                <td colspan="4"><b>{{ $grandTotalMurid }} Murid Aktif</b></td>
+                <td colspan="5"><b>{{ $grandTotalMurid }} Murid Aktif</b></td>
             </tr>
         </tbody>
     </table>
