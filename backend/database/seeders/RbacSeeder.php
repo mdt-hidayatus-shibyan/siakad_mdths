@@ -134,11 +134,19 @@ class RbacSeeder extends Seeder
                 'permissions' => ['read', 'create', 'update', 'delete'],
             ],
             [
+                'name'        => 'Catatan & Keluhan Ustadz',
+                'url'         => 'catatan-ustadz.index',
+                'category'    => 'AKADEMIK',
+                'icon'        => 'bi-chat-left-text-fill',
+                'orders'      => 15,
+                'permissions' => ['read'],
+            ],
+            [
                 'name'        => 'Ujian & Evaluasi',
                 'url'         => '#ujian',
                 'category'    => 'AKADEMIK',
                 'icon'        => 'bi-mortarboard-fill',
-                'orders'      => 15,
+                'orders'      => 16,
                 'permissions' => ['read'],
                 'sub_menus'   => [
                     [
