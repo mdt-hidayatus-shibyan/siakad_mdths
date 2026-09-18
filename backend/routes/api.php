@@ -14,6 +14,8 @@ use App\Http\Controllers\Api\TagihanController;
 use App\Http\Controllers\Api\MuridController;
 use App\Http\Controllers\Api\LaporanController;
 use App\Http\Controllers\Api\TabunganApiController;
+use App\Http\Controllers\Api\CatatanUstadzController;
+use App\Http\Controllers\Api\AppVersionApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +26,7 @@ use App\Http\Controllers\Api\TabunganApiController;
 // =========================================================================
 // 1. PUBLIC ROUTES (Dilindungi Rate Limiter Throttle)
 // =========================================================================
+Route::get('/app-version', [AppVersionApiController::class, 'getAppVersion']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/wali/login', [AuthController::class, 'loginWali'])->middleware('throttle:5,1');
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
@@ -135,6 +138,14 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/tabungan/detail/{id}', [TabunganApiController::class, 'getDetailTabungan']);
     Route::post('/tabungan/setor', [TabunganApiController::class, 'setorTunai']);
     Route::get('/tabungan/cari', [TabunganApiController::class, 'cariRekening']);
+
+    // 2.13 Catatan & Keluhan Ustadz (CRUD Penuh Ustadz)
+    Route::get('/catatan-ustadz/options', [CatatanUstadzController::class, 'getOptions']);
+    Route::get('/catatan-ustadz', [CatatanUstadzController::class, 'index']);
+    Route::get('/catatan-ustadz/{id}', [CatatanUstadzController::class, 'show']);
+    Route::post('/catatan-ustadz', [CatatanUstadzController::class, 'store']);
+    Route::post('/catatan-ustadz/{id}', [CatatanUstadzController::class, 'update']);
+    Route::delete('/catatan-ustadz/{id}', [CatatanUstadzController::class, 'destroy']);
 
     // =========================================================================
     // 3. APLIKASI MURID & WALI MURID (app_murid)

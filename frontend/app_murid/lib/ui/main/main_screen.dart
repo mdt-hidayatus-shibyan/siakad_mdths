@@ -85,72 +85,90 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                height: 66,
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                decoration: BoxDecoration(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                // 1. Ambient & bottom drop shadow
+                BoxShadow(
                   color: isDark
-                      ? const Color(0xFF121712).withValues(alpha: 0.95)
-                      : Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.outlineDark.withValues(alpha: 0.6)
-                        : const Color(0xFFE2E8F0),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.40 : 0.08,
-                      ),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
+                      ? Colors.black.withValues(alpha: 0.65)
+                      : const Color(0xFF0F172A).withValues(alpha: 0.14),
+                  blurRadius: 24,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
                 ),
-                child: Row(
-                  children: [
-                    _buildNavItem(
-                      index: 0,
-                      activeIcon: Icons.home_rounded,
-                      inactiveIcon: Icons.home_outlined,
-                      label: 'Beranda',
-                      isDark: isDark,
+                // 2. Top boundary shadow to separate clearly from scrolling content
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.40)
+                      : const Color(0xFF0F172A).withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  height: 66,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF121712).withValues(alpha: 0.95)
+                        : Colors.white.withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.outlineDark.withValues(alpha: 0.6)
+                          : const Color(0xFFE2E8F0),
+                      width: 1,
                     ),
-                    _buildNavItem(
-                      index: 1,
-                      activeIcon: Icons.receipt_long_rounded,
-                      inactiveIcon: Icons.receipt_long_outlined,
-                      label: 'Tagihan',
-                      isDark: isDark,
-                    ),
-                    _buildNavItem(
-                      index: 2,
-                      activeIcon: Icons.event_available_rounded,
-                      inactiveIcon: Icons.event_available_outlined,
-                      label: 'Presensi',
-                      isDark: isDark,
-                    ),
-                    _buildNavItem(
-                      index: 3,
-                      activeIcon: Icons.auto_stories_rounded,
-                      inactiveIcon: Icons.auto_stories_outlined,
-                      label: 'Akademik',
-                      isDark: isDark,
-                    ),
-                    _buildNavItem(
-                      index: 4,
-                      activeIcon: Icons.person_rounded,
-                      inactiveIcon: Icons.person_outline_rounded,
-                      label: 'Akun',
-                      isDark: isDark,
-                    ),
-                  ],
+                  ),
+                  child: Row(
+                    children: [
+                      _buildNavItem(
+                        index: 0,
+                        activeIcon: Icons.home_rounded,
+                        inactiveIcon: Icons.home_outlined,
+                        label: 'Beranda',
+                        isDark: isDark,
+                      ),
+                      _buildNavItem(
+                        index: 1,
+                        activeIcon: Icons.receipt_long_rounded,
+                        inactiveIcon: Icons.receipt_long_outlined,
+                        label: 'Tagihan',
+                        isDark: isDark,
+                      ),
+                      _buildNavItem(
+                        index: 2,
+                        activeIcon: Icons.event_available_rounded,
+                        inactiveIcon: Icons.event_available_outlined,
+                        label: 'Presensi',
+                        isDark: isDark,
+                      ),
+                      _buildNavItem(
+                        index: 3,
+                        activeIcon: Icons.auto_stories_rounded,
+                        inactiveIcon: Icons.auto_stories_outlined,
+                        label: 'Akademik',
+                        isDark: isDark,
+                      ),
+                      _buildNavItem(
+                        index: 4,
+                        activeIcon: Icons.person_rounded,
+                        inactiveIcon: Icons.person_outline_rounded,
+                        label: 'Akun',
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

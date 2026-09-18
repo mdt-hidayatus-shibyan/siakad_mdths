@@ -18,6 +18,7 @@ import '../../widgets/glass_card.dart';
 import '../laporan/laporan_pengampu_screen.dart';
 import '../laporan/laporan_ruangan_screen.dart';
 import 'hubungi_admin_screen.dart';
+import 'tentang_aplikasi_screen.dart';
 
 class AkunTab extends StatefulWidget {
   const AkunTab({super.key});
@@ -2681,10 +2682,62 @@ class _AkunTabState extends State<AkunTab> {
                 ],
               ),
             ),
+            const SizedBox(height: 18),
+
+            // =================================================================
+            // 8. KARTU INFORMASI APLIKASI
+            // =================================================================
+            const Text(
+              'Informasi Aplikasi',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            GlassCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color:
+                        (isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight)
+                            .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 18,
+                    color: isDark
+                        ? AppColors.primaryDark
+                        : AppColors.primaryLight,
+                  ),
+                ),
+                title: const Text(
+                  'Tentang Aplikasi',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text(
+                  'Versi 1.0.0 • SIAKAD MDT Hidayatus Shibyan',
+                  style: TextStyle(fontSize: 11),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  HapticHelper.light();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TentangAplikasiScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
             const SizedBox(height: 28),
 
             // =================================================================
-            // 7. TOMBOL KELUAR
+            // 9. TOMBOL KELUAR
             // =================================================================
             ElevatedButton.icon(
               onPressed: _handleLogout,

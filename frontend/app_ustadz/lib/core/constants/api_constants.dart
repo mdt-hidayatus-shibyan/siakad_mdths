@@ -2,8 +2,10 @@ class ApiConstants {
   ApiConstants._();
 
   // Backend API URL
+  // static const String defaultBaseUrl = 'http://10.224.142.1:8000/api';
+  // static const String defaultBaseUrl = 'http://127.0.0.1:8000/api'; // Untuk browser / localhost
   static const String defaultBaseUrl =
-      'https://mdt-hidayatus-shibyan.sch.id/api';
+      'https://mdt-hidayatus-shibyan.sch.id/api'; // Untuk produksi / VPS
 
   static const String login = '/login';
   static const String logout = '/logout';
@@ -90,6 +92,7 @@ class ApiConstants {
   static const String bantuanKontak = '/bantuan/kontak';
   static const String bantuanLaporan = '/bantuan/laporan';
   static const String bantuanRiwayat = '/bantuan/riwayat';
+  static const String appVersion = '/app-version';
 
   // Tabungan Madrasah
   static const String tabunganUstadzRekening = '/tabungan/ustadz/rekening';
@@ -97,6 +100,10 @@ class ApiConstants {
   static const String tabunganDetail = '/tabungan/detail';
   static const String tabunganSetor = '/tabungan/setor';
   static const String tabunganCari = '/tabungan/cari';
+
+  // Catatan & Keluhan Ustadz
+  static const String catatanUstadz = '/catatan-ustadz';
+  static const String catatanUstadzOptions = '/catatan-ustadz/options';
 
   /// Format URL foto/gambar dari backend agar cocok dengan host yang aktif.
   /// Menghindari kegagalan koneksi ketika backend mengembalikan host 'localhost' / '127.0.0.1'

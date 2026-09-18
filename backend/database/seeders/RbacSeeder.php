@@ -640,6 +640,14 @@ class RbacSeeder extends Seeder
                 'orders'      => 40,
                 'permissions' => ['read', 'update', 'delete'],
             ],
+            [
+                'name'        => 'Catatan & Keluhan Ustadz',
+                'url'         => 'catatan-ustadz.index',
+                'category'    => 'LAYANAN & BANTUAN',
+                'icon'        => 'bi-journal-text',
+                'orders'      => 41,
+                'permissions' => ['read'],
+            ],
 
             // ==========================================
             // KATEGORI 6: MASTER DATA
@@ -825,10 +833,17 @@ class RbacSeeder extends Seeder
                         'permissions' => ['read', 'update'],
                     ],
                     [
+                        'name'        => 'Versi & Rilis Aplikasi',
+                        'url'         => 'pengaturan-versi.index',
+                        'icon'        => 'bi-phone-vibrate',
+                        'orders'      => 5,
+                        'permissions' => ['read', 'create', 'update'],
+                    ],
+                    [
                         'name'        => 'Backup & Restore Database',
                         'url'         => 'backup.database',
                         'icon'        => 'bi-cloud-arrow-down-fill',
-                        'orders'      => 5,
+                        'orders'      => 6,
                         'permissions' => ['read', 'create', 'update'],
                     ],
                 ],

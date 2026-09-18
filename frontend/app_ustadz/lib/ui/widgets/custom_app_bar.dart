@@ -57,7 +57,7 @@ class CircularIconButton extends StatelessWidget {
               size: iconSize,
               color:
                   iconColor ??
-                  (isDark ? Colors.white : const Color(0xFF1E293B)),
+                  (isDark ? AppColors.primaryDark : AppColors.primaryLight),
             ),
           ),
         ),

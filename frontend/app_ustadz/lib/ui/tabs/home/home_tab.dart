@@ -23,6 +23,7 @@ import '../laporan/laporan_ruangan_screen.dart';
 import 'kalendar_screen.dart';
 import 'pengumuman_screen.dart';
 import 'detail_pengumuman_screen.dart';
+import '../catatan/catatan_ustadz_screen.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -579,8 +580,34 @@ class _HomeTabState extends State<HomeTab> {
                       Row(
                         children: [
                           _buildQuickAction(
+                            icon: Icons.edit_note_rounded,
+                            label: 'Catatan',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const CatatanUstadzScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildQuickAction(
+                            icon: Icons.campaign_rounded,
+                            label: 'Pengumuman',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PengumumanScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildQuickAction(
                             icon: Icons.assessment_rounded,
-                            label: 'Laporan Pengampu',
+                            label: 'Laporan',
                             isDark: isDark,
                             onTap: () {
                               Navigator.push(
@@ -600,32 +627,6 @@ class _HomeTabState extends State<HomeTab> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => const TabunganScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildQuickAction(
-                            icon: Icons.campaign_rounded,
-                            label: 'Pengumuman',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const PengumumanScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildQuickAction(
-                            icon: Icons.support_agent_rounded,
-                            label: 'Bantuan',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const HubungiAdminScreen(),
                                 ),
                               );
                             },

@@ -32,6 +32,7 @@ use App\Http\Controllers\Akademik\PresensiMuridController;
 use App\Http\Controllers\Akademik\PresensiUstadzController;
 use App\Http\Controllers\Akademik\PelanggaranMuridController;
 use App\Http\Controllers\Akademik\KategoriKegiatanController;
+use App\Http\Controllers\Akademik\CatatanUstadzController;
 
 // 4. SPMB Controllers
 use App\Http\Controllers\Spmb\SpmbController;
@@ -109,6 +110,7 @@ use App\Http\Controllers\Pengaturan\UserController;
 use App\Http\Controllers\Pengaturan\PengumumanController;
 use App\Http\Controllers\Pengaturan\TahunPelajaranController;
 use App\Http\Controllers\Pengaturan\SettingController;
+use App\Http\Controllers\Pengaturan\AppVersionController;
 use App\Http\Controllers\Pengaturan\BackupController;
 
 // 10. Layanan & Bantuan Controllers
@@ -425,6 +427,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/admin-mode/sync', [PelanggaranMuridController::class, 'syncAdminMode'])->name('syncAdminMode');
         Route::get('/rekap', [PelanggaranMuridController::class, 'rekap'])->name('rekap');
         Route::get('/rekap/export', [PelanggaranMuridController::class, 'exportExcel'])->name('exportExcel');
+    });
+
+    // -- Catatan & Keluhan Ustadz (Read-Only Admin) --
+    Route::prefix('catatan-ustadz')->name('catatan-ustadz.')->group(function () {
+        Route::get('/', [CatatanUstadzController::class, 'index'])->name('index');
+        Route::get('/{id}', [CatatanUstadzController::class, 'show'])->name('show');
     });
 
     // -- SPMB Admin Panel --
@@ -886,6 +894,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // -- Pengaturan Aplikasi --
     Route::get('/pengaturan-aplikasi', [SettingController::class, 'index'])->name('pengaturan-aplikasi.index');
     Route::post('/pengaturan-aplikasi', [SettingController::class, 'update'])->name('pengaturan-aplikasi.update');
+
+    // -- Versi & Rilis Aplikasi Mobile --
+    Route::get('/pengaturan-versi', [AppVersionController::class, 'index'])->name('pengaturan-versi.index');
+    Route::post('/pengaturan-versi', [AppVersionController::class, 'update'])->name('pengaturan-versi.update');
 
     // -- Backup & Restore Database --
     Route::prefix('backup')->name('backup.')->controller(BackupController::class)->group(function () {
