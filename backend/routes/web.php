@@ -222,6 +222,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{ustadz}/resend-verification', [UstadzController::class, 'resendVerification'])->name('resend-verification');
         Route::get('/{id}/signature', [UstadzController::class, 'signature'])->name('signature');
         Route::post('/{id}/signature', [UstadzController::class, 'updateSignature'])->name('signature.update');
+        Route::get('/{id}/upload-foto', [UstadzController::class, 'modalUploadFoto'])->name('upload-foto');
+        Route::post('/{id}/update-foto', [UstadzController::class, 'updateFoto'])->name('update-foto');
+        Route::patch('/{id}/update-foto', [UstadzController::class, 'updateFoto'])->name('update-foto.patch');
+        Route::delete('/{id}/delete-foto', [UstadzController::class, 'deleteFoto'])->name('delete-foto');
     });
     Route::resource('ustadz', UstadzController::class);
 

@@ -14,13 +14,21 @@ use App\Models\Ujian\NilaiUjian;
 use App\Models\Ujian\RiwayatKenaikan;
 use App\Models\Ujian\Ujian;
 use App\Models\Ustadz;
+use App\Repositories\MuridRuanganRepository;
+use App\Services\ArsipService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use App\Services\ArsipService;
 
 class RaporController extends Controller
 {
+    protected $muridRuanganRepo;
+
+    public function __construct(MuridRuanganRepository $muridRuanganRepo)
+    {
+        $this->muridRuanganRepo = $muridRuanganRepo;
+    }
+
     public function index(Request $request)
     {
         $daftarTahun = TahunPelajaran::orderBy('id', 'asc')->get();
@@ -39,44 +47,48 @@ class RaporController extends Controller
         $isAkhirTahun = false;
 
         if ($request->ruangan_id) {
-            $ruanganTerpilih = Ruangan::with(['murids', 'level'])->find($request->ruangan_id);
-            $levelNama = $ruanganTerpilih->level->nama_level ?? '';
+            $ruanganTerpilih = Ruangan::with('level')->find($request->ruangan_id);
+            if ($ruanganTerpilih) {
+                $murids = $this->muridRuanganRepo->getMuridAktifByRuanganAndTahun($ruanganTerpilih->id, $tahunPelajaranId, ['waliMurid']);
+                $ruanganTerpilih->setRelation('murids', $murids);
 
-            // Filter Ujian Berdasarkan Kelas
-            $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-            $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
+                $levelNama = $ruanganTerpilih->level->nama_level ?? '';
 
-            if ($isKelasAkhir) {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
-            } else {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
-            }
-            $daftarUjian = $queryUjian->get();
+                // Filter Ujian Berdasarkan Kelas
+                $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
+                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
 
-            if ($request->ujian_id) {
-                $ujianTerpilih = Ujian::find($request->ujian_id);
-                $murids = $ruanganTerpilih->murids;
+                if ($isKelasAkhir) {
+                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+                } else {
+                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
+                }
+                $daftarUjian = $queryUjian->get();
 
-                // Ekstrak semua ID murid untuk query massal
-                $muridIds = $murids->pluck('id')->toArray();
+                if ($request->ujian_id) {
+                    $ujianTerpilih = Ujian::find($request->ujian_id);
 
-                // 1. Ambil data Arsip secara massal lalu kelompokkan berdasarkan referensi_id (ID Murid)
-                $arsipRapor = \App\Models\Arsip\ArsipDokumen::where('tipe_dokumen', 'rapor_murid')
-                    ->where('referensi_tipe', \App\Models\Murid::class)
-                    ->whereIn('referensi_id', $muridIds)
-                    ->whereJsonContains('snapshot_data->nama_ujian', $ujianTerpilih->nama_ujian)
-                    ->get()
-                    ->keyBy('referensi_id');
+                    // Ekstrak semua ID murid untuk query massal
+                    $muridIds = $murids->pluck('id')->toArray();
 
-                // 2. Cek apakah ini ujian akhir tahun MENGGUNAKAN tipe_ujian
-                $isAkhirTahun = in_array($ujianTerpilih->tipe_ujian, ['IMDA 2', 'IMNI']);
-
-                // 3. Jika ini ujian akhir tahun, tarik data Riwayat Kenaikan secara massal
-                if ($isAkhirTahun) {
-                    $riwayatKenaikans = \App\Models\Ujian\RiwayatKenaikan::whereIn('murid_id', $muridIds)
-                        ->where('tahun_pelajaran_id', $tahunPelajaranId)
+                    // 1. Ambil data Arsip secara massal lalu kelompokkan berdasarkan referensi_id (ID Murid)
+                    $arsipRapor = \App\Models\Arsip\ArsipDokumen::where('tipe_dokumen', 'rapor_murid')
+                        ->where('referensi_tipe', \App\Models\Murid::class)
+                        ->whereIn('referensi_id', $muridIds)
+                        ->whereJsonContains('snapshot_data->nama_ujian', $ujianTerpilih->nama_ujian)
                         ->get()
-                        ->keyBy('murid_id');
+                        ->keyBy('referensi_id');
+
+                    // 2. Cek apakah ini ujian akhir tahun MENGGUNAKAN tipe_ujian
+                    $isAkhirTahun = in_array($ujianTerpilih->tipe_ujian, ['IMDA 2', 'IMNI']);
+
+                    // 3. Jika ini ujian akhir tahun, tarik data Riwayat Kenaikan secara massal
+                    if ($isAkhirTahun) {
+                        $riwayatKenaikans = \App\Models\Ujian\RiwayatKenaikan::whereIn('murid_id', $muridIds)
+                            ->where('tahun_pelajaran_id', $tahunPelajaranId)
+                            ->get()
+                            ->keyBy('murid_id');
+                    }
                 }
             }
         }

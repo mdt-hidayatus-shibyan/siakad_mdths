@@ -78,7 +78,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Beri izin/dispensasi ujian untuk santri binaan:',
+              'Beri izin/dispensasi ujian untuk murid binaan:',
               style: TextStyle(
                 fontSize: 12,
                 color: isDark
@@ -180,7 +180,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Dispensasi berhasil diberikan untuk ${murid.nama}. Akses input nilai santri telah terbuka.',
+                      'Dispensasi berhasil diberikan untuk ${murid.nama}. Akses input nilai murid telah terbuka.',
                     ),
                     backgroundColor: primaryColor,
                     behavior: SnackBarBehavior.floating,
@@ -257,7 +257,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
           ],
         ),
         content: Text(
-          'Apakah Anda yakin ingin membatalkan dispensasi ujian untuk santri ${murid.nama}? Status santri akan kembali terkunci jika masih memiliki kendala administrasi.',
+          'Apakah Anda yakin ingin membatalkan dispensasi ujian untuk murid ${murid.nama}? Status murid akan kembali terkunci jika masih memiliki kendala administrasi.',
           style: const TextStyle(fontSize: 13),
         ),
         actions: [
@@ -556,8 +556,8 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                         const SizedBox(height: 3),
                         Text(
                           provider.isWaliRuangan
-                              ? 'Anda adalah Wali Ruangan kelas ini. Anda memiliki hak penuh untuk memberikan atau membatalkan dispensasi ujian bagi santri.'
-                              : 'Wali Ruangan: ${provider.waliRuanganNama}. Pemberian izin/dispensasi ujian santri dikelola oleh Wali Ruangan.',
+                              ? 'Anda adalah Wali Ruangan kelas ini. Anda memiliki hak penuh untuk memberikan atau membatalkan dispensasi ujian bagi murid.'
+                              : 'Wali Ruangan: ${provider.waliRuanganNama}. Pemberian izin/dispensasi ujian murid dikelola oleh Wali Ruangan.',
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark
@@ -624,7 +624,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Cari nama atau NISM santri...',
+              hintText: 'Cari nama atau NISM murid...',
               prefixIcon: const Icon(Icons.search_rounded, size: 18),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
@@ -686,7 +686,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
           const SizedBox(height: 12),
 
           // ===================================================================
-          // 5. DAFTAR SANTRI PERSYARATAN UJIAN
+          // 5. DAFTAR MURID PERSYARATAN UJIAN
           // ===================================================================
           if (muridList.isEmpty)
             Padding(
@@ -695,8 +695,8 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                 child: Text(
                   provider.searchQuery.isNotEmpty ||
                           provider.filterStatus != 'Semua'
-                      ? 'Tidak ada santri yang cocok dengan filter.'
-                      : 'Tidak ada data santri ditemukan.',
+                      ? 'Tidak ada murid yang cocok dengan filter.'
+                      : 'Tidak ada data murid ditemukan.',
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark
@@ -708,27 +708,14 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
             )
           else
             ...muridList.map((m) {
+              final isLunas = m.statusSyarat == 'Lunas';
+              final isDispensasi = m.statusSyarat == 'Dispensasi';
+
               Color statusBgColor;
               Color statusTextColor;
               IconData statusIcon;
 
-              if (m.hasDispensasi) {
-                statusBgColor = isDark
-                    ? AppColors.dispensasiBgDark
-                    : AppColors.dispensasiBgLight;
-                statusTextColor = isDark
-                    ? AppColors.dispensasiTextDark
-                    : AppColors.dispensasiTextLight;
-                statusIcon = Icons.verified_user_rounded;
-              } else if (m.isLocked) {
-                statusBgColor = isDark
-                    ? AppColors.alphaBgDark
-                    : AppColors.alphaBgLight;
-                statusTextColor = isDark
-                    ? AppColors.alphaTextDark
-                    : AppColors.alphaTextLight;
-                statusIcon = Icons.lock_rounded;
-              } else {
+              if (isLunas) {
                 statusBgColor = isDark
                     ? AppColors.hadirBgDark
                     : AppColors.hadirBgLight;
@@ -736,25 +723,41 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                     ? AppColors.hadirTextDark
                     : AppColors.hadirTextLight;
                 statusIcon = Icons.check_circle_rounded;
+              } else if (isDispensasi) {
+                statusBgColor = isDark
+                    ? AppColors.dispensasiBgDark
+                    : AppColors.dispensasiBgLight;
+                statusTextColor = isDark
+                    ? AppColors.dispensasiTextDark
+                    : AppColors.dispensasiTextLight;
+                statusIcon = Icons.verified_user_rounded;
+              } else {
+                statusBgColor = isDark
+                    ? AppColors.alphaBgDark
+                    : AppColors.alphaBgLight;
+                statusTextColor = isDark
+                    ? AppColors.alphaTextDark
+                    : AppColors.alphaTextLight;
+                statusIcon = Icons.lock_rounded;
               }
-
-              final avatarInitial = m.nama.trim().isNotEmpty
-                  ? m.nama.trim()[0].toUpperCase()
-                  : 'S';
 
               return GlassCard(
                 margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Header Baris 1: Avatar, Nama, NISM & Status Badge
                     Row(
                       children: [
                         CircleAvatar(
                           radius: 18,
                           backgroundColor: statusBgColor,
                           child: Text(
-                            avatarInitial,
+                            m.nama.isNotEmpty ? m.nama[0].toUpperCase() : 'M',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -773,12 +776,12 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'NISM: ${m.nism} • ${m.jenisKelamin == 'L' ? 'Santri Putra' : 'Santri Putri'}',
+                                'NISM: ${m.nism} • ${m.jenisKelamin == 'L' ? 'Murid Putra' : 'Murid Putri'}',
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: isDark

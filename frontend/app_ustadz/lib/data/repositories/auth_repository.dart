@@ -264,10 +264,16 @@ class AuthRepository {
     }
   }
 
-  Future<String> updateFoto({String? filePath, String? base64Image}) async {
+  Future<String?> updateFoto({
+    String? filePath,
+    String? base64Image,
+    bool deleteFoto = false,
+  }) async {
     try {
       dynamic postData;
-      if (filePath != null) {
+      if (deleteFoto) {
+        postData = {'hapus_foto': true};
+      } else if (filePath != null) {
         postData = FormData.fromMap({
           'foto': await MultipartFile.fromFile(filePath),
         });
@@ -283,15 +289,15 @@ class AuthRepository {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        return response.data['data']['foto_url'] ?? '';
+        return response.data['data']?['foto_url'];
       } else {
-        throw Exception(response.data['message'] ?? 'Gagal mengunggah foto.');
+        throw Exception(response.data['message'] ?? 'Gagal memperbarui foto.');
       }
     } on DioException catch (e) {
       if (e.response?.data != null && e.response?.data['message'] != null) {
         throw Exception(e.response!.data['message']);
       }
-      throw Exception('Gagal mengunggah foto: ${e.message}');
+      throw Exception('Gagal memperbarui foto: ${e.message}');
     }
   }
 

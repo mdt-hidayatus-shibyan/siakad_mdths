@@ -835,6 +835,22 @@ class AuthController extends Controller
             ], 404);
         }
 
+        // Opsi 0: Hapus Foto Profil (Set Null)
+        if ($request->boolean('hapus_foto') || $request->input('hapus_foto') === 'true' || $request->input('hapus_foto') === 1 || $request->input('hapus_foto') === '1') {
+            if ($ustadz->foto && Storage::disk('public')->exists($ustadz->foto)) {
+                Storage::disk('public')->delete($ustadz->foto);
+            }
+            $ustadz->update(['foto' => null]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto profil berhasil dihapus.',
+                'data' => [
+                    'foto_url' => null,
+                ]
+            ], 200);
+        }
+
         $newPath = null;
 
         // Opsi 1: File Upload Multipart

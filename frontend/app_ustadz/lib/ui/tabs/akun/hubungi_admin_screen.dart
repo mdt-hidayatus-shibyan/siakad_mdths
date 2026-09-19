@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
+import '../../../providers/app_version_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/bantuan_provider.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -96,12 +97,13 @@ class _HubungiAdminScreenState extends State<HubungiAdminScreen>
 
     final bantuan = context.read<BantuanProvider>();
 
+    final appVersion = context.read<AppVersionProvider>().appVersion.version;
     final res = await bantuan.submitLaporan(
       kategori: _selectedKategori,
       judul: _judulController.text.trim(),
       deskripsi: _deskripsiController.text.trim(),
       tipePerangkat: 'Android App',
-      versiAplikasi: '1.0.0',
+      versiAplikasi: appVersion,
     );
 
     if (!mounted) return;
@@ -440,7 +442,7 @@ class _HubungiAdminScreenState extends State<HubungiAdminScreen>
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Pengirim: ${user?.name ?? "Ustadz"} (${user?.kodeUstadz ?? "-"}) • Aplikasi Ustadz MDTHS v1.0.0',
+                          'Pengirim: ${user?.name ?? "Ustadz"} (${user?.kodeUstadz ?? "-"}) • Aplikasi Ustadz MDTHS v${context.watch<AppVersionProvider>().appVersion.version}',
                           style: const TextStyle(
                             fontSize: 11,
                             color: Color(0xFF1E40AF),

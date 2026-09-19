@@ -11,14 +11,30 @@
                 {{ $loop->iteration }}
             </span>
 
-            <!-- Foto Ustadz/Guru -->
-            <div
-                class="w-11 h-11 md:w-12 md:h-12 rounded-xl overflow-hidden transition-transform group-hover:scale-105 flex-shrink-0 border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 shadow-2xs">
-                <img src="{{ $ustadz->foto
-                    ? asset('storage/' . $ustadz->foto)
-                    : asset($ustadz->jenis_kelamin === 'L' ? 'assets/laki-default.png' : 'assets/perempuan-default.png') }}"
-                    alt="Foto {{ $ustadz->nama_lengkap }}" class="w-full h-full object-cover">
-            </div>
+            <!-- Foto Ustadz/Guru (Click to Upload/Change Foto) -->
+            @can('update ustadz')
+                <a href="{{ route('ustadz.upload-foto', $ustadz->id) }}"
+                    class="action-modal w-11 h-11 md:w-12 md:h-12 rounded-xl overflow-hidden flex-shrink-0 border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 shadow-2xs relative cursor-pointer group/avatar block"
+                    title="Ubah Foto {{ $ustadz->nama_lengkap }}">
+                    <img src="{{ $ustadz->foto
+                        ? asset('storage/' . $ustadz->foto)
+                        : asset($ustadz->jenis_kelamin === 'L' ? 'assets/laki-default.png' : 'assets/perempuan-default.png') }}"
+                        alt="Foto {{ $ustadz->nama_lengkap }}" class="w-full h-full object-cover">
+                    <!-- Overlay Ubah Foto -->
+                    <div
+                        class="absolute inset-0 rounded-xl bg-black/60 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300">
+                        <i class="bi bi-camera-fill text-white text-sm"></i>
+                    </div>
+                </a>
+            @else
+                <div
+                    class="w-11 h-11 md:w-12 md:h-12 rounded-xl overflow-hidden flex-shrink-0 border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 shadow-2xs">
+                    <img src="{{ $ustadz->foto
+                        ? asset('storage/' . $ustadz->foto)
+                        : asset($ustadz->jenis_kelamin === 'L' ? 'assets/laki-default.png' : 'assets/perempuan-default.png') }}"
+                        alt="Foto {{ $ustadz->nama_lengkap }}" class="w-full h-full object-cover">
+                </div>
+            @endcan
 
             <div class="flex-1 overflow-hidden">
                 <h4
@@ -59,8 +75,7 @@
                 @if ($ustadz->is_active)
                     <span
                         class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 shadow-2xs">
-                        <span
-                            class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
                         Aktif
                     </span>
                 @else
@@ -133,8 +148,16 @@
                 @endcan
 
                 @can('update ustadz')
+                    <a href="{{ route('ustadz.upload-foto', $ustadz->id) }}"
+                        class="action-modal w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center hover:bg-purple-500/20 border border-purple-500/20 transition-all hover:scale-105 active:scale-90 shadow-2xs outline-none"
+                        title="Upload / Ubah Foto Profil">
+                        <i class="bi bi-camera-fill text-xs"></i>
+                    </a>
+                @endcan
+
+                @can('update ustadz')
                     <a href="{{ route('ustadz.signature', $ustadz->id) }}"
-                        class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 border border-emerald-500/20 transition-all hover:scale-105 active:scale-90 shadow-2xs outline-none"
+                        class="action-modal w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 border border-emerald-500/20 transition-all hover:scale-105 active:scale-90 shadow-2xs outline-none"
                         title="Buat TTD Digital">
                         <i class="bi bi-pen-fill text-xs"></i>
                     </a>
@@ -150,9 +173,7 @@
 
 <!-- Pagination -->
 @if ($ustadzs->hasPages())
-    <div
-        class="mt-4 m3-glass-card p-4 rounded-2xl relative z-10 shadow-2xs">
+    <div class="mt-4 m3-glass-card p-4 rounded-2xl relative z-10 shadow-2xs">
         {{ $ustadzs->links('vendor.pagination.custom') }}
     </div>
 @endif
-

@@ -201,7 +201,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateFoto({String? filePath, String? base64Image}) async {
+  Future<bool> updateFoto({
+    String? filePath,
+    String? base64Image,
+    bool deleteFoto = false,
+  }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -210,10 +214,14 @@ class AuthProvider extends ChangeNotifier {
       final photoUrl = await _authRepo.updateFoto(
         filePath: filePath,
         base64Image: base64Image,
+        deleteFoto: deleteFoto,
       );
       if (_user != null) {
         _user = _user!.copyWith(
-          photo: ApiClient.resolveImageUrl(photoUrl) ?? photoUrl,
+          photo: deleteFoto
+              ? null
+              : (ApiClient.resolveImageUrl(photoUrl) ?? photoUrl),
+          setPhotoNull: deleteFoto,
         );
       }
       _isLoading = false;

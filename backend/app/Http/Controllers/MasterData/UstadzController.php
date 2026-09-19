@@ -9,6 +9,7 @@ use App\Http\Requests\MasterData\UstadzRequest;
 use App\Models\Ustadz;
 use App\Services\UstadzService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UstadzController extends Controller
 {
@@ -256,5 +257,85 @@ class UstadzController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menyimpan tanda tangan: ' . $e->getMessage());
         }
+    }
+
+    public function modalUploadFoto($id)
+    {
+        $ustadz = $this->ustadzService->findUstadz($id);
+
+        return view('ustadz.modal-upload-foto', compact('ustadz'));
+    }
+
+    public function updateFoto(Request $request, $id)
+    {
+        $ustadz = $this->ustadzService->findUstadz($id);
+
+        // Jika opsi hapus foto dipilih (set null)
+        if ($request->boolean('hapus_foto') || $request->input('hapus_foto') === 'true' || $request->input('hapus_foto') === '1' || $request->input('hapus_foto') === 1) {
+            if ($ustadz->foto && Storage::disk('public')->exists($ustadz->foto)) {
+                Storage::disk('public')->delete($ustadz->foto);
+            }
+            $ustadz->update(['foto' => null]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'status'    => 'success',
+                    'message'   => 'Foto Ustadz ' . $ustadz->nama_lengkap . ' berhasil dihapus!',
+                    'foto_url'  => null,
+                    'ustadz_id' => $ustadz->id,
+                ]);
+            }
+
+            return back()->with('success', 'Foto Ustadz berhasil dihapus!');
+        }
+
+        $request->validate([
+            'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:3072',
+        ], [
+            'foto.required' => 'File foto wajib diunggah.',
+            'foto.image'    => 'File yang diunggah harus berupa gambar.',
+            'foto.mimes'    => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
+            'foto.max'      => 'Ukuran foto maksimal 3MB.',
+        ]);
+
+        if ($ustadz->foto && Storage::disk('public')->exists($ustadz->foto)) {
+            Storage::disk('public')->delete($ustadz->foto);
+        }
+
+        $ustadz->foto = $request->file('foto')->store('uploads/ustadz/foto', 'public');
+        $ustadz->save();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'status'    => 'success',
+                'message'   => 'Foto Ustadz ' . $ustadz->nama_lengkap . ' berhasil diperbarui!',
+                'foto_url'  => asset('storage/' . $ustadz->foto),
+                'ustadz_id' => $ustadz->id,
+            ]);
+        }
+
+        return back()->with('success', 'Foto Ustadz berhasil diperbarui!');
+    }
+
+    public function deleteFoto(Request $request, $id)
+    {
+        $ustadz = $this->ustadzService->findUstadz($id);
+
+        if ($ustadz->foto && Storage::disk('public')->exists($ustadz->foto)) {
+            Storage::disk('public')->delete($ustadz->foto);
+        }
+
+        $ustadz->update(['foto' => null]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'status'    => 'success',
+                'message'   => 'Foto Ustadz ' . $ustadz->nama_lengkap . ' berhasil dihapus!',
+                'foto_url'  => null,
+                'ustadz_id' => $ustadz->id,
+            ]);
+        }
+
+        return back()->with('success', 'Foto Ustadz berhasil dihapus!');
     }
 }

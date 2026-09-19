@@ -182,165 +182,165 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                     murid.status != null && murid.status!.isNotEmpty;
 
                 return GlassCard(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  child: Row(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Avatar Number with Status Ring
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isFilled
-                              ? (isDark
-                                    ? const Color(0xFF142414)
-                                    : const Color(0xFFE8F5E9))
-                              : (isDark
-                                    ? const Color(0xFF181C18)
-                                    : const Color(0xFFF1F5F9)),
-                          border: Border.all(
-                            color: isFilled
-                                ? (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight)
-                                : (isDark
-                                      ? AppColors.outlineDark
-                                      : AppColors.outlineLight),
-                            width: isFilled ? 1.5 : 1.0,
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: isFilled
-                                ? (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight)
-                                : (isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Nama, NISM & Status Badge
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    murid.nama,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (!isFilled) ...[
-                                  const SizedBox(width: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.amberAccent.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: AppColors.amberAccent.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                        width: 0.8,
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Belum',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.amberAccent,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'NISM: ${murid.nism} • ${murid.jenisKelamin == "L" ? "Putra" : "Putri"}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark
-                                    ? const Color(0xFF8D9387)
-                                    : const Color(0xFF73796E),
+                      // Baris Atas: Nomor, Nama Murid (Full Width), NISM, & Badge Status
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Avatar Nomor dengan Status Ring
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isFilled
+                                  ? (isDark
+                                        ? const Color(0xFF142414)
+                                        : const Color(0xFFE8F5E9))
+                                  : (isDark
+                                        ? const Color(0xFF181C18)
+                                        : const Color(0xFFF1F5F9)),
+                              border: Border.all(
+                                color: isFilled
+                                    ? (isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight)
+                                    : (isDark
+                                          ? AppColors.outlineDark
+                                          : AppColors.outlineLight),
+                                width: isFilled ? 1.5 : 1.0,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: isFilled
+                                    ? (isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight)
+                                    : (isDark
+                                          ? const Color(0xFF8D9387)
+                                          : const Color(0xFF73796E)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
 
-                      // Status Chips Row (H, S, I, A, D)
+                          // Nama Murid & NISM (Spacious & Jelas)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  murid.nama,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: -0.2,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'NISM: ${murid.nism} • ${murid.jenisKelamin == "L" ? "Putra" : "Putri"}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? const Color(0xFF8D9387)
+                                        : const Color(0xFF73796E),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // Badge Status Kehadiran Terpilih / Belum
+                          _buildStatusBadge(murid.status, isDark),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Garis Pembatas Halus
+                      Divider(
+                        height: 1,
+                        thickness: 0.8,
+                        color: isDark
+                            ? AppColors.outlineDark.withValues(alpha: 0.4)
+                            : AppColors.outlineLight.withValues(alpha: 0.7),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Baris 5 Tombol Presensi (H, S, I, A, D) Fleksibel & Mudah Ditekan
                       Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          StatusPresensiChip(
-                            status: 'H',
-                            isSelected: murid.status == 'Hadir',
-                            onTap: () => presensi.updateMuridStatus(
-                              murid.muridId,
-                              'Hadir',
+                          Expanded(
+                            child: StatusPresensiChip(
+                              status: 'H',
+                              label: 'Hadir',
+                              isSelected: murid.status == 'Hadir',
+                              onTap: () => presensi.updateMuridStatus(
+                                murid.muridId,
+                                'Hadir',
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 3),
-                          StatusPresensiChip(
-                            status: 'S',
-                            isSelected: murid.status == 'Sakit',
-                            onTap: () => presensi.updateMuridStatus(
-                              murid.muridId,
-                              'Sakit',
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: StatusPresensiChip(
+                              status: 'S',
+                              label: 'Sakit',
+                              isSelected: murid.status == 'Sakit',
+                              onTap: () => presensi.updateMuridStatus(
+                                murid.muridId,
+                                'Sakit',
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 3),
-                          StatusPresensiChip(
-                            status: 'I',
-                            isSelected: murid.status == 'Izin',
-                            onTap: () => presensi.updateMuridStatus(
-                              murid.muridId,
-                              'Izin',
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: StatusPresensiChip(
+                              status: 'I',
+                              label: 'Izin',
+                              isSelected: murid.status == 'Izin',
+                              onTap: () => presensi.updateMuridStatus(
+                                murid.muridId,
+                                'Izin',
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 3),
-                          StatusPresensiChip(
-                            status: 'A',
-                            isSelected: murid.status == 'Alpha',
-                            onTap: () => presensi.updateMuridStatus(
-                              murid.muridId,
-                              'Alpha',
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: StatusPresensiChip(
+                              status: 'A',
+                              label: 'Alpha',
+                              isSelected: murid.status == 'Alpha',
+                              onTap: () => presensi.updateMuridStatus(
+                                murid.muridId,
+                                'Alpha',
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 3),
-                          StatusPresensiChip(
-                            status: 'D',
-                            isSelected: murid.status == 'Dispensasi',
-                            onTap: () => presensi.updateMuridStatus(
-                              murid.muridId,
-                              'Dispensasi',
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: StatusPresensiChip(
+                              status: 'D',
+                              label: 'Dispen',
+                              isSelected: murid.status == 'Dispensasi',
+                              onTap: () => presensi.updateMuridStatus(
+                                murid.muridId,
+                                'Dispensasi',
+                              ),
                             ),
                           ),
                         ],
@@ -443,7 +443,7 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                           )
                         : Text(
                             presensi.countBelumDiisi == 0
-                                ? 'Simpan Semua Presensi (${presensi.totalMurid} Santri)'
+                                ? 'Simpan Semua Presensi (${presensi.totalMurid} Murid)'
                                 : 'Simpan Presensi (${presensi.countSudahDiisi}/${presensi.totalMurid} Diisi)',
                             style: const TextStyle(
                               fontSize: 13,
@@ -456,6 +456,85 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String? status, bool isDark) {
+    final isFilled = status != null && status.isNotEmpty;
+    if (!isFilled) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.amberAccent.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppColors.amberAccent.withValues(alpha: 0.4),
+            width: 0.8,
+          ),
+        ),
+        child: const Text(
+          'Belum',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: AppColors.amberAccent,
+          ),
+        ),
+      );
+    }
+
+    Color bg;
+    Color text;
+    Color border;
+
+    switch (status) {
+      case 'Hadir':
+        bg = isDark ? AppColors.hadirBgDark : AppColors.hadirBgLight;
+        text = isDark ? AppColors.hadirTextDark : AppColors.hadirTextLight;
+        border = isDark ? AppColors.hadirTextDark : const Color(0xFF86EFAC);
+        break;
+      case 'Sakit':
+        bg = isDark ? AppColors.sakitBgDark : AppColors.sakitBgLight;
+        text = isDark ? AppColors.sakitTextDark : AppColors.sakitTextLight;
+        border = isDark ? AppColors.sakitTextDark : const Color(0xFFFDE68A);
+        break;
+      case 'Izin':
+        bg = isDark ? AppColors.izinBgDark : AppColors.izinBgLight;
+        text = isDark ? AppColors.izinTextDark : AppColors.izinTextLight;
+        border = isDark ? AppColors.izinTextDark : const Color(0xFF93C5FD);
+        break;
+      case 'Alpha':
+        bg = isDark ? AppColors.alphaBgDark : AppColors.alphaBgLight;
+        text = isDark ? AppColors.alphaTextDark : AppColors.alphaTextLight;
+        border = isDark ? AppColors.alphaTextDark : const Color(0xFFFCA5A5);
+        break;
+      case 'Dispensasi':
+      default:
+        bg = isDark ? AppColors.dispensasiBgDark : AppColors.dispensasiBgLight;
+        text = isDark
+            ? AppColors.dispensasiTextDark
+            : AppColors.dispensasiTextLight;
+        border = isDark
+            ? AppColors.dispensasiTextDark
+            : const Color(0xFFD8B4FE);
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border.withValues(alpha: 0.5), width: 0.8),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: text,
+        ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../core/utils/session_helper.dart';
+import '../../../providers/app_version_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/kas_provider.dart';
 import '../../../providers/theme_provider.dart';
@@ -36,6 +37,7 @@ class _AkunTabState extends State<AkunTab> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().fetchProfile();
       context.read<KasProvider>().fetchPengaturan();
+      context.read<AppVersionProvider>().fetchAppVersion();
     });
   }
 
@@ -372,6 +374,9 @@ class _AkunTabState extends State<AkunTab> {
   // =========================================================================
   void _showEditFotoModal() {
     HapticHelper.light();
+    final user = context.read<AuthProvider>().user;
+    final hasPhoto = user?.photo != null && user!.photo!.isNotEmpty;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -472,11 +477,119 @@ class _AkunTabState extends State<AkunTab> {
                   }
                 },
               ),
+              if (hasPhoto) ...[
+                const Divider(height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.roseDanger.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.roseDanger,
+                    ),
+                  ),
+                  title: const Text(
+                    'Hapus Foto Profil',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.roseDanger,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Kembalikan ke avatar bawaan / kosong',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _confirmDeleteFoto();
+                  },
+                ),
+              ],
             ],
           ),
         );
       },
     );
+  }
+
+  void _confirmDeleteFoto() {
+    HapticHelper.warning();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Foto Profil?'),
+        content: const Text(
+          'Foto profil Anda akan dihapus dan dikembalikan ke avatar default.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.roseDanger,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteFoto();
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteFoto() async {
+    HapticHelper.light();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Menghapus foto profil...'),
+          ],
+        ),
+        duration: Duration(seconds: 4),
+      ),
+    );
+
+    final success = await context.read<AuthProvider>().updateFoto(
+      deleteFoto: true,
+    );
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    if (success) {
+      HapticHelper.confirmSuccess();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Foto profil berhasil dihapus!'),
+          backgroundColor: AppColors.primaryLight,
+        ),
+      );
+    } else {
+      HapticHelper.warning();
+      final err =
+          context.read<AuthProvider>().errorMessage ??
+          'Gagal menghapus foto profil.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(err), backgroundColor: AppColors.roseDanger),
+      );
+    }
   }
 
   Future<void> _uploadFoto(String path) async {
@@ -2692,47 +2805,58 @@ class _AkunTabState extends State<AkunTab> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            GlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color:
-                        (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight)
-                            .withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+            Consumer<AppVersionProvider>(
+              builder: (context, versionProvider, _) {
+                final appVersion = versionProvider.appVersion;
+                return GlassCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
                   ),
-                  child: Icon(
-                    Icons.info_outline_rounded,
-                    size: 18,
-                    color: isDark
-                        ? AppColors.primaryDark
-                        : AppColors.primaryLight,
-                  ),
-                ),
-                title: const Text(
-                  'Tentang Aplikasi',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text(
-                  'Versi 1.0.0 • SIAKAD MDT Hidayatus Shibyan',
-                  style: TextStyle(fontSize: 11),
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () {
-                  HapticHelper.light();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const TentangAplikasiScreen(),
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color:
+                            (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight)
+                                .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.info_outline_rounded,
+                        size: 18,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                      ),
                     ),
-                  );
-                },
-              ),
+                    title: const Text(
+                      'Tentang Aplikasi',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Versi ${appVersion.version} • Ustadz MDTHS',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      HapticHelper.light();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TentangAplikasiScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 28),
 

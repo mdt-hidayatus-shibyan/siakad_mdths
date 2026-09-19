@@ -489,6 +489,27 @@ class MuridController extends Controller
 
     public function updateFoto(Request $request, $id)
     {
+        $murid = \App\Models\Murid::findOrFail($id);
+
+        // Jika opsi hapus foto dipilih (set null)
+        if ($request->boolean('hapus_foto') || $request->input('hapus_foto') === 'true' || $request->input('hapus_foto') === '1' || $request->input('hapus_foto') === 1) {
+            if ($murid->foto && Storage::disk('public')->exists($murid->foto)) {
+                Storage::disk('public')->delete($murid->foto);
+            }
+            $murid->update(['foto' => null]);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'status'   => 'success',
+                    'message'  => 'Foto murid ' . $murid->nama_lengkap . ' berhasil dihapus!',
+                    'foto_url' => null,
+                    'murid_id' => $murid->id,
+                ]);
+            }
+
+            return back()->with('success', 'Foto murid berhasil dihapus!');
+        }
+
         $request->validate([
             'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048'
         ], [
@@ -497,8 +518,6 @@ class MuridController extends Controller
             'foto.mimes'    => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
             'foto.max'      => 'Ukuran foto maksimal 2MB.',
         ]);
-
-        $murid = \App\Models\Murid::findOrFail($id);
 
         if ($murid->foto && Storage::disk('public')->exists($murid->foto)) {
             Storage::disk('public')->delete($murid->foto);
@@ -510,7 +529,7 @@ class MuridController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'status'   => 'success',
-                'message'  => 'Foto santri ' . $murid->nama_lengkap . ' berhasil diperbarui!',
+                'message'  => 'Foto murid ' . $murid->nama_lengkap . ' berhasil diperbarui!',
                 'foto_url' => asset('storage/' . $murid->foto),
                 'murid_id' => $murid->id,
             ]);

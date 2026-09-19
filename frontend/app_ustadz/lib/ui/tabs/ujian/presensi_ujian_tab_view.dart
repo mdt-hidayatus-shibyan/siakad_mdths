@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/presensi_ujian_provider.dart';
 import '../../widgets/glass_card.dart';
+import '../../widgets/status_presensi_chip.dart';
 
 class PresensiUjianTabView extends StatefulWidget {
   const PresensiUjianTabView({super.key});
@@ -534,37 +535,57 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                     ),
                     const SizedBox(height: 10),
 
-                    // Pilihan Status Kehadiran Pengawas
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: ['Hadir', 'Izin', 'Sakit', 'Badal'].map((st) {
-                        final isSelected = provider.pengawas!.status == st;
-                        Color chipColor = AppColors.primaryLight;
-                        if (st == 'Izin') chipColor = AppColors.skyBlueAccent;
-                        if (st == 'Sakit') chipColor = AppColors.amberAccent;
-                        if (st == 'Badal') chipColor = AppColors.violetAccent;
-
-                        return ChoiceChip(
-                          label: Text(st, style: const TextStyle(fontSize: 11)),
-                          selected: isSelected,
-                          selectedColor: chipColor.withValues(alpha: 0.2),
-                          labelStyle: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            color: isSelected ? chipColor : null,
+                    // Pilihan Status Kehadiran Pengawas (H, I, S, B)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: StatusPresensiChip(
+                            status: 'H',
+                            label: 'Hadir',
+                            isSelected: provider.pengawas!.status == 'Hadir',
+                            onTap: () {
+                              HapticHelper.light();
+                              provider.updatePengawasStatus('Hadir');
+                            },
                           ),
-                          side: BorderSide(
-                            color: isSelected
-                                ? chipColor
-                                : (isDark
-                                      ? AppColors.outlineDark
-                                      : AppColors.outlineLight),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: StatusPresensiChip(
+                            status: 'I',
+                            label: 'Izin',
+                            isSelected: provider.pengawas!.status == 'Izin',
+                            onTap: () {
+                              HapticHelper.light();
+                              provider.updatePengawasStatus('Izin');
+                            },
                           ),
-                          onSelected: (_) => provider.updatePengawasStatus(st),
-                        );
-                      }).toList(),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: StatusPresensiChip(
+                            status: 'S',
+                            label: 'Sakit',
+                            isSelected: provider.pengawas!.status == 'Sakit',
+                            onTap: () {
+                              HapticHelper.light();
+                              provider.updatePengawasStatus('Sakit');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: StatusPresensiChip(
+                            status: 'B',
+                            label: 'Badal',
+                            isSelected: provider.pengawas!.status == 'Badal',
+                            onTap: () {
+                              HapticHelper.light();
+                              provider.updatePengawasStatus('Badal');
+                            },
+                          ),
+                        ),
+                      ],
                     ),
 
                     // Dropdown Ustadz Badal jika status Badal
@@ -787,26 +808,21 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Flexible(
+                                  Expanded(
                                     child: Text(
                                       m.nama,
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
                                       ),
-                                      maxLines: 1,
+                                      maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  if (isBelumDiisi)
-                                    _buildBadge(
-                                      'Belum Diisi',
-                                      AppColors.amberAccent,
-                                    )
-                                  else
-                                    _buildBadge(m.status!, statusColor),
+                                  _buildStatusBadge(m.status, isDark),
                                 ],
                               ),
                               const SizedBox(height: 2),
@@ -873,59 +889,85 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
 
-                    // Choice Chips Status Kehadiran Santri
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children:
-                            [
-                              'Hadir',
-                              'Izin',
-                              'Sakit',
-                              'Alpha',
-                              'Dispensasi',
-                            ].map((st) {
-                              final isSelected = m.status == st;
-                              final chipColor = _getStatusColor(st);
+                    // Garis Pembatas Halus
+                    Divider(
+                      height: 1,
+                      thickness: 0.8,
+                      color: isDark
+                          ? AppColors.outlineDark.withValues(alpha: 0.4)
+                          : AppColors.outlineLight.withValues(alpha: 0.7),
+                    ),
 
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 6),
-                                child: ChoiceChip(
-                                  label: Text(
-                                    st,
-                                    style: const TextStyle(fontSize: 10),
-                                  ),
-                                  selected: isSelected,
-                                  selectedColor: chipColor.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  labelStyle: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    color: isSelected ? chipColor : null,
-                                  ),
-                                  visualDensity: VisualDensity.compact,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 0,
-                                  ),
-                                  side: BorderSide(
-                                    color: isSelected
-                                        ? chipColor
-                                        : (isDark
-                                              ? AppColors.outlineDark
-                                              : AppColors.outlineLight),
-                                  ),
-                                  onSelected: (_) =>
-                                      provider.updateMuridStatus(m.muridId, st),
-                                ),
+                    const SizedBox(height: 10),
+
+                    // Baris 5 Tombol Presensi (H, I, S, A, D) Fleksibel & Mudah Ditekan
+                    Row(
+                      children: [
+                        Expanded(
+                          child: StatusPresensiChip(
+                            status: 'H',
+                            label: 'Hadir',
+                            isSelected: m.status == 'Hadir',
+                            onTap: () {
+                              HapticHelper.light();
+                              provider.updateMuridStatus(m.muridId, 'Hadir');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: StatusPresensiChip(
+                            status: 'I',
+                            label: 'Izin',
+                            isSelected: m.status == 'Izin',
+                            onTap: () {
+                              HapticHelper.light();
+                              provider.updateMuridStatus(m.muridId, 'Izin');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: StatusPresensiChip(
+                            status: 'S',
+                            label: 'Sakit',
+                            isSelected: m.status == 'Sakit',
+                            onTap: () {
+                              HapticHelper.light();
+                              provider.updateMuridStatus(m.muridId, 'Sakit');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: StatusPresensiChip(
+                            status: 'A',
+                            label: 'Alpha',
+                            isSelected: m.status == 'Alpha',
+                            onTap: () {
+                              HapticHelper.light();
+                              provider.updateMuridStatus(m.muridId, 'Alpha');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: StatusPresensiChip(
+                            status: 'D',
+                            label: 'Dispen',
+                            isSelected: m.status == 'Dispensasi',
+                            onTap: () {
+                              HapticHelper.light();
+                              provider.updateMuridStatus(
+                                m.muridId,
+                                'Dispensasi',
                               );
-                            }).toList(),
-                      ),
+                            },
+                          ),
+                        ),
+                      ],
                     ),
 
                     if (m.catatan != null && m.catatan!.isNotEmpty) ...[
@@ -1159,6 +1201,86 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String? status, bool isDark) {
+    final isFilled = status != null && status.isNotEmpty;
+    if (!isFilled) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.amberAccent.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppColors.amberAccent.withValues(alpha: 0.4),
+            width: 0.8,
+          ),
+        ),
+        child: const Text(
+          'Belum',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: AppColors.amberAccent,
+          ),
+        ),
+      );
+    }
+
+    Color bg;
+    Color text;
+    Color border;
+
+    switch (status) {
+      case 'Hadir':
+        bg = isDark ? AppColors.hadirBgDark : AppColors.hadirBgLight;
+        text = isDark ? AppColors.hadirTextDark : AppColors.hadirTextLight;
+        border = isDark ? AppColors.hadirTextDark : const Color(0xFF86EFAC);
+        break;
+      case 'Sakit':
+        bg = isDark ? AppColors.sakitBgDark : AppColors.sakitBgLight;
+        text = isDark ? AppColors.sakitTextDark : AppColors.sakitTextLight;
+        border = isDark ? AppColors.sakitTextDark : const Color(0xFFFDE68A);
+        break;
+      case 'Izin':
+        bg = isDark ? AppColors.izinBgDark : AppColors.izinBgLight;
+        text = isDark ? AppColors.izinTextDark : AppColors.izinTextLight;
+        border = isDark ? AppColors.izinTextDark : const Color(0xFF93C5FD);
+        break;
+      case 'Alpha':
+        bg = isDark ? AppColors.alphaBgDark : AppColors.alphaBgLight;
+        text = isDark ? AppColors.alphaTextDark : AppColors.alphaTextLight;
+        border = isDark ? AppColors.alphaTextDark : const Color(0xFFFCA5A5);
+        break;
+      case 'Badal':
+      case 'Dispensasi':
+      default:
+        bg = isDark ? AppColors.dispensasiBgDark : AppColors.dispensasiBgLight;
+        text = isDark
+            ? AppColors.dispensasiTextDark
+            : AppColors.dispensasiTextLight;
+        border = isDark
+            ? AppColors.dispensasiTextDark
+            : const Color(0xFFD8B4FE);
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border.withValues(alpha: 0.5), width: 0.8),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: text,
         ),
       ),
     );

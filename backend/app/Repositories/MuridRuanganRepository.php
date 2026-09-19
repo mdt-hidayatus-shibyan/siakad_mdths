@@ -23,14 +23,20 @@ class MuridRuanganRepository
      *
      * @param int|string $ruangan_id
      * @param int|string $tahun_pelajaran_id
+     * @param string|null $status
+     * @param array $with
      * @return Collection
      */
-    public function getMuridByRuanganAndTahun($ruangan_id, $tahun_pelajaran_id, $status = null): Collection
+    public function getMuridByRuanganAndTahun($ruangan_id, $tahun_pelajaran_id, $status = null, array $with = []): Collection
     {
         $query = $this->murid->whereHas('ruangans', function ($query) use ($ruangan_id, $tahun_pelajaran_id) {
             $query->where('ruangans.id', $ruangan_id)
                 ->where('murid_ruangans.tahun_pelajaran_id', $tahun_pelajaran_id);
         });
+
+        if (!empty($with)) {
+            $query->with($with);
+        }
 
         // Jika parameter $status diisi, tambahkan filter where
         if ($status) {
@@ -40,6 +46,19 @@ class MuridRuanganRepository
         return $query->orderBy('jenis_kelamin', 'asc') // 1. Pisahkan L/P
             ->orderBy('nama_lengkap', 'asc')  // 2. Urutkan nama sesuai abjad
             ->get();
+    }
+
+    /**
+     * Mengambil data murid aktif saja berdasarkan ruangan dan tahun pelajaran.
+     *
+     * @param int|string $ruangan_id
+     * @param int|string $tahun_pelajaran_id
+     * @param array $with
+     * @return Collection
+     */
+    public function getMuridAktifByRuanganAndTahun($ruangan_id, $tahun_pelajaran_id, array $with = []): Collection
+    {
+        return $this->getMuridByRuanganAndTahun($ruangan_id, $tahun_pelajaran_id, 'Aktif', $with);
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Models\Ujian\DispensasiUjian;
 use App\Models\Ujian\JadwalUjian;
 use App\Models\Ujian\NilaiUjian;
 use App\Models\Ujian\Ujian;
+use App\Repositories\MuridRuanganRepository;
 use App\Services\NilaiUjianService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,10 +20,12 @@ use Illuminate\Support\Facades\DB;
 class NilaiUjianController extends Controller
 {
     protected $nilaiUjianService;
+    protected $muridRuanganRepo;
 
-    public function __construct(NilaiUjianService $nilaiUjianService)
+    public function __construct(NilaiUjianService $nilaiUjianService, MuridRuanganRepository $muridRuanganRepo)
     {
         $this->nilaiUjianService = $nilaiUjianService;
+        $this->muridRuanganRepo = $muridRuanganRepo;
     }
 
     public function index(Request $request)
@@ -30,9 +33,9 @@ class NilaiUjianController extends Controller
         $daftarTahun = TahunPelajaran::orderBy('id', 'asc')->get();
         $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()->id;
 
-        // Ambil daftar ruangan beserta jumlah muridnya (Optimasi Query)
+        // Ambil daftar ruangan beserta jumlah murid aktifnya
         $daftarRuangan = Ruangan::where('tahun_pelajaran_id', $tahunPelajaranId)
-            ->withCount('murids')
+            ->withCount(['murids' => fn($q) => $q->where('status', 'Aktif')])
             ->orderBy('level_id', 'asc')
             ->get();
 
@@ -70,124 +73,129 @@ class NilaiUjianController extends Controller
         $jadwals = collect();
 
         if ($request->ruangan_id) {
-            $ruanganTerpilih = Ruangan::with(['level', 'murids.waliMurid'])->find($request->ruangan_id);
-            $levelNama = $ruanganTerpilih->level->nama_level ?? '';
+            $ruanganTerpilih = Ruangan::with('level')->find($request->ruangan_id);
+            if ($ruanganTerpilih) {
+                $murids = $this->muridRuanganRepo->getMuridAktifByRuanganAndTahun($ruanganTerpilih->id, $tahunPelajaranId, ['waliMurid']);
+                $ruanganTerpilih->setRelation('murids', $murids);
 
-            // (Blok pencarian "MATA PELAJARAN" yang lama DIBUANG karena membuang-buang query DB)
+                $levelNama = $ruanganTerpilih->level->nama_level ?? '';
 
-            // FILTER UJIAN
-            $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-            $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
+                // (Blok pencarian "MATA PELAJARAN" yang lama DIBUANG karena membuang-buang query DB)
 
-            if ($isKelasAkhir) {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
-            } else {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
-            }
-            $daftarUjian = $queryUjian->get();
+                // FILTER UJIAN
+                $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
+                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
 
-            // JIKA AGENDA UJIAN DIKLIK
-            if ($request->ujian_id) {
-                $ujian = Ujian::find($request->ujian_id);
-
-                // Mengambil jadwal (sebagai pengganti filter mapel lama)
-                $jadwals = JadwalUjian::with('mataPelajaran')
-                    ->where('ujian_id', $ujian->id)
-                    ->where('level_id', $ruanganTerpilih->level_id)
-                    ->orderBy('tanggal_ujian', 'asc')
-                    ->get();
-
-
-                // Pembagian Bulan Tagihan per Semester Berjalan
-                $namaSemester = $ujian->semester_relasi->nama_semester ?? '';
-                $bulanSemester = (str_contains($namaSemester, '1') || str_contains(strtolower($namaSemester), 'ganjil'))
-                    ? ['Syawal', 'Dzul Qadah', 'Dzul Hijjah', 'Muharram', 'Shafar']
-                    : ['Rabiul Awal', 'Rabiul Tsani', 'Jumadal Ula', 'Jumadal Akhir', 'Rajab'];
-
-                // Ambil Nilai yang Sebelumnya Pernah Diinput (Sesuai Jadwal_id)
-                if ($request->jadwal_ujian_id) {
-                    $nilaiExisting = NilaiUjian::where('ujian_id', $ujian->id)
-                        ->where('jadwal_ujian_id', $request->jadwal_ujian_id)
-                        ->where('ruangan_id', $ruanganTerpilih->id)
-                        ->get()
-                        ->keyBy('murid_id');
+                if ($isKelasAkhir) {
+                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+                } else {
+                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
                 }
+                $daftarUjian = $queryUjian->get();
 
-                // =========================================================================
-                // OPTIMASI: BULK QUERY (TARIK DATA MASSAL SEBELUM FOREACH)
-                // =========================================================================
-                $muridIds = $ruanganTerpilih->murids->pluck('id')->toArray();
+                // JIKA AGENDA UJIAN DIKLIK
+                if ($request->ujian_id) {
+                    $ujian = Ujian::find($request->ujian_id);
 
-                // 1. Tarik Massal ID Siswa yang punya Dispensasi
-                $dispensasiMuridIds = DispensasiUjian::where('ujian_id', $ujian->id)
-                    ->whereIn('murid_id', $muridIds)
-                    ->pluck('murid_id')
-                    ->toArray();
+                    // Mengambil jadwal (sebagai pengganti filter mapel lama)
+                    $jadwals = JadwalUjian::with('mataPelajaran')
+                        ->where('ujian_id', $ujian->id)
+                        ->where('level_id', $ruanganTerpilih->level_id)
+                        ->orderBy('tanggal_ujian', 'asc')
+                        ->get();
 
-                // 2. Tarik Massal ID Jenis Tagihan IMDA 1
-                $jenis_tagihan_id = PengaturanTagihan::where('tahun_pelajaran_id', $ujian->tahun_pelajaran_id)
-                    ->where('level_id', $ruanganTerpilih->level_id)
-                    // Gunakan tipe_ujian agar dinamis, misal mencari kata "%IMDA 1%" atau "%IMNI%"
-                    ->where('nama_tagihan', 'LIKE', '%' . $ujian->tipe_ujian . '%')
-                    ->value('id');
 
-                // 3. Tarik Massal ID Siswa yang SUDAH LUNAS IMDA 1
-                $imdaLunasMuridIds = TagihanMurid::whereIn('murid_id', $muridIds)
-                    ->whereIn('status_bayar', ['Lunas', 'Bebas/Gratis', 'Ditanggung Donatur'])
-                    ->where(function ($q) use ($ruanganTerpilih, $jenis_tagihan_id) {
-                        $q->where('ruangan_id', $ruanganTerpilih->id)
-                            ->where('pengaturan_tagihan_id', $jenis_tagihan_id); // Gunakan where() BUKAN orWhere() agar akurat
-                    })
-                    ->pluck('murid_id')
-                    ->toArray();
+                    // Pembagian Bulan Tagihan per Semester Berjalan
+                    $namaSemester = $ujian->semester_relasi->nama_semester ?? '';
+                    $bulanSemester = (str_contains($namaSemester, '1') || str_contains(strtolower($namaSemester), 'ganjil'))
+                        ? ['Syawal', 'Dzul Qadah', 'Dzul Hijjah', 'Muharram', 'Shafar']
+                        : ['Rabiul Awal', 'Rabiul Tsani', 'Jumadal Ula', 'Jumadal Akhir', 'Rajab'];
 
-                // 4. Tarik Massal ID Siswa yang MENUNGGAK SPP di semester terkait
-                $sppMenunggakMuridIds = TagihanMurid::whereIn('murid_id', $muridIds)
-                    ->where('ruangan_id', $ruanganTerpilih->id)
-                    ->where('status_bayar', 'Belum Lunas')
-                    ->where(function ($q) use ($bulanSemester) {
-                        foreach ($bulanSemester as $bulan) {
-                            $q->orWhere('nama_tagihan_spesifik', 'like', "%SPP $bulan%")
-                                ->orWhere('nama_tagihan_spesifik', 'like', "%Syahriyah $bulan%");
-                        }
-                    })
-                    ->pluck('murid_id')
-                    ->toArray();
-                // =========================================================================
+                    // Ambil Nilai yang Sebelumnya Pernah Diinput (Sesuai Jadwal_id)
+                    if ($request->jadwal_ujian_id) {
+                        $nilaiExisting = NilaiUjian::where('ujian_id', $ujian->id)
+                            ->where('jadwal_ujian_id', $request->jadwal_ujian_id)
+                            ->where('ruangan_id', $ruanganTerpilih->id)
+                            ->get()
+                            ->keyBy('murid_id');
+                    }
 
-                foreach ($ruanganTerpilih->murids as $murid) {
-                    // Cek data dari array Bulk Query (Tanpa menyentuh database lagi)
-                    $hasDispensasi = in_array($murid->id, $dispensasiMuridIds);
-                    $imdaLunas     = in_array($murid->id, $imdaLunasMuridIds);
-                    $sppMenunggak  = in_array($murid->id, $sppMenunggakMuridIds);
+                    // =========================================================================
+                    // OPTIMASI: BULK QUERY (TARIK DATA MASSAL SEBELUM FOREACH)
+                    // =========================================================================
+                    $muridIds = $ruanganTerpilih->murids->pluck('id')->toArray();
 
-                    if ($hasDispensasi) {
-                        $murid->is_locked = false;
-                        $murid->lock_reason = 'Mendapat Dispensasi / Izin';
-                    } else {
-                        // Jika belum lunas IMDA ATAU menunggak SPP
-                        if (!$imdaLunas || $sppMenunggak) {
-                            $murid->is_locked = true;
+                    // 1. Tarik Massal ID Siswa yang punya Dispensasi
+                    $dispensasiMuridIds = DispensasiUjian::where('ujian_id', $ujian->id)
+                        ->whereIn('murid_id', $muridIds)
+                        ->pluck('murid_id')
+                        ->toArray();
 
-                            // Kumpulkan alasan tunggakan
-                            $alasan = [];
-                            if (!$imdaLunas) {
-                                $alasan[] = 'Iuran Ujian (IMDA/IMNI)';
+                    // 2. Tarik Massal ID Jenis Tagihan IMDA 1
+                    $jenis_tagihan_id = PengaturanTagihan::where('tahun_pelajaran_id', $ujian->tahun_pelajaran_id)
+                        ->where('level_id', $ruanganTerpilih->level_id)
+                        // Gunakan tipe_ujian agar dinamis, misal mencari kata "%IMDA 1%" atau "%IMNI%"
+                        ->where('nama_tagihan', 'LIKE', '%' . $ujian->tipe_ujian . '%')
+                        ->value('id');
+
+                    // 3. Tarik Massal ID Siswa yang SUDAH LUNAS IMDA 1
+                    $imdaLunasMuridIds = TagihanMurid::whereIn('murid_id', $muridIds)
+                        ->whereIn('status_bayar', ['Lunas', 'Bebas/Gratis', 'Ditanggung Donatur'])
+                        ->where(function ($q) use ($ruanganTerpilih, $jenis_tagihan_id) {
+                            $q->where('ruangan_id', $ruanganTerpilih->id)
+                                ->where('pengaturan_tagihan_id', $jenis_tagihan_id); // Gunakan where() BUKAN orWhere() agar akurat
+                        })
+                        ->pluck('murid_id')
+                        ->toArray();
+
+                    // 4. Tarik Massal ID Siswa yang MENUNGGAK SPP di semester terkait
+                    $sppMenunggakMuridIds = TagihanMurid::whereIn('murid_id', $muridIds)
+                        ->where('ruangan_id', $ruanganTerpilih->id)
+                        ->where('status_bayar', 'Belum Lunas')
+                        ->where(function ($q) use ($bulanSemester) {
+                            foreach ($bulanSemester as $bulan) {
+                                $q->orWhere('nama_tagihan_spesifik', 'like', "%SPP $bulan%")
+                                    ->orWhere('nama_tagihan_spesifik', 'like', "%Syahriyah $bulan%");
                             }
-                            if ($sppMenunggak) {
-                                $alasan[] = 'SPP Semester';
-                            }
+                        })
+                        ->pluck('murid_id')
+                        ->toArray();
+                    // =========================================================================
 
-                            // Gabungkan alasan dengan simbol "&"
-                            $murid->lock_reason = 'Tunggakan: ' . implode(' & ', $alasan);
-                        } else {
+                    foreach ($ruanganTerpilih->murids as $murid) {
+                        // Cek data dari array Bulk Query (Tanpa menyentuh database lagi)
+                        $hasDispensasi = in_array($murid->id, $dispensasiMuridIds);
+                        $imdaLunas     = in_array($murid->id, $imdaLunasMuridIds);
+                        $sppMenunggak  = in_array($murid->id, $sppMenunggakMuridIds);
+
+                        if ($hasDispensasi) {
                             $murid->is_locked = false;
-                            $murid->lock_reason = 'Lunas Administrasi';
+                            $murid->lock_reason = 'Mendapat Dispensasi / Izin';
+                        } else {
+                            // Jika belum lunas IMDA ATAU menunggak SPP
+                            if (!$imdaLunas || $sppMenunggak) {
+                                $murid->is_locked = true;
+
+                                // Kumpulkan alasan tunggakan
+                                $alasan = [];
+                                if (!$imdaLunas) {
+                                    $alasan[] = 'Iuran Ujian (IMDA/IMNI)';
+                                }
+                                if ($sppMenunggak) {
+                                    $alasan[] = 'SPP Semester';
+                                }
+
+                                // Gabungkan alasan dengan simbol "&"
+                                $murid->lock_reason = 'Tunggakan: ' . implode(' & ', $alasan);
+                            } else {
+                                $murid->is_locked = false;
+                                $murid->lock_reason = 'Lunas Administrasi';
+                            }
                         }
                     }
-                }
 
-                $muridsWithStatus = $ruanganTerpilih->murids;
+                    $muridsWithStatus = $ruanganTerpilih->murids;
+                }
             }
         }
 
@@ -270,40 +278,44 @@ class NilaiUjianController extends Controller
         $nilaiMatrix = [];
 
         if ($request->ruangan_id) {
-            $ruanganTerpilih = Ruangan::with('murids')->find($request->ruangan_id);
-            $levelNama = $ruanganTerpilih->level->nama_level ?? '';
-            $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
+            $ruanganTerpilih = Ruangan::with('level')->find($request->ruangan_id);
+            if ($ruanganTerpilih) {
+                $murids = $this->muridRuanganRepo->getMuridAktifByRuanganAndTahun($ruanganTerpilih->id, $tahunPelajaranId);
+                $ruanganTerpilih->setRelation('murids', $murids);
 
-            // Filter Ujian
-            $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
-            if ($isKelasAkhir) {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
-            } else {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
-            }
-            $daftarUjian = $queryUjian->get();
+                $levelNama = $ruanganTerpilih->level->nama_level ?? '';
+                $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
 
-            // JIKA UJIAN DIPILIH, SUSUN MATRIKS FORM & CEK SYARAT ADMIN
-            if ($request->ujian_id) {
-                $ujianTerpilih = Ujian::find($request->ujian_id);
-                $murids = $ruanganTerpilih->murids;
-
-                $jadwals = JadwalUjian::with('mataPelajaran')
-                    ->where('ujian_id', $ujianTerpilih->id)
-                    ->where('level_id', $ruanganTerpilih->level_id)
-                    ->orderBy('tanggal_ujian', 'asc')
-                    ->get();
-
-                $semuaNilai = NilaiUjian::where('ujian_id', $ujianTerpilih->id)
-                    ->where('ruangan_id', $ruanganTerpilih->id)
-                    ->get();
-
-                foreach ($semuaNilai as $n) {
-                    $nilaiMatrix[$n->murid_id][$n->jadwal_ujian_id] = $n->nilai;
+                // Filter Ujian
+                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
+                if ($isKelasAkhir) {
+                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+                } else {
+                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
                 }
+                $daftarUjian = $queryUjian->get();
 
-                // Delegate Evaluasi Syarat Admin ke Service
-                $murids = $this->nilaiUjianService->evaluasiSyaratAdmin($ujianTerpilih, $ruanganTerpilih, $murids);
+                // JIKA UJIAN DIPILIH, SUSUN MATRIKS FORM & CEK SYARAT ADMIN
+                if ($request->ujian_id) {
+                    $ujianTerpilih = Ujian::find($request->ujian_id);
+
+                    $jadwals = JadwalUjian::with('mataPelajaran')
+                        ->where('ujian_id', $ujianTerpilih->id)
+                        ->where('level_id', $ruanganTerpilih->level_id)
+                        ->orderBy('tanggal_ujian', 'asc')
+                        ->get();
+
+                    $semuaNilai = NilaiUjian::where('ujian_id', $ujianTerpilih->id)
+                        ->where('ruangan_id', $ruanganTerpilih->id)
+                        ->get();
+
+                    foreach ($semuaNilai as $n) {
+                        $nilaiMatrix[$n->murid_id][$n->jadwal_ujian_id] = $n->nilai;
+                    }
+
+                    // Delegate Evaluasi Syarat Admin ke Service
+                    $murids = $this->nilaiUjianService->evaluasiSyaratAdmin($ujianTerpilih, $ruanganTerpilih, $murids);
+                }
             }
         }
 
@@ -368,13 +380,15 @@ class NilaiUjianController extends Controller
 
         if ($request->ruangan_id) {
             $ruanganTerpilih = Ruangan::with([
-                'murids' => fn($q) => $q->where('status', 'Aktif')->orderBy('nama_lengkap', 'asc'),
                 'level',
                 'tahunPelajaran',
                 'waliRuangan'
             ])->find($request->ruangan_id);
 
             if ($ruanganTerpilih) {
+                $murids = $this->muridRuanganRepo->getMuridAktifByRuanganAndTahun($ruanganTerpilih->id, $tahunPelajaranId);
+                $ruanganTerpilih->setRelation('murids', $murids);
+
                 $levelNama = $ruanganTerpilih->level->nama_level ?? '';
 
                 // Filter Ujian Berdasarkan Kelas

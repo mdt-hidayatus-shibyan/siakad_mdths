@@ -30,6 +30,9 @@ class BintangPelajarController extends Controller
             $ujianTerpilih = Ujian::find($request->ujian_id);
             $semuaNilai = NilaiUjian::with(['murid', 'ruangan.level'])
                 ->where('ujian_id', $ujianTerpilih->id)
+                ->whereHas('murid', function ($q) {
+                    $q->where('status', 'Aktif');
+                })
                 ->get();
 
             $rekapMurid = collect();
@@ -77,9 +80,13 @@ class BintangPelajarController extends Controller
         // Syarat Pertama: IMDA 1 dan IMDA 2 harus sudah terlaksana
         if ($ujianImda1 && $ujianImda2) {
 
-            // FUNGSI HELPER: Mencari ID Murid yang Juara 1 di tiap ruangan pada suatu Ujian
+            // FUNGSI HELPER: Mencari ID Murid yang Juara 1 di tiap ruangan pada suatu Ujian (hanya murid aktif)
             $getJuara1PerRuangan = function ($ujianId) {
-                $semuaNilai = NilaiUjian::where('ujian_id', $ujianId)->get();
+                $semuaNilai = NilaiUjian::where('ujian_id', $ujianId)
+                    ->whereHas('murid', function ($query) {
+                        $query->where('status', 'Aktif');
+                    })
+                    ->get();
                 $juara1Ids = collect();
 
                 // Kelompokkan per ruangan
@@ -112,8 +119,8 @@ class BintangPelajarController extends Controller
             $kandidatArrayIds = $kandidatMuridIds->toArray();
 
             if (!empty($kandidatArrayIds)) {
-                // 1. Pre-fetch Data Murid
-                $muridsMap = \App\Models\Murid::whereIn('id', $kandidatArrayIds)->get()->keyBy('id');
+                // 1. Pre-fetch Data Murid (hanya yang aktif)
+                $muridsMap = \App\Models\Murid::whereIn('id', $kandidatArrayIds)->where('status', 'Aktif')->get()->keyBy('id');
 
                 // 2. Pre-fetch Ruangan lewat tabel pivot
                 $penempatansMap = \Illuminate\Support\Facades\DB::table('murid_ruangans')

@@ -10,6 +10,7 @@ use App\Models\Ujian\PresensiPengawasUjian;
 use App\Models\Ujian\PresensiUjian;
 use App\Models\Ujian\Ujian;
 use App\Models\Ustadz;
+use App\Repositories\MuridRuanganRepository;
 use App\Services\NilaiUjianService;
 use App\Services\PresensiUjianService;
 use Illuminate\Http\Request;
@@ -19,13 +20,16 @@ class PresensiUjianController extends Controller
 {
     protected $presensiUjianService;
     protected $nilaiUjianService;
+    protected $muridRuanganRepo;
 
     public function __construct(
         PresensiUjianService $presensiUjianService,
-        NilaiUjianService $nilaiUjianService
+        NilaiUjianService $nilaiUjianService,
+        MuridRuanganRepository $muridRuanganRepo
     ) {
         $this->presensiUjianService = $presensiUjianService;
         $this->nilaiUjianService = $nilaiUjianService;
+        $this->muridRuanganRepo = $muridRuanganRepo;
     }
 
     /**
@@ -38,7 +42,7 @@ class PresensiUjianController extends Controller
 
         $daftarRuangan = Ruangan::where('tahun_pelajaran_id', $tahunPelajaranId)
             ->berdasarkanHakAkses()
-            ->withCount('murids')
+            ->withCount(['murids' => fn($q) => $q->where('status', 'Aktif')])
             ->orderBy('level_id', 'asc')
             ->get();
 
@@ -86,9 +90,12 @@ class PresensiUjianController extends Controller
         $daftarUstadz = Ustadz::orderBy('nama_lengkap')->get();
 
         if ($request->ruangan_id) {
-            $ruanganTerpilih = Ruangan::with(['level', 'murids.waliMurid'])->find($request->ruangan_id);
+            $ruanganTerpilih = Ruangan::with('level')->find($request->ruangan_id);
 
             if ($ruanganTerpilih) {
+                $murids = $this->muridRuanganRepo->getMuridAktifByRuanganAndTahun($ruanganTerpilih->id, $tahunPelajaranId, ['waliMurid']);
+                $ruanganTerpilih->setRelation('murids', $murids);
+
                 $levelNama = $ruanganTerpilih->level->nama_level ?? '';
                 $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
 
@@ -112,7 +119,6 @@ class PresensiUjianController extends Controller
                             ->get();
 
                         // Evaluasi syarat administrasi murid (Lunas / Terkunci / Dispensasi)
-                        $murids = $ruanganTerpilih->murids;
                         $muridsWithStatus = $this->nilaiUjianService->evaluasiSyaratAdmin($ujian, $ruanganTerpilih, $murids);
 
                         if ($request->jadwal_ujian_id) {

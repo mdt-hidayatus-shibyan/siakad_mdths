@@ -9,11 +9,18 @@ use App\Models\PengaturanTagihan;
 use App\Models\Ruangan;
 use App\Models\TagihanMurid;
 use App\Models\TahunPelajaran;
+use App\Repositories\MuridRuanganRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PembayaranUjianController extends Controller
 {
+    protected $muridRuanganRepo;
+
+    public function __construct(MuridRuanganRepository $muridRuanganRepo)
+    {
+        $this->muridRuanganRepo = $muridRuanganRepo;
+    }
 
     public function index(Request $request)
     {
@@ -26,7 +33,7 @@ class PembayaranUjianController extends Controller
         $murids = collect();
         $tagihanExisting = collect();
         if ($request->ruangan_id) {
-            $ruanganTerpilih = Ruangan::with(['level', 'murids'])->find($request->ruangan_id);
+            $ruanganTerpilih = Ruangan::with('level')->find($request->ruangan_id);
 
             if ($ruanganTerpilih) {
                 $masterBiayas = PengaturanTagihan::where('tahun_pelajaran_id', $tahunPelajaranId)
@@ -36,7 +43,8 @@ class PembayaranUjianController extends Controller
 
                 if ($request->pengaturan_tagihan_id) {
                     $jenisTagihanTerpilih = PengaturanTagihan::find($request->pengaturan_tagihan_id);
-                    $murids = $ruanganTerpilih->murids->where('status', 'Aktif');
+                    $murids = $this->muridRuanganRepo->getMuridAktifByRuanganAndTahun($ruanganTerpilih->id, $tahunPelajaranId);
+                    $ruanganTerpilih->setRelation('murids', $murids);
 
                     $tagihanExisting = TagihanMurid::whereIn('murid_id', $murids->pluck('id'))
                         ->where('pengaturan_tagihan_id', $jenisTagihanTerpilih->id)
