@@ -217,11 +217,19 @@
                                     <td class="py-2.5 px-3.5 align-middle">
                                         <div class="flex flex-col items-center justify-center gap-1">
                                             @if ($arsip)
-                                                <!-- Tombol Cetak -->
-                                                <a href="{{ route('arsip.cetak', $arsip->id) }}" target="_blank"
-                                                    class="inline-flex items-center justify-center px-3 h-8 bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-600 text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-transform active:scale-95 shadow-2xs w-full max-w-[110px]">
-                                                    <i class="bi bi-printer-fill mr-1 text-xs"></i> Cetak
-                                                </a>
+                                                <!-- Tombol Cetak Rapor & Cover Biodata -->
+                                                <div class="flex items-center gap-1 w-full max-w-[125px]">
+                                                    <a href="{{ route('arsip.cetak', $arsip->id) }}" target="_blank"
+                                                        class="inline-flex items-center justify-center flex-1 h-8 bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-600 text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-transform active:scale-95 shadow-2xs">
+                                                        <i class="bi bi-printer-fill mr-1 text-xs"></i> Cetak
+                                                    </a>
+                                                    <a href="{{ route('petugas-cetak.biodata-rapor', $murid->id) }}"
+                                                        target="_blank"
+                                                        title="Cetak Biodata Rapor (Halaman Depan / Cover)"
+                                                        class="inline-flex items-center justify-center w-8 h-8 bg-purple-500/10 hover:bg-purple-600 text-purple-600 hover:text-white dark:text-purple-400 dark:hover:text-white border border-purple-500/20 rounded-lg transition-all shadow-2xs">
+                                                        <i class="bi bi-file-earmark-person-fill text-xs"></i>
+                                                    </a>
+                                                </div>
                                             @elseif ($isTidakIkut)
                                                 <!-- Tidak Ikut Ujian -->
                                                 <button type="button" disabled

@@ -107,4 +107,62 @@ class MuridRuanganRepository
             return 'Lainnya / Tanpa Kampung';
         });
     }
+
+    /**
+     * Mengambil satu data murid lengkap dengan relasi wali murid dan ruangan pada tahun pelajaran tertentu.
+     *
+     * @param int|string $id
+     * @param int|string|null $tahun_pelajaran_id
+     * @param array $extraWith
+     * @return Murid|null
+     */
+    public function getMuridByIdAndTahun($id, $tahun_pelajaran_id = null, array $extraWith = []): ?Murid
+    {
+        if (!$tahun_pelajaran_id) {
+            $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+            $tahun_pelajaran_id = $tahunAktif?->id;
+        }
+
+        $withRelations = array_merge([
+            'waliMurid.kampung',
+            'ruanganMasuk',
+            'ruangans' => function ($q) use ($tahun_pelajaran_id) {
+                if ($tahun_pelajaran_id) {
+                    $q->where('murid_ruangans.tahun_pelajaran_id', $tahun_pelajaran_id);
+                }
+            }
+        ], $extraWith);
+
+        return $this->murid->with($withRelations)->find($id);
+    }
+
+    /**
+     * Mengambil seluruh data murid aktif lengkap dengan ruangan pada tahun pelajaran tertentu.
+     *
+     * @param int|string|null $tahun_pelajaran_id
+     * @param array $extraWith
+     * @return Collection
+     */
+    public function getAllMuridAktifWithRuangan($tahun_pelajaran_id = null, array $extraWith = []): Collection
+    {
+        if (!$tahun_pelajaran_id) {
+            $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+            $tahun_pelajaran_id = $tahunAktif?->id;
+        }
+
+        $withRelations = array_merge([
+            'waliMurid.kampung',
+            'ruanganMasuk',
+            'ruangans' => function ($q) use ($tahun_pelajaran_id) {
+                if ($tahun_pelajaran_id) {
+                    $q->where('murid_ruangans.tahun_pelajaran_id', $tahun_pelajaran_id);
+                }
+            }
+        ], $extraWith);
+
+        return $this->murid->with($withRelations)
+            ->where('status', 'Aktif')
+            ->orderByRaw('CAST(nism AS UNSIGNED) ASC, nism ASC')
+            ->get();
+    }
 }

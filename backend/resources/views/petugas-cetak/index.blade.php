@@ -34,25 +34,37 @@
             @if ($murid)
                 <!-- Identitas murid -->
                 <div
-                    class="m3-glass-card rounded-3xl p-5 md:p-6 mb-6 shadow-2xs flex flex-col sm:flex-row items-center sm:items-start gap-4">
-                    <div
-                        class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center text-xl font-black shrink-0 shadow-2xs">
-                        {{ substr($murid->nama_lengkap, 0, 1) }}
-                    </div>
-                    <div class="text-center sm:text-left flex-1">
-                        <h3
-                            class="text-lg md:text-xl font-black uppercase tracking-tight text-zinc-900 dark:text-white">
-                            {{ $murid->nama_lengkap }}</h3>
-                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1.5 text-xs">
-                            <span
-                                class="px-2.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono font-bold">
-                                NISM: {{ $murid->nism }}
-                            </span>
-                            <span class="text-zinc-400">&bull;</span>
-                            <span class="text-zinc-500 font-semibold">
-                                Wali: <b class="text-zinc-700 dark:text-zinc-300">{{ $murid->nama_ayah ?? '-' }}</b>
-                            </span>
+                    class="m3-glass-card rounded-3xl p-5 md:p-6 mb-6 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                        <div
+                            class="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center text-xl font-black shrink-0 shadow-2xs">
+                            {{ substr($murid->nama_lengkap, 0, 1) }}
                         </div>
+                        <div>
+                            <h3
+                                class="text-lg md:text-xl font-black uppercase tracking-tight text-zinc-900 dark:text-white">
+                                {{ $murid->nama_lengkap }}</h3>
+                            <div
+                                class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1.5 text-xs">
+                                <span
+                                    class="px-2.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono font-bold">
+                                    NISM: {{ $murid->nism }}
+                                </span>
+                                <span class="text-zinc-400">&bull;</span>
+                                <span class="text-zinc-500 font-semibold">
+                                    Wali: <b class="text-zinc-700 dark:text-zinc-300">{{ $murid->nama_ayah ?? '-' }}</b>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Cepat Cetak Biodata Rapor -->
+                    <div class="shrink-0">
+                        <a href="{{ route('petugas-cetak.biodata-rapor', $murid->id) }}" target="_blank"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer">
+                            <i class="bi bi-file-earmark-person-fill text-base"></i>
+                            <span>Cetak Biodata Rapor (Cover)</span>
+                        </a>
                     </div>
                 </div>
 
@@ -85,6 +97,14 @@
                                             </div>
 
                                             <div class="flex flex-wrap gap-2">
+
+                                                <!-- TOMBOL BIODATA / COVER RAPOR -->
+                                                <a href="{{ route('petugas-cetak.biodata-rapor', $murid->id) }}"
+                                                    target="_blank"
+                                                    class="inline-flex items-center gap-1.5 px-3 h-8 bg-purple-500/10 hover:bg-purple-600 text-purple-600 hover:text-white dark:text-purple-400 dark:hover:text-white border border-purple-500/20 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-2xs">
+                                                    <i class="bi bi-file-earmark-person-fill text-xs"></i> <span>Biodata
+                                                        Rapor</span>
+                                                </a>
 
                                                 <!-- TOMBOL RAPOR SMT 1 -->
                                                 @if (isset($dokumens['rapor_smt_1']))

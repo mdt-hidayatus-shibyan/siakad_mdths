@@ -96,4 +96,22 @@ class PetugasCetakController extends Controller
 
         return view('petugas-cetak.index', compact('murid', 'arsipDikelompokkan'));
     }
+
+    /**
+     * Cetak Halaman Depan Rapor (Biodata Murid & Tanda Tangan Pengasuh)
+     */
+    public function cetakBiodataRapor($id)
+    {
+        $murid = Murid::with([
+            'waliMurid.kampung',
+            'tahunMasuk',
+            'levelMasuk',
+            'ruanganMasuk.level',
+            'ruangans.level',
+        ])->findOrFail($id);
+
+        $pengasuh = \App\Models\Kepengurusan\Pengurus::getAktifByJabatan('Pengasuh');
+
+        return view('cetak-baru.cetak_biodata_rapor', compact('murid', 'pengasuh'));
+    }
 }

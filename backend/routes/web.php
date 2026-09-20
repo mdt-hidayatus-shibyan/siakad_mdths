@@ -185,6 +185,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- 2.1 Dashboard & Notifikasi ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/petugas-cetak', [PetugasCetakController::class, 'index'])->name('petugas-cetak.index');
+    Route::get('/petugas-cetak/{id}/biodata-rapor', [PetugasCetakController::class, 'cetakBiodataRapor'])->name('petugas-cetak.biodata-rapor');
 
     Route::post('/notifikasi/mark-all-read', function () {
         auth()->user()->unreadNotifications->markAsRead();
