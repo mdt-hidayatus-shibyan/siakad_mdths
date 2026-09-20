@@ -27,8 +27,7 @@
                         class="m3-input-glass w-full !pl-9 !pr-9 appearance-none cursor-pointer">
                         <option value="">-- Pilih Kelas --</option>
                         @foreach ($daftarRuangan as $r)
-                            <option value="{{ $r->id }}"
-                                {{ request('ruangan_id') == $r->id ? 'selected' : '' }}>
+                            <option value="{{ $r->id }}" {{ request('ruangan_id') == $r->id ? 'selected' : '' }}>
                                 {{ $r->nama_ruangan }}
                             </option>
                         @endforeach
@@ -49,8 +48,7 @@
                         class="m3-input-glass w-full !pl-9 !pr-9 appearance-none cursor-pointer disabled:opacity-50">
                         <option value="">-- Pilih Ujian --</option>
                         @foreach ($daftarUjian as $uj)
-                            <option value="{{ $uj->id }}"
-                                {{ request('ujian_id') == $uj->id ? 'selected' : '' }}>
+                            <option value="{{ $uj->id }}" {{ request('ujian_id') == $uj->id ? 'selected' : '' }}>
                                 {{ $uj->nama_ujian }}
                             </option>
                         @endforeach
@@ -124,8 +122,7 @@
                             <i class="bi bi-clipboard2-data-fill text-lg"></i>
                         </div>
                         <div>
-                            <h3
-                                class="font-black text-zinc-900 dark:text-white text-base tracking-tight leading-snug">
+                            <h3 class="font-black text-zinc-900 dark:text-white text-base tracking-tight leading-snug">
                                 Lembar Koreksi Nilai Murid
                             </h3>
                             @php
@@ -136,8 +133,7 @@
                                         : $jadwalTerpilih->nama_mata_pelajaran_custom)
                                     : '-';
                             @endphp
-                            <p
-                                class="text-xs font-bold text-sky-600 dark:text-sky-400 flex items-center mt-0.5">
+                            <p class="text-xs font-bold text-sky-600 dark:text-sky-400 flex items-center mt-0.5">
                                 <i class="bi bi-journal-text mr-1.5 opacity-80"></i> Mapel:
                                 <span class="ml-1 text-zinc-700 dark:text-zinc-300 font-extrabold">
                                     {{ $namaMapelTerpilih }}
@@ -163,22 +159,23 @@
                             $itemNilai = $nilaiExisting->get($murid->id);
                             $currentScore = $itemNilai ? $itemNilai->nilai : '';
                             $isPublished = $itemNilai ? $itemNilai->is_published : false;
+                            $isTidakIkut = $murid->tidak_ikut_ujian ?? false;
                             $isLocked = $murid->is_locked;
                         @endphp
 
                         <!-- FLOATING CARD ITEM -->
                         <div
-                            class="m3-glass-card p-3.5 sm:p-4 transition-all duration-200 {{ $isLocked ? 'border-rose-200/80 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20' : 'hover:border-primary/40 dark:hover:border-primary-dark/40' }} grid grid-cols-1 lg:grid-cols-[1fr_120px_250px] items-start lg:items-center gap-3.5 lg:gap-6">
+                            class="m3-glass-card p-3.5 sm:p-4 transition-all duration-200 {{ $isTidakIkut ? 'border-zinc-300 dark:border-zinc-700/60 bg-zinc-50/50 dark:bg-zinc-800/30 opacity-80' : ($isLocked ? 'border-rose-200/80 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20' : 'hover:border-primary/40 dark:hover:border-primary-dark/40') }} grid grid-cols-1 lg:grid-cols-[1fr_120px_250px] items-start lg:items-center gap-3.5 lg:gap-6">
 
                             <!-- A. KIRI: Info Murid -->
                             <div class="flex items-center gap-3 min-w-0">
                                 <div
-                                    class="w-9 h-9 rounded-xl bg-zinc-100/80 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-center text-xs font-black shrink-0">
+                                    class="w-9 h-9 rounded-xl {{ $isTidakIkut ? 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-500' : 'bg-zinc-100/80 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400' }} border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-center text-xs font-black shrink-0">
                                     {{ $loop->iteration }}
                                 </div>
                                 <div class="flex flex-col min-w-0">
                                     <h4
-                                        class="font-black text-sm text-zinc-900 dark:text-white tracking-tight leading-tight truncate">
+                                        class="font-black text-sm {{ $isTidakIkut ? 'text-zinc-600 dark:text-zinc-400 line-through' : 'text-zinc-900 dark:text-white' }} tracking-tight leading-tight truncate">
                                         {{ $murid->nama_lengkap }}
                                     </h4>
                                     <div
@@ -196,17 +193,22 @@
                                     class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider lg:hidden">Nilai:</span>
 
                                 <input type="number" name="nilai[{{ $murid->id }}]" value="{{ $currentScore }}"
-                                    min="0" max="100" placeholder="-"
+                                    min="0" max="100" placeholder="{{ $isTidakIkut ? 'Tdk Ikut' : '-' }}"
                                     {{ $isLocked ? 'disabled' : '' }}
                                     class="w-20 lg:w-[84px] h-9.5 text-center text-base font-black rounded-xl outline-none transition-all disabled:cursor-not-allowed
-                                {{ $isLocked ? 'bg-rose-100/50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/40 text-rose-400' : 'm3-input-glass' }}">
+                                {{ $isTidakIkut ? 'bg-zinc-200/50 dark:bg-zinc-800/40 border border-zinc-300/80 dark:border-zinc-700/40 text-zinc-400 text-xs' : ($isLocked ? 'bg-rose-100/50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/40 text-rose-400' : 'm3-input-glass') }}">
                             </div>
 
                             <!-- C. KANAN: Status & Syarat Admin -->
                             <div
                                 class="flex flex-col gap-1.5 border-t lg:border-t-0 border-zinc-200/80 dark:border-zinc-800 pt-2.5 lg:pt-0 relative">
                                 <div class="flex flex-wrap items-center gap-1">
-                                    @if ($isLocked)
+                                    @if ($isTidakIkut)
+                                        <span
+                                            class="inline-flex items-center gap-1 bg-zinc-200/80 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">
+                                            <i class="bi bi-person-x-fill text-xs text-rose-500"></i> Tidak Ikut Ujian
+                                        </span>
+                                    @elseif ($isLocked)
                                         <span
                                             class="inline-flex items-center gap-1 bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/40 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">
                                             <i class="bi bi-lock-fill text-xs"></i> Belum Terpenuhi
@@ -239,7 +241,12 @@
                                 </div>
 
                                 <div>
-                                    @if ($isLocked)
+                                    @if ($isTidakIkut)
+                                        <div
+                                            class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 leading-snug">
+                                            {{ $murid->alasan_tidak_ikut ?? 'Tidak mengikuti ujian' }}
+                                        </div>
+                                    @elseif ($isLocked)
                                         <div class="text-[10px] font-bold text-rose-600 dark:text-rose-400 leading-snug line-clamp-2"
                                             title="{{ $murid->lock_reason }}">
                                             {{ $murid->lock_reason ?? 'Belum melunasi administrasi' }}
@@ -265,9 +272,11 @@
                         <p
                             class="text-xs text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider leading-relaxed">
                             @hasanyrole('administrator|staff')
-                                Pastikan nilai <span class="text-emerald-500 font-black">telah dicek</span> sebelum dipublikasikan ke rapor.
+                                Pastikan nilai <span class="text-emerald-500 font-black">telah dicek</span> sebelum
+                                dipublikasikan ke rapor.
                             @else
-                                Nilai akan berstatus <span class="text-amber-500 font-black">DRAFT</span> dan menunggu rilis Admin.
+                                Nilai akan berstatus <span class="text-amber-500 font-black">DRAFT</span> dan menunggu
+                                rilis Admin.
                             @endhasanyrole
                         </p>
                     </div>
@@ -307,4 +316,3 @@
     @endif
 
 </x-app-layout>
-

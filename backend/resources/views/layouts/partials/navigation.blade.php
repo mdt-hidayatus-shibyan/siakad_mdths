@@ -26,6 +26,14 @@
                     'tagihan-wali.detail',
                 ],
                 'tagihan-wali.laporan' => ['tagihan-wali.laporan', 'tagihan-wali.cetak-rekap'],
+                'pengaturan-versi.index' => [
+                    'pengaturan-versi.index',
+                    'pengaturan-versi.riwayat',
+                    'pengaturan-versi.create',
+                    'pengaturan-versi.update',
+                    'pengaturan-versi.*',
+                    'riwayat-versi',
+                ],
             ];
 
             // If an explicit alias mapping is defined, it is strictly authoritative

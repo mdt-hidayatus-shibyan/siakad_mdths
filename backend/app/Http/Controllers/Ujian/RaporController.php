@@ -11,6 +11,7 @@ use App\Models\PresensiMurid;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
 use App\Models\Ujian\NilaiUjian;
+use App\Models\Ujian\PengecualianUjian;
 use App\Models\Ujian\RiwayatKenaikan;
 use App\Models\Ujian\Ujian;
 use App\Models\Ustadz;
@@ -44,6 +45,8 @@ class RaporController extends Controller
         // Variabel tambahan untuk dikirim ke view
         $arsipRapor = collect();
         $riwayatKenaikans = collect();
+        $pengecualianMurids = collect();
+        $nilaiCountMap = [];
         $isAkhirTahun = false;
 
         if ($request->ruangan_id) {
@@ -72,8 +75,8 @@ class RaporController extends Controller
                     $muridIds = $murids->pluck('id')->toArray();
 
                     // 1. Ambil data Arsip secara massal lalu kelompokkan berdasarkan referensi_id (ID Murid)
-                    $arsipRapor = \App\Models\Arsip\ArsipDokumen::where('tipe_dokumen', 'rapor_murid')
-                        ->where('referensi_tipe', \App\Models\Murid::class)
+                    $arsipRapor = ArsipDokumen::where('tipe_dokumen', 'rapor_murid')
+                        ->where('referensi_tipe', Murid::class)
                         ->whereIn('referensi_id', $muridIds)
                         ->whereJsonContains('snapshot_data->nama_ujian', $ujianTerpilih->nama_ujian)
                         ->get()
@@ -84,11 +87,26 @@ class RaporController extends Controller
 
                     // 3. Jika ini ujian akhir tahun, tarik data Riwayat Kenaikan secara massal
                     if ($isAkhirTahun) {
-                        $riwayatKenaikans = \App\Models\Ujian\RiwayatKenaikan::whereIn('murid_id', $muridIds)
+                        $riwayatKenaikans = RiwayatKenaikan::whereIn('murid_id', $muridIds)
                             ->where('tahun_pelajaran_id', $tahunPelajaranId)
                             ->get()
                             ->keyBy('murid_id');
                     }
+
+                    // 4. Tarik data Murid yang Ditandai Tidak Mengikuti Ujian
+                    $pengecualianMurids = PengecualianUjian::where('ujian_id', $ujianTerpilih->id)
+                        ->whereIn('murid_id', $muridIds)
+                        ->get()
+                        ->keyBy('murid_id');
+
+                    // 5. Tarik Jumlah Nilai Terpublikasi per Murid
+                    $nilaiCountMap = NilaiUjian::where('ujian_id', $ujianTerpilih->id)
+                        ->whereIn('murid_id', $muridIds)
+                        ->where('is_published', true)
+                        ->selectRaw('murid_id, count(*) as total')
+                        ->groupBy('murid_id')
+                        ->pluck('total', 'murid_id')
+                        ->toArray();
                 }
             }
         }
@@ -103,11 +121,13 @@ class RaporController extends Controller
             'murids',
             'arsipRapor',
             'riwayatKenaikans',
+            'pengecualianMurids',
+            'nilaiCountMap',
             'isAkhirTahun'
         ));
     }
 
-    // FITUR BARU: MENGESAHKAN DAN MEMBEKUKAN RAPOR (E-DOCUMENT)
+    // FITUR: MENGESAHKAN DAN MEMBEKUKAN RAPOR (E-DOCUMENT)
     public function arsipkanRapor($murid_id, $ujian_id, ArsipService $arsipService)
     {
         try {
@@ -129,18 +149,28 @@ class RaporController extends Controller
 
         try {
             $berhasil = 0;
+            $dilewati = 0;
+
             // Looping dan sahkan rapor murid yang dicentang satu per satu
             foreach ($request->selected_murid as $murid_id) {
-                $arsipService->prosesPengarsipan($murid_id, $request->ujian_id);
-                $berhasil++;
+                try {
+                    $arsipService->prosesPengarsipan($murid_id, $request->ujian_id);
+                    $berhasil++;
+                } catch (\Exception $e) {
+                    $dilewati++;
+                }
             }
 
-            return back()->with('success', "Berhasil mengesahkan $berhasil dokumen rapor murid secara permanen!");
+            $pesan = "Berhasil mengesahkan $berhasil dokumen rapor murid secara permanen!";
+            if ($dilewati > 0) {
+                $pesan .= " ($dilewati murid dilewati karena belum memiliki nilai rilis / tidak mengikuti ujian).";
+            }
+
+            return back()->with('success', $pesan);
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
-
 
     public function cetakArsip($id)
     {
@@ -149,11 +179,7 @@ class RaporController extends Controller
 
         // Pastikan ini adalah dokumen rapor
         if ($arsip->tipe_dokumen === 'rapor_murid') {
-
-            // Opsional: Ambil data snapshot ke dalam variabel agar lebih mudah diketik di Blade
             $data = $arsip->snapshot_data;
-
-            // Panggil view khusus arsip rapor
             return view('cetak-baru.cetak_rapor_arsip', compact('arsip', 'data'));
         }
 

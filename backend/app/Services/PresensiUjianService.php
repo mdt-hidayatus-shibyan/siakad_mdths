@@ -33,25 +33,32 @@ class PresensiUjianService
             ->get()
             ->groupBy('ruangan_id');
 
+        $semuaPengecualianMuridIds = \App\Models\Ujian\PengecualianUjian::where('ujian_id', $ujianId)
+            ->pluck('murid_id')
+            ->toArray();
+
         $dataProgres = collect();
 
         foreach ($daftarRuangan as $ruangan) {
-            $jumlahMurid = $ruangan->murids_count ?? $ruangan->murids()->count();
+            $totalMurid = $ruangan->murids_count ?? $ruangan->murids()->where('murids.status', 'Aktif')->count();
+            $muridIdsRuangan = $ruangan->murids()->where('murids.status', 'Aktif')->pluck('murids.id')->toArray();
+            $jumlahTidakIkut = count(array_intersect($muridIdsRuangan, $semuaPengecualianMuridIds));
+            $jumlahPeserta = max(0, $totalMurid - $jumlahTidakIkut);
 
             $jadwalLevelIni = $semuaJadwal->get($ruangan->level_id, collect());
             $jumlahMapel = $jadwalLevelIni->count();
 
-            $targetPresensi = $jumlahMurid * $jumlahMapel;
+            $targetPresensi = $jumlahPeserta * $jumlahMapel;
 
             $presensiRuanganIni = $semuaPresensiMasuk->get($ruangan->id, collect());
             $totalDiinput = $presensiRuanganIni->count();
 
             $mapelKurang = [];
-            if ($jadwalLevelIni->isNotEmpty() && $jumlahMurid > 0) {
+            if ($jadwalLevelIni->isNotEmpty() && $jumlahPeserta > 0) {
                 foreach ($jadwalLevelIni as $jadwal) {
                     $presensiMapelIni = $presensiRuanganIni->where('jadwal_ujian_id', $jadwal->id)->count();
 
-                    if ($presensiMapelIni < $jumlahMurid) {
+                    if ($presensiMapelIni < $jumlahPeserta) {
                         $namaMapel = $jadwal->mata_pelajaran_id
                             ? ($jadwal->mataPelajaran->nama_mapel ?? '-')
                             : $jadwal->nama_mata_pelajaran_custom;
@@ -60,19 +67,21 @@ class PresensiUjianService
                 }
             }
 
-            $persentase = $targetPresensi > 0 ? round(($totalDiinput / $targetPresensi) * 100, 1) : 0;
+            $persentase = $targetPresensi > 0 ? round(($totalDiinput / $targetPresensi) * 100, 1) : ($jumlahMapel == 0 ? 0 : 100);
             if ($persentase > 100) {
                 $persentase = 100;
             }
 
             $dataProgres->push((object)[
-                'ruangan'        => $ruangan,
-                'jumlah_murid'   => $jumlahMurid,
-                'jumlah_mapel'   => $jumlahMapel,
-                'target_presensi' => $targetPresensi,
-                'total_diinput'  => $totalDiinput,
-                'persentase'     => $persentase,
-                'mapel_kurang'   => $mapelKurang,
+                'ruangan'           => $ruangan,
+                'jumlah_murid'      => $totalMurid,
+                'jumlah_peserta'    => $jumlahPeserta,
+                'jumlah_tidak_ikut' => $jumlahTidakIkut,
+                'jumlah_mapel'      => $jumlahMapel,
+                'target_presensi'   => $targetPresensi,
+                'total_diinput'     => $totalDiinput,
+                'persentase'        => $persentase,
+                'mapel_kurang'      => $mapelKurang,
             ]);
         }
 
@@ -161,10 +170,16 @@ class PresensiUjianService
             ->where('ruangan_id', $ruanganId)
             ->get();
 
+        // Ambil data pengecualian ujian
+        $pengecualianMap = \App\Models\Ujian\PengecualianUjian::where('ujian_id', $ujianId)
+            ->pluck('alasan', 'murid_id');
+
         $dataRekap = collect();
         $totalSesi = $jadwals->count();
 
         foreach ($murids as $murid) {
+            $isTidakIkut = $pengecualianMap->has($murid->id);
+            $alasanTidakIkut = $pengecualianMap->get($murid->id);
             $presensiMurid = $presensiDb->where('murid_id', $murid->id);
 
             $detailPerMapel = [];
@@ -176,12 +191,12 @@ class PresensiUjianService
 
             foreach ($jadwals as $jadwal) {
                 $p = $presensiMurid->firstWhere('jadwal_ujian_id', $jadwal->id);
-                $status = $p ? $p->status : '-';
+                $status = $p ? $p->status : ($isTidakIkut ? 'Tidak Ikut' : '-');
 
                 $detailPerMapel[$jadwal->id] = [
                     'jadwal_id' => $jadwal->id,
                     'status'    => $status,
-                    'catatan'   => $p ? $p->catatan : null,
+                    'catatan'   => $p ? $p->catatan : ($isTidakIkut ? $alasanTidakIkut : null),
                 ];
 
                 match ($status) {
@@ -199,6 +214,8 @@ class PresensiUjianService
 
             $dataRekap->push((object)[
                 'murid'                => $murid,
+                'is_tidak_ikut'        => $isTidakIkut,
+                'alasan_tidak_ikut'    => $alasanTidakIkut,
                 'detail_per_mapel'     => $detailPerMapel,
                 'hadir'                => $hadir,
                 'sakit'                => $sakit,
@@ -231,6 +248,9 @@ class PresensiUjianService
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruanganId, $ujian->tahun_pelajaran_id, 'Aktif');
 
+        $pengecualianMap = \App\Models\Ujian\PengecualianUjian::where('ujian_id', $ujianId)
+            ->pluck('alasan', 'murid_id');
+
         $presensiTersimpan = PresensiUjian::where('ujian_id', $ujianId)
             ->where('jadwal_ujian_id', $jadwalId)
             ->where('ruangan_id', $ruanganId)
@@ -247,6 +267,7 @@ class PresensiUjianService
             'ruangan'           => $ruangan,
             'jadwal'            => $jadwal,
             'murids'            => $murids,
+            'pengecualianMap'   => $pengecualianMap,
             'presensiTersimpan' => $presensiTersimpan,
             'presensiPengawas'  => $presensiPengawas,
         ];

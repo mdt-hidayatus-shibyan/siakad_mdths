@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -176,7 +176,8 @@
                     {{ $ujian->tahunPelajaran->nama_masehi ?? '-' }} M</strong></p>
             <p>Agenda Ujian: <strong>{{ strtoupper($ujian->nama_ujian) }}</strong></p>
             <p>Ruangan: <strong>{{ strtoupper($ruangan->nama_ruangan) }}</strong> | Tingkat / Kelas:
-                <strong>{{ $ruangan->level->nama_level ?? '-' }}</strong></p>
+                <strong>{{ $ruangan->level->nama_level ?? '-' }}</strong>
+            </p>
         </div>
     </div>
 
@@ -227,32 +228,49 @@
         <tbody>
             @forelse ($murids as $index => $murid)
                 @php
+                    $isTidakIkut = isset($pengecualianMap) && isset($pengecualianMap[$murid->id]);
+                    $alasanTidakIkut = $isTidakIkut ? $pengecualianMap[$murid->id] : null;
                     $p = $presensiTersimpan->get($murid->id);
-                    $status = $p ? $p->status : 'Hadir';
-                    $catatan = $p ? $p->catatan : '';
+                    $status = $p ? $p->status : ($isTidakIkut ? 'Tidak Ikut' : 'Hadir');
+                    $catatan = $p ? $p->catatan : ($isTidakIkut ? ($alasanTidakIkut ?: 'Tidak Ikut Ujian') : '');
                 @endphp
-                <tr>
+                <tr style="{{ $isTidakIkut ? 'background-color: #f8fafc;' : '' }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $murid->nism ?? '-' }}</td>
                     <td class="text-left" style="padding-left: 10px;">
-                        <div style="font-weight: 800; font-size: 12px; margin-bottom: 2px;">{{ $murid->nama_lengkap }}
+                        <div style="font-weight: 800; font-size: 12px; margin-bottom: 2px;">
+                            {{ $murid->nama_lengkap }}
+                            @if ($isTidakIkut)
+                                <span
+                                    style="font-size: 9px; color: #dc2626; font-weight: normal; margin-left: 5px;">(Tidak
+                                    Ikut Ujian)</span>
+                            @endif
                         </div>
                     </td>
                     <td>{{ $murid->jenis_kelamin }}</td>
 
                     @if ($mode === 'kosong')
                         <!-- TANDA TANGAN ZIGZAG -->
-                        <td
-                            style="text-align: {{ $loop->iteration % 2 == 1 ? 'left' : 'right' }}; padding-left: 15px; padding-right: 15px; height: 32px; vertical-align: bottom;">
-                            <span
-                                style="font-size: 9px; color: #94a3b8; margin-right: 5px;">{{ $loop->iteration }}.</span>
-                            ....................
-                        </td>
-                        <td></td>
+                        @if ($isTidakIkut)
+                            <td style="color: #dc2626; font-weight: bold; font-size: 10px; text-transform: uppercase;">
+                                [ Tidak Mengikuti Ujian ]
+                            </td>
+                            <td style="font-size: 10px; color: #64748b;">{{ $alasanTidakIkut ?: 'Dikecualikan' }}</td>
+                        @else
+                            <td
+                                style="text-align: {{ $loop->iteration % 2 == 1 ? 'left' : 'right' }}; padding-left: 15px; padding-right: 15px; height: 32px; vertical-align: bottom;">
+                                <span
+                                    style="font-size: 9px; color: #94a3b8; margin-right: 5px;">{{ $loop->iteration }}.</span>
+                                ....................
+                            </td>
+                            <td></td>
+                        @endif
                     @else
                         <!-- STATUS TERISI -->
                         <td>
-                            @if ($status === 'Hadir')
+                            @if ($isTidakIkut || $status === 'Tidak Ikut')
+                                <strong style="color: #dc2626;">TIDAK IKUT</strong>
+                            @elseif ($status === 'Hadir')
                                 <strong style="color: #059669;">HADIR</strong>
                             @elseif ($status === 'Sakit')
                                 <strong style="color: #2563eb;">SAKIT</strong>

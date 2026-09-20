@@ -33,11 +33,20 @@
                     </div>
                 </div>
 
-                <div class="w-full sm:w-auto shrink-0">
+                <div class="w-full sm:w-auto shrink-0 flex flex-col sm:flex-row items-center gap-2">
                     <button type="submit" class="m3-btn-primary w-full sm:w-auto h-10 px-4 group/btn">
                         <i class="bi bi-search text-sm"></i>
                         <span>Cek Progres</span>
                     </button>
+
+                    @if (request('ujian_id') && $dataProgres->count() > 0)
+                        <a href="{{ route('nilai-ujian.cetak-progres', ['ujian_id' => request('ujian_id'), 'tahun_id' => $tahunPelajaranId]) }}"
+                            target="_blank"
+                            class="m3-btn-secondary w-full sm:w-auto h-10 px-4 group/btn inline-flex items-center justify-center gap-2 shadow-2xs">
+                            <i class="bi bi-printer text-sm"></i>
+                            <span>Cetak Progres</span>
+                        </a>
+                    @endif
                 </div>
             </form>
         </div>
@@ -55,9 +64,7 @@
                         $barColor = 'bg-primary dark:bg-primary-dark';
                     } elseif ($progres->persentase == 100) {
                         $barColor =
-                            $progres->total_diinput == $progres->total_dipublish
-                                ? 'bg-emerald-500'
-                                : 'bg-amber-500';
+                            $progres->total_diinput == $progres->total_dipublish ? 'bg-emerald-500' : 'bg-amber-500';
                     }
                 @endphp
 
@@ -93,13 +100,14 @@
                         </div>
 
                         <!-- Statistik Bawah -->
-                        <div
-                            class="grid grid-cols-2 gap-2 border-t border-zinc-100 dark:border-zinc-800/80 pt-3">
+                        <div class="grid grid-cols-2 gap-2 border-t border-zinc-100 dark:border-zinc-800/80 pt-3">
                             <div class="flex flex-col">
                                 <span
                                     class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Terkumpul</span>
                                 <span class="text-xs font-black text-zinc-800 dark:text-zinc-200 mt-0.5">
-                                    {{ $progres->total_diinput }} <span class="text-zinc-400 text-[10px] font-semibold">/ {{ $progres->target_nilai }}</span>
+                                    {{ $progres->total_diinput }} <span
+                                        class="text-zinc-400 text-[10px] font-semibold">/
+                                        {{ $progres->target_nilai }}</span>
                                 </span>
                             </div>
                             <div class="flex flex-col text-right">
@@ -113,9 +121,13 @@
                                     <span class="text-xs font-black text-blue-500 mt-0.5">Proses Input</span>
                                 @else
                                     @if ($progres->total_diinput == $progres->total_dipublish)
-                                        <span class="text-xs font-black text-emerald-500 mt-0.5 flex items-center justify-end gap-1"><i class="bi bi-check2-all text-sm"></i> Selesai</span>
+                                        <span
+                                            class="text-xs font-black text-emerald-500 mt-0.5 flex items-center justify-end gap-1"><i
+                                                class="bi bi-check2-all text-sm"></i> Selesai</span>
                                     @else
-                                        <span class="text-xs font-black text-amber-500 mt-0.5 flex items-center justify-end gap-1"><i class="bi bi-pencil-fill text-[10px]"></i> Draft</span>
+                                        <span
+                                            class="text-xs font-black text-amber-500 mt-0.5 flex items-center justify-end gap-1"><i
+                                                class="bi bi-pencil-fill text-[10px]"></i> Draft</span>
                                     @endif
                                 @endif
                             </div>
@@ -160,4 +172,3 @@
             message="Pilih pelaksanaan ujian di atas untuk memantau kelengkapan pengisian nilai dari seluruh ruangan kelas secara real-time." />
     @endif
 </x-app-layout>
-

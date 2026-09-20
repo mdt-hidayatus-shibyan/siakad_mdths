@@ -131,4 +131,112 @@ class AppVersion extends Model
             'copyright_subtitle' => 'All Rights Reserved • SIAKAD MDTHS Mobile',
         ];
     }
+
+    /**
+     * Data default awal aplikasi Murid / Wali
+     */
+    public static function defaultMuridData(): array
+    {
+        return [
+            'app_type'          => 'murid',
+            'app_title'         => 'Murid - MDTHS',
+            'app_subtitle'      => 'MDT Hidayatus Shibyan',
+            'version'           => '1.0.0',
+            'build_number'      => '2026.09',
+            'release_date'      => 'September 2026',
+            'release_subtitle'  => 'Rilis Perdana Wali & Murid',
+            'release_badge'     => 'Rilis Saat Ini',
+            'status_badge'      => 'Versi Terbaru',
+            'is_latest'         => true,
+            'is_active'         => true,
+            'new_features'      => [
+                [
+                    'title'       => 'Portal Murid & Wali Santri Terpadu',
+                    'description' => 'Akses informasi akademik, rekap presensi kehadiran harian, riwayat nilai rapor, dan monitoring kedisiplinan murid.',
+                ],
+                [
+                    'title'       => 'Monitoring Tabungan & Tagihan Syahriah',
+                    'description' => 'Pantau mutasi saldo tabungan murid serta status tagihan bulanan dan pembayaran madrasah.',
+                ],
+                [
+                    'title'       => 'Jadwal Pelajaran & Kalender Akademik',
+                    'description' => 'Melihat agenda KBM mingguan dan kalender kegiatan madrasah secara praktis dari genggaman.',
+                ],
+            ],
+            'improvements'      => [
+                [
+                    'title'       => 'Sinkronisasi Data Realtime',
+                    'description' => 'Pembaruan data nilai dan absensi terintegrasi langsung dengan input ustadz pengampu.',
+                ],
+            ],
+            'dev_name'          => 'Mikyal Adly Ghoffar Hasin',
+            'dev_role'          => 'Lead Developer & Tim IT',
+            'dev_institution'   => 'MDT Hidayatus Shibyan',
+            'dev_description'   => 'Aplikasi ini dirancang untuk memberikan kemudahan bagi wali murid dalam memantau perkembangan belajar putra-putrinya di MDT Hidayatus Shibyan.',
+            'dev_details'       => [
+                ['icon' => 'developer_mode', 'label' => 'Framework & Bahasa', 'value' => 'Flutter (Dart)'],
+                ['icon' => 'dns', 'label' => 'Backend & Server', 'value' => 'Laravel REST API & MySQL'],
+            ],
+            'tech_stacks'       => ['Flutter', 'Dart', 'Laravel', 'REST API', 'MySQL', 'Provider'],
+            'copyright_year'    => '2026',
+            'copyright_owner'   => 'MDT Hidayatus Shibyan',
+            'copyright_subtitle' => 'All Rights Reserved • SIAKAD MDTHS Mobile',
+        ];
+    }
+
+    /**
+     * Data default awal Web SIAKAD
+     */
+    public static function defaultWebData(): array
+    {
+        return [
+            'app_type'          => 'web',
+            'app_title'         => 'SIAKAD MDTHS (Web)',
+            'app_subtitle'      => 'Sistem Informasi Akademik MDT Hidayatus Shibyan',
+            'version'           => '1.0.0',
+            'build_number'      => '2026.09',
+            'release_date'      => 'September 2026',
+            'release_subtitle'  => 'Sistem Administrasi Terpadu MDTHS',
+            'release_badge'     => 'Rilis Stabil',
+            'status_badge'      => 'Versi Utama',
+            'is_latest'         => true,
+            'is_active'         => true,
+            'new_features'      => [
+                [
+                    'title'       => 'Manajemen Akademik & Kesiswaan Komprehensif',
+                    'description' => 'Pengelolaan data murid, guru/ustadz, kelas/ruangan, kurikulum, leger nilai, dan percetakan rapor.',
+                ],
+                [
+                    'title'       => 'Penerimaan Santri Baru (SPMB Online)',
+                    'description' => 'Pendaftaran online mandiri dengan verifikasi KK, cetak bukti registrasi, dan integrasi data.',
+                ],
+                [
+                    'title'       => 'Keuangan, Tabungan, & Koperasi Madrasah',
+                    'description' => 'Sistem penagihan syahriah, pembukuan tabungan siswa/guru, dan kasir POS koperasi.',
+                ],
+                [
+                    'title'       => 'Riwayat Versi & Manajemen Rilis Mobile/Web',
+                    'description' => 'Halaman changelog timeline modern untuk mendokumentasikan setiap pembaruan sistem.',
+                ],
+            ],
+            'improvements'      => [
+                [
+                    'title'       => 'Optimalisasi Antarmuka Material 3',
+                    'description' => 'Tampilan responsif, Glassmorphism, dukungan tema Gelap/Terang, dan navigasi ergonomis.',
+                ],
+            ],
+            'dev_name'          => 'Mikyal Adly Ghoffar Hasin',
+            'dev_role'          => 'Lead Developer & Tim IT',
+            'dev_institution'   => 'MDT Hidayatus Shibyan',
+            'dev_description'   => 'Sistem Informasi Akademik berbasis web untuk mempermudah operasional dan manajemen pendidikan madrasah secara terintegrasi.',
+            'dev_details'       => [
+                ['icon' => 'dns', 'label' => 'Web Engine', 'value' => 'Laravel 11 & PHP 8.2+'],
+                ['icon' => 'database', 'label' => 'Database', 'value' => 'MySQL / MariaDB'],
+            ],
+            'tech_stacks'       => ['Laravel', 'PHP', 'Blade', 'Tailwind CSS', 'Alpine.js', 'MySQL'],
+            'copyright_year'    => '2026',
+            'copyright_owner'   => 'MDT Hidayatus Shibyan',
+            'copyright_subtitle' => 'All Rights Reserved • SIAKAD MDTHS Web',
+        ];
+    }
 }

@@ -681,6 +681,13 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                             'Total: ${provider.totalMurid}',
                             Colors.grey,
                           ),
+                          if (provider.countTidakIkut > 0)
+                            _buildBadge(
+                              'Tidak Ikut: ${provider.countTidakIkut}',
+                              isDark
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF64748B),
+                            ),
                           if (provider.countBelumDiisi > 0)
                             _buildBadge(
                               'Belum: ${provider.countBelumDiisi}',
@@ -770,218 +777,320 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
             // 6. DAFTAR SANTRI PRESENSI UJIAN
             // ===================================================================
             ...provider.muridList.map((m) {
-              final isBelumDiisi = m.status == null || m.status!.isEmpty;
-              final statusColor = _getStatusColor(m.status);
+              final isTidakIkut = m.isTidakIkut;
+              final isBelumDiisi =
+                  (m.status == null || m.status!.isEmpty) && !isTidakIkut;
+              final statusColor = isTidakIkut
+                  ? (isDark ? const Color(0xFF71717A) : const Color(0xFF94A3B8))
+                  : _getStatusColor(m.status);
 
-              return GlassCard(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header Santri (Avatar, Nama, NISM, Badge Status & Lock status)
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: isBelumDiisi
-                              ? (isDark
-                                    ? Colors.white10
-                                    : Colors.black.withValues(alpha: 0.06))
-                              : statusColor.withValues(alpha: 0.15),
-                          child: Text(
-                            m.nama.isNotEmpty ? m.nama[0].toUpperCase() : 'S',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: isBelumDiisi
-                                  ? (isDark
-                                        ? const Color(0xFF8D9387)
-                                        : const Color(0xFF73796E))
-                                  : statusColor,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      m.nama,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+              return Opacity(
+                opacity: isTidakIkut ? 0.72 : 1.0,
+                child: GlassCard(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  customBgColor: isTidakIkut
+                      ? (isDark
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : const Color(0xFFF1F3F0))
+                      : null,
+                  customBorderColor: isTidakIkut
+                      ? (isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : const Color(0xFFCBD5E1))
+                      : null,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Santri (Avatar, Nama, NISM, Badge Status & Lock status)
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: isTidakIkut
+                                ? (isDark
+                                      ? Colors.white10
+                                      : const Color(0xFFE2E8F0))
+                                : isBelumDiisi
+                                ? (isDark
+                                      ? Colors.white10
+                                      : Colors.black.withValues(alpha: 0.06))
+                                : statusColor.withValues(alpha: 0.15),
+                            child: isTidakIkut
+                                ? Icon(
+                                    Icons.person_off_outlined,
+                                    size: 16,
+                                    color: isDark
+                                        ? const Color(0xFF71717A)
+                                        : const Color(0xFF94A3B8),
+                                  )
+                                : Text(
+                                    m.nama.isNotEmpty
+                                        ? m.nama[0].toUpperCase()
+                                        : 'M',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: isBelumDiisi
+                                          ? (isDark
+                                                ? const Color(0xFF8D9387)
+                                                : const Color(0xFF73796E))
+                                          : statusColor,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  _buildStatusBadge(m.status, isDark),
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'NISM: ${m.nism} • ${m.jenisKelamin == 'L' ? 'Murid Putra' : 'Murid Putri'}',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E),
-                                ),
-                              ),
-                            ],
                           ),
-                        ),
-                        if (m.isLocked)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.amberAccent.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(
-                                  Icons.lock_outline_rounded,
-                                  size: 10,
-                                  color: AppColors.amberAccent,
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        m.nama,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: isTidakIkut
+                                              ? (isDark
+                                                    ? const Color(0xFFA1A1AA)
+                                                    : const Color(0xFF64748B))
+                                              : null,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    if (isTidakIkut)
+                                      _buildTidakIkutBadge(isDark)
+                                    else
+                                      _buildStatusBadge(m.status, isDark),
+                                  ],
                                 ),
-                                const SizedBox(width: 3),
+                                const SizedBox(height: 2),
                                 Text(
-                                  m.lockReason ?? 'Dispensasi',
-                                  style: const TextStyle(
-                                    fontSize: 9,
-                                    color: AppColors.amberAccent,
-                                    fontWeight: FontWeight.bold,
+                                  'NISM: ${m.nism} • ${m.jenisKelamin == 'L' ? 'Murid Putra' : 'Murid Putri'}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: isDark
+                                        ? const Color(0xFF8D9387)
+                                        : const Color(0xFF73796E),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        IconButton(
-                          icon: Icon(
-                            m.catatan != null && m.catatan!.isNotEmpty
-                                ? Icons.comment_rounded
-                                : Icons.mode_comment_outlined,
-                            size: 16,
-                            color: m.catatan != null && m.catatan!.isNotEmpty
-                                ? AppColors.skyBlueAccent
-                                : (isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E)),
-                          ),
-                          tooltip: 'Catatan Presensi',
-                          onPressed: () =>
-                              _showCatatanDialog(m.muridId, m.nama, m.catatan),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Garis Pembatas Halus
-                    Divider(
-                      height: 1,
-                      thickness: 0.8,
-                      color: isDark
-                          ? AppColors.outlineDark.withValues(alpha: 0.4)
-                          : AppColors.outlineLight.withValues(alpha: 0.7),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Baris 5 Tombol Presensi (H, I, S, A, D) Fleksibel & Mudah Ditekan
-                    Row(
-                      children: [
-                        Expanded(
-                          child: StatusPresensiChip(
-                            status: 'H',
-                            label: 'Hadir',
-                            isSelected: m.status == 'Hadir',
-                            onTap: () {
-                              HapticHelper.light();
-                              provider.updateMuridStatus(m.muridId, 'Hadir');
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: StatusPresensiChip(
-                            status: 'I',
-                            label: 'Izin',
-                            isSelected: m.status == 'Izin',
-                            onTap: () {
-                              HapticHelper.light();
-                              provider.updateMuridStatus(m.muridId, 'Izin');
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: StatusPresensiChip(
-                            status: 'S',
-                            label: 'Sakit',
-                            isSelected: m.status == 'Sakit',
-                            onTap: () {
-                              HapticHelper.light();
-                              provider.updateMuridStatus(m.muridId, 'Sakit');
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: StatusPresensiChip(
-                            status: 'A',
-                            label: 'Alpha',
-                            isSelected: m.status == 'Alpha',
-                            onTap: () {
-                              HapticHelper.light();
-                              provider.updateMuridStatus(m.muridId, 'Alpha');
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: StatusPresensiChip(
-                            status: 'D',
-                            label: 'Dispen',
-                            isSelected: m.status == 'Dispensasi',
-                            onTap: () {
-                              HapticHelper.light();
-                              provider.updateMuridStatus(
+                          if (m.isLocked && !isTidakIkut)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.amberAccent.withValues(
+                                  alpha: 0.15,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.lock_outline_rounded,
+                                    size: 10,
+                                    color: AppColors.amberAccent,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    m.lockReason ?? 'Dispensasi',
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      color: AppColors.amberAccent,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (!isTidakIkut)
+                            IconButton(
+                              icon: Icon(
+                                m.catatan != null && m.catatan!.isNotEmpty
+                                    ? Icons.comment_rounded
+                                    : Icons.mode_comment_outlined,
+                                size: 16,
+                                color:
+                                    m.catatan != null && m.catatan!.isNotEmpty
+                                    ? AppColors.skyBlueAccent
+                                    : (isDark
+                                          ? const Color(0xFF8D9387)
+                                          : const Color(0xFF73796E)),
+                              ),
+                              tooltip: 'Catatan Presensi',
+                              onPressed: () => _showCatatanDialog(
                                 m.muridId,
-                                'Dispensasi',
-                              );
-                            },
+                                m.nama,
+                                m.catatan,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Garis Pembatas Halus
+                      Divider(
+                        height: 1,
+                        thickness: 0.8,
+                        color: isDark
+                            ? AppColors.outlineDark.withValues(alpha: 0.4)
+                            : AppColors.outlineLight.withValues(alpha: 0.7),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Jika Tidak Ikut Ujian: Tampilkan Banner Disabled / Dikecualikan
+                      if (isTidakIkut)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.04)
+                                : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : const Color(0xFFE2E8F0),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.lock_outline_rounded,
+                                size: 14,
+                                color: isDark
+                                    ? const Color(0xFF71717A)
+                                    : const Color(0xFF94A3B8),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  m.lockReason ??
+                                      (m.alasanTidakIkut != null
+                                          ? 'Tidak Mengikuti Ujian (${m.alasanTidakIkut})'
+                                          : 'Tidak Mengikuti Ujian'),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? const Color(0xFF9CA3AF)
+                                        : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        // Baris 5 Tombol Presensi (H, I, S, A, D) Fleksibel & Mudah Ditekan
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatusPresensiChip(
+                                status: 'H',
+                                label: 'Hadir',
+                                isSelected: m.status == 'Hadir',
+                                onTap: () {
+                                  HapticHelper.light();
+                                  provider.updateMuridStatus(
+                                    m.muridId,
+                                    'Hadir',
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: StatusPresensiChip(
+                                status: 'I',
+                                label: 'Izin',
+                                isSelected: m.status == 'Izin',
+                                onTap: () {
+                                  HapticHelper.light();
+                                  provider.updateMuridStatus(m.muridId, 'Izin');
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: StatusPresensiChip(
+                                status: 'S',
+                                label: 'Sakit',
+                                isSelected: m.status == 'Sakit',
+                                onTap: () {
+                                  HapticHelper.light();
+                                  provider.updateMuridStatus(
+                                    m.muridId,
+                                    'Sakit',
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: StatusPresensiChip(
+                                status: 'A',
+                                label: 'Alpha',
+                                isSelected: m.status == 'Alpha',
+                                onTap: () {
+                                  HapticHelper.light();
+                                  provider.updateMuridStatus(
+                                    m.muridId,
+                                    'Alpha',
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: StatusPresensiChip(
+                                status: 'D',
+                                label: 'Dispen',
+                                isSelected: m.status == 'Dispensasi',
+                                onTap: () {
+                                  HapticHelper.light();
+                                  provider.updateMuridStatus(
+                                    m.muridId,
+                                    'Dispensasi',
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+
+                      if (m.catatan != null && m.catatan!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Memo: ${m.catatan!}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.skyBlueAccent,
                           ),
                         ),
                       ],
-                    ),
-
-                    if (m.catatan != null && m.catatan!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Memo: ${m.catatan!}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontStyle: FontStyle.italic,
-                          color: AppColors.skyBlueAccent,
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
               );
             }),
@@ -1034,7 +1143,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                 label: Text(
                   provider.isSaving
                       ? 'Menyimpan Presensi...'
-                      : 'Simpan Presensi (${provider.countSudahDiisi}/${provider.totalMurid})',
+                      : 'Simpan Presensi (${provider.countSudahDiisi}/${provider.totalPesertaAktif})',
                 ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1064,6 +1173,32 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
       default:
         return Colors.grey;
     }
+  }
+
+  Widget _buildTidakIkutBadge(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.15)
+              : const Color(0xFFCBD5E1),
+          width: 0.8,
+        ),
+      ),
+      child: Text(
+        'Tidak Ikut',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF64748B),
+        ),
+      ),
+    );
   }
 
   Widget _buildBelumAdaJadwalEmptyState(

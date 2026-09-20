@@ -7,6 +7,7 @@ use App\Models\TagihanMurid;
 use App\Models\Ujian\DispensasiUjian;
 use App\Models\Ujian\JadwalUjian;
 use App\Models\Ujian\NilaiUjian;
+use App\Models\Ujian\PengecualianUjian;
 use Illuminate\Support\Facades\DB;
 
 class NilaiUjianService
@@ -16,7 +17,8 @@ class NilaiUjianService
      */
     public function hitungProgresRuangan($ujianId, $daftarRuangan)
     {
-        $semuaJadwal = JadwalUjian::where('ujian_id', $ujianId)
+        $semuaJadwal = JadwalUjian::with('mataPelajaran')
+            ->where('ujian_id', $ujianId)
             ->get()
             ->groupBy('level_id');
 
@@ -24,44 +26,57 @@ class NilaiUjianService
             ->get()
             ->groupBy('ruangan_id');
 
+        // Tarik massal ID murid yang dikecualikan (tidak mengikuti ujian) di agenda ujian ini
+        $semuaPengecualianMuridIds = PengecualianUjian::where('ujian_id', $ujianId)
+            ->pluck('murid_id')
+            ->toArray();
+
         $dataProgres = collect();
 
         foreach ($daftarRuangan as $ruangan) {
-            $jumlahMurid = $ruangan->murids_count;
+            $totalMurid = $ruangan->murids_count;
+
+            // Hitung murid yang dikecualikan di ruangan ini
+            $muridIdsRuangan = $ruangan->murids()->where('murids.status', 'Aktif')->pluck('murids.id')->toArray();
+            $jumlahTidakIkut = count(array_intersect($muridIdsRuangan, $semuaPengecualianMuridIds));
+            $jumlahPeserta = max(0, $totalMurid - $jumlahTidakIkut);
 
             $jadwalLevelIni = $semuaJadwal->get($ruangan->level_id);
             $jumlahMapel = $jadwalLevelIni ? $jadwalLevelIni->count() : 0;
 
-            $targetNilai = $jumlahMurid * $jumlahMapel;
+            // Target nilai dihitung dari peserta aktif yang wajib dinilai
+            $targetNilai = $jumlahPeserta * $jumlahMapel;
 
             $nilaiRuanganIni = $semuaNilaiMasuk->get($ruangan->id);
             $totalDiinput = $nilaiRuanganIni ? $nilaiRuanganIni->count() : 0;
             $totalDipublish = $nilaiRuanganIni ? $nilaiRuanganIni->where('is_published', true)->count() : 0;
 
             $mapelKurang = [];
-            if ($jadwalLevelIni && $jumlahMurid > 0) {
+            if ($jadwalLevelIni && $jumlahPeserta > 0) {
                 foreach ($jadwalLevelIni as $jadwal) {
                     $nilaiMapelIni = $nilaiRuanganIni ? $nilaiRuanganIni->where('jadwal_ujian_id', $jadwal->id)->count() : 0;
 
-                    if ($nilaiMapelIni < $jumlahMurid) {
-                        $namaMapel = $jadwal->mata_pelajaran_id ? ($jadwal->mataPelajaran->nama_mapel ?? '-') : $jadwal->nama_mata_pelajaran_custom;
+                    if ($nilaiMapelIni < $jumlahPeserta) {
+                        $namaMapel = $jadwal->nama_mapel;
                         $mapelKurang[] = $namaMapel;
                     }
                 }
             }
 
-            $persentase = $targetNilai > 0 ? round(($totalDiinput / $targetNilai) * 100, 1) : 0;
+            $persentase = $targetNilai > 0 ? round(($totalDiinput / $targetNilai) * 100, 1) : ($jumlahMapel == 0 ? 0 : 100);
             if ($persentase > 100) $persentase = 100;
 
             $dataProgres->push((object)[
-                'ruangan'         => $ruangan,
-                'jumlah_murid'    => $jumlahMurid,
-                'jumlah_mapel'    => $jumlahMapel,
-                'target_nilai'    => $targetNilai,
-                'total_diinput'   => $totalDiinput,
-                'total_dipublish' => $totalDipublish,
-                'persentase'      => $persentase,
-                'mapel_kurang'    => $mapelKurang
+                'ruangan'           => $ruangan,
+                'jumlah_murid'      => $totalMurid,
+                'jumlah_peserta'    => $jumlahPeserta,
+                'jumlah_tidak_ikut' => $jumlahTidakIkut,
+                'jumlah_mapel'      => $jumlahMapel,
+                'target_nilai'      => $targetNilai,
+                'total_diinput'     => $totalDiinput,
+                'total_dipublish'   => $totalDipublish,
+                'persentase'        => $persentase,
+                'mapel_kurang'      => $mapelKurang
             ]);
         }
 
@@ -69,7 +84,7 @@ class NilaiUjianService
     }
 
     /**
-     * Evaluasi syarat administrasi (tunggakan & dispensasi) untuk murid
+     * Evaluasi syarat administrasi (tunggakan, dispensasi & pengecualian) untuk murid
      */
     public function evaluasiSyaratAdmin($ujianTerpilih, $ruanganTerpilih, $murids)
     {
@@ -90,6 +105,13 @@ class NilaiUjianService
 
         $muridIds = $murids->pluck('id')->toArray();
 
+        // 1. Tarik Pengecualian Ujian (Murid yang ditandai tidak mengikuti ujian)
+        $pengecualianMap = PengecualianUjian::where('ujian_id', $ujianTerpilih->id)
+            ->whereIn('murid_id', $muridIds)
+            ->get()
+            ->keyBy('murid_id');
+
+        // 2. Tarik Dispensasi
         $dispensasiMuridIds = DispensasiUjian::where('ujian_id', $ujianTerpilih->id)
             ->whereIn('murid_id', $muridIds)
             ->pluck('murid_id')
@@ -133,6 +155,19 @@ class NilaiUjianService
         $sppMenunggakMuridIds = $sppQuery->pluck('murid_id')->toArray();
 
         foreach ($murids as $murid) {
+            $pengecualian = $pengecualianMap->get($murid->id);
+
+            if ($pengecualian) {
+                $murid->tidak_ikut_ujian = true;
+                $murid->alasan_tidak_ikut = $pengecualian->alasan ?: 'Tidak Mengikuti Ujian';
+                $murid->is_locked = true;
+                $murid->lock_reason = 'Tidak Mengikuti Ujian (' . ($pengecualian->alasan ?: 'Izin/Berhalangan') . ')';
+                continue;
+            }
+
+            $murid->tidak_ikut_ujian = false;
+            $murid->alasan_tidak_ikut = null;
+
             $hasDispensasi = in_array($murid->id, $dispensasiMuridIds);
             $imdaLunas     = in_array($murid->id, $imdaLunasMuridIds);
             $sppMenunggak  = in_array($murid->id, $sppMenunggakMuridIds);
@@ -181,6 +216,14 @@ class NilaiUjianService
                                 'diinput_oleh' => $userId,
                             ]
                         );
+                    } else {
+                        // Jika kotak nilai dikosongkan, hapus rekaman nilai lama
+                        NilaiUjian::where([
+                            'ujian_id'        => $ujianId,
+                            'ruangan_id'      => $ruanganId,
+                            'jadwal_ujian_id' => $jadwalId,
+                            'murid_id'        => $muridId,
+                        ])->delete();
                     }
                 }
             }

@@ -251,6 +251,7 @@ class PresensiUjianController extends Controller
                 $muridList = $muridsWithStatus->map(function ($item) use ($presensiExisting, &$hadirCount, &$izinCount, &$sakitCount, &$alphaCount, &$dispensasiCount, &$belumCount) {
                     $m = $item->murid ?? $item;
                     $existing = $presensiExisting->get($m->id);
+                    $isTidakIkut = $item->tidak_ikut_ujian ?? false;
 
                     $status = $existing?->status ?? null;
                     $catatan = $existing?->catatan;
@@ -264,7 +265,7 @@ class PresensiUjianController extends Controller
                             'Dispensasi' => $dispensasiCount++,
                             default => null,
                         };
-                    } else {
+                    } elseif (!$isTidakIkut) {
                         $belumCount++;
                     }
 
@@ -275,6 +276,8 @@ class PresensiUjianController extends Controller
                         'jenis_kelamin' => $m->jenis_kelamin ?? 'L',
                         'is_locked' => $item->is_locked ?? false,
                         'lock_reason' => $item->lock_reason ?? null,
+                        'tidak_ikut_ujian' => $isTidakIkut,
+                        'alasan_tidak_ikut' => $item->alasan_tidak_ikut ?? null,
                         'status' => $status,
                         'catatan' => $catatan,
                     ];

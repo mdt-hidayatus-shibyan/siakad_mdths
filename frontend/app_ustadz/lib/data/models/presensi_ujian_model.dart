@@ -155,6 +155,8 @@ class MuridPresensiUjianItem {
   final String jenisKelamin;
   final bool isLocked;
   final String? lockReason;
+  final bool tidakIkutUjian;
+  final String? alasanTidakIkut;
   String?
   status; // Hadir, Izin, Sakit, Alpha, Dispensasi, or null if belum diisi
   String? catatan;
@@ -166,18 +168,33 @@ class MuridPresensiUjianItem {
     required this.jenisKelamin,
     required this.isLocked,
     this.lockReason,
+    this.tidakIkutUjian = false,
+    this.alasanTidakIkut,
     this.status,
     this.catatan,
   });
 
+  bool get isTidakIkut =>
+      tidakIkutUjian ||
+      (lockReason?.toLowerCase().contains('tidak mengikuti ujian') ?? false) ||
+      (lockReason?.toLowerCase().contains('tidak ikut') ?? false);
+
   factory MuridPresensiUjianItem.fromJson(Map<String, dynamic> json) {
+    final lr = json['lock_reason']?.toString();
+    final ti =
+        json['tidak_ikut_ujian'] == true ||
+        (lr?.toLowerCase().contains('tidak mengikuti ujian') ?? false) ||
+        (lr?.toLowerCase().contains('tidak ikut') ?? false);
+
     return MuridPresensiUjianItem(
       muridId: json['murid_id'] ?? 0,
       nama: json['nama'] ?? '',
       nism: json['nism'] ?? '-',
       jenisKelamin: json['jenis_kelamin'] ?? 'L',
       isLocked: json['is_locked'] ?? false,
-      lockReason: json['lock_reason'],
+      lockReason: lr,
+      tidakIkutUjian: ti,
+      alasanTidakIkut: json['alasan_tidak_ikut'],
       status: json['status'],
       catatan: json['catatan'],
     );
@@ -187,6 +204,8 @@ class MuridPresensiUjianItem {
     String? status,
     bool clearStatus = false,
     String? catatan,
+    bool? tidakIkutUjian,
+    String? alasanTidakIkut,
   }) {
     return MuridPresensiUjianItem(
       muridId: muridId,
@@ -195,6 +214,8 @@ class MuridPresensiUjianItem {
       jenisKelamin: jenisKelamin,
       isLocked: isLocked,
       lockReason: lockReason,
+      tidakIkutUjian: tidakIkutUjian ?? this.tidakIkutUjian,
+      alasanTidakIkut: alasanTidakIkut ?? this.alasanTidakIkut,
       status: clearStatus ? null : (status ?? this.status),
       catatan: catatan ?? this.catatan,
     );

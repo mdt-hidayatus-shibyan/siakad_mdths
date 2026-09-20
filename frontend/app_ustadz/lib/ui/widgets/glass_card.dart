@@ -9,6 +9,7 @@ class GlassCard extends StatelessWidget {
   final double borderRadius;
   final VoidCallback? onTap;
   final Color? customBorderColor;
+  final Color? customBgColor;
 
   const GlassCard({
     super.key,
@@ -18,6 +19,7 @@ class GlassCard extends StatelessWidget {
     this.borderRadius = 24,
     this.onTap,
     this.customBorderColor,
+    this.customBgColor,
   });
 
   @override
@@ -26,7 +28,9 @@ class GlassCard extends StatelessWidget {
     final borderColor =
         customBorderColor ??
         (isDark ? AppColors.outlineDark : AppColors.outlineLight);
-    final bgColor = isDark ? AppColors.cardGlassDark : AppColors.cardGlassLight;
+    final bgColor =
+        customBgColor ??
+        (isDark ? AppColors.cardGlassDark : AppColors.cardGlassLight);
 
     Widget content = ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),

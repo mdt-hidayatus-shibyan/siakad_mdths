@@ -39,4 +39,14 @@ class Ujian extends Model
     {
         return $this->hasMany(PresensiUjian::class, 'ujian_id');
     }
+
+    public function dispensasiUjians()
+    {
+        return $this->hasMany(DispensasiUjian::class, 'ujian_id');
+    }
+
+    public function pengecualianUjians()
+    {
+        return $this->hasMany(PengecualianUjian::class, 'ujian_id');
+    }
 }

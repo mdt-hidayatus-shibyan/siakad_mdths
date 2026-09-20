@@ -14,8 +14,7 @@
     </div>
 
     <!-- PANEL FILTER -->
-    <div
-        class="m3-glass-card p-4 sm:p-5 mb-6 relative z-10 animate-[modalFadeIn_0.2s_ease-out]">
+    <div class="m3-glass-card p-4 sm:p-5 mb-6 relative z-10 animate-[modalFadeIn_0.2s_ease-out]">
         <form action="{{ request()->url() }}" method="GET" id="formRapor"
             class="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-3.5 items-end">
 
@@ -32,8 +31,7 @@
                     <select name="tahun_id" onchange="document.getElementById('formRapor').submit()"
                         class="m3-input-glass w-full !pl-9 !pr-9 appearance-none cursor-pointer">
                         @foreach ($daftarTahun as $t)
-                            <option value="{{ $t->id }}"
-                                {{ $tahunPelajaranId == $t->id ? 'selected' : '' }}>
+                            <option value="{{ $t->id }}" {{ $tahunPelajaranId == $t->id ? 'selected' : '' }}>
                                 {{ $t->nama_hijriyah }} H - {{ $t->nama_masehi }} M
                             </option>
                         @endforeach
@@ -58,8 +56,7 @@
                         class="m3-input-glass w-full !pl-9 !pr-9 appearance-none cursor-pointer">
                         <option value="">-- Pilih Ruangan --</option>
                         @foreach ($daftarRuangan as $r)
-                            <option value="{{ $r->id }}"
-                                {{ request('ruangan_id') == $r->id ? 'selected' : '' }}>
+                            <option value="{{ $r->id }}" {{ request('ruangan_id') == $r->id ? 'selected' : '' }}>
                                 {{ $r->nama_ruangan }}
                             </option>
                         @endforeach
@@ -85,8 +82,7 @@
                         class="m3-input-glass w-full !pl-9 !pr-9 appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                         <option value="">-- Pilih Pelaksanaan Ujian --</option>
                         @foreach ($daftarUjian as $uj)
-                            <option value="{{ $uj->id }}"
-                                {{ request('ujian_id') == $uj->id ? 'selected' : '' }}>
+                            <option value="{{ $uj->id }}" {{ request('ujian_id') == $uj->id ? 'selected' : '' }}>
                                 {{ $uj->nama_ujian }}
                             </option>
                         @endforeach
@@ -106,8 +102,7 @@
             $isAkhirTahun = in_array($ujianTerpilih->tipe_ujian ?? '', ['IMDA 2', 'IMNI']);
         @endphp
 
-        <div
-            class="m3-glass-card overflow-hidden relative group animate-[modalFadeIn_0.2s_ease-out]">
+        <div class="m3-glass-card overflow-hidden relative group animate-[modalFadeIn_0.2s_ease-out]">
 
             <!-- FORM BULK -->
             <form action="{{ route('rapor.arsipkan_bulk') }}" method="POST" id="formSahkanRapor"
@@ -127,11 +122,14 @@
                                     <input type="checkbox" id="checkAllRapor"
                                         class="rounded border-zinc-300 dark:border-zinc-700 text-primary dark:text-primary-dark focus:ring-primary dark:focus:ring-primary-dark dark:bg-zinc-800 cursor-pointer w-4 h-4">
                                 </th>
-                                <th class="py-3 px-3.5 border-r border-zinc-200/80 dark:border-zinc-800 w-28 text-center">
+                                <th
+                                    class="py-3 px-3.5 border-r border-zinc-200/80 dark:border-zinc-800 w-28 text-center">
                                     NISM</th>
-                                <th class="py-3 px-4 border-r border-zinc-200/80 dark:border-zinc-800">Nama Lengkap Murid
+                                <th class="py-3 px-4 border-r border-zinc-200/80 dark:border-zinc-800">Nama Lengkap
+                                    Murid
                                 </th>
-                                <th class="py-3 px-3.5 text-center border-r border-zinc-200/80 dark:border-zinc-800 w-36">
+                                <th
+                                    class="py-3 px-3.5 text-center border-r border-zinc-200/80 dark:border-zinc-800 w-36">
                                     Status Dokumen</th>
                                 <th class="py-3 px-3.5 text-center w-40">Aksi & Pengesahan</th>
                             </tr>
@@ -144,10 +142,16 @@
                                     if ($isAkhirTahun && !$arsip) {
                                         $riwayatKenaikan = $riwayatKenaikans->get($murid->id);
                                     }
+                                    $isTidakIkut = $pengecualianMurids->has($murid->id);
+                                    $alasanTidakIkut = $isTidakIkut
+                                        ? $pengecualianMurids->get($murid->id)->alasan ?? 'Tidak Mengikuti Ujian'
+                                        : null;
+                                    $totalNilaiPublish = $nilaiCountMap[$murid->id] ?? 0;
+                                    $hasNilai = $totalNilaiPublish > 0;
                                 @endphp
 
                                 <tr
-                                    class="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors group/row {{ $arsip ? 'bg-emerald-50/10 dark:bg-emerald-950/10' : '' }}">
+                                    class="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors group/row {{ $arsip ? 'bg-emerald-50/10 dark:bg-emerald-950/10' : ($isTidakIkut ? 'bg-zinc-100/30 dark:bg-zinc-800/20 opacity-75' : '') }}">
 
                                     <!-- Sel Checkbox -->
                                     <td
@@ -155,6 +159,12 @@
                                         @if ($arsip)
                                             <i class="bi bi-shield-lock-fill text-emerald-500 text-sm"
                                                 title="Telah Diarsipkan"></i>
+                                        @elseif ($isTidakIkut)
+                                            <i class="bi bi-person-x-fill text-zinc-400 text-sm"
+                                                title="Tidak Mengikuti Ujian ({{ $alasanTidakIkut }})"></i>
+                                        @elseif (!$hasNilai)
+                                            <i class="bi bi-exclamation-circle text-amber-400 text-sm"
+                                                title="Belum Memiliki Nilai Rilis"></i>
                                         @elseif ($isAkhirTahun && !$riwayatKenaikan)
                                             <i class="bi bi-lock-fill text-zinc-400 text-sm"
                                                 title="Terkunci (Butuh SK Kenaikan)"></i>
@@ -172,7 +182,7 @@
 
                                     <!-- Nama Lengkap -->
                                     <td
-                                        class="py-2.5 px-4 font-black text-zinc-900 dark:text-zinc-100 text-xs tracking-tight border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
+                                        class="py-2.5 px-4 font-black {{ $isTidakIkut ? 'text-zinc-500 dark:text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-100' }} text-xs tracking-tight border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
                                         {{ $murid->nama_lengkap }}
                                     </td>
 
@@ -184,10 +194,21 @@
                                                 class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/40 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider">
                                                 <i class="bi bi-shield-lock-fill text-xs"></i> Diarsipkan
                                             </span>
-                                        @else
+                                        @elseif ($isTidakIkut)
+                                            <span
+                                                class="inline-flex items-center gap-1 bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider"
+                                                title="{{ $alasanTidakIkut }}">
+                                                <i class="bi bi-person-x-fill text-xs text-rose-500"></i> Tidak Ikut
+                                            </span>
+                                        @elseif (!$hasNilai)
                                             <span
                                                 class="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/40 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider">
-                                                <i class="bi bi-file-earmark-text text-xs"></i> Draft
+                                                <i class="bi bi-dash-circle text-xs"></i> Nilai Kosong
+                                            </span>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center gap-1 bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 border border-sky-200/80 dark:border-sky-800/40 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                                <i class="bi bi-file-earmark-text text-xs"></i> Siap Disahkan
                                             </span>
                                         @endif
                                     </td>
@@ -201,6 +222,18 @@
                                                     class="inline-flex items-center justify-center px-3 h-8 bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-600 text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-transform active:scale-95 shadow-2xs w-full max-w-[110px]">
                                                     <i class="bi bi-printer-fill mr-1 text-xs"></i> Cetak
                                                 </a>
+                                            @elseif ($isTidakIkut)
+                                                <!-- Tidak Ikut Ujian -->
+                                                <button type="button" disabled
+                                                    class="inline-flex items-center justify-center px-3 h-8 bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-not-allowed shadow-2xs w-full max-w-[110px] border border-transparent">
+                                                    <i class="bi bi-dash-circle mr-1 text-xs"></i> Tidak Ikut
+                                                </button>
+                                            @elseif (!$hasNilai)
+                                                <!-- Nilai Belum Rilis -->
+                                                <button type="button" disabled
+                                                    class="inline-flex items-center justify-center px-3 h-8 bg-amber-50/50 dark:bg-amber-950/20 text-amber-500 dark:text-amber-400 font-bold text-[10px] uppercase tracking-wider rounded-lg cursor-not-allowed shadow-2xs w-full max-w-[110px] border border-amber-200/50">
+                                                    <i class="bi bi-pencil mr-1 text-xs"></i> Belum Dinilai
+                                                </button>
                                             @else
                                                 @if ($isAkhirTahun && !$riwayatKenaikan)
                                                     <!-- Terkunci (Butuh SK Kenaikan Dulu) -->
@@ -355,4 +388,3 @@
     @endif
 
 </x-app-layout>
-

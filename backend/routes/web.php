@@ -470,6 +470,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('persyaratan-ujian')->name('persyaratan-ujian.')->group(function () {
         Route::get('/', [PersyaratanUjianController::class, 'index'])->name('index');
         Route::post('/dispensasi', [PersyaratanUjianController::class, 'beriDispensasi'])->name('dispensasi');
+        Route::post('/tandai-tidak-ikut', [PersyaratanUjianController::class, 'tandaiTidakIkut'])->name('tandai-tidak-ikut');
+        Route::post('/batalkan-tidak-ikut', [PersyaratanUjianController::class, 'batalkanTidakIkut'])->name('batalkan-tidak-ikut');
     });
 
     // -- Presensi Ujian --
@@ -487,6 +489,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // -- Nilai Ujian & Leger --
     Route::prefix('nilai-ujian')->name('nilai-ujian.')->group(function () {
         Route::get('/', [NilaiUjianController::class, 'index'])->name('index');
+        Route::get('/cetak-progres', [NilaiUjianController::class, 'cetakProgres'])->name('cetak-progres');
         Route::get('/input-nilai', [NilaiUjianController::class, 'inputNilai'])->name('input-nilai');
         Route::post('/store', [NilaiUjianController::class, 'simpanNilai'])->name('store');
         Route::get('/input-leger', [NilaiUjianController::class, 'inputLeger'])->name('input-leger');
@@ -496,6 +499,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // -- Bintang Pelajar --
     Route::get('/bintang-pelajar', [BintangPelajarController::class, 'bintangPelajar'])->name('bintang-pelajar.index');
+    Route::get('/bintang-pelajar/cetak', [BintangPelajarController::class, 'cetak'])->name('bintang-pelajar.cetak');
     Route::get('/bintang-madrasah', [BintangPelajarController::class, 'bintangMadrasah'])->name('bintang-madrasah.index');
 
     // -- Kenaikan Kelas --
@@ -899,9 +903,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pengaturan-aplikasi', [SettingController::class, 'index'])->name('pengaturan-aplikasi.index');
     Route::post('/pengaturan-aplikasi', [SettingController::class, 'update'])->name('pengaturan-aplikasi.update');
 
-    // -- Versi & Rilis Aplikasi Mobile --
-    Route::get('/pengaturan-versi', [AppVersionController::class, 'index'])->name('pengaturan-versi.index');
-    Route::post('/pengaturan-versi', [AppVersionController::class, 'update'])->name('pengaturan-versi.update');
+    // -- Versi & Rilis Aplikasi Mobile / Web --
+    Route::prefix('pengaturan-versi')->name('pengaturan-versi.')->group(function () {
+        Route::get('/', [AppVersionController::class, 'index'])->name('index');
+        Route::get('/riwayat', [AppVersionController::class, 'riwayat'])->name('riwayat');
+        Route::get('/tambah', [AppVersionController::class, 'create'])->name('create');
+        Route::post('/', [AppVersionController::class, 'update'])->name('update');
+        Route::post('/set-active/{id}', [AppVersionController::class, 'setActive'])->name('set-active');
+        Route::delete('/{id}', [AppVersionController::class, 'destroy'])->name('destroy');
+    });
+    Route::get('/riwayat-versi', [AppVersionController::class, 'riwayat'])->name('riwayat-versi');
 
     // -- Backup & Restore Database --
     Route::prefix('backup')->name('backup.')->controller(BackupController::class)->group(function () {

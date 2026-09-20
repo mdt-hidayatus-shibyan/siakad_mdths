@@ -378,6 +378,14 @@ class NilaiUjianController extends Controller
                         ]
                     );
                     $tersimpanCount++;
+                } else {
+                    // Jika dikosongkan di aplikasi ustadz, hapus nilai lama
+                    NilaiUjian::where([
+                        'ujian_id' => $ujianId,
+                        'ruangan_id' => $ruanganId,
+                        'jadwal_ujian_id' => $jadwalUjianId,
+                        'murid_id' => $muridId,
+                    ])->delete();
                 }
             }
 

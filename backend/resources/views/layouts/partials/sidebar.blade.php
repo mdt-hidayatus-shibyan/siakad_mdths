@@ -28,10 +28,11 @@
                         {{ auth()->user()?->tingkat->kode_tingkat ?? '' }}
                     @endif
                 </span>
-                <span
-                    class="text-zinc-400 dark:text-zinc-500 leading-tight tracking-tight text-[9px] md:text-[10px] truncate font-semibold">
-                    v.{{ config('app.version', '1.0.0') }}
-                </span>
+                <a href="{{ route('pengaturan-versi.riwayat') }}" title="Lihat Riwayat Versi & Catatan Rilis"
+                    class="text-zinc-400 hover:text-primary dark:text-zinc-500 dark:hover:text-primary-dark leading-tight tracking-tight text-[9px] md:text-[10px] truncate font-semibold transition-colors inline-flex items-center gap-1 group">
+                    <span>v.{{ config('app.version', '1.0.0') }}</span>
+                    <i class="bi bi-clock-history opacity-0 group-hover:opacity-100 transition-opacity text-[9px]"></i>
+                </a>
             </div>
         </div>
 

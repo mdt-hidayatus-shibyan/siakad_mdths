@@ -19,50 +19,116 @@ class BintangPelajarController extends Controller
     public function bintangPelajar(Request $request)
     {
         $daftarTahun = TahunPelajaran::orderBy('id', 'asc')->get();
-        $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()->id;
+        $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()?->id;
 
         $daftarUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
 
+        $ujianTerpilih = null;
         $bintangLevel = collect();
         $bintangRuangan = collect();
 
         if ($request->filled('ujian_id')) {
-            $ujianTerpilih = Ujian::find($request->ujian_id);
-            $semuaNilai = NilaiUjian::with(['murid', 'ruangan.level'])
-                ->where('ujian_id', $ujianTerpilih->id)
-                ->whereHas('murid', function ($q) {
-                    $q->where('status', 'Aktif');
-                })
-                ->get();
-
-            $rekapMurid = collect();
-            foreach ($semuaNilai->groupBy('murid_id') as $muridId => $nilais) {
-                $rekapMurid->push((object)[
-                    'murid' => $nilais->first()->murid,
-                    'ruangan_nama' => $nilais->first()->ruangan->nama_ruangan ?? 'Tanpa Ruangan',
-                    'level_nama' => $nilais->first()->ruangan->level->nama_level ?? 'Tanpa Tingkat',
-                    'total_nilai' => $nilais->sum('nilai'),
-                    'rata_rata' => $nilais->count() > 0 ? round($nilais->sum('nilai') / $nilais->count(), 2) : 0,
-                ]);
-            }
-
-            // A. Top 3 Per Tingkatan/Level (Semua murid se-level diadu)
-            $bintangLevel = $rekapMurid->groupBy('level_nama')->map(function ($group) {
-                return $group->sortByDesc('total_nilai')->take(3)->values();
-            })->sortKeys();
-
-            // B. Top 3 Per Ruangan (Hanya diadu dengan teman sekelas)
-            $bintangRuangan = $rekapMurid->groupBy('ruangan_nama')->map(function ($group) {
-                return $group->sortByDesc('total_nilai')->take(3)->values();
-            })->sortKeys();
+            $data = $this->ambilDataBintangPelajar($request->ujian_id);
+            $ujianTerpilih = $data['ujianTerpilih'];
+            $bintangLevel = $data['bintangLevel'];
+            $bintangRuangan = $data['bintangRuangan'];
         }
 
-        return view('bintang-pelajar.index', compact('daftarTahun', 'tahunPelajaranId', 'daftarUjian', 'bintangLevel', 'bintangRuangan'));
+        return view('bintang-pelajar.index', compact(
+            'daftarTahun',
+            'tahunPelajaranId',
+            'daftarUjian',
+            'ujianTerpilih',
+            'bintangLevel',
+            'bintangRuangan'
+        ));
     }
 
-    // =======================================================
-    // 2. HALAMAN BINTANG MADRASAH (UMUM)
-    // =======================================================
+    /**
+     * Cetak Dokumen Rekap Pemenang Bintang Pelajar
+     */
+    public function cetak(Request $request)
+    {
+        $request->validate([
+            'ujian_id' => 'required|exists:ujians,id',
+        ]);
+
+        $data = $this->ambilDataBintangPelajar($request->ujian_id);
+        $kategori = $request->kategori ?? 'semua'; // 'semua', 'level', 'ruangan'
+
+        return view('cetak-baru.cetak_bintang_pelajar', array_merge($data, [
+            'kategori' => $kategori,
+        ]));
+    }
+
+    /**
+     * Helper untuk mengambil data Bintang Pelajar (Level & Ruangan) terurut berdasarkan urutan_level
+     */
+    private function ambilDataBintangPelajar($ujianId)
+    {
+        $ujianTerpilih = Ujian::with('tahunPelajaran')->find($ujianId);
+        if (!$ujianTerpilih) {
+            return [
+                'ujianTerpilih' => null,
+                'bintangLevel' => collect(),
+                'bintangRuangan' => collect(),
+            ];
+        }
+
+        $pengecualianMuridIds = \App\Models\Ujian\PengecualianUjian::where('ujian_id', $ujianTerpilih->id)->pluck('murid_id');
+
+        $semuaNilai = NilaiUjian::with([
+            'murid.waliMurid.kampung',
+            'ruangan.level'
+        ])
+            ->where('ujian_id', $ujianTerpilih->id)
+            ->whereNotIn('murid_id', $pengecualianMuridIds)
+            ->whereHas('murid', function ($q) {
+                $q->where('status', 'Aktif');
+            })
+            ->get();
+
+        $rekapMurid = collect();
+        foreach ($semuaNilai->groupBy('murid_id') as $muridId => $nilais) {
+            $first = $nilais->first();
+            $ruangan = $first->ruangan;
+            $level = $ruangan?->level;
+            $murid = $first->murid;
+
+            $rekapMurid->push((object)[
+                'murid' => $murid,
+                'ruangan_id' => $ruangan?->id,
+                'ruangan_nama' => $ruangan->nama_ruangan ?? 'Tanpa Ruangan',
+                'level_id' => $level?->id,
+                'level_nama' => $level->nama_level ?? 'Tanpa Tingkat',
+                'urutan_level' => $level->urutan_level ?? 999,
+                'total_nilai' => $nilais->sum('nilai'),
+                'rata_rata' => $nilais->count() > 0 ? round($nilais->sum('nilai') / $nilais->count(), 2) : 0,
+            ]);
+        }
+
+        // A. Top 3 Per Tingkatan/Level (Semua murid se-level diadu, diurutkan berdasarkan urutan_level)
+        $bintangLevel = $rekapMurid->groupBy('level_nama')->map(function ($group) {
+            return $group->sortByDesc('total_nilai')->take(3)->values();
+        })->sortBy(function ($group) {
+            return $group->first()->urutan_level ?? 999;
+        });
+
+        // B. Top 3 Per Ruangan (Hanya diadu dengan teman sekelas, diurutkan berdasarkan urutan_level kemudian nama_ruangan)
+        $bintangRuangan = $rekapMurid->groupBy('ruangan_nama')->map(function ($group) {
+            return $group->sortByDesc('total_nilai')->take(3)->values();
+        })->sortBy(function ($group) {
+            $first = $group->first();
+            return sprintf('%04d_%s', $first->urutan_level ?? 999, $first->ruangan_nama ?? '');
+        });
+
+        return [
+            'ujianTerpilih' => $ujianTerpilih,
+            'bintangLevel' => $bintangLevel,
+            'bintangRuangan' => $bintangRuangan,
+        ];
+    }
+
     // =======================================================
     // 2. HALAMAN BINTANG MADRASAH (BEST OF THE BEST)
     // =======================================================
@@ -80,9 +146,12 @@ class BintangPelajarController extends Controller
         // Syarat Pertama: IMDA 1 dan IMDA 2 harus sudah terlaksana
         if ($ujianImda1 && $ujianImda2) {
 
-            // FUNGSI HELPER: Mencari ID Murid yang Juara 1 di tiap ruangan pada suatu Ujian (hanya murid aktif)
+            // FUNGSI HELPER: Mencari ID Murid yang Juara 1 di tiap ruangan pada suatu Ujian (hanya murid aktif dan tidak dikecualikan)
             $getJuara1PerRuangan = function ($ujianId) {
+                $pengecualianMuridIds = \App\Models\Ujian\PengecualianUjian::where('ujian_id', $ujianId)->pluck('murid_id');
+
                 $semuaNilai = NilaiUjian::where('ujian_id', $ujianId)
+                    ->whereNotIn('murid_id', $pengecualianMuridIds)
                     ->whereHas('murid', function ($query) {
                         $query->where('status', 'Aktif');
                     })

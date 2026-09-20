@@ -2,10 +2,11 @@ class ApiConstants {
   ApiConstants._();
 
   // Backend API URL
-  static const String defaultBaseUrl = 'http://10.32.158.1:8000/api';
-  // static const String defaultBaseUrl = 'http://127.0.0.1:8000/api'; // Untuk browser / localhost
+  // static const String defaultBaseUrl = 'http://10.32.158.1:8000/api';
   // static const String defaultBaseUrl =
-  //     'https://mdt-hidayatus-shibyan.sch.id/api'; // Untuk produksi / VPS
+  //     'http://127.0.0.1:8000/api'; // Untuk browser / localhost
+  static const String defaultBaseUrl =
+      'https://mdt-hidayatus-shibyan.sch.id/api'; // Untuk produksi / VPS
 
   static const String login = '/login';
   static const String logout = '/logout';

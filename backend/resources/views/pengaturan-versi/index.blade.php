@@ -4,28 +4,52 @@
     <!-- Header Page -->
     <div class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-20">
         <div>
+            <div class="flex items-center gap-2 mb-1">
+                <a href="{{ route('pengaturan-versi.riwayat', ['app' => $appType]) }}"
+                    class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Riwayat Versi</span>
+                </a>
+                <span class="text-xs text-zinc-400">•</span>
+                <span
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    {{ isset($isNew) && $isNew ? 'Tambah Versi Baru' : 'Editor Versi' }}
+                </span>
+            </div>
             <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
-                Versi & Rilis Aplikasi Mobile
+                {{ isset($isNew) && $isNew ? 'Tambah Versi & Catatan Rilis' : 'Pengaturan Versi & Rilis' }}
             </h2>
             <p class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Kelola nomor versi, catatan rilis pembaruan (*changelog*), dan informasi pengembang aplikasi
-                Android/iOS.
+                Kelola nomor versi, catatan rilis pembaruan (*changelog*), dan informasi pengembang aplikasi.
             </p>
         </div>
 
-        <!-- Tab Pemilih Aplikasi -->
-        <div
-            class="flex items-center gap-2 p-1 bg-zinc-200/60 dark:bg-zinc-800/80 rounded-2xl border border-zinc-300/50 dark:border-zinc-700/50">
-            <a href="{{ route('pengaturan-versi.index', ['app' => 'ustadz']) }}"
-                class="px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 {{ $appType === 'ustadz' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white' }}">
-                <i class="bi bi-person-badge-fill"></i>
-                Aplikasi Ustadz
+        <div class="flex flex-wrap items-center gap-2.5">
+            <a href="{{ route('pengaturan-versi.riwayat', ['app' => $appType]) }}"
+                class="px-4 py-2.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs transition-all flex items-center gap-2 border border-zinc-200/80 dark:border-zinc-700/80">
+                <i class="bi bi-clock-history text-sm"></i>
+                <span>Lihat Riwayat Versi</span>
             </a>
-            <a href="{{ route('pengaturan-versi.index', ['app' => 'murid']) }}"
-                class="px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 {{ $appType === 'murid' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white' }}">
-                <i class="bi bi-mortarboard-fill"></i>
-                Aplikasi Murid / Wali
-            </a>
+
+            <!-- Tab Pemilih Platform -->
+            <div
+                class="flex items-center gap-1.5 p-1 bg-zinc-200/60 dark:bg-zinc-800/80 rounded-2xl border border-zinc-300/50 dark:border-zinc-700/50">
+                <a href="{{ route('pengaturan-versi.index', ['app' => 'ustadz']) }}"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 {{ $appType === 'ustadz' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white' }}">
+                    <i class="bi bi-person-badge-fill"></i>
+                    <span>Ustadz</span>
+                </a>
+                <a href="{{ route('pengaturan-versi.index', ['app' => 'murid']) }}"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 {{ $appType === 'murid' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white' }}">
+                    <i class="bi bi-mortarboard-fill"></i>
+                    <span>Murid</span>
+                </a>
+                <a href="{{ route('pengaturan-versi.index', ['app' => 'web']) }}"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 {{ $appType === 'web' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white' }}">
+                    <i class="bi bi-globe2"></i>
+                    <span>Web</span>
+                </a>
+            </div>
         </div>
     </div>
 
@@ -307,10 +331,20 @@
                         Publikasikan Versi
                     </h3>
 
-                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-5 leading-relaxed">
-                        Data yang disimpan di sini akan langsung disajikan via REST API dan otomatis tampil pada halaman
-                        <b>Tentang Aplikasi</b> di aplikasi mobile ustadz & murid.
-                    </p>
+                    <div
+                        class="mb-5 p-3.5 rounded-2xl bg-zinc-100/80 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="checkbox" name="is_latest" value="1"
+                                {{ old('is_latest', $version->is_latest ?? true) ? 'checked' : '' }}
+                                class="rounded text-emerald-600 focus:ring-emerald-500 mt-0.5 w-4 h-4">
+                            <div>
+                                <span class="text-xs font-bold text-zinc-900 dark:text-white block">Jadikan Versi Utama
+                                    / Aktif</span>
+                                <span class="text-[11px] text-zinc-500 dark:text-zinc-400 block mt-0.5">Versi ini akan
+                                    otomatis dijadikan versi rujukan utama saat diakses client.</span>
+                            </div>
+                        </label>
+                    </div>
 
                     <button type="submit"
                         class="w-full py-3.5 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-black text-xs tracking-wider uppercase transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer">

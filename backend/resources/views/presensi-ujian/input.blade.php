@@ -296,12 +296,13 @@
                                 $pExisting = $presensiExisting->get($murid->id);
                                 $statusSekarang = $pExisting ? $pExisting->status : null;
                                 $catatanSekarang = $pExisting ? $pExisting->catatan : null;
+                                $isTidakIkut = $murid->tidak_ikut_ujian ?? false;
                                 $isLocked = $murid->is_locked ?? false;
                                 $lockReason = $murid->lock_reason ?? 'Lunas Administrasi';
                             @endphp
 
                             <li
-                                class="p-4 sm:px-5 sm:py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3.5 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                                class="p-4 sm:px-5 sm:py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3.5 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors {{ $isTidakIkut ? 'bg-zinc-50/40 dark:bg-zinc-900/30 opacity-75' : '' }}">
                                 <!-- Info Identitas Murid -->
                                 <div class="flex items-center gap-3.5 flex-1 min-w-0">
                                     <div
@@ -314,30 +315,38 @@
                                                 {{ $murid->nama_lengkap }}
                                             </h4>
 
-                                            @if (!$statusSekarang)
-                                                <span id="badge-status-{{ $murid->id }}"
-                                                    class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 uppercase tracking-wider">
-                                                    Belum Diisi
+                                            @if ($isTidakIkut)
+                                                <span
+                                                    class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700"
+                                                    title="{{ $murid->alasan_tidak_ikut }}">
+                                                    <i class="bi bi-person-slash mr-0.5"></i> Tidak Ikut Ujian
                                                 </span>
                                             @else
-                                                <span id="badge-status-{{ $murid->id }}"
-                                                    class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
-                                                    {{ $statusSekarang }}
-                                                </span>
-                                            @endif
+                                                @if (!$statusSekarang)
+                                                    <span id="badge-status-{{ $murid->id }}"
+                                                        class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+                                                        Belum Diisi
+                                                    </span>
+                                                @else
+                                                    <span id="badge-status-{{ $murid->id }}"
+                                                        class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                                                        {{ $statusSekarang }}
+                                                    </span>
+                                                @endif
 
-                                            @if ($isLocked)
-                                                <span
-                                                    class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800"
-                                                    title="{{ $lockReason }}">
-                                                    <i class="bi bi-exclamation-triangle mr-0.5"></i>
-                                                    {{ $lockReason }}
-                                                </span>
-                                            @else
-                                                <span
-                                                    class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                                    <i class="bi bi-check-circle mr-0.5"></i> Terpenuhi
-                                                </span>
+                                                @if ($isLocked)
+                                                    <span
+                                                        class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800"
+                                                        title="{{ $lockReason }}">
+                                                        <i class="bi bi-exclamation-triangle mr-0.5"></i>
+                                                        {{ $lockReason }}
+                                                    </span>
+                                                @else
+                                                    <span
+                                                        class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                        <i class="bi bi-check-circle mr-0.5"></i> Terpenuhi
+                                                    </span>
+                                                @endif
                                             @endif
                                         </div>
                                         <p
@@ -349,38 +358,52 @@
 
                                 <!-- Area Pilihan Presensi & Catatan -->
                                 <div class="flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
-                                    <!-- Radio Buttons Kehadiran -->
-                                    <div
-                                        class="grid grid-cols-5 gap-1 w-full sm:w-[280px] bg-zinc-100/80 dark:bg-zinc-950/60 p-1 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
-                                        @foreach (['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A', 'Dispensasi' => 'D'] as $val => $label)
-                                            <label class="cursor-pointer relative block w-full text-center">
-                                                <input type="radio" name="presensi[{{ $murid->id }}][status]"
-                                                    value="{{ $val }}"
-                                                    class="peer sr-only presensi-radio-{{ $val }} presensi-radio-{{ $murid->id }}"
-                                                    data-murid-id="{{ $murid->id }}"
-                                                    {{ $statusSekarang == $val ? 'checked' : '' }}
-                                                    onchange="updateStatusBadge('{{ $murid->id }}', '{{ $val }}')">
+                                    @if ($isTidakIkut)
+                                        <div
+                                            class="w-full sm:w-[280px] py-1.5 px-3 rounded-xl bg-zinc-100/90 dark:bg-zinc-800/80 text-center text-xs font-bold text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center gap-1.5 shadow-2xs">
+                                            <i class="bi bi-lock-fill text-zinc-400"></i>
+                                            <span>Dikecualikan
+                                                ({{ $murid->alasan_tidak_ikut ?? 'Tidak Ikut Ujian' }})</span>
+                                        </div>
+                                        <div class="w-full sm:w-44">
+                                            <input type="text" disabled value="Tidak Ikut Ujian"
+                                                class="m3-input-glass !py-1 !px-2.5 text-xs font-medium w-full opacity-60 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800">
+                                        </div>
+                                    @else
+                                        <!-- Radio Buttons Kehadiran -->
+                                        <div
+                                            class="grid grid-cols-5 gap-1 w-full sm:w-[280px] bg-zinc-100/80 dark:bg-zinc-950/60 p-1 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
+                                            @foreach (['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A', 'Dispensasi' => 'D'] as $val => $label)
+                                                <label class="cursor-pointer relative block w-full text-center">
+                                                    <input type="radio"
+                                                        name="presensi[{{ $murid->id }}][status]"
+                                                        value="{{ $val }}"
+                                                        class="peer sr-only presensi-radio-{{ $val }} presensi-radio-{{ $murid->id }}"
+                                                        data-murid-id="{{ $murid->id }}"
+                                                        {{ $statusSekarang == $val ? 'checked' : '' }}
+                                                        onchange="updateStatusBadge('{{ $murid->id }}', '{{ $val }}')">
 
-                                                <div
-                                                    class="w-full py-1.5 flex items-center justify-center text-[11px] font-black rounded-lg transition-all duration-200 border border-transparent text-zinc-400 dark:text-zinc-500 hover:bg-white dark:hover:bg-zinc-800
-                                                {{ $val == 'Hadir' ? 'peer-checked:bg-emerald-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-emerald-600' : '' }}
-                                                {{ $val == 'Sakit' ? 'peer-checked:bg-blue-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-blue-600' : '' }}
-                                                {{ $val == 'Izin' ? 'peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-amber-600' : '' }}
-                                                {{ $val == 'Alpha' ? 'peer-checked:bg-rose-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-rose-600' : '' }}
-                                                {{ $val == 'Dispensasi' ? 'peer-checked:bg-purple-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-purple-600' : '' }}
-                                                ">
-                                                    {{ $label }}
-                                                </div>
-                                            </label>
-                                        @endforeach
-                                    </div>
+                                                    <div
+                                                        class="w-full py-1.5 flex items-center justify-center text-[11px] font-black rounded-lg transition-all duration-200 border border-transparent text-zinc-400 dark:text-zinc-500 hover:bg-white dark:hover:bg-zinc-800
+                                                    {{ $val == 'Hadir' ? 'peer-checked:bg-emerald-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-emerald-600' : '' }}
+                                                    {{ $val == 'Sakit' ? 'peer-checked:bg-blue-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-blue-600' : '' }}
+                                                    {{ $val == 'Izin' ? 'peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-amber-600' : '' }}
+                                                    {{ $val == 'Alpha' ? 'peer-checked:bg-rose-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-rose-600' : '' }}
+                                                    {{ $val == 'Dispensasi' ? 'peer-checked:bg-purple-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-purple-600' : '' }}
+                                                    ">
+                                                        {{ $label }}
+                                                    </div>
+                                                </label>
+                                            @endforeach
+                                        </div>
 
-                                    <!-- Catatan Murid (Opsional) -->
-                                    <div class="w-full sm:w-44">
-                                        <input type="text" name="presensi[{{ $murid->id }}][catatan]"
-                                            value="{{ $catatanSekarang }}" placeholder="Catatan..."
-                                            class="m3-input-glass !py-1 !px-2.5 text-xs font-medium w-full">
-                                    </div>
+                                        <!-- Catatan Murid (Opsional) -->
+                                        <div class="w-full sm:w-44">
+                                            <input type="text" name="presensi[{{ $murid->id }}][catatan]"
+                                                value="{{ $catatanSekarang }}" placeholder="Catatan..."
+                                                class="m3-input-glass !py-1 !px-2.5 text-xs font-medium w-full">
+                                        </div>
+                                    @endif
                                 </div>
                             </li>
                         @endforeach

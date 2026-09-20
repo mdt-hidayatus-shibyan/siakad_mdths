@@ -74,7 +74,8 @@
                     class="w-12 h-12 bg-rose-50 dark:bg-rose-950/40 text-rose-500 border border-rose-200/60 dark:border-rose-800/40 rounded-xl flex items-center justify-center text-xl mb-3 mx-auto shadow-2xs">
                     <i class="bi bi-exclamation-triangle-fill"></i>
                 </div>
-                <h3 class="text-base font-black text-rose-700 dark:text-rose-400 tracking-tight">Data Tidak Memenuhi Syarat</h3>
+                <h3 class="text-base font-black text-rose-700 dark:text-rose-400 tracking-tight">Data Tidak Memenuhi
+                    Syarat</h3>
                 <p class="text-xs font-bold text-rose-600/80 dark:text-rose-400/80 mt-1 max-w-md mx-auto">
                     @if ($murids->isEmpty())
                         Tidak ada data murid aktif di ruangan kelas ini.
@@ -96,7 +97,8 @@
                     <input type="hidden" name="ujian_id" value="{{ $ujianTerpilih->id }}">
 
                     <!-- 1. KARTU HEADER -->
-                    <div class="m3-glass-card px-5 py-4 flex flex-col md:flex-row justify-between md:items-center gap-3">
+                    <div
+                        class="m3-glass-card px-5 py-4 flex flex-col md:flex-row justify-between md:items-center gap-3">
                         <div class="flex items-center gap-3.5">
                             <div
                                 class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/40 flex items-center justify-center shrink-0 hidden sm:flex shadow-2xs">
@@ -129,7 +131,8 @@
                             <table class="w-full text-left border-separate border-spacing-0 min-w-max">
                                 <!-- HEADER TABEL -->
                                 <thead>
-                                    <tr class="bg-zinc-50/95 dark:bg-zinc-950/95 border-b border-zinc-200/80 dark:border-zinc-800">
+                                    <tr
+                                        class="bg-zinc-50/95 dark:bg-zinc-950/95 border-b border-zinc-200/80 dark:border-zinc-800">
                                         <!-- Sticky Number -->
                                         <th
                                             class="p-0 align-middle text-center text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider sticky top-0 left-0 bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-md border-r border-b border-zinc-200/80 dark:border-zinc-800 z-40 w-12 min-w-[3rem] max-w-[3rem] md:w-16 md:min-w-[4rem] md:max-w-[4rem]">
@@ -163,13 +166,20 @@
                                 <tbody>
                                     @foreach ($murids as $murid)
                                         @php
-                                            $rowBg = $murid->is_locked
-                                                ? 'bg-rose-50/20 dark:bg-rose-950/20'
-                                                : 'hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors';
+                                            $isTidakIkut = $murid->tidak_ikut_ujian ?? false;
+                                            $isLocked = $murid->is_locked;
 
-                                            $stickyBg = $murid->is_locked
-                                                ? 'bg-rose-50 dark:bg-rose-950/30'
-                                                : 'bg-white dark:bg-zinc-900 group-hover/row:bg-zinc-50 dark:group-hover/row:bg-zinc-800/80';
+                                            $rowBg = $isTidakIkut
+                                                ? 'bg-zinc-100/40 dark:bg-zinc-800/30 opacity-75'
+                                                : ($isLocked
+                                                    ? 'bg-rose-50/20 dark:bg-rose-950/20'
+                                                    : 'hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors');
+
+                                            $stickyBg = $isTidakIkut
+                                                ? 'bg-zinc-100 dark:bg-zinc-800'
+                                                : ($isLocked
+                                                    ? 'bg-rose-50 dark:bg-rose-950/30'
+                                                    : 'bg-white dark:bg-zinc-900 group-hover/row:bg-zinc-50 dark:group-hover/row:bg-zinc-800/80');
                                         @endphp
                                         <tr class="{{ $rowBg }} group/row">
 
@@ -177,8 +187,10 @@
                                             <td
                                                 class="p-0 text-center sticky left-0 {{ $stickyBg }} z-20 border-r border-b border-zinc-200/80 dark:border-zinc-800 transition-colors w-12 min-w-[3rem] max-w-[3rem] md:w-16 md:min-w-[4rem] md:max-w-[4rem] align-middle">
                                                 <div
-                                                    class="w-7 h-7 md:w-8 md:h-8 mx-auto rounded-lg {{ $murid->is_locked ? 'bg-rose-100 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/40 text-rose-500' : 'bg-zinc-100/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-700' }} flex items-center justify-center font-bold shrink-0 text-[10px] md:text-xs">
-                                                    @if ($murid->is_locked)
+                                                    class="w-7 h-7 md:w-8 md:h-8 mx-auto rounded-lg {{ $isTidakIkut ? 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-500' : ($isLocked ? 'bg-rose-100 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/40 text-rose-500' : 'bg-zinc-100/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-700') }} flex items-center justify-center font-bold shrink-0 text-[10px] md:text-xs">
+                                                    @if ($isTidakIkut)
+                                                        <i class="bi bi-person-x-fill text-rose-500"></i>
+                                                    @elseif ($isLocked)
                                                         <i class="bi bi-lock-fill"></i>
                                                     @else
                                                         {{ $loop->iteration }}
@@ -189,11 +201,16 @@
                                             <!-- Nama Murid -->
                                             <td
                                                 class="px-3 py-2 text-xs sticky left-12 md:left-16 {{ $stickyBg }} z-20 border-r border-b border-zinc-200/80 dark:border-zinc-800 transition-colors w-[180px] min-w-[180px] max-w-[180px] md:w-[260px] md:min-w-[260px] md:max-w-[260px] align-middle">
-                                                <div class="font-bold {{ $murid->is_locked ? 'text-rose-700 dark:text-rose-400' : 'text-zinc-900 dark:text-zinc-100' }} truncate max-w-[150px] md:max-w-[230px]"
+                                                <div class="font-bold {{ $isTidakIkut ? 'text-zinc-500 dark:text-zinc-400 line-through' : ($isLocked ? 'text-rose-700 dark:text-rose-400' : 'text-zinc-900 dark:text-zinc-100') }} truncate max-w-[150px] md:max-w-[230px]"
                                                     title="{{ $murid->nama_lengkap }}">
                                                     {{ $murid->nama_lengkap }}
                                                 </div>
-                                                @if ($murid->is_locked)
+                                                @if ($isTidakIkut)
+                                                    <div class="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 mt-0.5 tracking-wider uppercase truncate max-w-[150px] md:max-w-[230px]"
+                                                        title="{{ $murid->alasan_tidak_ikut ?? 'Tidak mengikuti ujian' }}">
+                                                        {{ $murid->alasan_tidak_ikut ?? 'Tidak Ikut Ujian' }}
+                                                    </div>
+                                                @elseif ($isLocked)
                                                     <div class="text-[9px] font-bold text-rose-500 dark:text-rose-400 mt-0.5 tracking-wider uppercase truncate max-w-[150px] md:max-w-[230px]"
                                                         title="{{ $murid->lock_reason }}">
                                                         {{ $murid->lock_reason }}
@@ -210,16 +227,19 @@
                                             @foreach ($jadwals as $jadwal)
                                                 @php $existingNilai = $nilaiMatrix[$murid->id][$jadwal->id] ?? ''; @endphp
                                                 <td
-                                                    class="p-1 text-center border-r border-b border-zinc-200/80 dark:border-zinc-800 align-middle {{ $murid->is_locked ? 'bg-rose-50/20 dark:bg-rose-950/20' : '' }}">
+                                                    class="p-1 text-center border-r border-b border-zinc-200/80 dark:border-zinc-800 align-middle {{ $isTidakIkut ? 'bg-zinc-100/30 dark:bg-zinc-800/20' : ($isLocked ? 'bg-rose-50/20 dark:bg-rose-950/20' : '') }}">
                                                     <input type="number" step="0.01" min="0" max="100"
                                                         name="nilai[{{ $murid->id }}][{{ $jadwal->id }}]"
-                                                        value="{{ $existingNilai }}" placeholder="-"
-                                                        {{ $murid->is_locked ? 'disabled readonly' : '' }}
-                                                        title="{{ $murid->is_locked ? $murid->lock_reason : 'Input Nilai' }}"
+                                                        value="{{ $existingNilai }}"
+                                                        placeholder="{{ $isTidakIkut ? 'Tdk Ikut' : '-' }}"
+                                                        {{ $isLocked ? 'disabled readonly' : '' }}
+                                                        title="{{ $isLocked ? $murid->lock_reason : 'Input Nilai' }}"
                                                         class="w-14 h-8.5 p-0 mx-auto text-center rounded-lg text-xs font-black outline-none transition-all hide-arrows
-                                                        {{ $murid->is_locked
-                                                            ? 'bg-rose-100/50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/40 text-rose-400 cursor-not-allowed placeholder:text-rose-300 dark:placeholder:text-rose-800'
-                                                            : 'm3-input-glass text-center !px-0' }}">
+                                                        {{ $isTidakIkut
+                                                            ? 'bg-zinc-200/50 dark:bg-zinc-800/40 border border-zinc-300/80 dark:border-zinc-700/40 text-zinc-400 text-[10px] cursor-not-allowed'
+                                                            : ($isLocked
+                                                                ? 'bg-rose-100/50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/40 text-rose-400 cursor-not-allowed placeholder:text-rose-300 dark:placeholder:text-rose-800'
+                                                                : 'm3-input-glass text-center !px-0') }}">
                                                 </td>
                                             @endforeach
                                         </tr>
@@ -242,9 +262,11 @@
                             <p
                                 class="text-xs text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider leading-relaxed">
                                 @hasanyrole('administrator|staff')
-                                    Pastikan nilai <span class="text-emerald-500 font-black">telah dicek ulang</span> sebelum dipublikasikan.
+                                    Pastikan nilai <span class="text-emerald-500 font-black">telah dicek ulang</span>
+                                    sebelum dipublikasikan.
                                 @else
-                                    Nilai akan berstatus <span class="text-amber-500 font-black">DRAFT</span> dan menunggu rilis Admin.
+                                    Nilai akan berstatus <span class="text-amber-500 font-black">DRAFT</span> dan menunggu
+                                    rilis Admin.
                                 @endhasanyrole
                             </p>
                         </div>
@@ -280,8 +302,6 @@
         @endif
     @else
         <!-- STATE AWAL PANDUAN PENGGUNAAN -->
-        <x-empty-state icon="bi-grid-3x3-gap" title="Pilih Ruangan Kelas & Pelaksanaan Ujian"
-    @endif
+        <x-empty-state icon="bi-grid-3x3-gap" title="Pilih Ruangan Kelas & Pelaksanaan Ujian" @endif
 
 </x-app-layout>
-

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -181,7 +181,8 @@
                     {{ $ujian->tahunPelajaran->nama_masehi ?? '-' }} M</strong></p>
             <p>Agenda Ujian: <strong>{{ strtoupper($ujian->nama_ujian) }}</strong></p>
             <p>Ruangan: <strong>{{ strtoupper($ruangan->nama_ruangan) }}</strong> | Wali Kelas:
-                <strong>{{ $waliUstadz?->nama_lengkap ?? '-' }}</strong></p>
+                <strong>{{ $waliUstadz?->nama_lengkap ?? '-' }}</strong>
+            </p>
         </div>
     </div>
 
@@ -216,11 +217,18 @@
         </thead>
         <tbody>
             @forelse ($dataRekap as $index => $row)
-                <tr>
+                <tr style="{{ $row->is_tidak_ikut ? 'background-color: #f8fafc;' : '' }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $row->murid->nism ?? '-' }}</td>
                     <td class="text-left" style="padding-left: 10px;">
-                        <div style="font-weight: 800; font-size: 12px;">{{ $row->murid->nama_lengkap }}</div>
+                        <div style="font-weight: 800; font-size: 12px;">
+                            {{ $row->murid->nama_lengkap }}
+                            @if ($row->is_tidak_ikut)
+                                <span
+                                    style="font-size: 9px; color: #dc2626; font-weight: normal; margin-left: 4px;">(Tidak
+                                    Ikut Ujian)</span>
+                            @endif
+                        </div>
                     </td>
 
                     @foreach ($jadwals as $jdw)
@@ -238,6 +246,8 @@
                                 <span class="badge-a">A</span>
                             @elseif ($st === 'Dispensasi')
                                 <span class="badge-d">D</span>
+                            @elseif ($st === 'Tidak Ikut')
+                                <span style="color: #94a3b8; font-weight: bold; font-size: 9px;">-</span>
                             @else
                                 <span style="color: #94a3b8;">-</span>
                             @endif
@@ -252,8 +262,8 @@
                         {{ $row->alpha }}</td>
                     <td style="font-weight: 800; background: #faf5ff;">{{ $row->dispensasi }}</td>
                     <td
-                        style="font-weight: 800; color: {{ $row->persentase_kehadiran >= 80 ? '#059669' : '#dc2626' }};">
-                        {{ $row->persentase_kehadiran }}%
+                        style="font-weight: 800; color: {{ $row->persentase_kehadiran >= 80 ? '#059669' : ($row->is_tidak_ikut ? '#94a3b8' : '#dc2626') }};">
+                        {{ $row->is_tidak_ikut ? '-' : $row->persentase_kehadiran . '%' }}
                     </td>
                 </tr>
             @empty

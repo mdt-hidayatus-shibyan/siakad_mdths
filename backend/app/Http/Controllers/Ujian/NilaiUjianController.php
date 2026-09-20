@@ -120,81 +120,8 @@ class NilaiUjianController extends Controller
                             ->keyBy('murid_id');
                     }
 
-                    // =========================================================================
-                    // OPTIMASI: BULK QUERY (TARIK DATA MASSAL SEBELUM FOREACH)
-                    // =========================================================================
-                    $muridIds = $ruanganTerpilih->murids->pluck('id')->toArray();
-
-                    // 1. Tarik Massal ID Siswa yang punya Dispensasi
-                    $dispensasiMuridIds = DispensasiUjian::where('ujian_id', $ujian->id)
-                        ->whereIn('murid_id', $muridIds)
-                        ->pluck('murid_id')
-                        ->toArray();
-
-                    // 2. Tarik Massal ID Jenis Tagihan IMDA 1
-                    $jenis_tagihan_id = PengaturanTagihan::where('tahun_pelajaran_id', $ujian->tahun_pelajaran_id)
-                        ->where('level_id', $ruanganTerpilih->level_id)
-                        // Gunakan tipe_ujian agar dinamis, misal mencari kata "%IMDA 1%" atau "%IMNI%"
-                        ->where('nama_tagihan', 'LIKE', '%' . $ujian->tipe_ujian . '%')
-                        ->value('id');
-
-                    // 3. Tarik Massal ID Siswa yang SUDAH LUNAS IMDA 1
-                    $imdaLunasMuridIds = TagihanMurid::whereIn('murid_id', $muridIds)
-                        ->whereIn('status_bayar', ['Lunas', 'Bebas/Gratis', 'Ditanggung Donatur'])
-                        ->where(function ($q) use ($ruanganTerpilih, $jenis_tagihan_id) {
-                            $q->where('ruangan_id', $ruanganTerpilih->id)
-                                ->where('pengaturan_tagihan_id', $jenis_tagihan_id); // Gunakan where() BUKAN orWhere() agar akurat
-                        })
-                        ->pluck('murid_id')
-                        ->toArray();
-
-                    // 4. Tarik Massal ID Siswa yang MENUNGGAK SPP di semester terkait
-                    $sppMenunggakMuridIds = TagihanMurid::whereIn('murid_id', $muridIds)
-                        ->where('ruangan_id', $ruanganTerpilih->id)
-                        ->where('status_bayar', 'Belum Lunas')
-                        ->where(function ($q) use ($bulanSemester) {
-                            foreach ($bulanSemester as $bulan) {
-                                $q->orWhere('nama_tagihan_spesifik', 'like', "%SPP $bulan%")
-                                    ->orWhere('nama_tagihan_spesifik', 'like', "%Syahriyah $bulan%");
-                            }
-                        })
-                        ->pluck('murid_id')
-                        ->toArray();
-                    // =========================================================================
-
-                    foreach ($ruanganTerpilih->murids as $murid) {
-                        // Cek data dari array Bulk Query (Tanpa menyentuh database lagi)
-                        $hasDispensasi = in_array($murid->id, $dispensasiMuridIds);
-                        $imdaLunas     = in_array($murid->id, $imdaLunasMuridIds);
-                        $sppMenunggak  = in_array($murid->id, $sppMenunggakMuridIds);
-
-                        if ($hasDispensasi) {
-                            $murid->is_locked = false;
-                            $murid->lock_reason = 'Mendapat Dispensasi / Izin';
-                        } else {
-                            // Jika belum lunas IMDA ATAU menunggak SPP
-                            if (!$imdaLunas || $sppMenunggak) {
-                                $murid->is_locked = true;
-
-                                // Kumpulkan alasan tunggakan
-                                $alasan = [];
-                                if (!$imdaLunas) {
-                                    $alasan[] = 'Iuran Ujian (IMDA/IMNI)';
-                                }
-                                if ($sppMenunggak) {
-                                    $alasan[] = 'SPP Semester';
-                                }
-
-                                // Gabungkan alasan dengan simbol "&"
-                                $murid->lock_reason = 'Tunggakan: ' . implode(' & ', $alasan);
-                            } else {
-                                $murid->is_locked = false;
-                                $murid->lock_reason = 'Lunas Administrasi';
-                            }
-                        }
-                    }
-
-                    $muridsWithStatus = $ruanganTerpilih->murids;
+                    // Evaluasi Syarat Admin & Pengecualian via NilaiUjianService
+                    $muridsWithStatus = $this->nilaiUjianService->evaluasiSyaratAdmin($ujian, $ruanganTerpilih, $ruanganTerpilih->murids);
                 }
             }
         }
@@ -228,7 +155,6 @@ class NilaiUjianController extends Controller
         DB::beginTransaction();
         try {
             foreach ($request->nilai as $muridId => $angka) {
-                // Hanya simpan jika nilai diisi (tidak kosong)
                 if ($angka !== null && $angka !== '') {
                     NilaiUjian::updateOrCreate(
                         [
@@ -246,6 +172,14 @@ class NilaiUjianController extends Controller
                         ]
                     );
                     $jumlahDisimpan++;
+                } else {
+                    // Jika input dikosongkan, hapus nilai lama dari database
+                    NilaiUjian::where([
+                        'ujian_id' => $request->ujian_id,
+                        'jadwal_ujian_id' => $request->jadwal_ujian_id,
+                        'ruangan_id' => $request->ruangan_id,
+                        'murid_id' => $muridId,
+                    ])->delete();
                 }
             }
             DB::commit();
@@ -491,6 +425,36 @@ class NilaiUjianController extends Controller
             'ujianTerpilih',
             'kolomMapel',
             'dataLeger'
+        ));
+    }
+
+    /**
+     * Cetak Rekapitulasi Dokumen Progres Input Nilai Ujian
+     */
+    public function cetakProgres(Request $request)
+    {
+        $request->validate([
+            'ujian_id' => 'required|exists:ujians,id',
+        ]);
+
+        $daftarTahun = TahunPelajaran::orderBy('id', 'asc')->get();
+        $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()?->id;
+
+        $ujianTerpilih = Ujian::with(['tahunPelajaran', 'semester_relasi'])->findOrFail($request->ujian_id);
+
+        $daftarRuangan = Ruangan::where('tahun_pelajaran_id', $ujianTerpilih->tahun_pelajaran_id ?? $tahunPelajaranId)
+            ->with(['level', 'waliRuangan'])
+            ->withCount(['murids' => fn($q) => $q->where('status', 'Aktif')])
+            ->orderBy('level_id', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $dataProgres = $this->nilaiUjianService->hitungProgresRuangan($ujianTerpilih->id, $daftarRuangan);
+
+        return view('cetak-baru.cetak_progres_nilai_ujian', compact(
+            'ujianTerpilih',
+            'daftarRuangan',
+            'dataProgres'
         ));
     }
 }

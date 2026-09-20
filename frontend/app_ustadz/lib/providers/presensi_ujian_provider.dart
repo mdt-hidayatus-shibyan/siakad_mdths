@@ -66,8 +66,11 @@ class PresensiUjianProvider extends ChangeNotifier {
 
   // Live Summary Counters
   int get totalMurid => _muridList.length;
-  int get countBelumDiisi =>
-      _muridList.where((m) => m.status == null || m.status!.isEmpty).length;
+  int get countTidakIkut => _muridList.where((m) => m.isTidakIkut).length;
+  int get totalPesertaAktif => _muridList.where((m) => !m.isTidakIkut).length;
+  int get countBelumDiisi => _muridList
+      .where((m) => !m.isTidakIkut && (m.status == null || m.status!.isEmpty))
+      .length;
   int get countSudahDiisi =>
       _muridList.where((m) => m.status != null && m.status!.isNotEmpty).length;
   int get countHadir => _muridList.where((m) => m.status == 'Hadir').length;
@@ -147,7 +150,7 @@ class PresensiUjianProvider extends ChangeNotifier {
   void setAllMuridStatus(String? status) {
     HapticHelper.medium();
     for (var m in _muridList) {
-      if (!m.isLocked) {
+      if (!m.isLocked && !m.isTidakIkut) {
         m.status = status;
       }
     }
