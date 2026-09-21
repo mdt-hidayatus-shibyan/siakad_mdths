@@ -64,6 +64,7 @@ use App\Http\Controllers\Arsip\ArsipDokumenController;
 use App\Http\Controllers\Arsip\ArsipRaporController;
 use App\Http\Controllers\Arsip\ArsipSKController;
 use App\Http\Controllers\Arsip\ArsipIjazahController;
+use App\Http\Controllers\Persuratan\SuratKeluarController;
 
 // 7. Keuangan Madrasah Controllers
 use App\Http\Controllers\Keuangan\TagihanMuridController;
@@ -598,6 +599,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/arsip-rapor', [ArsipRaporController::class, 'index'])->name('arsip-rapor.index');
     Route::get('/arsip-sk', [ArsipSKController::class, 'index'])->name('arsip-sk.index');
     Route::get('/arsip-ijazah', [ArsipIjazahController::class, 'index'])->name('arsip-ijazah.index');
+
+    // -- Persuratan & Pembuatan Surat Keluar --
+    Route::prefix('persuratan/surat-keluar')->name('surat-keluar.')->controller(SuratKeluarController::class)->group(function () {
+        Route::match(['get', 'post'], '/cetak-massal', 'cetakMassal')->name('cetak-massal');
+        Route::post('/destroy-massal', 'destroyMassal')->name('destroy-massal');
+        Route::get('/duplicate/{id}', 'duplicate')->name('duplicate');
+        Route::get('/cetak/{id}', 'cetak')->name('cetak');
+        Route::get('/api/murid/{id}', 'apiGetMuridDetail')->name('api-murid');
+        Route::get('/api/murid-by-ruangan/{ruangan_id?}', 'apiGetMuridByRuangan')->name('api-murid-by-ruangan');
+        Route::get('/api/ustadz/{id}', 'apiGetUstadzDetail')->name('api-ustadz');
+        Route::get('/api/generate-nomor', 'apiGenerateNomor')->name('api-generate-nomor');
+    });
+    Route::resource('persuratan/surat-keluar', SuratKeluarController::class)->names('surat-keluar');
 
 
     // ==========================================

@@ -62,6 +62,40 @@ class MuridRuanganRepository
     }
 
     /**
+     * Mengambil seluruh data murid aktif beserta relasi ruangan dari pivot murid_ruangans
+     * pada tahun pelajaran tertentu.
+     *
+     * @param int|string|null $tahun_pelajaran_id
+     * @param array $with
+     * @return Collection
+     */
+    public function getAllMuridAktifWithRuanganByTahun($tahun_pelajaran_id = null, array $with = []): Collection
+    {
+        if (!$tahun_pelajaran_id) {
+            $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+            $tahun_pelajaran_id = $tahunAktif?->id;
+        }
+
+        $defaultWith = [
+            'waliMurid.kampung',
+            'ruangans' => function ($query) use ($tahun_pelajaran_id) {
+                if ($tahun_pelajaran_id) {
+                    $query->where('murid_ruangans.tahun_pelajaran_id', $tahun_pelajaran_id);
+                }
+            },
+            'ruanganMasuk'
+        ];
+
+        $mergedWith = !empty($with) ? array_merge($defaultWith, $with) : $defaultWith;
+
+        return $this->murid->where('status', 'Aktif')
+            ->with($mergedWith)
+            ->orderBy('jenis_kelamin', 'asc') // 1. Pisahkan L/P
+            ->orderBy('nama_lengkap', 'asc')  // 2. Urutkan nama sesuai abjad
+            ->get();
+    }
+
+    /**
      * Mengambil data wali murid aktif dikelompokkan berdasarkan kode kampung,
      * beserta data murid/murid aktif dan ruangan mereka di tahun ajaran tertentu.
      *
@@ -106,63 +140,5 @@ class MuridRuanganRepository
             }
             return 'Lainnya / Tanpa Kampung';
         });
-    }
-
-    /**
-     * Mengambil satu data murid lengkap dengan relasi wali murid dan ruangan pada tahun pelajaran tertentu.
-     *
-     * @param int|string $id
-     * @param int|string|null $tahun_pelajaran_id
-     * @param array $extraWith
-     * @return Murid|null
-     */
-    public function getMuridByIdAndTahun($id, $tahun_pelajaran_id = null, array $extraWith = []): ?Murid
-    {
-        if (!$tahun_pelajaran_id) {
-            $tahunAktif = TahunPelajaran::where('is_active', true)->first();
-            $tahun_pelajaran_id = $tahunAktif?->id;
-        }
-
-        $withRelations = array_merge([
-            'waliMurid.kampung',
-            'ruanganMasuk',
-            'ruangans' => function ($q) use ($tahun_pelajaran_id) {
-                if ($tahun_pelajaran_id) {
-                    $q->where('murid_ruangans.tahun_pelajaran_id', $tahun_pelajaran_id);
-                }
-            }
-        ], $extraWith);
-
-        return $this->murid->with($withRelations)->find($id);
-    }
-
-    /**
-     * Mengambil seluruh data murid aktif lengkap dengan ruangan pada tahun pelajaran tertentu.
-     *
-     * @param int|string|null $tahun_pelajaran_id
-     * @param array $extraWith
-     * @return Collection
-     */
-    public function getAllMuridAktifWithRuangan($tahun_pelajaran_id = null, array $extraWith = []): Collection
-    {
-        if (!$tahun_pelajaran_id) {
-            $tahunAktif = TahunPelajaran::where('is_active', true)->first();
-            $tahun_pelajaran_id = $tahunAktif?->id;
-        }
-
-        $withRelations = array_merge([
-            'waliMurid.kampung',
-            'ruanganMasuk',
-            'ruangans' => function ($q) use ($tahun_pelajaran_id) {
-                if ($tahun_pelajaran_id) {
-                    $q->where('murid_ruangans.tahun_pelajaran_id', $tahun_pelajaran_id);
-                }
-            }
-        ], $extraWith);
-
-        return $this->murid->with($withRelations)
-            ->where('status', 'Aktif')
-            ->orderByRaw('CAST(nism AS UNSIGNED) ASC, nism ASC')
-            ->get();
     }
 }

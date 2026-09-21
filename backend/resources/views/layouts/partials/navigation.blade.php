@@ -34,6 +34,14 @@
                     'pengaturan-versi.*',
                     'riwayat-versi',
                 ],
+                'surat-keluar.index' => [
+                    'surat-keluar.index',
+                    'surat-keluar.create',
+                    'surat-keluar.show',
+                    'surat-keluar.edit',
+                    'surat-keluar.cetak',
+                    'surat-keluar.*',
+                ],
             ];
 
             // If an explicit alias mapping is defined, it is strictly authoritative

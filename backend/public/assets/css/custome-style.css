@@ -488,3 +488,18 @@ html.dark .m3-btn-primary {
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #52525b;
 }
+
+/* Sticky Live Preview Persuratan */
+@media (min-width: 1024px) {
+    .sticky-preview-column,
+    .sticky-preview-wrapper {
+        display: block !important;
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 0.75rem !important;
+        align-self: flex-start !important;
+        max-height: calc(100vh - 5.5rem) !important;
+        overflow-y: auto !important;
+        z-index: 20 !important;
+    }
+}

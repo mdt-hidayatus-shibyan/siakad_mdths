@@ -636,6 +636,14 @@ class RbacSeeder extends Seeder
                     ],
                 ],
             ],
+            [
+                'name'        => 'Persuratan & Surat Keluar',
+                'url'         => 'surat-keluar.index',
+                'category'    => 'ARSIP & KESEKRETARIATAN',
+                'icon'        => 'bi-envelope-paper-fill',
+                'orders'      => 32,
+                'permissions' => ['read', 'create', 'update', 'delete'],
+            ],
 
             // ==========================================
             // KATEGORI 5: LAYANAN & BANTUAN
@@ -944,6 +952,7 @@ class RbacSeeder extends Seeder
                 ->orWhere('name', 'like', '%kas-ruangan%')
                 ->orWhere('name', 'like', '%pengurus%')
                 ->orWhere('name', 'like', '%arsip%')
+                ->orWhere('name', 'like', '%surat-keluar%')
                 ->orWhere('name', 'like', '%laporan-kendala%')
                 ->orWhere('name', 'like', '%murid%')
                 ->orWhere('name', 'like', '%ustadz%')

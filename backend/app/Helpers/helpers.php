@@ -27,6 +27,29 @@ if (!function_exists('getSetting')) {
     }
 }
 
+if (!function_exists('getAppVersion')) {
+    /**
+     * Mengambil nomor versi aktif aplikasi dari tabel pengaturan versi (AppVersion).
+     *
+     * @param string $appType ('web', 'ustadz', 'murid', 'all')
+     * @param string|null $default
+     * @return string
+     */
+    function getAppVersion($appType = 'web', $default = null)
+    {
+        $defaultVersion = $default ?? config('app.version', '1.0.0');
+
+        try {
+            return Cache::remember('active_app_version_' . $appType, 86400, function () use ($appType, $defaultVersion) {
+                $ver = \App\Models\AppVersion::getActiveVersion($appType);
+                return $ver?->version ?? $defaultVersion;
+            });
+        } catch (\Throwable $e) {
+            return $defaultVersion;
+        }
+    }
+}
+
 
 
 if (!function_exists('menus')) {

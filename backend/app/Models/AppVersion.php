@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class AppVersion extends Model
 {
@@ -19,6 +20,28 @@ class AppVersion extends Model
         'dev_details'   => 'array',
         'tech_stacks'   => 'array',
     ];
+
+    /**
+     * Booted model events untuk manajemen cache versi
+     */
+    protected static function booted()
+    {
+        static::saved(function ($model) {
+            Cache::forget('active_app_version_' . $model->app_type);
+            Cache::forget('active_app_version_web');
+            Cache::forget('active_app_version_ustadz');
+            Cache::forget('active_app_version_murid');
+            Cache::forget('active_app_version_all');
+        });
+
+        static::deleted(function ($model) {
+            Cache::forget('active_app_version_' . $model->app_type);
+            Cache::forget('active_app_version_web');
+            Cache::forget('active_app_version_ustadz');
+            Cache::forget('active_app_version_murid');
+            Cache::forget('active_app_version_all');
+        });
+    }
 
     /**
      * Ambil versi aktif berdasarkan tipe aplikasi (ustadz / murid)
