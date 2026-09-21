@@ -391,12 +391,11 @@
                     {{-- C. SURAT PEMBERITAHUAN --}}
                 @elseif ($surat->jenis_surat === 'surat_pemberitahuan')
                     <p style="margin-bottom: 8px;">
-                        Bersama ini kami sampaikan pemberitahuan resmi mengenai
-                        <strong>{{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}</strong>
+                        Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut
                         @if ($surat->murid)
                             terkait murid kami:
                         @else
-                            sebagai berikut:
+                            :
                         @endif
                     </p>
 
@@ -434,6 +433,11 @@
 
                     <div
                         style="background: #f8fafc; border-left: 4px solid #047857; padding: 8px 12px; margin: 10px 0; border-radius: 4px;">
+                        @if (!empty($spesifik['kategori_pemberitahuan']))
+                            <div style="font-size: 8.5pt; font-weight: 700; color: #047857; margin-bottom: 2px; text-transform: uppercase;">
+                                [ {{ $spesifik['kategori_pemberitahuan'] }} ]
+                            </div>
+                        @endif
                         <div style="font-weight: 700; margin-bottom: 4px;">
                             {{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}</div>
                         @if (!empty($spesifik['jadwal_terkait']))

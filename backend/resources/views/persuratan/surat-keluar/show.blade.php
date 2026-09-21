@@ -326,12 +326,11 @@
                             @endif
                         </div>
                     @elseif ($surat->jenis_surat === 'surat_pemberitahuan')
-                        <p>Dengan hormat, melalui surat ini kami sampaikan pemberitahuan mengenai
-                            <strong>{{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}</strong>
+                        <p>Dengan hormat, melalui surat ini kami sampaikan pemberitahuan resmi mengenai hal berikut
                             @if ($surat->murid)
                                 kepada Orang Tua / Wali dari murid:
                             @else
-                                sebagai berikut:
+                                :
                             @endif
                         </p>
                         @if ($surat->murid)
@@ -353,10 +352,15 @@
                                 </div>
                             </div>
                         @endif
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 my-2">
-                            <p class="font-semibold">{{ $spesifik['pokok_pemberitahuan'] ?? '-' }}</p>
+                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 my-2 border-l-4 border-emerald-600">
+                            @if (!empty($spesifik['kategori_pemberitahuan']))
+                                <div class="text-[10px] font-bold text-emerald-600 uppercase">
+                                    [ {{ $spesifik['kategori_pemberitahuan'] }} ]
+                                </div>
+                            @endif
+                            <p class="font-bold text-zinc-900 dark:text-white">{{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}</p>
                             @if (!empty($spesifik['jadwal_terkait']))
-                                <p class="text-[11px] text-zinc-500">Jadwal/Waktu: {{ $spesifik['jadwal_terkait'] }}
+                                <p class="text-[11px] text-zinc-500"><strong>Jadwal:</strong> {{ $spesifik['jadwal_terkait'] }}
                                 </p>
                             @endif
                         </div>

@@ -1677,7 +1677,7 @@
                             <!-- 3. PEMBERITAHUAN -->
                             <template x-if="jenis === 'surat_pemberitahuan'">
                                 <div>
-                                    <p>Bersama ini kami sampaikan pemberitahuan mengenai hal berikut:</p>
+                                    <p>Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut<template x-if="activePreviewMurid"><span> terkait murid kami:</span></template><template x-if="!activePreviewMurid"><span>:</span></template></p>
 
                                     <template x-if="activePreviewMurid">
                                         <div
@@ -1702,6 +1702,9 @@
                                     </template>
 
                                     <div class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px]">
+                                        <div class="flex items-center gap-1.5 mb-1" x-show="kategoriPemberitahuan">
+                                            <span class="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200" x-text="kategoriPemberitahuan"></span>
+                                        </div>
                                         <div class="font-bold text-zinc-800"
                                             x-text="pokokPemberitahuan || '(Pokok uraian pemberitahuan...)'"></div>
                                         <div class="text-zinc-500 mt-0.5" x-show="jadwalTerkait"
