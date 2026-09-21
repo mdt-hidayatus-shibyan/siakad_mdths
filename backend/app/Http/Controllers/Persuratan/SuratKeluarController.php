@@ -9,7 +9,6 @@ use App\Models\Murid;
 use App\Models\Persuratan\SuratKeluar;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
-use App\Models\Ustadz;
 use App\Repositories\MuridRuanganRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -24,11 +23,25 @@ class SuratKeluarController extends Controller
     {
         $this->muridRuanganRepo = $muridRuanganRepo;
     }
+
+    /**
+     * Otorisasi Hak Akses RBAC Pengguna
+     */
+    private function authorizePermission(string $permission): void
+    {
+        $user = Auth::user();
+        if (!$user || !$user->can($permission)) {
+            abort(403, 'Akses ditolak: Anda tidak memiliki hak akses (' . $permission . ') untuk fitur ini.');
+        }
+    }
+
     /**
      * Tampilkan daftar riwayat surat keluar resmi
      */
     public function index(Request $request)
     {
+        $this->authorizePermission('read surat-keluar.index');
+
         $jenisFilter = $request->query('jenis', 'all');
         $statusFilter = $request->query('status', 'all');
         $search = $request->query('q');
@@ -120,6 +133,8 @@ class SuratKeluarController extends Controller
      */
     public function create(Request $request)
     {
+        $this->authorizePermission('create surat-keluar.index');
+
         $selectedJenis = $request->query('jenis', 'surat_panggilan');
         if (!array_key_exists($selectedJenis, SuratKeluar::DAFTAR_JENIS_SURAT)) {
             $selectedJenis = 'surat_panggilan';
@@ -178,6 +193,8 @@ class SuratKeluarController extends Controller
      */
     public function duplicate($id)
     {
+        $this->authorizePermission('create surat-keluar.index');
+
         $surat = SuratKeluar::findOrFail($id);
         return redirect()->route('surat-keluar.create', [
             'jenis' => $surat->jenis_surat,
@@ -190,6 +207,8 @@ class SuratKeluarController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorizePermission('create surat-keluar.index');
+
         $targetMode = $request->input('target_mode', 'single');
         $jenisSurat = $request->input('jenis_surat');
 
@@ -487,6 +506,8 @@ class SuratKeluarController extends Controller
      */
     public function cetakMassal(Request $request)
     {
+        $this->authorizePermission('read surat-keluar.index');
+
         $ids = [];
         if ($request->filled('ids')) {
             if (is_array($request->input('ids'))) {
@@ -523,6 +544,8 @@ class SuratKeluarController extends Controller
      */
     public function destroyMassal(Request $request)
     {
+        $this->authorizePermission('delete surat-keluar.index');
+
         $ids = $request->input('ids', []);
         if (is_string($ids)) {
             $ids = explode(',', $ids);
@@ -557,6 +580,8 @@ class SuratKeluarController extends Controller
      */
     public function show($id)
     {
+        $this->authorizePermission('read surat-keluar.index');
+
         $surat = SuratKeluar::with([
             'tahunPelajaran',
             'creator',
@@ -571,6 +596,8 @@ class SuratKeluarController extends Controller
      */
     public function edit($id)
     {
+        $this->authorizePermission('update surat-keluar.index');
+
         $surat = SuratKeluar::with([
             'tahunPelajaran',
             'creator',
@@ -611,6 +638,8 @@ class SuratKeluarController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $this->authorizePermission('update surat-keluar.index');
+
         $surat = SuratKeluar::findOrFail($id);
 
         $request->validate([
@@ -692,6 +721,8 @@ class SuratKeluarController extends Controller
      */
     public function destroy($id)
     {
+        $this->authorizePermission('delete surat-keluar.index');
+
         $surat = SuratKeluar::findOrFail($id);
         $nomor = $surat->nomor_surat;
         $surat->delete();
@@ -712,6 +743,8 @@ class SuratKeluarController extends Controller
      */
     public function cetak($id)
     {
+        $this->authorizePermission('read surat-keluar.index');
+
         $surat = SuratKeluar::with([
             'tahunPelajaran',
             'creator',
@@ -726,6 +759,8 @@ class SuratKeluarController extends Controller
      */
     public function apiGetMuridDetail($id)
     {
+        $this->authorizePermission('read surat-keluar.index');
+
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $murid = Murid::with([
             'waliMurid.kampung',
@@ -769,10 +804,41 @@ class SuratKeluarController extends Controller
     }
 
     /**
+     * AJAX Endpoint: Ambil detail ustadz / pengurus
+     */
+    public function apiGetUstadzDetail($id)
+    {
+        $this->authorizePermission('read surat-keluar.index');
+
+        $pengurus = Pengurus::with(['anggota', 'jabatan', 'periode'])->find($id);
+
+        if (!$pengurus) {
+            return response()->json(['success' => false, 'message' => 'Data pengurus / ustadz tidak ditemukan'], 404);
+        }
+
+        $anggota = $pengurus->anggota;
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'id'           => $pengurus->id,
+                'nama_lengkap' => $anggota?->nama_lengkap ?? '-',
+                'jabatan'      => $pengurus->jabatan?->nama_jabatan ?? '-',
+                'periode'      => $pengurus->periode?->nama_periode ?? '-',
+                'no_sk'        => $pengurus->no_sk ?? '-',
+                'alamat'       => $anggota?->alamat ?? '-',
+                'no_hp'        => $anggota?->no_hp ?? '-',
+            ]
+        ]);
+    }
+
+    /**
      * AJAX Endpoint: Ambil daftar murid aktif berdasarkan ruangan dari MuridRuanganRepository
      */
     public function apiGetMuridByRuangan(Request $request, $ruangan_id = null)
     {
+        $this->authorizePermission('read surat-keluar.index');
+
         $ruanganId = $ruangan_id ?: $request->query('ruangan_id');
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $tahunId = $request->query('tahun_pelajaran_id') ?: ($tahunAktif?->id ?? 1);
@@ -806,37 +872,15 @@ class SuratKeluarController extends Controller
         ]);
     }
 
-    /**
-     * AJAX Endpoint: Ambil detail data ustadz untuk autofill
-     */
-    public function apiGetUstadzDetail($id)
-    {
-        $ustadz = Ustadz::find($id);
 
-        if (!$ustadz) {
-            return response()->json(['success' => false, 'message' => 'Data ustadz tidak ditemukan'], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data'    => [
-                'id'            => $ustadz->id,
-                'nip'           => $ustadz->nigm ?? $ustadz->nip ?? $ustadz->kode_ustadz ?? '-',
-                'nama_lengkap'  => $ustadz->nama_lengkap,
-                'telepon'       => $ustadz->no_hp ?? $ustadz->telepon ?? '-',
-                'alamat'        => $ustadz->alamat ?? '-',
-                'jenis_kelamin' => $ustadz->jenis_kelamin ?? 'Laki-laki',
-                'tempat_lahir'  => $ustadz->tempat_lahir ?? '-',
-                'tanggal_lahir' => $ustadz->tanggal_lahir ? Carbon::parse($ustadz->tanggal_lahir)->translatedFormat('d F Y') : '-',
-            ]
-        ]);
-    }
 
     /**
      * AJAX Endpoint: Generate nomor surat secara dinamis
      */
     public function apiGenerateNomor(Request $request)
     {
+        $this->authorizePermission('read surat-keluar.index');
+
         $jenis = $request->query('jenis', 'surat_panggilan');
         $tanggal = $request->query('tanggal', date('Y-m-d'));
 
@@ -861,8 +905,8 @@ class SuratKeluarController extends Controller
                     'hari_panggilan'      => $request->input('hari_panggilan'),
                     'tanggal_panggilan'   => $request->input('tanggal_panggilan'),
                     'waktu_panggilan'     => $request->input('waktu_panggilan', '14.00 WIB s/d Selesai'),
-                    'tempat_menghadap'    => $request->input('tempat_menghadap', 'Kantor TU / Ruang Guru MDT Hidayatus Shibyan'),
-                    'menghadap_kepada'    => $request->input('menghadap_kepada', 'Kepala Madrasah & Tim Kesiswaan'),
+                    'tempat_menghadap'    => $request->input('tempat_menghadap', 'Ruang Administrasi'),
+                    'menghadap_kepada'    => $request->input('menghadap_kepada', 'Administrator Madrasah'),
                     'alasan_panggilan'    => $request->input('alasan_panggilan'),
                     'keterangan_tambahan' => $request->input('keterangan_tambahan'),
                 ];
@@ -989,7 +1033,7 @@ class SuratKeluarController extends Controller
         // 1. Pengasuh
         $pengasuh = Pengurus::getAktifByJabatan('Pengasuh') ?? Pengurus::getAktifByJabatan('Ketua');
         $pengasuhNama = $pengasuh?->anggota?->nama_lengkap ?? $pengasuh?->anggota?->ustadz?->nama_lengkap ?? 'K.H. ABDUL FATTAH';
-        $pengasuhNip = $pengasuh?->anggota?->ustadz?->nip ?? '-';
+        $pengasuhNip = $pengasuh?->anggota?->ustadz?->nigm ?? '-';
         $pengasuhId = $pengasuh?->id ?? 2;
 
         // 2. Sekretaris Jenderal
@@ -1006,7 +1050,7 @@ class SuratKeluarController extends Controller
         $defaultKabid = $kabidList->first();
         $kabidNama = $defaultKabid?->anggota?->nama_lengkap ?? $defaultKabid?->anggota?->ustadz?->nama_lengkap ?? 'KHOIRUS SHOLEH';
         $kabidJabatan = $defaultKabid?->jabatan?->nama_jabatan ?? 'Kepala Bidang Pendidikan';
-        $kabidNip = $defaultKabid?->anggota?->ustadz?->nip ?? '-';
+        $kabidNip = $defaultKabid?->anggota?->ustadz?->nigm ?? '-';
         $kabidId = $defaultKabid?->id ?? 4;
 
         // 4. Administrator (Ambil semua opsi admin)
@@ -1014,7 +1058,7 @@ class SuratKeluarController extends Controller
         $defaultAdmin = Administrator::getTandaTanganAdmin(null) ?? $adminList->first();
         $adminNama = $defaultAdmin?->nama_lengkap ?? 'MIKYAL ADLY';
         $adminJabatan = $defaultAdmin?->jabatan ?: 'Administrator';
-        $adminNip = $defaultAdmin?->nip ?? '-';
+        $adminNip = $defaultAdmin?->no_hp ?? '-';
         $adminId = $defaultAdmin?->id ?? 1;
 
         $defaultSigners = [
@@ -1086,7 +1130,7 @@ class SuratKeluarController extends Controller
                     'id'      => $k->id,
                     'nama'    => $k->anggota?->nama_lengkap ?? $k->anggota?->ustadz?->nama_lengkap ?? '-',
                     'jabatan' => $k->jabatan?->nama_jabatan ?? 'Kepala Bidang',
-                    'nip'     => $k->anggota?->ustadz?->nip ?? '-',
+                    'nip'     => $k->anggota?->ustadz?->nigm ?? '-',
                     'tingkat' => $k->tingkat?->nama_tingkat ?? null,
                 ];
             })->values()->toArray(),
@@ -1095,7 +1139,7 @@ class SuratKeluarController extends Controller
                     'id'      => $a->id,
                     'nama'    => $a->nama_lengkap,
                     'jabatan' => $a->jabatan ?: 'Administrator',
-                    'nip'     => $a->nip ?? '-',
+                    'nip'     => $a->no_hp ?? '-',
                 ];
             })->values()->toArray(),
         ];

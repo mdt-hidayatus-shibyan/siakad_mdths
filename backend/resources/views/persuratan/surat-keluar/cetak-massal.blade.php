@@ -376,12 +376,8 @@
                     {{-- C. SURAT PEMBERITAHUAN --}}
                     @if ($surat->jenis_surat === 'surat_pemberitahuan')
                         <p style="margin-bottom: 8px;">
-                            Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut
-                            @if ($surat->murid)
-                                terkait murid kami:
-                            @else
-                                :
-                            @endif
+                            Bersama ini kami sampaikan pemberitahuan mengenai hal berikut:
+
                         </p>
 
                         @if ($surat->murid)
@@ -420,7 +416,8 @@
 
                         <div class="tabel-data-box" style="padding: 10px 14px; margin: 10px 0;">
                             @if (!empty($spesifik['kategori_pemberitahuan']))
-                                <div style="font-size: 8.5pt; font-weight: 700; color: #047857; margin-bottom: 2px; text-transform: uppercase;">
+                                <div
+                                    style="font-size: 8.5pt; font-weight: 700; color: #047857; margin-bottom: 2px; text-transform: uppercase;">
                                     [ {{ $spesifik['kategori_pemberitahuan'] }} ]
                                 </div>
                             @endif

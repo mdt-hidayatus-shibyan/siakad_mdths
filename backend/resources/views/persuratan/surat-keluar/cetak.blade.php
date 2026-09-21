@@ -391,12 +391,8 @@
                     {{-- C. SURAT PEMBERITAHUAN --}}
                 @elseif ($surat->jenis_surat === 'surat_pemberitahuan')
                     <p style="margin-bottom: 8px;">
-                        Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut
-                        @if ($surat->murid)
-                            terkait murid kami:
-                        @else
-                            :
-                        @endif
+                        Bersama ini kami sampaikan pemberitahuan mengenai hal berikut :
+
                     </p>
 
                     @if ($surat->murid)
@@ -433,11 +429,7 @@
 
                     <div
                         style="background: #f8fafc; border-left: 4px solid #047857; padding: 8px 12px; margin: 10px 0; border-radius: 4px;">
-                        @if (!empty($spesifik['kategori_pemberitahuan']))
-                            <div style="font-size: 8.5pt; font-weight: 700; color: #047857; margin-bottom: 2px; text-transform: uppercase;">
-                                [ {{ $spesifik['kategori_pemberitahuan'] }} ]
-                            </div>
-                        @endif
+
                         <div style="font-weight: 700; margin-bottom: 4px;">
                             {{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}</div>
                         @if (!empty($spesifik['jadwal_terkait']))
@@ -776,9 +768,9 @@
                         $primary = !empty($activeSigners) ? $activeSigners[0] : null;
                     @endphp
                     @if (!empty($primary['id_relasi']) && !empty($primary['tipe_relasi']))
-                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate(URL::signedRoute('profil.publik', ['tipe' => $primary['tipe_relasi'], 'id' => $primary['id_relasi']])) !!}
+                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(52)->margin(0)->generate(URL::signedRoute('profil.publik', ['tipe' => $primary['tipe_relasi'], 'id' => $primary['id_relasi']])) !!}
                     @else
-                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate($surat->qr_token ?: url('/')) !!}
+                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(52)->margin(0)->generate($surat->qr_token ?: url('/')) !!}
                     @endif
                 </div>
                 <div style="font-size: 7pt; color: #1e293b; line-height: 1.25; text-align: justify; flex: 1;">
@@ -935,9 +927,9 @@
                     <div
                         style="flex-shrink: 0; background: #fff; padding: 2px; border: 1px solid #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
                         @if (!empty($primary['id_relasi']) && !empty($primary['tipe_relasi']))
-                            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate(URL::signedRoute('profil.publik', ['tipe' => $primary['tipe_relasi'], 'id' => $primary['id_relasi']])) !!}
+                            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(40)->margin(0)->generate(URL::signedRoute('profil.publik', ['tipe' => $primary['tipe_relasi'], 'id' => $primary['id_relasi']])) !!}
                         @else
-                            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate($surat->qr_token ?: url('/')) !!}
+                            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(40)->margin(0)->generate($surat->qr_token ?: url('/')) !!}
                         @endif
                     </div>
                     <div style="font-size: 7pt; color: #1e293b; line-height: 1.25; text-align: justify; flex: 1;">

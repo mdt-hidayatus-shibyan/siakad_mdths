@@ -602,16 +602,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // -- Persuratan & Pembuatan Surat Keluar --
     Route::prefix('persuratan/surat-keluar')->name('surat-keluar.')->controller(SuratKeluarController::class)->group(function () {
-        Route::match(['get', 'post'], '/cetak-massal', 'cetakMassal')->name('cetak-massal');
-        Route::post('/destroy-massal', 'destroyMassal')->name('destroy-massal');
-        Route::get('/duplicate/{id}', 'duplicate')->name('duplicate');
-        Route::get('/cetak/{id}', 'cetak')->name('cetak');
-        Route::get('/api/murid/{id}', 'apiGetMuridDetail')->name('api-murid');
-        Route::get('/api/murid-by-ruangan/{ruangan_id?}', 'apiGetMuridByRuangan')->name('api-murid-by-ruangan');
-        Route::get('/api/ustadz/{id}', 'apiGetUstadzDetail')->name('api-ustadz');
-        Route::get('/api/generate-nomor', 'apiGenerateNomor')->name('api-generate-nomor');
+        // Read Actions
+        Route::middleware(['permission:read surat-keluar.index'])->group(function () {
+            Route::match(['get', 'post'], '/cetak-massal', 'cetakMassal')->name('cetak-massal');
+            Route::get('/cetak/{id}', 'cetak')->name('cetak');
+            Route::get('/api/murid/{id}', 'apiGetMuridDetail')->name('api-murid');
+            Route::get('/api/murid-by-ruangan/{ruangan_id?}', 'apiGetMuridByRuangan')->name('api-murid-by-ruangan');
+            Route::get('/api/ustadz/{id}', 'apiGetUstadzDetail')->name('api-ustadz');
+            Route::get('/api/generate-nomor', 'apiGenerateNomor')->name('api-generate-nomor');
+        });
+
+        // Create Actions
+        Route::middleware(['permission:create surat-keluar.index'])->group(function () {
+            Route::get('/duplicate/{id}', 'duplicate')->name('duplicate');
+        });
+
+        // Delete Actions
+        Route::middleware(['permission:delete surat-keluar.index'])->group(function () {
+            Route::post('/destroy-massal', 'destroyMassal')->name('destroy-massal');
+        });
     });
-    Route::resource('persuratan/surat-keluar', SuratKeluarController::class)->names('surat-keluar');
+    Route::resource('persuratan/surat-keluar', SuratKeluarController::class)
+        ->names('surat-keluar')
+        ->middleware([
+            'index'   => 'permission:read surat-keluar.index',
+            'show'    => 'permission:read surat-keluar.index',
+            'create'  => 'permission:create surat-keluar.index',
+            'store'   => 'permission:create surat-keluar.index',
+            'edit'    => 'permission:update surat-keluar.index',
+            'update'  => 'permission:update surat-keluar.index',
+            'destroy' => 'permission:delete surat-keluar.index',
+        ]);
 
 
     // ==========================================

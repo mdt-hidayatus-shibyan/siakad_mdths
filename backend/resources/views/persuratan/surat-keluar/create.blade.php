@@ -1677,7 +1677,10 @@
                             <!-- 3. PEMBERITAHUAN -->
                             <template x-if="jenis === 'surat_pemberitahuan'">
                                 <div>
-                                    <p>Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut<template x-if="activePreviewMurid"><span> terkait murid kami:</span></template><template x-if="!activePreviewMurid"><span>:</span></template></p>
+                                    <p>Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut<template
+                                            x-if="activePreviewMurid"><span> terkait murid
+                                                kami:</span></template><template
+                                            x-if="!activePreviewMurid"><span>:</span></template></p>
 
                                     <template x-if="activePreviewMurid">
                                         <div
@@ -1703,7 +1706,9 @@
 
                                     <div class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px]">
                                         <div class="flex items-center gap-1.5 mb-1" x-show="kategoriPemberitahuan">
-                                            <span class="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200" x-text="kategoriPemberitahuan"></span>
+                                            <span
+                                                class="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                x-text="kategoriPemberitahuan"></span>
                                         </div>
                                         <div class="font-bold text-zinc-800"
                                             x-text="pokokPemberitahuan || '(Pokok uraian pemberitahuan...)'"></div>
@@ -2274,13 +2279,13 @@
 
                 get currentJenisNama() {
                     const map = {
-                        'surat_panggilan': 'Surat Panggilan Murid/Wali',
-                        'surat_peringatan': 'Surat Peringatan (SP)',
-                        'surat_pemberitahuan': 'Surat Pemberitahuan Wali',
-                        'surat_edaran': 'Surat Edaran Resmi',
+                        'surat_panggilan': 'Surat Panggilan',
+                        'surat_peringatan': 'Surat Peringatan',
+                        'surat_pemberitahuan': 'Surat Pemberitahuan',
+                        'surat_edaran': 'Surat Edaran',
                         'surat_permohonan_izin': 'Surat Permohonan Izin',
-                        'surat_dispensasi': 'Surat Dispensasi Antar Lembaga',
-                        'surat_undangan': 'Surat Undangan Resmi',
+                        'surat_dispensasi': 'Surat Dispensasi',
+                        'surat_undangan': 'Surat Undangan',
                     };
                     return map[this.jenis] || 'Surat';
                 },
@@ -2451,7 +2456,7 @@
                 updateDefaults() {
                     switch (this.jenis) {
                         case 'surat_panggilan':
-                            this.perihal = 'Surat Panggilan Wali Murid';
+                            this.perihal = 'Surat Panggilan';
                             this.sifatSurat = 'Penting';
                             break;
                         case 'surat_peringatan':
@@ -2459,7 +2464,7 @@
                             this.sifatSurat = 'Penting';
                             break;
                         case 'surat_pemberitahuan':
-                            this.perihal = 'Surat Pemberitahuan Wali Murid';
+                            this.perihal = 'Surat Pemberitahuan';
                             this.sifatSurat = 'Biasa';
                             break;
                         case 'surat_edaran':

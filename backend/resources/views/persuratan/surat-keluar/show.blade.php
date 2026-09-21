@@ -24,22 +24,28 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-            <a href="{{ route('surat-keluar.cetak', $surat->id) }}" target="_blank"
-                class="m3-btn-primary h-10 px-4.5 group/btn shrink-0">
-                <i class="bi bi-printer-fill text-sm"></i>
-                <span>Cetak Surat</span>
-            </a>
-            <a href="{{ route('surat-keluar.duplicate', $surat->id) }}"
-                class="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs flex items-center gap-2 active:scale-95"
-                title="Salin isi surat ini untuk murid/tujuan lain">
-                <i class="bi bi-copy"></i>
-                <span>Duplikasi</span>
-            </a>
-            <a href="{{ route('surat-keluar.edit', $surat->id) }}"
-                class="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs flex items-center gap-2 active:scale-95">
-                <i class="bi bi-pencil-fill"></i>
-                <span>Edit</span>
-            </a>
+            @can('read surat-keluar.index')
+                <a href="{{ route('surat-keluar.cetak', $surat->id) }}" target="_blank"
+                    class="m3-btn-primary h-10 px-4.5 group/btn shrink-0">
+                    <i class="bi bi-printer-fill text-sm"></i>
+                    <span>Cetak Surat</span>
+                </a>
+            @endcan
+            @can('create surat-keluar.index')
+                <a href="{{ route('surat-keluar.duplicate', $surat->id) }}"
+                    class="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs flex items-center gap-2 active:scale-95"
+                    title="Salin isi surat ini untuk murid/tujuan lain">
+                    <i class="bi bi-copy"></i>
+                    <span>Duplikasi</span>
+                </a>
+            @endcan
+            @can('update surat-keluar.index')
+                <a href="{{ route('surat-keluar.edit', $surat->id) }}"
+                    class="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs flex items-center gap-2 active:scale-95">
+                    <i class="bi bi-pencil-fill"></i>
+                    <span>Edit</span>
+                </a>
+            @endcan
         </div>
     </div>
 
@@ -352,15 +358,18 @@
                                 </div>
                             </div>
                         @endif
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 my-2 border-l-4 border-emerald-600">
+                        <div
+                            class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 my-2 border-l-4 border-emerald-600">
                             @if (!empty($spesifik['kategori_pemberitahuan']))
                                 <div class="text-[10px] font-bold text-emerald-600 uppercase">
                                     [ {{ $spesifik['kategori_pemberitahuan'] }} ]
                                 </div>
                             @endif
-                            <p class="font-bold text-zinc-900 dark:text-white">{{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}</p>
+                            <p class="font-bold text-zinc-900 dark:text-white">
+                                {{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}</p>
                             @if (!empty($spesifik['jadwal_terkait']))
-                                <p class="text-[11px] text-zinc-500"><strong>Jadwal:</strong> {{ $spesifik['jadwal_terkait'] }}
+                                <p class="text-[11px] text-zinc-500"><strong>Jadwal:</strong>
+                                    {{ $spesifik['jadwal_terkait'] }}
                                 </p>
                             @endif
                         </div>

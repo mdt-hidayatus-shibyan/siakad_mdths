@@ -29,11 +29,13 @@
                 <i class="bi bi-eye-fill text-zinc-500"></i>
                 <span>Lihat Detail</span>
             </a>
-            <a href="{{ route('surat-keluar.cetak', $surat->id) }}" target="_blank"
-                class="m3-btn-primary h-10 px-4.5 group/btn shrink-0">
-                <i class="bi bi-printer-fill text-sm"></i>
-                <span>Cetak Surat</span>
-            </a>
+            @can('read surat-keluar.index')
+                <a href="{{ route('surat-keluar.cetak', $surat->id) }}" target="_blank"
+                    class="m3-btn-primary h-10 px-4.5 group/btn shrink-0">
+                    <i class="bi bi-printer-fill text-sm"></i>
+                    <span>Cetak Surat</span>
+                </a>
+            @endcan
         </div>
     </div>
 
@@ -1287,7 +1289,10 @@
                             <!-- 3. PEMBERITAHUAN -->
                             @if ($surat->jenis_surat === 'surat_pemberitahuan')
                                 <div>
-                                    <p>Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut<template x-if="activePreviewMurid"><span> terkait murid kami:</span></template><template x-if="!activePreviewMurid"><span>:</span></template></p>
+                                    <p>Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut<template
+                                            x-if="activePreviewMurid"><span> terkait murid
+                                                kami:</span></template><template
+                                            x-if="!activePreviewMurid"><span>:</span></template></p>
 
                                     <template x-if="activePreviewMurid">
                                         <div
@@ -1313,7 +1318,9 @@
 
                                     <div class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px]">
                                         <div class="flex items-center gap-1.5 mb-1" x-show="kategoriPemberitahuan">
-                                            <span class="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200" x-text="kategoriPemberitahuan"></span>
+                                            <span
+                                                class="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                x-text="kategoriPemberitahuan"></span>
                                         </div>
                                         <div class="font-bold text-zinc-800" x-text="pokokPemberitahuan"></div>
                                         <div class="text-zinc-500 mt-0.5" x-show="jadwalTerkait"

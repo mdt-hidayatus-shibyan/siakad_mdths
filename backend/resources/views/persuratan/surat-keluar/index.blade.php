@@ -14,10 +14,12 @@
         </div>
 
         <div class="flex items-center gap-2.5">
-            <a href="{{ route('surat-keluar.create') }}" class="m3-btn-primary h-10 px-4.5 group/btn shrink-0">
-                <i class="bi bi-plus-lg text-base transition-transform duration-300 group-hover/btn:scale-110"></i>
-                <span>Buat Surat Baru</span>
-            </a>
+            @can('create surat-keluar.index')
+                <a href="{{ route('surat-keluar.create') }}" class="m3-btn-primary h-10 px-4.5 group/btn shrink-0">
+                    <i class="bi bi-plus-lg text-base transition-transform duration-300 group-hover/btn:scale-110"></i>
+                    <span>Buat Surat Baru</span>
+                </a>
+            @endcan
         </div>
     </div>
 
@@ -268,32 +270,36 @@
 
             <div class="flex items-center gap-2">
                 <!-- Cetak Massal Form -->
-                <form action="{{ route('surat-keluar.cetak-massal') }}" method="POST" target="_blank"
-                    class="inline">
-                    @csrf
-                    <template x-for="id in selectedIds" :key="id">
-                        <input type="hidden" name="ids[]" :value="id">
-                    </template>
-                    <button type="submit"
-                        class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/30 cursor-pointer">
-                        <i class="bi bi-printer-fill"></i>
-                        <span>Cetak Terpilih (<span x-text="selectedIds.length"></span>)</span>
-                    </button>
-                </form>
+                @can('read surat-keluar.index')
+                    <form action="{{ route('surat-keluar.cetak-massal') }}" method="POST" target="_blank"
+                        class="inline">
+                        @csrf
+                        <template x-for="id in selectedIds" :key="id">
+                            <input type="hidden" name="ids[]" :value="id">
+                        </template>
+                        <button type="submit"
+                            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/30 cursor-pointer">
+                            <i class="bi bi-printer-fill"></i>
+                            <span>Cetak Terpilih (<span x-text="selectedIds.length"></span>)</span>
+                        </button>
+                    </form>
+                @endcan
 
                 <!-- Hapus Massal Form -->
-                <form action="{{ route('surat-keluar.destroy-massal') }}" method="POST"
-                    class="delete-ajax inline m-0 p-0" data-refresh-target="#data-grid-container">
-                    @csrf
-                    <template x-for="id in selectedIds" :key="id">
-                        <input type="hidden" name="ids[]" :value="id">
-                    </template>
-                    <button type="submit"
-                        class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer">
-                        <i class="bi bi-trash3-fill"></i>
-                        <span>Hapus</span>
-                    </button>
-                </form>
+                @can('delete surat-keluar.index')
+                    <form action="{{ route('surat-keluar.destroy-massal') }}" method="POST"
+                        class="delete-ajax inline m-0 p-0" data-refresh-target="#data-grid-container">
+                        @csrf
+                        <template x-for="id in selectedIds" :key="id">
+                            <input type="hidden" name="ids[]" :value="id">
+                        </template>
+                        <button type="submit"
+                            class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                            <i class="bi bi-trash3-fill"></i>
+                            <span>Hapus</span>
+                        </button>
+                    </form>
+                @endcan
 
                 <button type="button" @click="selectedIds = []"
                     class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs transition-all cursor-pointer">
@@ -432,43 +438,53 @@
                                 <td class="py-3.5 px-4 text-center">
                                     <div class="flex items-center justify-center gap-1">
                                         <!-- Cetak -->
-                                        <a href="{{ route('surat-keluar.cetak', $surat->id) }}" target="_blank"
-                                            title="Cetak Dokumen Resmi (PDF)"
-                                            class="p-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-colors">
-                                            <i class="bi bi-printer-fill text-xs"></i>
-                                        </a>
+                                        @can('read surat-keluar.index')
+                                            <a href="{{ route('surat-keluar.cetak', $surat->id) }}" target="_blank"
+                                                title="Cetak Dokumen Resmi (PDF)"
+                                                class="p-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-colors">
+                                                <i class="bi bi-printer-fill text-xs"></i>
+                                            </a>
+                                        @endcan
 
                                         <!-- Duplikasi / Salin -->
-                                        <a href="{{ route('surat-keluar.duplicate', $surat->id) }}"
-                                            title="Duplikasi / Salin Surat Ini"
-                                            class="p-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-colors">
-                                            <i class="bi bi-copy text-xs"></i>
-                                        </a>
+                                        @can('create surat-keluar.index')
+                                            <a href="{{ route('surat-keluar.duplicate', $surat->id) }}"
+                                                title="Duplikasi / Salin Surat Ini"
+                                                class="p-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-colors">
+                                                <i class="bi bi-copy text-xs"></i>
+                                            </a>
+                                        @endcan
 
                                         <!-- Detail / Preview -->
-                                        <a href="{{ route('surat-keluar.show', $surat->id) }}"
-                                            title="Lihat Detail & Pratinjau"
-                                            class="p-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 transition-colors">
-                                            <i class="bi bi-eye-fill text-xs"></i>
-                                        </a>
+                                        @can('read surat-keluar.index')
+                                            <a href="{{ route('surat-keluar.show', $surat->id) }}"
+                                                title="Lihat Detail & Pratinjau"
+                                                class="p-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 transition-colors">
+                                                <i class="bi bi-eye-fill text-xs"></i>
+                                            </a>
+                                        @endcan
 
                                         <!-- Edit -->
-                                        <a href="{{ route('surat-keluar.edit', $surat->id) }}" title="Edit Surat"
-                                            class="p-1.5 rounded-xl bg-zinc-500/10 hover:bg-zinc-500/20 text-zinc-600 dark:text-zinc-400 transition-colors">
-                                            <i class="bi bi-pencil-fill text-xs"></i>
-                                        </a>
+                                        @can('update surat-keluar.index')
+                                            <a href="{{ route('surat-keluar.edit', $surat->id) }}" title="Edit Surat"
+                                                class="p-1.5 rounded-xl bg-zinc-500/10 hover:bg-zinc-500/20 text-zinc-600 dark:text-zinc-400 transition-colors">
+                                                <i class="bi bi-pencil-fill text-xs"></i>
+                                            </a>
+                                        @endcan
 
                                         <!-- Hapus -->
-                                        <form action="{{ route('surat-keluar.destroy', $surat->id) }}" method="POST"
-                                            class="delete-ajax inline m-0 p-0"
-                                            data-refresh-target="#data-grid-container">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" title="Hapus Surat"
-                                                class="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition-colors cursor-pointer">
-                                                <i class="bi bi-trash3-fill text-xs"></i>
-                                            </button>
-                                        </form>
+                                        @can('delete surat-keluar.index')
+                                            <form action="{{ route('surat-keluar.destroy', $surat->id) }}" method="POST"
+                                                class="delete-ajax inline m-0 p-0"
+                                                data-refresh-target="#data-grid-container">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" title="Hapus Surat"
+                                                    class="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition-colors cursor-pointer">
+                                                    <i class="bi bi-trash3-fill text-xs"></i>
+                                                </button>
+                                            </form>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>
@@ -485,11 +501,13 @@
                                             Tidak ditemukan surat dengan kriteria filter saat ini. Klik tombol di bawah
                                             untuk membuat surat baru.
                                         </p>
-                                        <a href="{{ route('surat-keluar.create') }}"
-                                            class="mt-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all flex items-center gap-2">
-                                            <i class="bi bi-plus-lg"></i>
-                                            <span>Buat Surat Pertama</span>
-                                        </a>
+                                        @can('create surat-keluar.index')
+                                            <a href="{{ route('surat-keluar.create') }}"
+                                                class="mt-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all flex items-center gap-2">
+                                                <i class="bi bi-plus-lg"></i>
+                                                <span>Buat Surat Pertama</span>
+                                            </a>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>
