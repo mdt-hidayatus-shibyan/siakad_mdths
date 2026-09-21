@@ -127,11 +127,13 @@ class NilaiProvider extends ChangeNotifier {
     }
   }
 
-  void updateScore(int muridId, double value) {
+  void updateScore(int muridId, double? value, {bool notify = false}) {
     final index = _muridNilaiList.indexWhere((m) => m.muridId == muridId);
     if (index != -1) {
       _muridNilaiList[index].nilai = value;
-      notifyListeners();
+      if (notify) {
+        notifyListeners();
+      }
     }
   }
 

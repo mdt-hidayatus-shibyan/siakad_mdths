@@ -821,178 +821,25 @@ class AuthController extends Controller
     }
 
     /**
-     * Update Foto Profil Ustadz
+     * Update Foto Profil Ustadz (Dibatasi hanya untuk Administrator)
      */
     public function updateFoto(Request $request)
     {
-        $user = $request->user();
-        $ustadz = $user->ustadz;
-
-        if (!$ustadz) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data ustadz tidak ditemukan.'
-            ], 404);
-        }
-
-        // Opsi 0: Hapus Foto Profil (Set Null)
-        if ($request->boolean('hapus_foto') || $request->input('hapus_foto') === 'true' || $request->input('hapus_foto') === 1 || $request->input('hapus_foto') === '1') {
-            if ($ustadz->foto && Storage::disk('public')->exists($ustadz->foto)) {
-                Storage::disk('public')->delete($ustadz->foto);
-            }
-            $ustadz->update(['foto' => null]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Foto profil berhasil dihapus.',
-                'data' => [
-                    'foto_url' => null,
-                ]
-            ], 200);
-        }
-
-        $newPath = null;
-
-        // Opsi 1: File Upload Multipart
-        if ($request->hasFile('foto')) {
-            $validator = Validator::make($request->all(), [
-                'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:3072',
-            ], [
-                'foto.max' => 'Ukuran foto maksimal 3MB.',
-                'foto.image' => 'Berkas harus berupa gambar.',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validasi gagal.',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $newPath = $request->file('foto')->store('uploads/ustadz/foto', 'public');
-        }
-        // Opsi 2: Base64 String
-        elseif ($request->filled('foto_base64')) {
-            $base64 = $request->foto_base64;
-            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $type)) {
-                $base64 = substr($base64, strpos($base64, ',') + 1);
-                $type = strtolower($type[1]);
-                if (!in_array($type, ['jpg', 'jpeg', 'png', 'webp'])) {
-                    $type = 'png';
-                }
-            } else {
-                $type = 'png';
-            }
-
-            $imageData = base64_decode($base64);
-            if ($imageData === false) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Format base64 foto tidak valid.'
-                ], 422);
-            }
-
-            $filename = 'foto_' . $ustadz->id . '_' . time() . '.' . $type;
-            $newPath = 'uploads/ustadz/foto/' . $filename;
-            Storage::disk('public')->put($newPath, $imageData);
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'Berkas foto tidak ditemukan dalam permintaan.'
-            ], 422);
-        }
-
-        // Hapus foto lama jika ada
-        if ($ustadz->foto && Storage::disk('public')->exists($ustadz->foto)) {
-            Storage::disk('public')->delete($ustadz->foto);
-        }
-
-        $ustadz->update(['foto' => $newPath]);
-
         return response()->json([
-            'success' => true,
-            'message' => 'Foto profil berhasil diperbarui.',
-            'data' => [
-                'foto_url' => asset('storage/' . $newPath),
-            ]
-        ], 200);
+            'success' => false,
+            'message' => 'Akses ditolak: Pengubahan foto profil ustadz hanya dapat dilakukan oleh Administrator Madrasah.',
+        ], 403);
     }
 
     /**
-     * Update Tanda Tangan Ustadz (Digital Canvas / Upload Image)
+     * Update Tanda Tangan Ustadz (Dibatasi hanya untuk Administrator)
      */
     public function updateTandaTangan(Request $request)
     {
-        $user = $request->user();
-        $ustadz = $user->ustadz;
-
-        if (!$ustadz) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data ustadz tidak ditemukan.'
-            ], 404);
-        }
-
-        $newPath = null;
-
-        // Opsi 1: File Upload Multipart
-        if ($request->hasFile('tanda_tangan')) {
-            $validator = Validator::make($request->all(), [
-                'tanda_tangan' => 'required|image|mimes:png,jpg,jpeg|max:2048',
-            ], [
-                'tanda_tangan.max' => 'Ukuran gambar tanda tangan maksimal 2MB.',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validasi gagal.',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $newPath = $request->file('tanda_tangan')->store('uploads/ustadz/ttd', 'public');
-        }
-        // Opsi 2: Base64 String (dari Signature Pad Canvas)
-        elseif ($request->filled('tanda_tangan_base64')) {
-            $base64 = $request->tanda_tangan_base64;
-            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $type)) {
-                $base64 = substr($base64, strpos($base64, ',') + 1);
-            }
-
-            $imageData = base64_decode($base64);
-            if ($imageData === false) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Format gambar tanda tangan digital tidak valid.'
-                ], 422);
-            }
-
-            $filename = 'ttd_' . $ustadz->id . '_' . time() . '.png';
-            $newPath = 'uploads/ustadz/ttd/' . $filename;
-            Storage::disk('public')->put($newPath, $imageData);
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data tanda tangan tidak ditemukan dalam permintaan.'
-            ], 422);
-        }
-
-        // Hapus tanda tangan lama jika ada
-        if ($ustadz->tanda_tangan && Storage::disk('public')->exists($ustadz->tanda_tangan)) {
-            Storage::disk('public')->delete($ustadz->tanda_tangan);
-        }
-
-        $ustadz->update(['tanda_tangan' => $newPath]);
-
         return response()->json([
-            'success' => true,
-            'message' => 'Tanda tangan digital berhasil diperbarui.',
-            'data' => [
-                'tanda_tangan_url' => asset('storage/' . $newPath),
-            ]
-        ], 200);
+            'success' => false,
+            'message' => 'Akses ditolak: Pengubahan tanda tangan digital ustadz hanya dapat dilakukan oleh Administrator Madrasah.',
+        ], 403);
     }
 
     public function logout(Request $request)

@@ -373,287 +373,17 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
               itemBuilder: (context, index) {
                 final murid = nilai.muridNilaiList[index];
 
-                return GlassCard(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      // Avatar nomor urut
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: isDark
-                            ? const Color(0xFF101710)
-                            : const Color(0xFFE8F5E9),
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Nama & Status
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              murid.nama,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              'NISM: ${murid.nism} • ${murid.jenisKelamin == 'L' ? 'Murid Putra' : 'Murid Putri'}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: isDark
-                                    ? const Color(0xFF8D9387)
-                                    : const Color(0xFF73796E),
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            if (murid.isLocked) ...[
-                              Text(
-                                '🔒 ${murid.lockReason ?? "Terkunci Administrasi"}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.roseDanger,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              // Tombol Beri Dispensasi (Hanya Wali Ruangan)
-                              if (nilai.isWaliRuangan)
-                                InkWell(
-                                  onTap: () => _showDispensasiDialog(murid),
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          (isDark
-                                                  ? AppColors.primaryDark
-                                                  : AppColors.primaryLight)
-                                              .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color:
-                                            (isDark
-                                                    ? AppColors.primaryDark
-                                                    : AppColors.primaryLight)
-                                                .withValues(alpha: 0.5),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.verified_user_rounded,
-                                          size: 13,
-                                          color: isDark
-                                              ? AppColors.primaryDark
-                                              : AppColors.primaryLight,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'Beri Dispensasi',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDark
-                                                ? AppColors.primaryDark
-                                                : AppColors.primaryLight,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              else
-                                Text(
-                                  'Hubungi Wali Ruangan untuk izin',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontStyle: FontStyle.italic,
-                                    color: isDark
-                                        ? const Color(0xFF8D9387)
-                                        : const Color(0xFF73796E),
-                                  ),
-                                ),
-                            ] else if (murid.lockReason?.contains(
-                                  'Dispensasi',
-                                ) ??
-                                false) ...[
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? AppColors.dispensasiBgDark
-                                          : AppColors.dispensasiBgLight,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color:
-                                            (isDark
-                                                    ? AppColors
-                                                          .dispensasiTextDark
-                                                    : AppColors
-                                                          .dispensasiTextLight)
-                                                .withValues(alpha: 0.3),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.verified_rounded,
-                                          size: 11,
-                                          color: isDark
-                                              ? AppColors.dispensasiTextDark
-                                              : AppColors.dispensasiTextLight,
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          'Dispensasi',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDark
-                                                ? AppColors.dispensasiTextDark
-                                                : AppColors.dispensasiTextLight,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (nilai.isWaliRuangan) ...[
-                                    const SizedBox(width: 6),
-                                    InkWell(
-                                      onTap: () =>
-                                          _showBatalDispensasiDialog(murid),
-                                      child: const Icon(
-                                        Icons.cancel_outlined,
-                                        size: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ] else
-                              Text(
-                                murid.isPublished
-                                    ? '✓ Terbit di Rapor'
-                                    : (murid.nilai != null
-                                          ? 'Draf Belum Terbit'
-                                          : 'Belum Diisi'),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: murid.isPublished
-                                      ? AppColors.hadirTextLight
-                                      : (murid.nilai != null
-                                            ? AppColors.amberAccent
-                                            : Colors.grey),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-
-                      // Input Field Nilai
-                      SizedBox(
-                        width: 80,
-                        child: TextFormField(
-                          key: ValueKey(
-                            'nilai_${murid.muridId}_${murid.isLocked}_${murid.nilai}',
-                          ),
-                          initialValue: murid.nilai?.toString() ?? '',
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          enabled: !murid.isLocked,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: murid.isLocked ? 'Kunci' : '0-100',
-                            hintStyle: TextStyle(
-                              fontSize: 11,
-                              color: murid.isLocked
-                                  ? AppColors.roseDanger
-                                  : Colors.grey,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 10,
-                            ),
-                            filled: true,
-                            fillColor: (isDark ? Colors.white : Colors.black)
-                                .withValues(
-                                  alpha: murid.isLocked ? 0.02 : 0.05,
-                                ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: isDark
-                                    ? AppColors.outlineDark
-                                    : AppColors.outlineLight,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: murid.nilai != null
-                                    ? AppColors.primaryLight
-                                    : (isDark
-                                          ? AppColors.outlineDark
-                                          : AppColors.outlineLight),
-                              ),
-                            ),
-                            disabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color:
-                                    (isDark
-                                            ? AppColors.outlineDark
-                                            : AppColors.outlineLight)
-                                        .withValues(alpha: 0.5),
-                              ),
-                            ),
-                          ),
-                          onChanged: (val) {
-                            final score = double.tryParse(
-                              val.replaceAll(',', '.'),
-                            );
-                            if (score != null) {
-                              nilai.updateScore(murid.muridId, score);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+                return _MuridNilaiCard(
+                  key: ValueKey('murid_${murid.muridId}'),
+                  murid: murid,
+                  index: index,
+                  isDark: isDark,
+                  isWaliRuangan: nilai.isWaliRuangan,
+                  onDispensasi: () => _showDispensasiDialog(murid),
+                  onBatalDispensasi: () => _showBatalDispensasiDialog(murid),
+                  onScoreChanged: (score) {
+                    nilai.updateScore(murid.muridId, score);
+                  },
                 );
               },
             ),
@@ -717,6 +447,348 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MuridNilaiCard extends StatefulWidget {
+  final MuridNilaiItem murid;
+  final int index;
+  final bool isDark;
+  final bool isWaliRuangan;
+  final VoidCallback onDispensasi;
+  final VoidCallback onBatalDispensasi;
+  final ValueChanged<double?> onScoreChanged;
+
+  const _MuridNilaiCard({
+    super.key,
+    required this.murid,
+    required this.index,
+    required this.isDark,
+    required this.isWaliRuangan,
+    required this.onDispensasi,
+    required this.onBatalDispensasi,
+    required this.onScoreChanged,
+  });
+
+  @override
+  State<_MuridNilaiCard> createState() => _MuridNilaiCardState();
+}
+
+class _MuridNilaiCardState extends State<_MuridNilaiCard> {
+  late final TextEditingController _controller;
+  late final FocusNode _focusNode;
+
+  static String _formatNilai(double? val) {
+    if (val == null) return '';
+    if (val == val.roundToDouble()) {
+      return val.toInt().toString();
+    }
+    return val.toString();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _formatNilai(widget.murid.nilai));
+    _focusNode = FocusNode();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MuridNilaiCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.murid.muridId != widget.murid.muridId) {
+      _controller.text = _formatNilai(widget.murid.nilai);
+    } else if (!_focusNode.hasFocus) {
+      final currentParsed = double.tryParse(
+        _controller.text.trim().replaceAll(',', '.'),
+      );
+      if (currentParsed != widget.murid.nilai) {
+        _controller.text = _formatNilai(widget.murid.nilai);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final murid = widget.murid;
+    final isDark = widget.isDark;
+
+    return GlassCard(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Avatar nomor urut
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: isDark
+                ? const Color(0xFF101710)
+                : const Color(0xFFE8F5E9),
+            child: Text(
+              '${widget.index + 1}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Nama & Status
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  murid.nama,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'NISM: ${murid.nism} • ${murid.jenisKelamin == 'L' ? 'Murid Putra' : 'Murid Putri'}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark
+                        ? const Color(0xFF8D9387)
+                        : const Color(0xFF73796E),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                if (murid.isLocked) ...[
+                  Text(
+                    '🔒 ${murid.lockReason ?? "Terkunci Administrasi"}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.roseDanger,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // Tombol Beri Dispensasi (Hanya Wali Ruangan)
+                  if (widget.isWaliRuangan)
+                    InkWell(
+                      onTap: widget.onDispensasi,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  .withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.verified_user_rounded,
+                              size: 13,
+                              color: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Beri Dispensasi',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    Text(
+                      'Hubungi Wali Ruangan untuk izin',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontStyle: FontStyle.italic,
+                        color: isDark
+                            ? const Color(0xFF8D9387)
+                            : const Color(0xFF73796E),
+                      ),
+                    ),
+                ] else if (murid.lockReason?.contains('Dispensasi') ??
+                    false) ...[
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.dispensasiBgDark
+                              : AppColors.dispensasiBgLight,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color:
+                                (isDark
+                                        ? AppColors.dispensasiTextDark
+                                        : AppColors.dispensasiTextLight)
+                                    .withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 11,
+                              color: isDark
+                                  ? AppColors.dispensasiTextDark
+                                  : AppColors.dispensasiTextLight,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              'Dispensasi',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? AppColors.dispensasiTextDark
+                                    : AppColors.dispensasiTextLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (widget.isWaliRuangan) ...[
+                        const SizedBox(width: 6),
+                        InkWell(
+                          onTap: widget.onBatalDispensasi,
+                          child: const Icon(
+                            Icons.cancel_outlined,
+                            size: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ] else
+                  Text(
+                    murid.isPublished
+                        ? '✓ Terbit di Rapor'
+                        : (murid.nilai != null
+                              ? 'Draf Belum Terbit'
+                              : 'Belum Diisi'),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: murid.isPublished
+                          ? AppColors.hadirTextLight
+                          : (murid.nilai != null
+                                ? AppColors.amberAccent
+                                : Colors.grey),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // Input Field Nilai
+          SizedBox(
+            width: 80,
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              enabled: !murid.isLocked,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                hintText: murid.isLocked ? 'Kunci' : '0-100',
+                hintStyle: TextStyle(
+                  fontSize: 11,
+                  color: murid.isLocked ? AppColors.roseDanger : Colors.grey,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 10,
+                ),
+                filled: true,
+                fillColor: (isDark ? Colors.white : Colors.black).withValues(
+                  alpha: murid.isLocked ? 0.02 : 0.05,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: isDark
+                        ? AppColors.outlineDark
+                        : AppColors.outlineLight,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: murid.nilai != null
+                        ? AppColors.primaryLight
+                        : (isDark
+                              ? AppColors.outlineDark
+                              : AppColors.outlineLight),
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color:
+                        (isDark
+                                ? AppColors.outlineDark
+                                : AppColors.outlineLight)
+                            .withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+              onChanged: (val) {
+                final clean = val.trim().replaceAll(',', '.');
+                if (clean.isEmpty) {
+                  widget.onScoreChanged(null);
+                  setState(() {});
+                  return;
+                }
+                final score = double.tryParse(clean);
+                if (score != null) {
+                  widget.onScoreChanged(score);
+                  setState(() {});
+                }
+              },
+            ),
+          ),
         ],
       ),
     );

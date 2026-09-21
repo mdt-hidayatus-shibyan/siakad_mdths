@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -14,7 +13,6 @@ import '../../../providers/theme_provider.dart';
 import '../../auth/login_screen.dart';
 import '../../widgets/app_avatar.dart';
 import '../../widgets/custom_app_bar.dart';
-import '../../widgets/digital_signature_pad.dart';
 import '../../widgets/glass_card.dart';
 import '../laporan/laporan_pengampu_screen.dart';
 import '../laporan/laporan_ruangan_screen.dart';
@@ -29,8 +27,6 @@ class AkunTab extends StatefulWidget {
 }
 
 class _AkunTabState extends State<AkunTab> {
-  final ImagePicker _picker = ImagePicker();
-
   @override
   void initState() {
     super.initState();
@@ -370,277 +366,7 @@ class _AkunTabState extends State<AkunTab> {
   }
 
   // =========================================================================
-  // 1. MODAL EDIT FOTO PROFIL
-  // =========================================================================
-  void _showEditFotoModal() {
-    HapticHelper.light();
-    final user = context.read<AuthProvider>().user;
-    final hasPhoto = user?.photo != null && user!.photo!.isNotEmpty;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF101710) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF43483E)
-                        : const Color(0xFFC3C8BC),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Perbarui Foto Profil',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.camera_alt_rounded,
-                    color: AppColors.primaryLight,
-                  ),
-                ),
-                title: const Text(
-                  'Ambil dari Kamera',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: const Text(
-                  'Gunakan kamera ponsel untuk mengambil foto baru',
-                  style: TextStyle(fontSize: 11),
-                ),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final picked = await _picker.pickImage(
-                    source: ImageSource.camera,
-                    maxWidth: 1024,
-                    maxHeight: 1024,
-                    imageQuality: 85,
-                  );
-                  if (picked != null) {
-                    _uploadFoto(picked.path);
-                  }
-                },
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.skyBlueAccent.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.photo_library_rounded,
-                    color: AppColors.skyBlueAccent,
-                  ),
-                ),
-                title: const Text(
-                  'Pilih dari Galeri',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: const Text(
-                  'Unggah foto dari penyimpanan perangkat',
-                  style: TextStyle(fontSize: 11),
-                ),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final picked = await _picker.pickImage(
-                    source: ImageSource.gallery,
-                    maxWidth: 1024,
-                    maxHeight: 1024,
-                    imageQuality: 85,
-                  );
-                  if (picked != null) {
-                    _uploadFoto(picked.path);
-                  }
-                },
-              ),
-              if (hasPhoto) ...[
-                const Divider(height: 1),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.roseDanger.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: AppColors.roseDanger,
-                    ),
-                  ),
-                  title: const Text(
-                    'Hapus Foto Profil',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.roseDanger,
-                    ),
-                  ),
-                  subtitle: const Text(
-                    'Kembalikan ke avatar bawaan / kosong',
-                    style: TextStyle(fontSize: 11),
-                  ),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _confirmDeleteFoto();
-                  },
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _confirmDeleteFoto() {
-    HapticHelper.warning();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Foto Profil?'),
-        content: const Text(
-          'Foto profil Anda akan dihapus dan dikembalikan ke avatar default.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.roseDanger,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              _deleteFoto();
-            },
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _deleteFoto() async {
-    HapticHelper.light();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(width: 12),
-            Text('Menghapus foto profil...'),
-          ],
-        ),
-        duration: Duration(seconds: 4),
-      ),
-    );
-
-    final success = await context.read<AuthProvider>().updateFoto(
-      deleteFoto: true,
-    );
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    if (success) {
-      HapticHelper.confirmSuccess();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Foto profil berhasil dihapus!'),
-          backgroundColor: AppColors.primaryLight,
-        ),
-      );
-    } else {
-      HapticHelper.warning();
-      final err =
-          context.read<AuthProvider>().errorMessage ??
-          'Gagal menghapus foto profil.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err), backgroundColor: AppColors.roseDanger),
-      );
-    }
-  }
-
-  Future<void> _uploadFoto(String path) async {
-    HapticHelper.light();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(width: 12),
-            Text('Mengunggah foto profil baru...'),
-          ],
-        ),
-        duration: Duration(seconds: 4),
-      ),
-    );
-
-    final success = await context.read<AuthProvider>().updateFoto(
-      filePath: path,
-    );
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    if (success) {
-      HapticHelper.confirmSuccess();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Foto profil berhasil diperbarui!'),
-          backgroundColor: AppColors.primaryLight,
-        ),
-      );
-    } else {
-      HapticHelper.warning();
-      final err =
-          context.read<AuthProvider>().errorMessage ??
-          'Gagal mengunggah foto profil.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err), backgroundColor: AppColors.roseDanger),
-      );
-    }
-  }
-
-  // =========================================================================
-  // 2. MODAL EDIT BIODATA USTADZ
+  // 1. MODAL EDIT BIODATA USTADZ
   // =========================================================================
   void _showEditBiodataSheet() {
     HapticHelper.light();
@@ -1186,271 +912,7 @@ class _AkunTabState extends State<AkunTab> {
   }
 
   // =========================================================================
-  // 4. MODAL EDIT TANDA TANGAN DIGITAL
-  // =========================================================================
-  void _showEditTandaTanganSheet() {
-    HapticHelper.light();
-    final user = context.read<AuthProvider>().user;
-    final sigKey = GlobalKey<DigitalSignaturePadState>();
-    bool isSaving = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-
-          return Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.85,
-            ),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-            ),
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              MediaQuery.of(context).viewInsets.bottom + 20,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF43483E)
-                          : const Color(0xFFC3C8BC),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Tanda Tangan Digital Ustadz',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 20),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                const Divider(height: 1),
-                const SizedBox(height: 10),
-
-                Expanded(
-                  child: ListView(
-                    children: [
-                      // TANDA TANGAN SAAT INI (JIKA ADA)
-                      if (user?.tandaTangan != null) ...[
-                        const Text(
-                          'Tanda Tangan Saat Ini:',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          height: 80,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF162016)
-                                : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF263326)
-                                  : const Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          child: Center(
-                            child: Image.network(
-                              user!.tandaTangan!,
-                              height: 65,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const Text(
-                                'Gagal memuat pratinjau tanda tangan',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      const Text(
-                        'Goreskan Tanda Tangan Baru:',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-
-                      // CANVAS SIGNATURE PAD
-                      DigitalSignaturePad(key: sigKey, height: 180),
-                      const SizedBox(height: 10),
-
-                      // OPSI ALTERNATIF: UPLOAD BERKAS GAMBAR
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          final auth = context.read<AuthProvider>();
-                          final messenger = ScaffoldMessenger.of(context);
-                          final picked = await _picker.pickImage(
-                            source: ImageSource.gallery,
-                            maxWidth: 800,
-                            maxHeight: 400,
-                          );
-                          if (picked != null) {
-                            if (ctx.mounted) {
-                              Navigator.pop(ctx);
-                            }
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Mengunggah gambar tanda tangan...',
-                                ),
-                              ),
-                            );
-                            final success = await auth.updateTandaTangan(
-                              filePath: picked.path,
-                            );
-                            if (mounted) {
-                              if (success) {
-                                HapticHelper.confirmSuccess();
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
-                                      'Tanda tangan digital berhasil diperbarui!',
-                                    ),
-                                    backgroundColor: AppColors.primaryLight,
-                                  ),
-                                );
-                              } else {
-                                messenger.showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Gagal memperbarui tanda tangan.',
-                                    ),
-                                    backgroundColor: AppColors.roseDanger,
-                                  ),
-                                );
-                              }
-                            }
-                          }
-                        },
-                        icon: const Icon(Icons.upload_file_rounded, size: 16),
-                        label: const Text(
-                          'Atau Unggah Gambar Tanda Tangan dari Galeri',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                          final padState = sigKey.currentState;
-                          if (padState == null || padState.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Silakan goreskan tanda tangan pada layar terlebih dahulu.',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-
-                          setModalState(() => isSaving = true);
-                          HapticHelper.medium();
-
-                          final auth = context.read<AuthProvider>();
-                          final base64 = await padState.exportBase64();
-                          if (base64 == null) {
-                            setModalState(() => isSaving = false);
-                            return;
-                          }
-
-                          final success = await auth.updateTandaTangan(
-                            base64Image: base64,
-                          );
-
-                          if (ctx.mounted) {
-                            setModalState(() => isSaving = false);
-                            if (success) {
-                              Navigator.pop(ctx);
-                              HapticHelper.confirmSuccess();
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
-                                      'Tanda tangan digital berhasil disimpan!',
-                                    ),
-                                    backgroundColor: AppColors.primaryLight,
-                                  ),
-                                );
-                              }
-                            } else {
-                              final err =
-                                  auth.errorMessage ??
-                                  'Gagal menyimpan tanda tangan.';
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(err),
-                                    backgroundColor: AppColors.roseDanger,
-                                  ),
-                                );
-                              }
-                            }
-                          }
-                        },
-                  child: isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Simpan Goresan Tanda Tangan'),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // =========================================================================
-  // 5. MODAL PENGATURAN KAS RUANGAN (KHUSUS WALI RUANGAN)
+  // 4. MODAL PENGATURAN KAS RUANGAN (KHUSUS WALI RUANGAN)
   // =========================================================================
   void _showPengaturanKasSheet() async {
     HapticHelper.light();
@@ -2017,44 +1479,12 @@ class _AkunTabState extends State<AkunTab> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  // AVATAR WITH EDIT BADGE
-                  Stack(
-                    children: [
-                      AppAvatar(
-                        radius: 38,
-                        imageUrl: user?.photo,
-                        name: user?.name ?? '-',
-                        cacheDimension: 200,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: InkWell(
-                          onTap: _showEditFotoModal,
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isDark
-                                    ? const Color(0xFF101710)
-                                    : Colors.white,
-                                width: 2,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt_rounded,
-                              size: 13,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  // AVATAR (READ-ONLY)
+                  AppAvatar(
+                    radius: 38,
+                    imageUrl: user?.photo,
+                    name: user?.name ?? '-',
+                    cacheDimension: 200,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -2216,29 +1646,11 @@ class _AkunTabState extends State<AkunTab> {
             const SizedBox(height: 18),
 
             // =================================================================
-            // 3. KARTU TANDA TANGAN DIGITAL
+            // 3. KARTU TANDA TANGAN DIGITAL (READ-ONLY)
             // =================================================================
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Tanda Tangan Digital',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                TextButton.icon(
-                  onPressed: _showEditTandaTanganSheet,
-                  icon: const Icon(Icons.draw_rounded, size: 14),
-                  label: Text(
-                    user?.tandaTangan != null
-                        ? 'Ubah Tanda Tangan'
-                        : 'Buat Tanda Tangan',
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              ],
+            const Text(
+              'Tanda Tangan Digital',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             GlassCard(
@@ -2298,7 +1710,7 @@ class _AkunTabState extends State<AkunTab> {
                   ] else ...[
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        vertical: 24,
+                        vertical: 20,
                         horizontal: 16,
                       ),
                       alignment: Alignment.center,
@@ -2331,9 +1743,10 @@ class _AkunTabState extends State<AkunTab> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4),
                           Text(
-                            'Tanda tangan digunakan untuk pengesahan rapor santri.',
+                            'Pengaturan foto profil dan tanda tangan dikelola oleh Administrator Madrasah.',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 10,
                               color: isDark
