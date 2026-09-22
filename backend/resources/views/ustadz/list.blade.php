@@ -157,7 +157,7 @@
 
                 @can('update ustadz')
                     <a href="{{ route('ustadz.signature', $ustadz->id) }}"
-                        class="action-modal w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 border border-emerald-500/20 transition-all hover:scale-105 active:scale-90 shadow-2xs outline-none"
+                        class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 border border-emerald-500/20 transition-all hover:scale-105 active:scale-90 shadow-2xs outline-none"
                         title="Buat TTD Digital">
                         <i class="bi bi-pen-fill text-xs"></i>
                     </a>
