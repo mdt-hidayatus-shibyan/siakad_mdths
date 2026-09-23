@@ -61,6 +61,13 @@ class LoginRequest extends FormRequest
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
+            \App\Services\ActivityLogService::recordFailedLogin(
+                $this,
+                'web',
+                $loginInput,
+                'Kredensial yang diberikan salah atau akun sedang nonaktif'
+            );
+
             throw ValidationException::withMessages([
                 'login' => trans('Kredensial yang diberikan salah atau akun Anda tidak aktif.'),
             ]);
@@ -73,11 +80,18 @@ class LoginRequest extends FormRequest
             Auth::logout();
             RateLimiter::hit($this->throttleKey());
 
+            \App\Services\ActivityLogService::recordFailedLogin(
+                $this,
+                'web',
+                $loginInput,
+                'Akses Web ditolak! Akun khusus Aplikasi Mobile.',
+                $user->id
+            );
+
             throw ValidationException::withMessages([
                 'login' => 'Akses ditolak! Akun Anda hanya dapat digunakan melalui Aplikasi Mobile MDT.',
             ]);
         }
-
 
         RateLimiter::clear($this->throttleKey());
     }

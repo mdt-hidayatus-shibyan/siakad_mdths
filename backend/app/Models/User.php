@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'username', 'email', 'password', 'is_active', 'is_login', 'is_logout', 'tingkat_id'])]
+#[Fillable(['name', 'username', 'email', 'password', 'is_active', 'is_login', 'is_logout', 'tingkat_id', 'last_seen_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -28,7 +28,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'last_seen_at'      => 'datetime',
+            'password'          => 'hashed',
         ];
     }
 
@@ -44,6 +45,11 @@ class User extends Authenticatable
     public function ustadz()
     {
         return $this->hasOne(Ustadz::class);
+    }
+
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
     }
 
     public function isOnline()

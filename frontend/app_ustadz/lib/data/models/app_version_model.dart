@@ -123,12 +123,8 @@ class AppVersionModel {
       statusBadge:
           json['status_badge']?.toString() ?? AppVersionConfig.statusBadge,
       isLatest: json['is_latest'] == true || json['is_latest'] == 1,
-      newFeatures: parsedFeatures.isNotEmpty
-          ? parsedFeatures
-          : AppVersionConfig.newFeatures,
-      improvements: parsedImprovements.isNotEmpty
-          ? parsedImprovements
-          : AppVersionConfig.improvements,
+      newFeatures: parsedFeatures,
+      improvements: parsedImprovements,
       devName: json['dev_name']?.toString() ?? AppVersionConfig.devName,
       devRole: json['dev_role']?.toString() ?? AppVersionConfig.devRole,
       devInstitution:

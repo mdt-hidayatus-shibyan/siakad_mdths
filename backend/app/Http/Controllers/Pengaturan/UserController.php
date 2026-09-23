@@ -393,8 +393,11 @@ class UserController extends Controller
                 : back()->with('error', $msg);
         }
 
-        // Hapus paksa sesi di database session
+        // Hapus paksa sesi di database session (Web)
         DB::table('sessions')->where('user_id', $user->id)->delete();
+
+        // Cabut seluruh token API Sanctum (Mobile App Ustadz & Wali)
+        $user->tokens()->delete();
 
         // Hancurkan remember_token & set status offline
         $user->update([

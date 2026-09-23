@@ -7,6 +7,7 @@ use App\Mail\SendOtpResetPasswordMail;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -57,6 +58,15 @@ class AuthController extends Controller
                     $user->currentAccessToken()->delete();
                 }
 
+                // Catat log penolakan akses
+                ActivityLogService::recordFailedLogin(
+                    $request,
+                    'app_ustadz',
+                    $request->login_id,
+                    'Akses Ditolak! Role Administrator/Staff dilarang login di App Ustadz.',
+                    $user->id
+                );
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Akses Ditolak! Aplikasi seluler khusus untuk Ustadz.'
@@ -86,6 +96,21 @@ class AuthController extends Controller
 
             $roleName = $user->roles->first()->name ?? 'ustadz';
             $token = $user->createToken('MobileAppToken')->plainTextToken;
+
+            // Update status online & last_seen_at
+            $user->update([
+                'last_seen_at' => Carbon::now(),
+                'is_login'     => true,
+                'is_logout'    => false,
+            ]);
+
+            // Catat riwayat login Ustadz ke ActivityLog
+            ActivityLogService::recordLogin($request, $user, 'app_ustadz', "Login berhasil ke Aplikasi Mobile Ustadz ({$user->name})", [
+                'ruangan_wali'    => $namaRuangan,
+                'ruangan_wali_id' => $ruanganId,
+                'kode_ustadz'     => $user->ustadz->kode_ustadz ?? null,
+                'nigm'            => $user->ustadz->nigm ?? null,
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -118,6 +143,14 @@ class AuthController extends Controller
                 ]
             ], 200);
         }
+
+        // Catat percobaan login gagal
+        ActivityLogService::recordFailedLogin(
+            $request,
+            'app_ustadz',
+            $request->login_id,
+            'Username/Email atau Kata Sandi salah.'
+        );
 
         return response()->json([
             'success' => false,
@@ -171,6 +204,13 @@ class AuthController extends Controller
         }
 
         if (!$wali) {
+            ActivityLogService::recordFailedLogin(
+                $request,
+                'app_murid',
+                $idInput,
+                'Data Wali/Murid tidak ditemukan atau status sedang nonaktif.'
+            );
+
             return response()->json([
                 'success' => false,
                 'message' => 'Data Wali/Murid tidak ditemukan atau status sedang nonaktif. Pastikan No. KK / No. Registrasi / NISM sudah benar.'
@@ -243,6 +283,13 @@ class AuthController extends Controller
                 ? 'PIN keamanan yang Anda masukkan salah.'
                 : 'PIN keamanan yang Anda masukkan salah. (PIN default: 112233)';
 
+            ActivityLogService::recordFailedLogin(
+                $request,
+                'app_murid',
+                $idInput,
+                $errorMessage
+            );
+
             return response()->json([
                 'success' => false,
                 'message' => $errorMessage,
@@ -273,6 +320,21 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('WaliAppToken')->plainTextToken;
+
+        // Update status online & last_seen_at
+        $user->update([
+            'last_seen_at' => Carbon::now(),
+            'is_login'     => true,
+            'is_logout'    => false,
+        ]);
+
+        // Catat riwayat login Wali Murid ke ActivityLog
+        ActivityLogService::recordLogin($request, $user, 'app_murid', "Login berhasil ke Aplikasi Wali Murid ({$wali->nama_kepala_keluarga})", [
+            'wali_id'       => $wali->id,
+            'no_registrasi' => $wali->no_registrasi,
+            'no_kk'         => $wali->no_kk,
+            'total_anak'    => $wali->murids->where('status', 'Aktif')->count(),
+        ]);
 
         return response()->json([
             'success'        => true,
@@ -844,8 +906,21 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        if ($request->user() && $request->user()->currentAccessToken()) {
-            $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        if ($user) {
+            $platform = $user->hasRole('wali-murid') ? 'app_murid' : 'app_ustadz';
+            ActivityLogService::recordLogout($request, $user, $platform);
+
+            if ($user->currentAccessToken()) {
+                $user->currentAccessToken()->delete();
+            }
+
+            // Set status offline pada database
+            $user->update([
+                'last_seen_at' => Carbon::now()->subMinutes(5),
+                'is_login'     => false,
+                'is_logout'    => true,
+            ]);
         }
 
         return response()->json([

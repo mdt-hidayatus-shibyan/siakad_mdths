@@ -47,68 +47,11 @@ class AppVersionConfig {
   static const String releaseSubtitle = 'Rilis Perdana • September 2026';
   static const String releaseBadge = 'Rilis Saat Ini';
 
-  /// Daftar Penambahan Fitur Baru
-  static const List<ChangelogEntry> newFeatures = [
-    ChangelogEntry(
-      title: 'Modul Catatan & Keluhan Ustadz',
-      description:
-          'Fitur pelaporan perkembangan murid, fasilitas madrasah, dan evaluasi umum dengan lampiran bukti foto kamera/galeri serta pilihan form select ruangan kelas.',
-    ),
-    ChangelogEntry(
-      title: 'Menu Cepat & Pengumuman',
-      description:
-          'Akses cepat pada beranda untuk Kalender Akademik, Referensi Sanksi, Mapel, Jadwal Pelajaran, Catatan, Pengumuman, Laporan Pengampu, dan Tabungan.',
-    ),
-    ChangelogEntry(
-      title: 'Presensi & Jurnal Mengajar Harian',
-      description:
-          'Pencatatan kehadiran murid dan ustadz secara realtime dengan verifikasi status dan jurnal materi KBM.',
-    ),
-    ChangelogEntry(
-      title: 'Penilaian & Rekap Leger Nilai',
-      description:
-          'Pengelolaan nilai tugas, harian, UTS, UAS, dan rekapitulasi leger nilai murid per mata pelajaran.',
-    ),
-    ChangelogEntry(
-      title: 'Buku Kasus & Disiplin Murid',
-      description:
-          'Pencatatan pelanggaran kedisiplinan dan katalog referensi pedoman sanksi pembinaan murid.',
-    ),
-    ChangelogEntry(
-      title: 'Kas Ruangan & Tabungan',
-      description:
-          'Transparansi pembukuan kas kelas bagi wali ruangan dan monitoring tabungan pribadi ustadz/murid.',
-    ),
-    ChangelogEntry(
-      title: 'Kustomisasi Tema & Tampilan',
-      description:
-          'Dukungan Mode Gelap Super AMOLED, Mode Terang, dan pilihan palet warna aksen aplikasi.',
-    ),
-  ];
+  /// Daftar Penambahan Fitur Baru (Kosong secara default, diisi via API / rilis aktif)
+  static const List<ChangelogEntry> newFeatures = [];
 
-  /// Daftar Perbaikan & Peningkatan Sistem
-  static const List<ChangelogEntry> improvements = [
-    ChangelogEntry(
-      title: 'Penyempurnaan Form Pemilihan Ruangan',
-      description:
-          'Dropdown ruangan kelas kini diurutkan berdasarkan urutan level secara rapi dan terhubung otomatis dengan ID ruangan murid.',
-    ),
-    ChangelogEntry(
-      title: 'Desain Tombol AppBar Melingkar',
-      description:
-          'Standardisasi tombol navigasi dan aksi pada AppBar menjadi Circular Button dengan pewarnaan tema konsisten.',
-    ),
-    ChangelogEntry(
-      title: 'Standardisasi Istilah Baku',
-      description:
-          'Penggunaan istilah "Murid" secara konsisten di seluruh antarmuka dan basis data aplikasi.',
-    ),
-    ChangelogEntry(
-      title: 'Optimasi Jaringan & Keamanan API',
-      description:
-          'Peningkatan kecepatan pengambilan data REST API dan keamanan sesi login menggunakan token Sanctum.',
-    ),
-  ];
+  /// Daftar Perbaikan & Peningkatan Sistem (Kosong secara default, diisi via API / rilis aktif)
+  static const List<ChangelogEntry> improvements = [];
 
   // ---------------------------------------------------------------------------
   // 3. INFORMASI PENGEMBANG (DEVELOPER)

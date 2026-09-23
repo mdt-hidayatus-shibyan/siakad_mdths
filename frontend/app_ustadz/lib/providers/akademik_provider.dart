@@ -160,6 +160,23 @@ class AkademikProvider extends ChangeNotifier {
   String _selectedHari = 'Ahad';
   String get selectedHari => _selectedHari;
 
+  int _jadwalModeIndex =
+      0; // 0 = Jadwal Mengajar Saya, 1 = Jadwal Kelas / Ruangan Binaan
+  int get jadwalModeIndex => _jadwalModeIndex;
+
+  void setJadwalModeIndex(int index) {
+    _jadwalModeIndex = index;
+    notifyListeners();
+  }
+
+  List<HariJadwalItem> get activeJadwalPerHari {
+    if (_jadwalData == null) return [];
+    if (_jadwalModeIndex == 1 && _jadwalData!.isWaliRuangan) {
+      return _jadwalData!.jadwalRuanganPerHari;
+    }
+    return _jadwalData!.jadwalPerHari;
+  }
+
   void setSelectedHari(String hari) {
     _selectedHari = hari;
     notifyListeners();
@@ -202,6 +219,7 @@ class AkademikProvider extends ChangeNotifier {
     _jadwalError = null;
     _jadwalData = null;
     _selectedHari = 'Ahad';
+    _jadwalModeIndex = 0;
     notifyListeners();
   }
 }

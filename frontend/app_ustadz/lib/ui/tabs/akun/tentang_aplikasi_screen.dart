@@ -326,26 +326,26 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                       const SizedBox(height: 14),
 
                       // SUB-SECTION: PENAMBAHAN FITUR BARU
-                      if (versionData.newFeatures.isNotEmpty) ...[
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.add_circle_outline_rounded,
-                              size: 16,
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.add_circle_outline_rounded,
+                            size: 16,
+                            color: Color(0xFF10B981),
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Penambahan Fitur Baru',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
                               color: Color(0xFF10B981),
                             ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Penambahan Fitur Baru',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF10B981),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      if (versionData.newFeatures.isNotEmpty) ...[
                         ...versionData.newFeatures.map(
                           (feat) => _buildChangelogBullet(
                             title: feat.title,
@@ -354,42 +354,67 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                             primaryColor: primaryColor,
                           ),
                         ),
+                      ] else ...[
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 12),
+                          child: Text(
+                            'Tidak ada penambahan fitur baru pada versi ini.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              color: isDark
+                                  ? const Color(0xFF8D9387)
+                                  : const Color(0xFF73796E),
+                            ),
+                          ),
+                        ),
                       ],
 
-                      if (versionData.newFeatures.isNotEmpty &&
-                          versionData.improvements.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        const Divider(height: 1),
-                        const SizedBox(height: 14),
-                      ],
+                      const SizedBox(height: 6),
+                      const Divider(height: 1),
+                      const SizedBox(height: 14),
 
-                      // SUB-SECTION: PERBAIKAN & PENINGKATAN
-                      if (versionData.improvements.isNotEmpty) ...[
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.build_circle_outlined,
-                              size: 16,
+                      // SUB-SECTION: PERBAIKAN & PENINGKATAN SISTEM
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.build_circle_outlined,
+                            size: 16,
+                            color: Color(0xFF3B82F6),
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Perbaikan & Peningkatan Sistem',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
                               color: Color(0xFF3B82F6),
                             ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Perbaikan & Peningkatan Sistem',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF3B82F6),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      if (versionData.improvements.isNotEmpty) ...[
                         ...versionData.improvements.map(
                           (imp) => _buildChangelogBullet(
                             title: imp.title,
                             desc: imp.description,
                             isDark: isDark,
                             primaryColor: primaryColor,
+                          ),
+                        ),
+                      ] else ...[
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 4),
+                          child: Text(
+                            'Tidak ada perbaikan & peningkatan sistem pada versi ini.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              color: isDark
+                                  ? const Color(0xFF8D9387)
+                                  : const Color(0xFF73796E),
+                            ),
                           ),
                         ),
                       ],

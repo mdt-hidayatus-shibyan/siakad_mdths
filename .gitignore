@@ -52,6 +52,7 @@ frontend/**/build/
 **/ios/Flutter/flutter_export_environment.sh
 
 # Internal Documentation & Notes
+PANDUAN_DEPLOY_DAN_UPDATE.md
 BACKEND_GUIDELINES.md
 FRONTEND_APP_MURID.md
 FRONTEND_APP_USTADZ.md

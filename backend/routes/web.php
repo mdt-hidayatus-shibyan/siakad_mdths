@@ -45,6 +45,7 @@ use App\Http\Controllers\Ujian\PersyaratanUjianController;
 use App\Http\Controllers\Ujian\PresensiUjianController;
 use App\Http\Controllers\Ujian\NilaiUjianController;
 use App\Http\Controllers\Ujian\BintangPelajarController;
+use App\Http\Controllers\Ujian\BintangMadrasahController;
 use App\Http\Controllers\Ujian\RiwayatKenaikanController;
 use App\Http\Controllers\Ujian\RaporController;
 use App\Http\Controllers\Ujian\PembayaranUjianController;
@@ -113,6 +114,7 @@ use App\Http\Controllers\Pengaturan\TahunPelajaranController;
 use App\Http\Controllers\Pengaturan\SettingController;
 use App\Http\Controllers\Pengaturan\AppVersionController;
 use App\Http\Controllers\Pengaturan\BackupController;
+use App\Http\Controllers\Pengaturan\LogAktivitasController;
 
 // 10. Layanan & Bantuan Controllers
 use App\Http\Controllers\Bantuan\LaporanKendalaAdminController;
@@ -499,10 +501,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/laporan-leger', [NilaiUjianController::class, 'laporanLeger'])->name('laporan-leger');
     });
 
-    // -- Bintang Pelajar --
-    Route::get('/bintang-pelajar', [BintangPelajarController::class, 'bintangPelajar'])->name('bintang-pelajar.index');
-    Route::get('/bintang-pelajar/cetak', [BintangPelajarController::class, 'cetak'])->name('bintang-pelajar.cetak');
-    Route::get('/bintang-madrasah', [BintangPelajarController::class, 'bintangMadrasah'])->name('bintang-madrasah.index');
+    // -- Bintang Pelajar (Per Agenda Ujian) --
+    Route::prefix('bintang-pelajar')->name('bintang-pelajar.')->group(function () {
+        Route::get('/', [BintangPelajarController::class, 'bintangPelajar'])->name('index');
+        Route::get('/cetak', [BintangPelajarController::class, 'cetak'])->name('cetak');
+    });
+
+    // -- Bintang Madrasah (Best of The Best Tahunan) --
+    Route::prefix('bintang-madrasah')->name('bintang-madrasah.')->group(function () {
+        Route::get('/', [BintangMadrasahController::class, 'index'])->name('index');
+    });
 
     // -- Kenaikan Kelas --
     Route::prefix('kenaikan-kelas')->name('kenaikan-kelas.')->group(function () {
@@ -955,6 +963,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', 'index')->name('database');
         Route::post('/process', 'process')->name('process');
         Route::post('/restore', 'restore')->name('restore');
+    });
+
+    // -- Log Aktivitas & Monitoring Sesi Pengguna --
+    Route::prefix('log-aktivitas')->name('log-aktivitas.')->controller(LogAktivitasController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{id}', 'show')->name('show');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::post('/clear-old', 'clearOld')->name('clear-old');
     });
 
 

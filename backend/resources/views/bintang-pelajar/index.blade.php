@@ -2,17 +2,30 @@
 
 <x-app-layout>
 
-    <!-- HEADER & TOOLBAR SEJAJAR -->
-    <div
-        class="mb-6 md:mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-3 md:gap-4 relative z-10 print:hidden">
-
-        <!-- Area Tab Menu -->
-        <div class="w-full xl:w-auto shrink-0">
-            @include('bintang-pelajar.menu')
+    <!-- 1. HEADER & TOOLBAR SECTION -->
+    <div class="mb-6 md:mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-4 relative z-10 print:hidden">
+        <div>
+            <div class="flex items-center gap-2 mb-1.5">
+                <span
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 inline-flex items-center gap-1.5 shadow-2xs">
+                    <i class="bi bi-star-fill text-xs"></i>
+                    <span>Akademik & Prestasi</span>
+                </span>
+                <span class="text-xs text-zinc-400">•</span>
+                <span class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
+                    Hasil Ujian
+                </span>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
+                Bintang Pelajar
+            </h2>
+            <p class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Peringkat murid berprestasi Top 3 per tingkatan jenjang dan per ruangan kelas pada agenda ujian.
+            </p>
         </div>
 
         <!-- Area Form Pencarian & Tombol Aksi -->
-        <div class="w-full xl:w-auto flex-1 flex xl:justify-end">
+        <div class="w-full xl:w-auto flex flex-col sm:flex-row items-center gap-2.5">
             <form action="{{ route('bintang-pelajar.index') }}" method="GET" id="formFilter"
                 class="flex flex-col sm:flex-row items-center gap-2.5 w-full xl:w-auto">
 

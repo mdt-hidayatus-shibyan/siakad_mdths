@@ -102,7 +102,7 @@ class RbacSeeder extends Seeder
                 'permissions' => ['read', 'create', 'update', 'delete'],
             ],
             [
-                'name'        => 'Rombongan Belajar (Rombel)',
+                'name'        => 'Rombongan Belajar',
                 'url'         => 'rombongan-belajar.index',
                 'category'    => 'AKADEMIK',
                 'icon'        => 'bi-people-fill',
@@ -132,14 +132,6 @@ class RbacSeeder extends Seeder
                 'icon'        => 'bi-shield-exclamation',
                 'orders'      => 14,
                 'permissions' => ['read', 'create', 'update', 'delete'],
-            ],
-            [
-                'name'        => 'Catatan & Keluhan Ustadz',
-                'url'         => 'catatan-ustadz.index',
-                'category'    => 'AKADEMIK',
-                'icon'        => 'bi-chat-left-text-fill',
-                'orders'      => 15,
-                'permissions' => ['read'],
             ],
             [
                 'name'        => 'Ujian & Evaluasi',
@@ -251,6 +243,14 @@ class RbacSeeder extends Seeder
                 'category'    => 'AKADEMIK',
                 'icon'        => 'bi-star-fill',
                 'orders'      => 17,
+                'permissions' => ['read'],
+            ],
+            [
+                'name'        => 'Bintang Madrasah',
+                'url'         => 'bintang-madrasah.index',
+                'category'    => 'AKADEMIK',
+                'icon'        => 'bi-stars',
+                'orders'      => 18,
                 'permissions' => ['read'],
             ],
             [
@@ -669,7 +669,7 @@ class RbacSeeder extends Seeder
             // KATEGORI 6: MASTER DATA
             // ==========================================
             [
-                'name'        => 'Data Induk',
+                'name'        => 'Master Data',
                 'url'         => '#master-data',
                 'category'    => 'MASTER DATA',
                 'icon'        => 'bi-database-fill',
@@ -684,7 +684,7 @@ class RbacSeeder extends Seeder
                         'permissions' => ['read', 'create', 'update', 'delete'],
                     ],
                     [
-                        'name'        => 'Ustadz / Dewan Guru',
+                        'name'        => 'Ustadz',
                         'url'         => 'ustadz.index',
                         'icon'        => 'bi-person-workspace',
                         'orders'      => 2,
@@ -767,7 +767,7 @@ class RbacSeeder extends Seeder
             // KATEGORI 7: PENGATURAN
             // ==========================================
             [
-                'name'        => 'Manajemen Akun Pengguna',
+                'name'        => 'Akun Pengguna',
                 'url'         => 'pengguna.index',
                 'category'    => 'PENGATURAN',
                 'icon'        => 'bi-person-gear',
@@ -862,6 +862,13 @@ class RbacSeeder extends Seeder
                         'orders'      => 6,
                         'permissions' => ['read', 'create', 'update'],
                     ],
+                    [
+                        'name'        => 'Log Aktivitas & Sesi',
+                        'url'         => 'log-aktivitas.index',
+                        'icon'        => 'bi-clock-history',
+                        'orders'      => 7,
+                        'permissions' => ['read', 'delete'],
+                    ],
                 ],
             ],
         ];
@@ -945,6 +952,7 @@ class RbacSeeder extends Seeder
                 ->orWhere('name', 'like', '%ujian%')
                 ->orWhere('name', 'like', '%jadwal-ujian%')
                 ->orWhere('name', 'like', '%bintang-pelajar%')
+                ->orWhere('name', 'like', '%bintang-madrasah%')
                 ->orWhere('name', 'like', '%rapor%')
                 ->orWhere('name', 'like', '%tagihan-murid%')
                 ->orWhere('name', 'like', '%tagihan-wali%')

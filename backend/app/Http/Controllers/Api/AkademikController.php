@@ -10,6 +10,7 @@ use App\Models\KalendarPendidikan;
 use App\Models\Level;
 use App\Models\MataPelajaran;
 use App\Models\ReferensiPelanggaran;
+use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
 use App\Models\Ujian\Ujian;
 use Carbon\Carbon;
@@ -213,7 +214,7 @@ class AkademikController extends Controller
     }
 
     /**
-     * Ambil Jadwal Mengajar Mingguan Ustadz yang Login
+     * Ambil Jadwal Mengajar Mingguan Ustadz yang Login & Jadwal Ruangan (jika Wali Ruangan)
      */
     public function getJadwalPelajaran(Request $request)
     {
@@ -229,7 +230,10 @@ class AkademikController extends Controller
             ], 403);
         }
 
-        $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level'])
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+
+        // 1. Jadwal Mengajar Pribadi Ustadz
+        $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ruangan.level', 'ruangan.gedung'])
             ->where('ustadz_id', $ustadzId)
             ->get();
 
@@ -252,23 +256,94 @@ class AkademikController extends Controller
                     };
 
                     return [
-                        'id' => $j->id,
-                        'jam_ke' => $j->jam_ke,
-                        'jam' => $jamText,
-                        'mapel' => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
-                        'ruangan' => $j->ruangan->nama_ruangan ?? '-',
-                        'level' => $j->ruangan->level->nama_level ?? '-',
+                        'id'          => $j->id,
+                        'jam_ke'      => $j->jam_ke,
+                        'jam'         => $jamText,
+                        'mapel'       => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
+                        'ustadz'      => $j->ustadz->nama_lengkap ?? 'Pengajar',
+                        'kode_ustadz' => $j->ustadz->kode_ustadz ?? '-',
+                        'ustadz_foto' => $j->ustadz && $j->ustadz->foto ? asset('storage/' . $j->ustadz->foto) : null,
+                        'ruangan'     => $j->ruangan->nama_ruangan ?? '-',
+                        'nama_gedung' => $j->ruangan->gedung->nama_gedung ?? null,
+                        'nama_kamar'  => $j->ruangan->nama_kamar ?? null,
+                        'level'       => $j->ruangan->level->nama_level ?? '-',
                     ];
                 })
             ];
         }
 
+        // 2. Deteksi Apakah Ustadz adalah Wali Ruangan
+        $isWaliRuangan = false;
+        $ruanganWaliNama = null;
+        $ruanganWaliId = null;
+        $levelWaliNama = null;
+        $totalJadwalRuanganMingguan = 0;
+        $jadwalRuanganGrouped = [];
+
+        if ($tahunAktif) {
+            $ruanganWali = Ruangan::with(['level', 'gedung'])
+                ->where('tahun_pelajaran_id', $tahunAktif->id)
+                ->where('ustadz_id', $ustadz->id)
+                ->first();
+
+            if ($ruanganWali) {
+                $isWaliRuangan = true;
+                $ruanganWaliNama = $ruanganWali->nama_ruangan;
+                $ruanganWaliId = $ruanganWali->id;
+                $levelWaliNama = $ruanganWali->level->nama_level ?? '-';
+
+                $jadwalRuangan = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ruangan.level', 'ruangan.gedung'])
+                    ->where('ruangan_id', $ruanganWali->id)
+                    ->get();
+
+                $totalJadwalRuanganMingguan = $jadwalRuangan->count();
+
+                foreach ($hariOrder as $hari) {
+                    $hariJadwals = $jadwalRuangan->where('hari', $hari)->sortBy('jam_ke')->values();
+
+                    $jadwalRuanganGrouped[] = [
+                        'hari' => $hari,
+                        'total_sesi' => $hariJadwals->count(),
+                        'sesi' => $hariJadwals->map(function ($j) {
+                            $jamText = match ($j->jam_ke) {
+                                'Nadzoman' => '13:45 - 14:00 WIB',
+                                '1' => '14:00 - 14:45 WIB',
+                                '2' => '15:30 - 16:15 WIB',
+                                'Ekstra' => '20:00 - 21:00 WIB',
+                                default => 'Jam Ke-' . $j->jam_ke,
+                            };
+
+                            return [
+                                'id'          => $j->id,
+                                'jam_ke'      => $j->jam_ke,
+                                'jam'         => $jamText,
+                                'mapel'       => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
+                                'ustadz'      => $j->ustadz->nama_lengkap ?? 'Pengajar',
+                                'kode_ustadz' => $j->ustadz->kode_ustadz ?? '-',
+                                'ustadz_foto' => $j->ustadz && $j->ustadz->foto ? asset('storage/' . $j->ustadz->foto) : null,
+                                'ruangan'     => $j->ruangan->nama_ruangan ?? '-',
+                                'nama_gedung' => $j->ruangan->gedung->nama_gedung ?? null,
+                                'nama_kamar'  => $j->ruangan->nama_kamar ?? null,
+                                'level'       => $j->ruangan->level->nama_level ?? '-',
+                            ];
+                        })
+                    ];
+                }
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
-                'ustadz_nama' => $ustadz->nama_lengkap,
-                'total_jadwal_mingguan' => $jadwals->count(),
-                'jadwal_per_hari' => $grouped,
+                'ustadz_nama'                   => $ustadz->nama_lengkap,
+                'total_jadwal_mingguan'         => $jadwals->count(),
+                'jadwal_per_hari'               => $grouped,
+                'is_wali_ruangan'               => $isWaliRuangan,
+                'ruangan_wali_id'               => $ruanganWaliId,
+                'ruangan_wali_nama'             => $ruanganWaliNama,
+                'level_wali_nama'               => $levelWaliNama,
+                'total_jadwal_ruangan_mingguan' => $totalJadwalRuanganMingguan,
+                'jadwal_ruangan_per_hari'       => $jadwalRuanganGrouped,
             ]
         ], 200);
     }

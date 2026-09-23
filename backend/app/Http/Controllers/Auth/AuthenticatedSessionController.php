@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\ActivityLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,14 +26,18 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         // =========================================================
-        // UPDATE STATUS ONLINE
+        // UPDATE STATUS ONLINE & CATAT LOG AKTIVITAS
         // =========================================================
         $user = $request->user();
         if ($user) {
             $user->update([
-                'is_login'  => true,
-                'is_logout' => false,
+                'is_login'     => true,
+                'is_logout'    => false,
+                'last_seen_at' => \Carbon\Carbon::now(),
             ]);
+
+            // Catat log aktivitas login Web Admin
+            ActivityLogService::recordLogin($request, $user, 'web');
 
             // Arahkan ke route sesuai role (misal: petugas-tabungan -> tabungan.index)
             return redirect()->intended($request->redirectRoute());
@@ -50,9 +55,13 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         if ($user) {
             $user->update([
-                'is_login'  => false,
-                'is_logout' => true,
+                'is_login'     => false,
+                'is_logout'    => true,
+                'last_seen_at' => \Carbon\Carbon::now()->subMinutes(5),
             ]);
+
+            // Catat log aktivitas logout Web Admin
+            ActivityLogService::recordLogout($request, $user, 'web');
         }
         Auth::guard('web')->logout();
 

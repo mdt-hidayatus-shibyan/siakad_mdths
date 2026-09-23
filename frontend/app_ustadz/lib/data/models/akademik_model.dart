@@ -267,7 +267,12 @@ class SesiJadwalItem {
   final String jamKe;
   final String jam;
   final String mapel;
+  final String? ustadz;
+  final String? kodeUstadz;
+  final String? ustadzFoto;
   final String ruangan;
+  final String? namaGedung;
+  final String? namaKamar;
   final String level;
 
   SesiJadwalItem({
@@ -275,9 +280,26 @@ class SesiJadwalItem {
     required this.jamKe,
     required this.jam,
     required this.mapel,
+    this.ustadz,
+    this.kodeUstadz,
+    this.ustadzFoto,
     required this.ruangan,
+    this.namaGedung,
+    this.namaKamar,
     required this.level,
   });
+
+  String get lokasiGedungKamar {
+    final list = <String>[];
+    if (namaGedung != null && namaGedung!.trim().isNotEmpty) {
+      list.add(namaGedung!.trim());
+    }
+    if (namaKamar != null && namaKamar!.trim().isNotEmpty) {
+      list.add(namaKamar!.trim());
+    }
+    if (list.isEmpty) return 'Gedung / Kamar: -';
+    return list.join(' • ');
+  }
 
   factory SesiJadwalItem.fromJson(Map<String, dynamic> json) {
     return SesiJadwalItem(
@@ -285,7 +307,12 @@ class SesiJadwalItem {
       jamKe: json['jam_ke']?.toString() ?? '',
       jam: json['jam'] ?? '',
       mapel: json['mapel'] ?? '',
+      ustadz: json['ustadz'],
+      kodeUstadz: json['kode_ustadz'],
+      ustadzFoto: json['ustadz_foto'],
       ruangan: json['ruangan'] ?? '',
+      namaGedung: json['nama_gedung'],
+      namaKamar: json['nama_kamar'],
       level: json['level'] ?? '',
     );
   }
@@ -316,19 +343,41 @@ class JadwalPelajaranResponse {
   final String ustadzNama;
   final int totalJadwalMingguan;
   final List<HariJadwalItem> jadwalPerHari;
+  final bool isWaliRuangan;
+  final int? ruanganWaliId;
+  final String? ruanganWaliNama;
+  final String? levelWaliNama;
+  final int totalJadwalRuanganMingguan;
+  final List<HariJadwalItem> jadwalRuanganPerHari;
 
   JadwalPelajaranResponse({
     required this.ustadzNama,
     required this.totalJadwalMingguan,
     required this.jadwalPerHari,
+    this.isWaliRuangan = false,
+    this.ruanganWaliId,
+    this.ruanganWaliNama,
+    this.levelWaliNama,
+    this.totalJadwalRuanganMingguan = 0,
+    this.jadwalRuanganPerHari = const [],
   });
 
   factory JadwalPelajaranResponse.fromJson(Map<String, dynamic> json) {
     final rawJadwal = json['jadwal_per_hari'] as List? ?? [];
+    final rawJadwalRuangan = json['jadwal_ruangan_per_hari'] as List? ?? [];
     return JadwalPelajaranResponse(
       ustadzNama: json['ustadz_nama'] ?? '',
       totalJadwalMingguan: json['total_jadwal_mingguan'] ?? 0,
       jadwalPerHari: rawJadwal.map((e) => HariJadwalItem.fromJson(e)).toList(),
+      isWaliRuangan:
+          json['is_wali_ruangan'] == true || json['is_wali_ruangan'] == 1,
+      ruanganWaliId: json['ruangan_wali_id'],
+      ruanganWaliNama: json['ruangan_wali_nama'],
+      levelWaliNama: json['level_wali_nama'],
+      totalJadwalRuanganMingguan: json['total_jadwal_ruangan_mingguan'] ?? 0,
+      jadwalRuanganPerHari: rawJadwalRuangan
+          .map((e) => HariJadwalItem.fromJson(e))
+          .toList(),
     );
   }
 }
