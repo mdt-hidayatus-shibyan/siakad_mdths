@@ -39,18 +39,24 @@
                 box-shadow: none !important;
                 margin: 0 !important;
                 padding: 2mm 4mm !important;
+                width: 100% !important;
                 max-width: 100% !important;
-                min-height: auto !important;
+                height: 278mm !important;
+                min-height: 278mm !important;
                 border: none !important;
-                page-break-after: always;
-                break-after: page;
-                page-break-inside: avoid;
-                break-inside: avoid;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
             }
 
             .page-sheet:last-child {
-                page-break-after: auto;
-                break-after: auto;
+                page-break-after: auto !important;
+                break-after: auto !important;
             }
         }
 
@@ -308,7 +314,7 @@
                             <td style="font-weight: 600;">Menghadap Kepada</td>
                             <td>:</td>
                             <td style="font-weight: 700;">
-                                {{ $spesifik['menghadap_kepada'] ?? 'Kepala Madrasah & Tim Kesiswaan' }}</td>
+                                {{ $spesifik['menghadap_kepada'] ?? 'Pengasuh & Tim Kesiswaan' }}</td>
                         </tr>
                     </table>
 
@@ -555,7 +561,7 @@
                         </table>
 
                         <p style="margin-bottom: 8px;">
-                            Maka kami selaku Kepala MDT Hidayatus Shibyan Desa Somorkoneng Kecamatan Kwanyar Kabupaten
+                            Maka kami selaku Pengasuh MDT Hidayatus Shibyan Desa Somorkoneng Kecamatan Kwanyar Kabupaten
                             Bangkalan mengajukan permohonan dispensasi untuk
                             <strong>{{ $spesifik['permohonan_dispensasi_khusus'] ?? 'dipulangkan pukul 12.00 WIB agar Murid dapat mempersiapkan diri' }}</strong>.
                             Adapun Murid yang mengikuti
@@ -565,7 +571,7 @@
                     @else
                         {{-- DISPENSASI 1 MURID (TUNGGAL) --}}
                         <p style="margin-bottom: 8px;">
-                            Yang bertanda tangan di bawah ini Kepala MDT Hidayatus Shibyan menerangkan bahwa murid di
+                            Yang bertanda tangan di bawah ini Pengasuh MDT Hidayatus Shibyan menerangkan bahwa murid di
                             bawah ini:
                         </p>
 
@@ -645,10 +651,14 @@
 
                     <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 10px;">
                         <tr>
-                            <td style="width: 140px; font-weight: 600;">Hari / Tanggal</td>
+                            <td style="width: 140px; font-weight: 600;">Hari</td>
                             <td style="width: 10px;">:</td>
+                            <td style="font-weight: 700;">{{ $spesifik['hari_acara'] ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600;">Tanggal</td>
+                            <td>:</td>
                             <td style="font-weight: 700;">
-                                {{ $spesifik['hari_acara'] ?? '-' }},
                                 {{ isset($spesifik['tanggal_acara']) && $spesifik['tanggal_acara'] ? \Carbon\Carbon::parse($spesifik['tanggal_acara'])->translatedFormat('d F Y') : '-' }}
                             </td>
                         </tr>
@@ -662,13 +672,6 @@
                             <td>:</td>
                             <td>{{ $spesifik['tempat_acara'] ?? 'Aula MDT Hidayatus Shibyan' }}</td>
                         </tr>
-                        @if (!empty($spesifik['pakaian_dresscode']))
-                            <tr>
-                                <td style="font-weight: 600;">Pakaian / Dresscode</td>
-                                <td>:</td>
-                                <td>{{ $spesifik['pakaian_dresscode'] }}</td>
-                            </tr>
-                        @endif
                         @if (!empty($spesifik['agenda_acara']))
                             <tr>
                                 <td style="font-weight: 600;">Susunan Agenda</td>
@@ -740,10 +743,6 @@
                         <td class="align-bottom">
                             <p class="font-bold underline mb-0" style="font-size: 9.5pt;">
                                 {{ $signer['nama'] ?? '-' }}</p>
-                            @if (!empty($signer['nip']) && $signer['nip'] !== '-')
-                                <p class="text-[8pt] text-slate-600 mt-0.5" style="font-size: 8pt;">NIP.
-                                    {{ $signer['nip'] }}</p>
-                            @endif
                         </td>
                     @endforeach
                 </tr>
@@ -912,10 +911,6 @@
                             <td class="align-bottom">
                                 <p class="font-bold underline mb-0" style="font-size: 9.5pt;">
                                     {{ $signer['nama'] ?? '-' }}</p>
-                                @if (!empty($signer['nip']) && $signer['nip'] !== '-')
-                                    <p class="text-[8pt] text-slate-600 mt-0.5" style="font-size: 8pt;">NIP.
-                                        {{ $signer['nip'] }}</p>
-                                @endif
                             </td>
                         @endforeach
                     </tr>

@@ -55,14 +55,6 @@
                             class="m3-dropdown-item hover:!text-blue-600 dark:hover:!text-blue-400">
                             <i class="bi bi-printer mr-2.5 text-base"></i> Print Data
                         </a>
-                        <a href="{{ route('rombongan-belajar.print-pembayaran-anggota', $ruangan->id) }}" target="_blank"
-                            class="m3-dropdown-item hover:!text-blue-600 dark:hover:!text-blue-400">
-                            <i class="bi bi-printer mr-2.5 text-base"></i> Print Data Pembayaran
-                        </a>
-                        <a href="{{ route('rombongan-belajar.print-penilaian-anggota', $ruangan->id) }}" target="_blank"
-                            class="m3-dropdown-item hover:!text-blue-600 dark:hover:!text-blue-400">
-                            <i class="bi bi-printer mr-2.5 text-base"></i> Print Data Penilaian
-                        </a>
                     </div>
                 </div>
             @endcan

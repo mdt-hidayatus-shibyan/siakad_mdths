@@ -364,7 +364,7 @@
         <tr style="border: none;">
             <td style="width: 50%; border: none; text-align: center; vertical-align: top;">
                 <p style="margin: 0; font-size: 11px;">Mengetahui,</p>
-                <p style="margin: 2px 0 6px 0; font-size: 11px; font-weight: bold;">Kepala Madrasah / Pengasuh</p>
+                <p style="margin: 2px 0 6px 0; font-size: 11px; font-weight: bold;">Pengasuh</p>
                 <div style="min-height: 60px; display: flex; justify-content: center; align-items: center;">
                     @if (!empty($pengasuh?->id))
                         {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(60)->generate(

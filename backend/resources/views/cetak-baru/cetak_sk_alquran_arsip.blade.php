@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -181,7 +181,7 @@
                 SEBAGAI SYARAT KELULUSAN TINGKAT IBTIDAIYAH</p>
         </div>
 
-        <p class="mb-2">Kepala Madrasah Diniyah Takmiliyah Hidayatus Shibyan,</p>
+        <p class="mb-2">Pengasuh Madrasah Diniyah Takmiliyah Hidayatus Shibyan,</p>
 
         <table class="w-full tabel-konsideran mb-1">
             <tr>

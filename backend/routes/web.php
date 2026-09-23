@@ -350,8 +350,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}/uploadFoto/{murid_id}', [RombonganBelajarController::class, 'modalUpload'])->name('uploadFoto');
 
         // Print & Export Rombel
-        Route::get('/{id}/print-pembayaran-anggota', [RombonganBelajarController::class, 'printPembayaranAnggota'])->name('print-pembayaran-anggota');
-        Route::get('/{id}/print-penilaian-anggota', [RombonganBelajarController::class, 'printPenilaianAnggota'])->name('print-penilaian-anggota');
         Route::get('/{id}/print-anggota', [RombonganBelajarController::class, 'printAnggota'])->name('print-anggota');
         Route::get('/{id}/export-anggota', [RombonganBelajarController::class, 'exportAnggota'])->name('export-anggota');
     });

@@ -833,21 +833,12 @@
                                             class="m3-input-glass w-full text-xs font-bold">
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label
-                                            class="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">Tempat
-                                            Acara</label>
-                                        <input type="text" name="tempat_acara" x-model="tempatAcara"
-                                            class="m3-input-glass w-full text-xs font-bold">
-                                    </div>
-                                    <div>
-                                        <label
-                                            class="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">Dresscode
-                                            / Pakaian</label>
-                                        <input type="text" name="pakaian_dresscode" x-model="pakaianDresscode"
-                                            class="m3-input-glass w-full text-xs font-bold">
-                                    </div>
+                                <div>
+                                    <label
+                                        class="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">Tempat
+                                        Acara</label>
+                                    <input type="text" name="tempat_acara" x-model="tempatAcara"
+                                        class="m3-input-glass w-full text-xs font-bold">
                                 </div>
                                 <div>
                                     <label
@@ -1036,24 +1027,13 @@
                                             </div>
                                         </div>
 
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            <div>
-                                                <label
-                                                    class="block text-[10px] font-bold text-zinc-600 dark:text-zinc-400 mb-0.5">
-                                                    Nama Terang Pejabat
-                                                </label>
-                                                <input type="text" x-model="s.nama"
-                                                    class="m3-input-glass w-full text-[11px] font-extrabold">
-                                            </div>
-                                            <div>
-                                                <label
-                                                    class="block text-[10px] font-bold text-zinc-600 dark:text-zinc-400 mb-0.5">
-                                                    NIP / NIU (Opsional)
-                                                </label>
-                                                <input type="text" x-model="s.nip"
-                                                    class="m3-input-glass w-full text-[11px] font-mono"
-                                                    placeholder="-">
-                                            </div>
+                                        <div>
+                                            <label
+                                                class="block text-[10px] font-bold text-zinc-600 dark:text-zinc-400 mb-0.5">
+                                                Nama Terang Pejabat
+                                            </label>
+                                            <input type="text" x-model="s.nama"
+                                                class="m3-input-glass w-full text-[11px] font-extrabold">
                                         </div>
                                     </div>
                                 </div>
@@ -1197,14 +1177,15 @@
                             keluarga dan para sahabatnya.
                         </p>
 
-                        <!-- ISI DINAMIS REALTIME -->
+                        <!-- ISI DINAMIS REALTIME SESUAI TEMPLATE -->
                         <div class="space-y-2 text-[9.5px] text-justify leading-relaxed">
 
                             <!-- 1. PANGGILAN -->
                             @if ($surat->jenis_surat === 'surat_panggilan')
                                 <div>
-                                    <p>Sehubungan dengan keperluan <strong x-text="alasanPanggilan"></strong>, kami
-                                        mengharap kehadiran Bapak/Ibu/Wali murid dari:</p>
+                                    <p>Sehubungan dengan keperluan <strong
+                                            x-text="alasanPanggilan || 'evaluasi perkembangan dan tata tertib murid'"></strong>,
+                                        maka dengan ini kami mengharap kehadiran Bapak/Ibu/Wali Murid dari:</p>
 
                                     <template x-if="activePreviewMurid">
                                         <div
@@ -1219,7 +1200,7 @@
                                                     Ruangan:</span><span
                                                     x-text="activePreviewMurid.ruangan_nama"></span>
                                             </div>
-                                            <div class="flex"><span class="w-28 text-zinc-500">Orang Tua /
+                                            <div class="flex"><span class="w-28 text-zinc-500">Nama Orang Tua /
                                                     Wali:</span><span x-text="activePreviewMurid.nama_wali"></span>
                                             </div>
                                             <div class="flex"><span class="w-28 text-zinc-500">Dusun /
@@ -1231,16 +1212,19 @@
                                     <p class="mt-1">Untuk hadir menghadap pada:</p>
                                     <div
                                         class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px] space-y-0.5">
-                                        <div class="flex"><span class="w-24 text-zinc-500">Hari / Tgl:</span><span
-                                                class="font-bold"
-                                                x-text="hariPanggilan + ', ' + formatTanggalMasehi(tanggalPanggilan)"></span>
+                                        <div class="flex"><span class="w-28 text-zinc-500">Hari /
+                                                Tanggal:</span><span class="font-bold"
+                                                x-text="(hariPanggilan || '-') + ', ' + (tanggalPanggilan ? formatTanggalMasehi(tanggalPanggilan) : '-')"></span>
                                         </div>
-                                        <div class="flex"><span class="w-24 text-zinc-500">Waktu:</span><span
-                                                x-text="waktuPanggilan"></span></div>
-                                        <div class="flex"><span class="w-24 text-zinc-500">Tempat:</span><span
-                                                x-text="tempatMenghadap"></span></div>
-                                        <div class="flex"><span class="w-24 text-zinc-500">Menghadap:</span><span
-                                                class="font-semibold" x-text="menghadapKepada"></span></div>
+                                        <div class="flex"><span class="w-28 text-zinc-500">Waktu /
+                                                Pukul:</span><span
+                                                x-text="waktuPanggilan || '14.00 WIB s/d Selesai'"></span></div>
+                                        <div class="flex"><span class="w-28 text-zinc-500">Tempat:</span><span
+                                                x-text="tempatMenghadap || 'Kantor TU / Ruang Guru MDT Hidayatus Shibyan'"></span>
+                                        </div>
+                                        <div class="flex"><span class="w-28 text-zinc-500">Menghadap
+                                                Kepada:</span><span class="font-bold"
+                                                x-text="menghadapKepada || 'Pengasuh & Tim Kesiswaan'"></span></div>
                                     </div>
                                 </div>
                             @endif
@@ -1248,8 +1232,11 @@
                             <!-- 2. PERINGATAN (SP) -->
                             @if ($surat->jenis_surat === 'surat_peringatan')
                                 <div>
-                                    <p>Berdasarkan hasil evaluasi kedisiplinan madrasah, dengan ini kami menerbitkan
-                                        <strong class="text-rose-700" x-text="tingkatSp"></strong> kepada:
+                                    <p>Berdasarkan hasil pemantauan kedisiplinan dan tata tertib madrasah, dengan ini
+                                        Pengurus MDT
+                                        Hidayatus Shibyan menerbitkan
+                                        <strong class="text-rose-700 font-bold"
+                                            x-text="tingkatSp || 'Surat Peringatan'"></strong> kepada murid:
                                     </p>
 
                                     <template x-if="activePreviewMurid">
@@ -1265,7 +1252,7 @@
                                                     Ruangan:</span><span
                                                     x-text="activePreviewMurid.ruangan_nama"></span>
                                             </div>
-                                            <div class="flex"><span class="w-28 text-zinc-500">Orang Tua /
+                                            <div class="flex"><span class="w-28 text-zinc-500">Nama Orang Tua /
                                                     Wali:</span><span x-text="activePreviewMurid.nama_wali"></span>
                                             </div>
                                             <div class="flex"><span class="w-28 text-zinc-500">Dusun /
@@ -1274,15 +1261,29 @@
                                         </div>
                                     </template>
 
-                                    <p class="mt-1">Atas pelanggaran:</p>
+                                    <p class="mt-1">Surat Peringatan ini diberikan atas pertimbangan pelanggaran
+                                        sebagai berikut:</p>
                                     <div
                                         class="bg-rose-50 p-2 rounded-lg my-1.5 border border-rose-200 text-[9px] space-y-0.5">
-                                        <div class="font-bold text-rose-800" x-text="bentukPelanggaran"></div>
-                                        <div class="text-zinc-600" x-show="poinTatib" x-text="'Dasar: ' + poinTatib">
+                                        <div class="flex"><span class="w-28 text-zinc-500 shrink-0">Uraian
+                                                Pelanggaran:</span><strong class="text-rose-700"
+                                                x-text="bentukPelanggaran || '(Uraian pelanggaran...)'"></strong>
                                         </div>
-                                        <div class="text-zinc-600" x-show="tindakanPembinaan"
-                                            x-text="'Pembinaan: ' + tindakanPembinaan"></div>
+                                        <div class="flex" x-show="poinTatib"><span
+                                                class="w-28 text-zinc-500 shrink-0">Dasar Peraturan:</span><span
+                                                x-text="poinTatib"></span></div>
+                                        <div class="flex" x-show="tindakanPembinaan"><span
+                                                class="w-28 text-zinc-500 shrink-0">Tindakan Pembinaan:</span><span
+                                                x-text="tindakanPembinaan"></span></div>
+                                        <div class="flex" x-show="batasWaktuPembinaan"><span
+                                                class="w-28 text-zinc-500 shrink-0">Masa Pembinaan:</span><span
+                                                x-text="batasWaktuPembinaan"></span></div>
                                     </div>
+                                    <p class="mt-1">
+                                        Kami menghimbau kepada murid bersangkutan dan orang tua/wali untuk segera
+                                        melakukan pembinaan dan perbaikan agar tidak berlanjut ke sanksi tingkat
+                                        berikutnya.
+                                    </p>
                                 </div>
                             @endif
 
@@ -1290,8 +1291,8 @@
                             @if ($surat->jenis_surat === 'surat_pemberitahuan')
                                 <div>
                                     <p>Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut<template
-                                            x-if="activePreviewMurid"><span> terkait murid
-                                                kami:</span></template><template
+                                            x-if="activePreviewMurid"><span> kepada Orang Tua / Wali dari
+                                                murid:</span></template><template
                                             x-if="!activePreviewMurid"><span>:</span></template></p>
 
                                     <template x-if="activePreviewMurid">
@@ -1307,7 +1308,7 @@
                                                     Ruangan:</span><span
                                                     x-text="activePreviewMurid.ruangan_nama"></span>
                                             </div>
-                                            <div class="flex"><span class="w-28 text-zinc-500">Orang Tua /
+                                            <div class="flex"><span class="w-28 text-zinc-500">Nama Orang Tua /
                                                     Wali:</span><span x-text="activePreviewMurid.nama_wali"></span>
                                             </div>
                                             <div class="flex"><span class="w-28 text-zinc-500">Dusun /
@@ -1316,15 +1317,18 @@
                                         </div>
                                     </template>
 
-                                    <div class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px]">
+                                    <div
+                                        class="bg-zinc-50 p-2 rounded-lg my-1.5 border-l-4 border-emerald-600 border-y border-r border-zinc-200 text-[9px]">
                                         <div class="flex items-center gap-1.5 mb-1" x-show="kategoriPemberitahuan">
                                             <span
-                                                class="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                                x-text="kategoriPemberitahuan"></span>
+                                                class="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider text-emerald-700"
+                                                x-text="'[ ' + kategoriPemberitahuan + ' ]'"></span>
                                         </div>
-                                        <div class="font-bold text-zinc-800" x-text="pokokPemberitahuan"></div>
-                                        <div class="text-zinc-500 mt-0.5" x-show="jadwalTerkait"
-                                            x-text="'Jadwal: ' + jadwalTerkait"></div>
+                                        <div class="font-bold text-zinc-800"
+                                            x-text="pokokPemberitahuan || perihal || '(Pokok uraian pemberitahuan...)'">
+                                        </div>
+                                        <div class="text-zinc-600 mt-0.5" x-show="jadwalTerkait"
+                                            x-text="'Jadwal Pelaksanaan: ' + jadwalTerkait"></div>
                                     </div>
                                 </div>
                             @endif
@@ -1332,28 +1336,55 @@
                             <!-- 4. EDARAN -->
                             @if ($surat->jenis_surat === 'surat_edaran')
                                 <div>
-                                    <div class="text-center font-bold uppercase my-1 text-[10px]"
-                                        x-text="pokokMaklumat">
+                                    <div class="text-center my-2 pb-1.5 border-b border-zinc-200">
+                                        <div class="font-extrabold uppercase text-[10px] tracking-wide text-zinc-900">
+                                            SURAT EDARAN RESMI MADRASAH
+                                        </div>
+                                        <div class="text-[8.5px] text-zinc-500 font-mono"
+                                            x-text="nomorEdaranInternal || nomorSurat || '...'"></div>
+                                        <div class="font-bold uppercase text-[9.5px] text-emerald-700 mt-0.5"
+                                            x-text="'TENTANG: ' + (pokokMaklumat || perihal || '').toUpperCase()">
+                                        </div>
                                     </div>
-                                    <div class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[8.5px] font-mono whitespace-pre-line"
-                                        x-text="instruksiPoin"></div>
+
+                                    <p class="mt-1">Diberitahukan kepada seluruh Asatidz, Dewan Guru, Murid, dan Wali
+                                        Murid MDT Hidayatus Shibyan mengenai ketetapan bersama sebagai berikut:</p>
+
+                                    <div class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[8.5px] font-mono whitespace-pre-line leading-relaxed"
+                                        x-text="instruksiPoin || '(Poin-poin instruksi ketetapan...)'"></div>
+
+                                    <template x-if="berlakuMulai">
+                                        <p class="mt-1">Ketetapan surat edaran ini berlaku sejak <strong
+                                                x-text="berlakuMulai"></strong> sampai dengan pemberitahuan resmi
+                                            berikutnya.</p>
+                                    </template>
                                 </div>
                             @endif
 
                             <!-- 5. PERMOHONAN IZIN -->
                             @if ($surat->jenis_surat === 'surat_permohonan_izin')
                                 <div>
-                                    <p>Sehubungan dengan pelaksanaan kegiatan <strong x-text="namaKegiatan"></strong>,
-                                        kami
-                                        mengajukan permohonan izin fasilitas pada:</p>
+                                    <p>Sehubungan dengan rencana pelaksanaan kegiatan <strong
+                                            x-text="namaKegiatan || perihal || '(Nama Kegiatan)'"></strong> oleh MDT
+                                        Hidayatus Shibyan yang insya Allah akan dilaksanakan pada:</p>
                                     <div
                                         class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px] space-y-0.5">
-                                        <div><strong
-                                                x-text="hariKegiatan + ', ' + formatTanggalMasehi(tanggalKegiatan)"></strong>
-                                            (<span x-text="waktuKegiatan"></span>)</div>
-                                        <div x-text="'Tempat: ' + tempatKegiatan"></div>
-                                        <div x-text="'Permohonan: ' + fasilitasDimohonkan"></div>
+                                        <div class="flex"><span class="w-28 text-zinc-500 shrink-0">Hari /
+                                                Tanggal:</span><strong
+                                                x-text="(hariKegiatan || '-') + ', ' + (tanggalKegiatan ? formatTanggalMasehi(tanggalKegiatan) : '-')"></strong>
+                                        </div>
+                                        <div class="flex"><span
+                                                class="w-28 text-zinc-500 shrink-0">Waktu:</span><span
+                                                x-text="waktuKegiatan || '08.00 WIB s/d Selesai'"></span></div>
+                                        <div class="flex"><span class="w-28 text-zinc-500 shrink-0">Tempat
+                                                Pelaksanaan:</span><span x-text="tempatKegiatan || '-'"></span></div>
+                                        <div class="flex" x-show="penanggungJawab"><span
+                                                class="w-28 text-zinc-500 shrink-0">Penanggung Jawab:</span><span
+                                                x-text="penanggungJawab"></span></div>
                                     </div>
+                                    <p class="mt-1">Maka dengan ini kami mengajukan permohonan izin untuk <strong
+                                            x-text="fasilitasDimohonkan || 'peminjaman fasilitas dan pelaksanaan kegiatan tersebut'"></strong>.
+                                    </p>
                                 </div>
                             @endif
 
@@ -1367,43 +1398,40 @@
                                             diadakan oleh MDT Hidayatus Shibyan, yang dilaksanakan pada:</p>
 
                                         <div
-                                            class="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-lg my-2 border border-zinc-200 dark:border-zinc-700 text-[9.5px] space-y-1">
+                                            class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px] space-y-0.5">
                                             <div class="flex" x-show="hariKegiatanDispensasi">
-                                                <span class="w-20 text-zinc-500">Hari:</span>
+                                                <span class="w-24 text-zinc-500">Hari:</span>
                                                 <strong x-text="hariKegiatanDispensasi"></strong>
                                             </div>
                                             <div class="flex">
-                                                <span class="w-20 text-zinc-500">Tanggal:</span>
+                                                <span class="w-24 text-zinc-500">Tanggal:</span>
                                                 <strong
-                                                    x-text="formatTanggalMasehi(tanggalMulaiDispensasi) + (tanggalSelesaiDispensasi && tanggalSelesaiDispensasi !== tanggalMulaiDispensasi ? ' s.d. ' + formatTanggalMasehi(tanggalSelesaiDispensasi) : '')"></strong>
+                                                    x-text="(tanggalMulaiDispensasi ? formatTanggalMasehi(tanggalMulaiDispensasi) : '-') + (tanggalSelesaiDispensasi && tanggalSelesaiDispensasi !== tanggalMulaiDispensasi ? ' s.d. ' + formatTanggalMasehi(tanggalSelesaiDispensasi) : '')"></strong>
                                             </div>
                                             <div class="flex" x-show="waktuKegiatanDispensasi">
-                                                <span class="w-20 text-zinc-500">Waktu:</span>
+                                                <span class="w-24 text-zinc-500">Waktu:</span>
                                                 <span x-text="waktuKegiatanDispensasi"></span>
                                             </div>
                                             <div class="flex">
-                                                <span class="w-20 text-zinc-500">Tempat:</span>
+                                                <span class="w-24 text-zinc-500">Tempat:</span>
                                                 <span
                                                     x-text="tempatKegiatanDispensasi || 'MDT Hidayatus Shibyan'"></span>
                                             </div>
                                         </div>
 
-                                        <p class="mt-2">
-                                            Maka kami selaku Kepala MDT Hidayatus Shibyan Desa Somorkoneng Kecamatan
-                                            Kwanyar
-                                            Kabupaten Bangkalan mengajukan permohonan dispensasi untuk <strong
-                                                x-text="permohonanDispensasiKhusus || 'dipulangkan lebih awal agar Murid dapat mempersiapkan diri'"></strong>.
+                                        <p class="mt-1">
+                                            Maka kami selaku Pengasuh MDT Hidayatus Shibyan Desa Somorkoneng Kecamatan
+                                            Kwanyar Kabupaten Bangkalan mengajukan permohonan dispensasi untuk <strong
+                                                x-text="permohonanDispensasiKhusus || 'dipulangkan pukul 12.00 WIB agar Murid dapat mempersiapkan diri'"></strong>.
                                             Adapun Murid yang mengikuti <span
                                                 x-text="namaKegiatanDispensasi || 'kegiatan tersebut'"></span> akan
-                                            disebut
-                                            sebagaimana terlampir.
+                                            disebut sebagaimana terlampir.
                                         </p>
                                     </div>
                                 @else
                                     <div>
-                                        <p>Yang bertanda tangan di bawah ini Kepala MDT Hidayatus Shibyan menerangkan
-                                            bahwa
-                                            murid di bawah ini:</p>
+                                        <p>Yang bertanda tangan di bawah ini Pengasuh MDT Hidayatus Shibyan menerangkan
+                                            bahwa murid di bawah ini:</p>
 
                                         <template x-if="activePreviewMurid">
                                             <div
@@ -1419,7 +1447,7 @@
                                                         Ruangan:</span><span
                                                         x-text="activePreviewMurid.ruangan_nama"></span>
                                                 </div>
-                                                <div class="flex"><span class="w-28 text-zinc-500">Orang Tua /
+                                                <div class="flex"><span class="w-28 text-zinc-500">Nama Orang Tua /
                                                         Wali:</span><span x-text="activePreviewMurid.nama_wali"></span>
                                                 </div>
                                                 <div class="flex"><span class="w-28 text-zinc-500">Dusun /
@@ -1428,19 +1456,22 @@
                                             </div>
                                         </template>
 
-                                        <p class="mt-2">Diberikan izin dan dispensasi kehadiran karena mengikuti
-                                            kegiatan
-                                            <strong x-text="namaKegiatanDispensasi || '(Nama Kegiatan)'"></strong>
+                                        <p class="mt-1">Diberikan izin dan dispensasi kehadiran karena mengikuti
+                                            kegiatan <strong
+                                                x-text="namaKegiatanDispensasi || 'kegiatan resmi madrasah'"></strong>
                                             pada:
                                         </p>
 
                                         <div
-                                            class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px]">
-                                            <div class="font-bold"
-                                                x-text="formatTanggalMasehi(tanggalMulaiDispensasi) + (tanggalSelesaiDispensasi && tanggalSelesaiDispensasi !== tanggalMulaiDispensasi ? ' s/d ' + formatTanggalMasehi(tanggalSelesaiDispensasi) : '') + (jumlahHari ? ' ('+jumlahHari+')' : '')">
+                                            class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px] space-y-0.5">
+                                            <div class="flex"><span class="w-28 text-zinc-500 shrink-0">Periode
+                                                    Dispensasi:</span>
+                                                <strong
+                                                    x-text="(tanggalMulaiDispensasi ? formatTanggalMasehi(tanggalMulaiDispensasi) : '-') + (tanggalSelesaiDispensasi && tanggalSelesaiDispensasi !== tanggalMulaiDispensasi ? ' s/d ' + formatTanggalMasehi(tanggalSelesaiDispensasi) : '') + (jumlahHari ? ' ('+jumlahHari+')' : '')"></strong>
                                             </div>
-                                            <div class="text-zinc-600 mt-0.5" x-show="alasanDispensasi"
-                                                x-text="alasanDispensasi"></div>
+                                            <div class="flex" x-show="alasanDispensasi"><span
+                                                    class="w-28 text-zinc-500 shrink-0">Keterangan:</span><span
+                                                    x-text="alasanDispensasi"></span></div>
                                         </div>
                                     </div>
                                 @endif
@@ -1449,17 +1480,29 @@
                             <!-- 7. UNDANGAN -->
                             @if ($surat->jenis_surat === 'surat_undangan')
                                 <div>
-                                    <p>Mengharap dengan hormat kehadiran Bapak/Ibu/Saudara pada kegiatan <strong
-                                            x-text="namaAcara"></strong> pada:</p>
+                                    <p>Mengharap dengan hormat kehadiran Bapak/Ibu/Saudara pada agenda <strong
+                                            x-text="namaAcara || perihal || '(Nama Agenda)'"></strong> yang insya Allah
+                                        akan dilaksanakan pada:</p>
                                     <div
                                         class="bg-zinc-50 p-2 rounded-lg my-1.5 border border-zinc-200 text-[9px] space-y-0.5">
-                                        <div><strong
-                                                x-text="hariAcara + ', ' + formatTanggalMasehi(tanggalAcara)"></strong>
-                                            •
-                                            <span x-text="waktuAcara"></span>
+                                        <div class="flex"><span
+                                                class="w-28 text-zinc-500 shrink-0">Hari:</span><strong
+                                                x-text="hariAcara || '-'"></strong>
                                         </div>
-                                        <div x-text="'Tempat: ' + tempatAcara"></div>
-                                        <div x-text="'Pakaian: ' + pakaianDresscode"></div>
+                                        <div class="flex"><span
+                                                class="w-28 text-zinc-500 shrink-0">Tanggal:</span><strong
+                                                x-text="tanggalAcara ? formatTanggalMasehi(tanggalAcara) : '-'"></strong>
+                                        </div>
+                                        <div class="flex"><span class="w-28 text-zinc-500 shrink-0">Waktu /
+                                                Pukul:</span><span
+                                                x-text="waktuAcara || '19.30 WIB (Ba\'da Isya) s/d Selesai'"></span>
+                                        </div>
+                                        <div class="flex"><span class="w-28 text-zinc-500 shrink-0">Tempat
+                                                Acara:</span><span
+                                                x-text="tempatAcara || 'Aula MDT Hidayatus Shibyan'"></span></div>
+                                        <div class="flex" x-show="agendaAcara"><span
+                                                class="w-28 text-zinc-500 shrink-0">Susunan Agenda:</span><span
+                                                x-text="agendaAcara"></span></div>
                                     </div>
                                 </div>
                             @endif
@@ -1515,8 +1558,6 @@
                                         <div class="text-[8.5px] leading-tight">
                                             <div class="font-extrabold underline text-zinc-900 dark:text-white"
                                                 x-text="s.nama"></div>
-                                            <div class="text-[7.5px] text-zinc-500 mt-0.5"
-                                                x-show="s.nip && s.nip !== '-'" x-text="'NIP. ' + s.nip"></div>
                                         </div>
                                     </div>
                                 </template>
@@ -1749,19 +1790,19 @@
                 hariPanggilan: '{{ addslashes($spesifik['hari_panggilan'] ?? '') }}',
                 tanggalPanggilan: '{{ $spesifik['tanggal_panggilan'] ?? '' }}',
                 waktuPanggilan: '{{ addslashes($spesifik['waktu_panggilan'] ?? '14.00 WIB s/d Selesai') }}',
-                tempatMenghadap: '{{ addslashes($spesifik['tempat_menghadap'] ?? 'Kantor TU MDTHS') }}',
-                menghadapKepada: '{{ addslashes($spesifik['menghadap_kepada'] ?? 'Kepala Madrasah & Tim Kesiswaan') }}',
-                alasanPanggilan: '{{ addslashes($spesifik['alasan_panggilan'] ?? '') }}',
+                tempatMenghadap: '{{ addslashes($spesifik['tempat_menghadap'] ?? 'Kantor TU / Ruang Guru MDT Hidayatus Shibyan') }}',
+                menghadapKepada: '{{ addslashes($spesifik['menghadap_kepada'] ?? 'Pengasuh & Tim Kesiswaan') }}',
+                alasanPanggilan: `{!! addslashes($spesifik['alasan_panggilan'] ?? '') !!}`,
 
                 tingkatSp: '{{ addslashes($spesifik['tingkat_sp'] ?? 'Surat Peringatan I (SP 1)') }}',
                 poinTatib: '{{ addslashes($spesifik['poin_tatib_dilanggar'] ?? '') }}',
-                bentukPelanggaran: '{{ addslashes($spesifik['bentuk_pelanggaran'] ?? '') }}',
+                bentukPelanggaran: `{!! addslashes($spesifik['bentuk_pelanggaran'] ?? '') !!}`,
                 tindakanPembinaan: '{{ addslashes($spesifik['tindakan_pembinaan'] ?? '') }}',
                 batasWaktuPembinaan: '{{ addslashes($spesifik['batas_waktu_pembinaan'] ?? '') }}',
 
                 kategoriPemberitahuan: '{{ addslashes($spesifik['kategori_pemberitahuan'] ?? 'Akademik & KBM') }}',
                 jadwalTerkait: '{{ addslashes($spesifik['jadwal_terkait'] ?? '') }}',
-                pokokPemberitahuan: '{{ addslashes($spesifik['pokok_pemberitahuan'] ?? '') }}',
+                pokokPemberitahuan: `{!! addslashes($spesifik['pokok_pemberitahuan'] ?? '') !!}`,
 
                 nomorEdaranInternal: '{{ addslashes($spesifik['nomor_edaran_internal'] ?? '') }}',
                 berlakuMulai: '{{ addslashes($spesifik['berlaku_mulai'] ?? 'Sejak tanggal ditetapkan') }}',
@@ -1771,10 +1812,10 @@
                 namaKegiatan: '{{ addslashes($spesifik['nama_kegiatan'] ?? '') }}',
                 hariKegiatan: '{{ addslashes($spesifik['hari_kegiatan'] ?? '') }}',
                 tanggalKegiatan: '{{ $spesifik['tanggal_kegiatan'] ?? '' }}',
-                waktuKegiatan: '{{ addslashes($spesifik['waktu_kegiatan'] ?? '08.00 WIB') }}',
+                waktuKegiatan: '{{ addslashes($spesifik['waktu_kegiatan'] ?? '08.00 WIB s/d Selesai') }}',
                 tempatKegiatan: '{{ addslashes($spesifik['tempat_kegiatan'] ?? '') }}',
                 penanggungJawab: '{{ addslashes($spesifik['penanggung_jawab'] ?? '') }}',
-                fasilitasDimohonkan: '{{ addslashes($spesifik['fasilitas_dimohonkan'] ?? '') }}',
+                fasilitasDimohonkan: `{!! addslashes($spesifik['fasilitas_dimohonkan'] ?? '') !!}`,
 
                 namaSekolahTujuan: '{{ addslashes($spesifik['nama_sekolah_tujuan'] ?? '') }}',
                 namaKegiatanDispensasi: '{{ addslashes($spesifik['nama_kegiatan_dispensasi'] ?? '') }}',
@@ -1785,15 +1826,17 @@
                 tempatKegiatanDispensasi: '{{ addslashes($spesifik['tempat_kegiatan_dispensasi'] ?? 'MDT Hidayatus Shibyan') }}',
                 permohonanDispensasiKhusus: '{{ addslashes($spesifik['permohonan_dispensasi_khusus'] ?? 'dipulangkan pukul 12.00 WIB agar Murid dapat mempersiapkan diri') }}',
                 jumlahHari: '{{ addslashes($spesifik['jumlah_hari'] ?? '') }}',
-                alasanDispensasi: '{{ addslashes($spesifik['alasan_kegiatan'] ?? '') }}',
+                alasanDispensasi: `{!! addslashes($spesifik['alasan_kegiatan'] ?? '') !!}`,
 
                 namaAcara: '{{ addslashes($spesifik['nama_acara'] ?? '') }}',
                 hariAcara: '{{ addslashes($spesifik['hari_acara'] ?? '') }}',
                 tanggalAcara: '{{ $spesifik['tanggal_acara'] ?? '' }}',
-                waktuAcara: '{{ addslashes($spesifik['waktu_acara'] ?? '19.30 WIB') }}',
-                tempatAcara: '{{ addslashes($spesifik['tempat_acara'] ?? 'Aula MDTHS') }}',
-                pakaianDresscode: '{{ addslashes($spesifik['pakaian_dresscode'] ?? 'Busana Muslim') }}',
-                agendaAcara: '{{ addslashes($spesifik['agenda_acara'] ?? '') }}',
+                waktuAcara: '{{ addslashes($spesifik['waktu_acara'] ?? '19.30 WIB (Ba\'da Isya) s/d Selesai') }}',
+                tempatAcara: '{{ addslashes($spesifik['tempat_acara'] ?? 'Aula MDT Hidayatus Shibyan') }}',
+                agendaAcara: `{!! addslashes($spesifik['agenda_acara'] ?? '') !!}`,
+
+                isiSurat: `{!! addslashes($surat->isi_surat ?? '') !!}`,
+                tembusan: '{{ addslashes($surat->tembusan ?? '') }}',
 
                 init() {
                     this.$watch('hasLampiran', (val) => {
@@ -1816,7 +1859,7 @@
                     if (type === 'agenda') {
                         this.lampiranJudul = 'SUSUNAN ACARA & JADWAL KEGIATAN';
                         this.lampiranKonten =
-                            "1. Pembukaan & Pembacaan Tahlil / Sholawat\n2. Sambutan Pengasuh / Kepala MDTHS\n3. Laporan Akademik & Perkembangan KBM\n4. Musyawarah & Tanya Jawab Bersama Wali Murid\n5. Doa Penutup & Ramah Tamah";
+                            "1. Pembukaan & Pembacaan Tahlil / Sholawat\n2. Sambutan Pengasuh MDTHS\n3. Laporan Akademik & Perkembangan KBM\n4. Musyawarah & Tanya Jawab Bersama Wali Murid\n5. Doa Penutup & Ramah Tamah";
                     } else if (type === 'poin') {
                         this.lampiranJudul = 'KETENTUAN & TATA TERTIB RESMI';
                         this.lampiranKonten =

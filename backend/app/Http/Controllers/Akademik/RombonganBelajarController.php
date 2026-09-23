@@ -332,26 +332,6 @@ class RombonganBelajarController extends Controller
 
         return view('cetak-baru.print-anggota', compact('ruangan'));
     }
-    public function printPembayaranAnggota($id)
-    {
-        $ruangan = Ruangan::with(['tahunPelajaran', 'waliRuangan', 'murids' => function ($q) {
-            $q->where('status', 'Aktif');
-            $q->orderBy('jenis_kelamin', 'asc');
-            $q->orderBy('nama_lengkap', 'asc');
-        }])->findOrFail($id);
-
-        return view('cetak-baru.print-pembayaran-anggota', compact('ruangan'));
-    }
-    public function printPenilaianAnggota($id)
-    {
-        $ruangan = Ruangan::with(['tahunPelajaran', 'waliRuangan', 'murids' => function ($q) {
-            $q->where('status', 'Aktif');
-            $q->orderBy('jenis_kelamin', 'asc');
-            $q->orderBy('nama_lengkap', 'asc');
-        }])->findOrFail($id);
-
-        return view('cetak-baru.print-penilaian-anggota', compact('ruangan'));
-    }
 
     /**
      * Export Data Anggota Ruangan ke Excel (CSV)

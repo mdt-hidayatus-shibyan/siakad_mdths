@@ -228,21 +228,22 @@
                         <div>
                             <label
                                 class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1.5 ml-1">
-                                Nama Kepala Madrasah
+                                Nama Pengasuh Madrasah
                             </label>
                             <input type="text" name="headmaster_name"
                                 value="{{ $settings['headmaster_name'] ?? '' }}"
-                                placeholder="Nama Kepala Sekolah beserta gelar"
+                                placeholder="Nama Pengasuh beserta gelar"
                                 class="m3-input-glass w-full text-xs font-bold">
                         </div>
 
                         <div>
                             <label
                                 class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1.5 ml-1">
-                                NIP / NIY Kepala
+                                NIY / NIGM Pengasuh (Opsional)
                             </label>
                             <input type="text" name="headmaster_nip"
-                                value="{{ $settings['headmaster_nip'] ?? '' }}" placeholder="Nomor Induk Pegawai"
+                                value="{{ $settings['headmaster_nip'] ?? '' }}"
+                                placeholder="Nomor Induk Guru / Yayasan"
                                 class="m3-input-glass w-full text-xs font-bold">
                         </div>
                     </div>

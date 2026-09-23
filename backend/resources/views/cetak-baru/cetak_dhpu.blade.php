@@ -302,7 +302,7 @@
         <tr style="border: none;">
             <td style="width: 50%; border: none; text-align: center; vertical-align: top;">
                 <p style="margin: 0; font-size: 12px;">Mengetahui,</p>
-                <p style="margin: 2px 0 6px 0; font-size: 12px; font-weight: bold;">Kepala Madrasah / Pengasuh</p>
+                <p style="margin: 2px 0 6px 0; font-size: 12px; font-weight: bold;">Pengasuh</p>
                 <div style="min-height: 65px; display: flex; justify-content: center; align-items: center;">
                     @if (!empty($pengasuh?->id))
                         {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(65)->generate(
@@ -314,7 +314,7 @@
                 </div>
                 <p
                     style="margin: 6px 0 0 0; font-size: 12px; font-weight: bold; text-decoration: underline; text-transform: uppercase;">
-                    {{ $pengasuh?->anggota?->nama_lengkap ?? ($pengasuh?->nama ?? 'Nama Kepala Belum Diatur') }}
+                    {{ $pengasuh?->anggota?->nama_lengkap ?? ($pengasuh?->nama ?? 'Nama Pengasuh Belum Diatur') }}
                 </p>
             </td>
 

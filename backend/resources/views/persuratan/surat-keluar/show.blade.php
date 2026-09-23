@@ -280,21 +280,26 @@
                                 </div>
                             </div>
                         @endif
-                        <p class="mt-2">Untuk hadir pada:</p>
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 font-medium my-2">
-                            <div class="flex"><span class="w-32 text-zinc-500">Hari / Tanggal</span><span>:
+                        <p class="mt-2">Untuk hadir menghadap pada:</p>
+                        <div
+                            class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 font-medium my-2 border border-zinc-200/60 dark:border-zinc-700/60">
+                            <div class="flex"><span class="w-36 text-zinc-500">Hari / Tanggal</span><span>:
                                     <strong>{{ $spesifik['hari_panggilan'] ?? '-' }},
                                         {{ isset($spesifik['tanggal_panggilan']) && $spesifik['tanggal_panggilan'] ? \Carbon\Carbon::parse($spesifik['tanggal_panggilan'])->translatedFormat('d F Y') : '-' }}</strong></span>
                             </div>
-                            <div class="flex"><span class="w-32 text-zinc-500">Waktu / Pukul</span><span>:
-                                    {{ $spesifik['waktu_panggilan'] ?? '-' }}</span></div>
-                            <div class="flex"><span class="w-32 text-zinc-500">Tempat</span><span>:
-                                    {{ $spesifik['tempat_menghadap'] ?? '-' }}</span></div>
-                            <div class="flex"><span class="w-32 text-zinc-500">Menghadap</span><span>:
-                                    {{ $spesifik['menghadap_kepada'] ?? '-' }}</span></div>
+                            <div class="flex"><span class="w-36 text-zinc-500">Waktu / Pukul</span><span>:
+                                    {{ $spesifik['waktu_panggilan'] ?? '14.00 WIB s/d Selesai' }}</span></div>
+                            <div class="flex"><span class="w-36 text-zinc-500">Tempat</span><span>:
+                                    {{ $spesifik['tempat_menghadap'] ?? 'Kantor TU / Ruang Guru MDT Hidayatus Shibyan' }}</span>
+                            </div>
+                            <div class="flex"><span class="w-36 text-zinc-500">Menghadap Kepada</span><span>:
+                                    <strong
+                                        class="text-zinc-900 dark:text-zinc-100">{{ $spesifik['menghadap_kepada'] ?? 'Pengasuh & Tim Kesiswaan' }}</strong></span>
+                            </div>
                         </div>
                     @elseif ($surat->jenis_surat === 'surat_peringatan')
-                        <p>Berdasarkan hasil evaluasi kedisiplinan dan tata tertib madrasah, dengan ini kami menerbitkan
+                        <p>Berdasarkan hasil pemantauan kedisiplinan dan tata tertib madrasah, dengan ini Pengurus MDT
+                            Hidayatus Shibyan menerbitkan
                             <strong>{{ $spesifik['tingkat_sp'] ?? 'Surat Peringatan' }}</strong> kepada murid:
                         </p>
                         @if ($surat->murid)
@@ -316,23 +321,32 @@
                                 </div>
                             </div>
                         @endif
-                        <p class="mt-2">Atas tindakan pelanggaran tata tertib sebagai berikut:</p>
+                        <p class="mt-2">Surat Peringatan ini diberikan atas pertimbangan pelanggaran sebagai berikut:
+                        </p>
                         <div
-                            class="bg-rose-50 dark:bg-rose-950/20 p-3 rounded-xl border border-rose-200 dark:border-rose-900/40 my-2 space-y-1">
-                            <p class="font-bold text-rose-700 dark:text-rose-300">
-                                {{ $spesifik['bentuk_pelanggaran'] ?? '-' }}</p>
+                            class="bg-rose-50 dark:bg-rose-950/20 p-3 rounded-xl border border-rose-200 dark:border-rose-900/40 my-2 space-y-1.5 text-xs">
+                            <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Uraian
+                                    Pelanggaran</span><span class="text-rose-700 dark:text-rose-400 font-bold">:
+                                    {{ $spesifik['bentuk_pelanggaran'] ?? '-' }}</span></div>
                             @if (!empty($spesifik['poin_tatib_dilanggar']))
-                                <p class="text-[11px] text-zinc-500">Dasar Aturan:
-                                    {{ $spesifik['poin_tatib_dilanggar'] }}</p>
+                                <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Dasar
+                                        Peraturan</span><span>: {{ $spesifik['poin_tatib_dilanggar'] }}</span></div>
                             @endif
                             @if (!empty($spesifik['tindakan_pembinaan']))
-                                <p class="text-[11px] text-zinc-500">Tindakan Pembinaan:
-                                    {{ $spesifik['tindakan_pembinaan'] }} (Masa:
-                                    {{ $spesifik['batas_waktu_pembinaan'] ?? '-' }})</p>
+                                <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Tindakan
+                                        Pembinaan</span><span>: {{ $spesifik['tindakan_pembinaan'] }}</span></div>
+                            @endif
+                            @if (!empty($spesifik['batas_waktu_pembinaan']))
+                                <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Masa
+                                        Pembinaan</span><span>: {{ $spesifik['batas_waktu_pembinaan'] }}</span></div>
                             @endif
                         </div>
+                        <p class="mt-2">
+                            Kami menghimbau kepada murid bersangkutan dan orang tua/wali untuk segera melakukan
+                            pembinaan dan perbaikan agar tidak berlanjut ke sanksi tingkat berikutnya.
+                        </p>
                     @elseif ($surat->jenis_surat === 'surat_pemberitahuan')
-                        <p>Dengan hormat, melalui surat ini kami sampaikan pemberitahuan resmi mengenai hal berikut
+                        <p>Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut
                             @if ($surat->murid)
                                 kepada Orang Tua / Wali dari murid:
                             @else
@@ -359,76 +373,118 @@
                             </div>
                         @endif
                         <div
-                            class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 my-2 border-l-4 border-emerald-600">
+                            class="bg-zinc-50 dark:bg-zinc-800/50 p-3.5 rounded-xl space-y-1.5 my-2 border-l-4 border-emerald-600">
                             @if (!empty($spesifik['kategori_pemberitahuan']))
-                                <div class="text-[10px] font-bold text-emerald-600 uppercase">
+                                <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
                                     [ {{ $spesifik['kategori_pemberitahuan'] }} ]
                                 </div>
                             @endif
-                            <p class="font-bold text-zinc-900 dark:text-white">
+                            <p class="font-bold text-zinc-900 dark:text-white text-xs">
                                 {{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}</p>
                             @if (!empty($spesifik['jadwal_terkait']))
-                                <p class="text-[11px] text-zinc-500"><strong>Jadwal:</strong>
+                                <p class="text-xs text-zinc-600 dark:text-zinc-400"><strong>Jadwal
+                                        Pelaksanaan:</strong>
                                     {{ $spesifik['jadwal_terkait'] }}
                                 </p>
                             @endif
                         </div>
                     @elseif ($surat->jenis_surat === 'surat_edaran')
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-2 my-2">
-                            <p class="font-bold text-center uppercase">
-                                {{ $spesifik['pokok_maklumat'] ?? $surat->perihal }}</p>
-                            <div class="whitespace-pre-line text-xs font-mono pl-2">{!! nl2br(e($spesifik['instruksi_poin'] ?? '')) !!}</div>
+                        <div class="text-center my-3 pb-2 border-b border-zinc-200 dark:border-zinc-700">
+                            <div class="text-xs font-black uppercase text-zinc-900 dark:text-white">
+                                SURAT EDARAN RESMI MADRASAH
+                            </div>
+                            <div class="text-[11px] text-zinc-500 font-mono mt-0.5">
+                                {{ $spesifik['nomor_edaran_internal'] ?? $surat->nomor_surat }}
+                            </div>
+                            <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 mt-1 uppercase">
+                                TENTANG: {{ $spesifik['pokok_maklumat'] ?? $surat->perihal }}
+                            </div>
                         </div>
-                    @elseif ($surat->jenis_surat === 'surat_permohonan_izin')
-                        <p>Sehubungan dengan pelaksanaan agenda
-                            <strong>{{ $spesifik['nama_kegiatan'] ?? $surat->perihal }}</strong>, kami memohon izin
-                            permohonan fasilitas/tempat dengan rincian:
+
+                        <p>Diberitahukan kepada seluruh Asatidz, Dewan Guru, Murid, dan Wali Murid MDT Hidayatus Shibyan
+                            mengenai ketetapan bersama sebagai berikut:
                         </p>
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 my-2">
-                            <p><strong>Hari/Tgl:</strong> {{ $spesifik['hari_kegiatan'] ?? '' }},
-                                {{ isset($spesifik['tanggal_kegiatan']) && $spesifik['tanggal_kegiatan'] ? \Carbon\Carbon::parse($spesifik['tanggal_kegiatan'])->translatedFormat('d F Y') : '' }}
-                                ({{ $spesifik['waktu_kegiatan'] ?? '' }})</p>
-                            <p><strong>Lokasi:</strong> {{ $spesifik['tempat_kegiatan'] ?? '' }}</p>
-                            <p><strong>Permohonan:</strong> {{ $spesifik['fasilitas_dimohonkan'] ?? '' }}</p>
+
+                        <div
+                            class="bg-zinc-50 dark:bg-zinc-800/50 p-3.5 rounded-xl my-2 border border-zinc-200/60 dark:border-zinc-700/60 whitespace-pre-line text-xs font-medium leading-relaxed text-zinc-800 dark:text-zinc-200">
+                            {!! nl2br(e($spesifik['instruksi_poin'] ?? '')) !!}
                         </div>
+
+                        @if (!empty($spesifik['berlaku_mulai']))
+                            <p class="mt-2">
+                                Ketetapan surat edaran ini berlaku sejak
+                                <strong>{{ $spesifik['berlaku_mulai'] }}</strong>
+                                sampai dengan pemberitahuan resmi berikutnya.
+                            </p>
+                        @endif
+                    @elseif ($surat->jenis_surat === 'surat_permohonan_izin')
+                        <p>Sehubungan dengan rencana pelaksanaan kegiatan
+                            <strong>{{ $spesifik['nama_kegiatan'] ?? $surat->perihal }}</strong> oleh MDT Hidayatus
+                            Shibyan
+                            yang insya Allah akan dilaksanakan pada:
+                        </p>
+                        <div
+                            class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1.5 my-2 border border-zinc-200/60 dark:border-zinc-700/60 text-xs font-medium">
+                            <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Hari / Tanggal</span><span>:
+                                    <strong>{{ $spesifik['hari_kegiatan'] ?? '-' }},
+                                        {{ isset($spesifik['tanggal_kegiatan']) && $spesifik['tanggal_kegiatan'] ? \Carbon\Carbon::parse($spesifik['tanggal_kegiatan'])->translatedFormat('d F Y') : '-' }}</strong></span>
+                            </div>
+                            <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Waktu</span><span>:
+                                    {{ $spesifik['waktu_kegiatan'] ?? '08.00 WIB s/d Selesai' }}</span></div>
+                            <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Tempat
+                                    Pelaksanaan</span><span>: {{ $spesifik['tempat_kegiatan'] ?? '-' }}</span></div>
+                            @if (!empty($spesifik['penanggung_jawab']))
+                                <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Penanggung
+                                        Jawab</span><span>: {{ $spesifik['penanggung_jawab'] }}</span></div>
+                            @endif
+                        </div>
+                        <p class="mt-2">
+                            Maka dengan ini kami mengajukan permohonan izin untuk
+                            <strong>{{ $spesifik['fasilitas_dimohonkan'] ?? 'peminjaman fasilitas dan pelaksanaan kegiatan tersebut' }}</strong>.
+                        </p>
                     @elseif ($surat->jenis_surat === 'surat_dispensasi')
                         @if ($surat->is_dispensasi_massal)
                             <p>Sehubungan dengan adanya
-                                <strong>{{ $spesifik['nama_kegiatan_dispensasi'] ?? 'kegiatan madrasah' }}</strong>
+                                <strong>{{ $spesifik['nama_kegiatan_dispensasi'] ?? 'kegiatan resmi madrasah' }}</strong>
                                 yang diadakan oleh MDT Hidayatus Shibyan, yang dilaksanakan pada:
                             </p>
                             <div
-                                class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 font-medium my-2 text-xs border border-zinc-200/60 dark:border-zinc-700/60">
+                                class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1.5 font-medium my-2 text-xs border border-zinc-200/60 dark:border-zinc-700/60">
                                 @if (!empty($spesifik['hari_kegiatan_dispensasi']))
-                                    <p><strong>Hari:</strong> {{ $spesifik['hari_kegiatan_dispensasi'] }}</p>
+                                    <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Hari</span><span>:
+                                            <strong>{{ $spesifik['hari_kegiatan_dispensasi'] }}</strong></span></div>
                                 @endif
-                                <p><strong>Tanggal:</strong>
-                                    {{ isset($spesifik['tanggal_mulai_dispensasi']) && $spesifik['tanggal_mulai_dispensasi'] ? \Carbon\Carbon::parse($spesifik['tanggal_mulai_dispensasi'])->translatedFormat('d F Y') : '-' }}
-                                    @if (
-                                        !empty($spesifik['tanggal_selesai_dispensasi']) &&
-                                            $spesifik['tanggal_selesai_dispensasi'] !== $spesifik['tanggal_mulai_dispensasi']
-                                    )
-                                        s.d.
-                                        {{ \Carbon\Carbon::parse($spesifik['tanggal_selesai_dispensasi'])->translatedFormat('d F Y') }}
-                                    @endif
-                                </p>
+                                <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Tanggal</span><span>:
+                                        <strong>{{ isset($spesifik['tanggal_mulai_dispensasi']) && $spesifik['tanggal_mulai_dispensasi'] ? \Carbon\Carbon::parse($spesifik['tanggal_mulai_dispensasi'])->translatedFormat('d F Y') : '-' }}
+                                            @if (
+                                                !empty($spesifik['tanggal_selesai_dispensasi']) &&
+                                                    $spesifik['tanggal_selesai_dispensasi'] !== $spesifik['tanggal_mulai_dispensasi']
+                                            )
+                                                s.d.
+                                                {{ \Carbon\Carbon::parse($spesifik['tanggal_selesai_dispensasi'])->translatedFormat('d F Y') }}
+                                            @endif
+                                        </strong></span>
+                                </div>
                                 @if (!empty($spesifik['waktu_kegiatan_dispensasi']))
-                                    <p><strong>Waktu:</strong> {{ $spesifik['waktu_kegiatan_dispensasi'] }}</p>
+                                    <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Waktu</span><span>:
+                                            {{ $spesifik['waktu_kegiatan_dispensasi'] }}</span></div>
                                 @endif
-                                <p><strong>Tempat:</strong>
-                                    {{ $spesifik['tempat_kegiatan_dispensasi'] ?? 'MDT Hidayatus Shibyan' }}</p>
+                                <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Tempat</span><span>:
+                                        {{ $spesifik['tempat_kegiatan_dispensasi'] ?? 'MDT Hidayatus Shibyan' }}</span>
+                                </div>
                             </div>
                             <p class="mt-2">
-                                Maka kami selaku Kepala MDT Hidayatus Shibyan Desa Somorkoneng Kecamatan Kwanyar
+                                Maka kami selaku Pengasuh MDT Hidayatus Shibyan Desa Somorkoneng Kecamatan Kwanyar
                                 Kabupaten Bangkalan mengajukan permohonan dispensasi untuk
-                                <strong>{{ $spesifik['permohonan_dispensasi_khusus'] ?? 'dipulangkan lebih awal agar murid dapat mempersiapkan diri' }}</strong>.
+                                <strong>{{ $spesifik['permohonan_dispensasi_khusus'] ?? 'dipulangkan pukul 12.00 WIB agar Murid dapat mempersiapkan diri' }}</strong>.
                                 Adapun Murid yang mengikuti
                                 {{ $spesifik['nama_kegiatan_dispensasi'] ?? 'kegiatan tersebut' }} akan disebut
                                 sebagaimana terlampir.
                             </p>
                         @else
                             {{-- DISPENSASI 1 MURID --}}
-                            <p>Dengan ini kami menerangkan bahwa murid di bawah ini:</p>
+                            <p>Yang bertanda tangan di bawah ini Pengasuh MDT Hidayatus Shibyan menerangkan bahwa murid
+                                di bawah ini:</p>
                             @if ($surat->murid)
                                 <div
                                     class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 font-medium my-2 text-xs border border-zinc-200/60 dark:border-zinc-700/60">
@@ -448,40 +504,56 @@
                                     </div>
                                 </div>
                             @endif
-                            <p class="mt-2">Diberikan izin dan dispensasi kehadiran karena mengikuti agenda kegiatan
-                                <strong>{{ $spesifik['nama_kegiatan_dispensasi'] ?? $surat->perihal }}</strong> pada:
+                            <p class="mt-2">Diberikan izin dan dispensasi kehadiran karena mengikuti kegiatan
+                                <strong>{{ $spesifik['nama_kegiatan_dispensasi'] ?? 'kegiatan resmi madrasah' }}</strong>
+                                pada:
                             </p>
-                            <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 my-2">
-                                <p><strong>Periode Dispensasi:</strong>
-                                    {{ isset($spesifik['tanggal_mulai_dispensasi']) && $spesifik['tanggal_mulai_dispensasi'] ? \Carbon\Carbon::parse($spesifik['tanggal_mulai_dispensasi'])->translatedFormat('d F Y') : '-' }}
-                                    @if (
-                                        !empty($spesifik['tanggal_selesai_dispensasi']) &&
-                                            $spesifik['tanggal_selesai_dispensasi'] !== $spesifik['tanggal_mulai_dispensasi']
-                                    )
-                                        s.d.
-                                        {{ \Carbon\Carbon::parse($spesifik['tanggal_selesai_dispensasi'])->translatedFormat('d F Y') }}
-                                    @endif
-                                    @if (!empty($spesifik['jumlah_hari']))
-                                        ({{ $spesifik['jumlah_hari'] }})
-                                    @endif
-                                </p>
+                            <div
+                                class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1.5 my-2 border border-zinc-200/60 dark:border-zinc-700/60 text-xs font-medium">
+                                <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Periode
+                                        Dispensasi</span><span>:
+                                        <strong>{{ isset($spesifik['tanggal_mulai_dispensasi']) && $spesifik['tanggal_mulai_dispensasi'] ? \Carbon\Carbon::parse($spesifik['tanggal_mulai_dispensasi'])->translatedFormat('d F Y') : '-' }}
+                                            @if (
+                                                !empty($spesifik['tanggal_selesai_dispensasi']) &&
+                                                    $spesifik['tanggal_selesai_dispensasi'] !== $spesifik['tanggal_mulai_dispensasi']
+                                            )
+                                                s/d
+                                                {{ \Carbon\Carbon::parse($spesifik['tanggal_selesai_dispensasi'])->translatedFormat('d F Y') }}
+                                            @endif
+                                            @if (!empty($spesifik['jumlah_hari']))
+                                                ({{ $spesifik['jumlah_hari'] }})
+                                            @endif
+                                        </strong></span>
+                                </div>
                                 @if (!empty($spesifik['alasan_kegiatan']))
-                                    <p><strong>Alasan:</strong> {{ $spesifik['alasan_kegiatan'] }}</p>
+                                    <div class="flex"><span
+                                            class="w-36 text-zinc-500 shrink-0">Keterangan</span><span>:
+                                            {{ $spesifik['alasan_kegiatan'] }}</span></div>
                                 @endif
                             </div>
                         @endif
                     @elseif ($surat->jenis_surat === 'surat_undangan')
-                        <p>Mengharap dengan hormat kehadiran Bapak/Ibu/Saudara pada kegiatan
+                        <p>Mengharap dengan hormat kehadiran Bapak/Ibu/Saudara pada agenda
                             <strong>{{ $spesifik['nama_acara'] ?? $surat->perihal }}</strong> yang insya Allah akan
                             dilaksanakan pada:
                         </p>
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1 my-2">
-                            <p><strong>Hari/Tgl:</strong> {{ $spesifik['hari_acara'] ?? '' }},
-                                {{ isset($spesifik['tanggal_acara']) && $spesifik['tanggal_acara'] ? \Carbon\Carbon::parse($spesifik['tanggal_acara'])->translatedFormat('d F Y') : '' }}
-                            </p>
-                            <p><strong>Waktu:</strong> {{ $spesifik['waktu_acara'] ?? '' }}</p>
-                            <p><strong>Tempat:</strong> {{ $spesifik['tempat_acara'] ?? '' }}</p>
-                            <p><strong>Pakaian:</strong> {{ $spesifik['pakaian_dresscode'] ?? '' }}</p>
+                        <div
+                            class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl space-y-1.5 my-2 border border-zinc-200/60 dark:border-zinc-700/60 text-xs font-medium">
+                            <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Hari</span><span>:
+                                    <strong>{{ $spesifik['hari_acara'] ?? '-' }}</strong></span>
+                            </div>
+                            <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Tanggal</span><span>:
+                                    <strong>{{ isset($spesifik['tanggal_acara']) && $spesifik['tanggal_acara'] ? \Carbon\Carbon::parse($spesifik['tanggal_acara'])->translatedFormat('d F Y') : '-' }}</strong></span>
+                            </div>
+                            <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Waktu / Pukul</span><span>:
+                                    {{ $spesifik['waktu_acara'] ?? '19.30 WIB (Ba\'da Isya) s/d Selesai' }}</span>
+                            </div>
+                            <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Tempat Acara</span><span>:
+                                    {{ $spesifik['tempat_acara'] ?? 'Aula MDT Hidayatus Shibyan' }}</span></div>
+                            @if (!empty($spesifik['agenda_acara']))
+                                <div class="flex"><span class="w-36 text-zinc-500 shrink-0">Susunan
+                                        Agenda</span><span>: {{ $spesifik['agenda_acara'] }}</span></div>
+                            @endif
                         </div>
                     @endif
 
@@ -544,9 +616,6 @@
                                 <td class="align-bottom pt-1">
                                     <p class="font-extrabold underline text-zinc-900 dark:text-zinc-100 text-xs mb-0">
                                         {{ $signer['nama'] ?? '-' }}</p>
-                                    @if (!empty($signer['nip']) && $signer['nip'] !== '-')
-                                        <p class="text-[10px] text-zinc-500 mt-0.5">NIP. {{ $signer['nip'] }}</p>
-                                    @endif
                                 </td>
                             @endforeach
                         </tr>
@@ -715,10 +784,6 @@
                                             <p
                                                 class="font-extrabold underline text-zinc-900 dark:text-zinc-100 text-xs mb-0">
                                                 {{ $signer['nama'] ?? '-' }}</p>
-                                            @if (!empty($signer['nip']) && $signer['nip'] !== '-')
-                                                <p class="text-[10px] text-zinc-500 mt-0.5">NIP. {{ $signer['nip'] }}
-                                                </p>
-                                            @endif
                                         </td>
                                     @endforeach
                                 </tr>

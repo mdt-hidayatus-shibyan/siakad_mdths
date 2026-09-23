@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -253,7 +253,7 @@
 
     <div class="signatures">
         <div class="signature-box">
-            <div>Mengetahui,<br>Kepala MDT Hidayatus Shibyan</div>
+            <div>Mengetahui,<br>Pengasuh MDT Hidayatus Shibyan</div>
             <div class="signature-space"></div>
             <div class="signature-name">( ........................................ )</div>
         </div>

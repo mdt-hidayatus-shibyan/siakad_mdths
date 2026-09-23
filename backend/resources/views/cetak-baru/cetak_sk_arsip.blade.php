@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -169,7 +169,7 @@
             <p class="font-bold mt-2 uppercase text-[11pt]">TENTANG<br>EVALUASI AKADEMIK & KENAIKAN KELAS</p>
         </div>
 
-        <p class="mb-3">Kepala Madrasah Diniyah Takmiliyah Hidayatus Shibyan,</p>
+        <p class="mb-3">Pengasuh Madrasah Diniyah Takmiliyah Hidayatus Shibyan,</p>
 
         <table class="w-full tabel-konsideran mb-2">
             <tr>

@@ -39,13 +39,19 @@
                 box-shadow: none !important;
                 margin: 0 !important;
                 padding: 2mm 4mm !important;
+                width: 100% !important;
                 max-width: 100% !important;
-                min-height: auto !important;
+                height: 278mm !important;
+                min-height: 278mm !important;
                 border: none !important;
                 page-break-after: always !important;
                 break-after: page !important;
-                page-break-inside: avoid;
-                break-inside: avoid;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
             }
 
             .page-sheet:last-child {
@@ -232,278 +238,344 @@
                         </p>
 
                         @if ($surat->murid)
-                            <div style="margin: 8px 0 12px 10px;">
-                                <table class="tabel-identitas">
-                                    <tr>
-                                        <td style="width: 140px; font-weight: 600;">Nama Murid</td>
-                                        <td style="width: 10px;">:</td>
-                                        <td style="font-weight: 700;">{{ $surat->murid->nama_lengkap }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">NISM</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->nism ?? '-' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">Kelas / Ruangan</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->nama_ruangan_aktif ?? '-' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">Nama Orang Tua / Wali</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->nama_ayah ?: $surat->murid->waliMurid->nama_kepala_keluarga ?? ($surat->murid->nama_ibu ?? '-') }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">Dusun / Kampung</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->waliMurid->kampung->nama_kampung ?? ($surat->murid->alamat ?? 'Somorkoneng') }}
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        @endif
-
-                        <p style="margin-bottom: 6px;">Untuk hadir menghadap pimpinan madrasah pada:</p>
-                        <div style="margin: 6px 0 12px 10px;">
-                            <table class="tabel-identitas">
+                            <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 8px;">
                                 <tr>
-                                    <td style="width: 130px; font-weight: 600;">Hari / Tanggal</td>
+                                    <td style="width: 150px; font-weight: 600;">Nama Murid</td>
                                     <td style="width: 10px;">:</td>
-                                    <td style="font-weight: 700;">
-                                        {{ $spesifik['hari_panggilan'] ?? '-' }},
-                                        {{ isset($spesifik['tanggal_panggilan']) && $spesifik['tanggal_panggilan'] ? \Carbon\Carbon::parse($spesifik['tanggal_panggilan'])->translatedFormat('d F Y') : '-' }}
+                                    <td style="font-weight: 700;">{{ $surat->murid->nama_lengkap }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">NISM</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->nism ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">Kelas / Ruangan</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->nama_ruangan_aktif ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">Nama Orang Tua / Wali</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->nama_ayah ?: $surat->murid->waliMurid->nama_kepala_keluarga ?? ($surat->murid->nama_ibu ?? '-') }}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="font-weight: 600;">Waktu / Pukul</td>
+                                    <td style="font-weight: 600;">Dusun / Kampung</td>
                                     <td>:</td>
-                                    <td>{{ $spesifik['waktu_panggilan'] ?? '14.00 WIB s/d Selesai' }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight: 600;">Tempat</td>
-                                    <td>:</td>
-                                    <td>{{ $spesifik['tempat_menghadap'] ?? 'Kantor Pengurus MDT Hidayatus Shibyan' }}
+                                    <td>{{ $surat->murid->waliMurid->kampung->nama_kampung ?? ($surat->murid->alamat ?? 'Somorkoneng') }}
                                     </td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight: 600;">Menghadap Kepada</td>
-                                    <td>:</td>
-                                    <td style="font-weight: 600;">
-                                        {{ $spesifik['menghadap_kepada'] ?? 'Kepala Madrasah & Tim Kesiswaan' }}</td>
                                 </tr>
                             </table>
-                        </div>
-                    @endif
+                        @endif
 
-                    {{-- B. SURAT PERINGATAN (SP) --}}
-                    @if ($surat->jenis_surat === 'surat_peringatan')
-                        <div
-                            style="text-align: center; margin: 10px 0; font-weight: 800; font-size: 12pt; text-decoration: underline; text-transform: uppercase;">
-                            {{ $spesifik['tingkat_sp'] ?? 'SURAT PERINGATAN (SP)' }}
-                        </div>
+                        <p style="margin-bottom: 6px;">Untuk hadir menghadap pada:</p>
+                        <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 10px;">
+                            <tr>
+                                <td style="width: 140px; font-weight: 600;">Hari / Tanggal</td>
+                                <td style="width: 10px;">:</td>
+                                <td style="font-weight: 700;">
+                                    {{ $spesifik['hari_panggilan'] ?? '-' }},
+                                    {{ isset($spesifik['tanggal_panggilan']) && $spesifik['tanggal_panggilan'] ? \Carbon\Carbon::parse($spesifik['tanggal_panggilan'])->translatedFormat('d F Y') : '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Waktu / Pukul</td>
+                                <td>:</td>
+                                <td>{{ $spesifik['waktu_panggilan'] ?? '14.00 WIB s/d Selesai' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Tempat</td>
+                                <td>:</td>
+                                <td>{{ $spesifik['tempat_menghadap'] ?? 'Kantor TU / Ruang Guru MDT Hidayatus Shibyan' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Menghadap Kepada</td>
+                                <td>:</td>
+                                <td style="font-weight: 700;">
+                                    {{ $spesifik['menghadap_kepada'] ?? 'Pengasuh & Tim Kesiswaan' }}</td>
+                            </tr>
+                        </table>
 
+                        {{-- B. SURAT PERINGATAN (SP) --}}
+                    @elseif ($surat->jenis_surat === 'surat_peringatan')
                         <p style="margin-bottom: 8px;">
-                            Surat Peringatan ini diterbitkan secara resmi oleh pihak pimpinan Madrasah Diniyah
-                            Takmiliyah
-                            Hidayatus Shibyan dan ditujukan kepada murid:
+                            Berdasarkan hasil pemantauan kedisiplinan dan tata tertib madrasah, dengan ini Pengurus MDT
+                            Hidayatus Shibyan menerbitkan
+                            <strong>{{ $spesifik['tingkat_sp'] ?? 'Surat Peringatan' }}</strong> kepada murid:
                         </p>
 
                         @if ($surat->murid)
-                            <div style="margin: 8px 0 12px 10px;">
-                                <table class="tabel-identitas">
-                                    <tr>
-                                        <td style="width: 140px; font-weight: 600;">Nama Murid</td>
-                                        <td style="width: 10px;">:</td>
-                                        <td style="font-weight: 700;">{{ $surat->murid->nama_lengkap }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">NISM</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->nism ?? '-' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">Kelas / Ruangan</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->nama_ruangan_aktif ?? '-' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">Nama Orang Tua / Wali</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->nama_ayah ?: $surat->murid->waliMurid->nama_kepala_keluarga ?? ($surat->murid->nama_ibu ?? '-') }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">Dusun / Kampung</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->waliMurid->kampung->nama_kampung ?? ($surat->murid->alamat ?? 'Somorkoneng') }}
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
+                            <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 8px;">
+                                <tr>
+                                    <td style="width: 150px; font-weight: 600;">Nama Murid</td>
+                                    <td style="width: 10px;">:</td>
+                                    <td style="font-weight: 700;">{{ $surat->murid->nama_lengkap }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">NISM</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->nism ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">Kelas / Ruangan</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->nama_ruangan_aktif ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">Nama Orang Tua / Wali</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->nama_ayah ?: $surat->murid->waliMurid->nama_kepala_keluarga ?? ($surat->murid->nama_ibu ?? '-') }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">Dusun / Kampung</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->waliMurid->kampung->nama_kampung ?? ($surat->murid->alamat ?? 'Somorkoneng') }}
+                                    </td>
+                                </tr>
+                            </table>
                         @endif
 
-                        <p style="margin-bottom: 6px;">Berdasarkan hasil evaluasi dan catatan ketertiban madrasah, yang
-                            bersangkutan telah melakukan tindakan pelanggaran sebagai berikut:</p>
-                        <table class="tabel-data-box">
+                        <p style="margin-bottom: 6px;">Surat Peringatan ini diberikan atas pertimbangan pelanggaran
+                            sebagai
+                            berikut:</p>
+                        <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 10px;">
                             <tr>
-                                <td style="width: 170px; font-weight: 600; color: #475569;">Bentuk Pelanggaran</td>
+                                <td style="width: 140px; font-weight: 600;">Uraian Pelanggaran</td>
+                                <td style="width: 10px;">:</td>
                                 <td style="font-weight: 700; color: #b91c1c;">
-                                    {{ $spesifik['bentuk_pelanggaran'] ?? ($spesifik['alasan_sp'] ?? '-') }}</td>
+                                    {{ $spesifik['bentuk_pelanggaran'] ?? '-' }}
+                                </td>
                             </tr>
                             @if (!empty($spesifik['poin_tatib_dilanggar']))
                                 <tr>
-                                    <td style="font-weight: 600; color: #475569;">Poin Tata Tertib</td>
+                                    <td style="font-weight: 600;">Dasar Peraturan</td>
+                                    <td>:</td>
                                     <td>{{ $spesifik['poin_tatib_dilanggar'] }}</td>
                                 </tr>
                             @endif
                             @if (!empty($spesifik['tindakan_pembinaan']))
                                 <tr>
-                                    <td style="font-weight: 600; color: #475569;">Bentuk Pembinaan / Sanksi</td>
+                                    <td style="font-weight: 600;">Tindakan Pembinaan</td>
+                                    <td>:</td>
                                     <td>{{ $spesifik['tindakan_pembinaan'] }}</td>
                                 </tr>
                             @endif
                             @if (!empty($spesifik['batas_waktu_pembinaan']))
                                 <tr>
-                                    <td style="font-weight: 600; color: #475569;">Masa Pembinaan</td>
+                                    <td style="font-weight: 600;">Masa Pembinaan</td>
+                                    <td>:</td>
                                     <td>{{ $spesifik['batas_waktu_pembinaan'] }}</td>
                                 </tr>
                             @endif
                         </table>
-                    @endif
-
-                    {{-- C. SURAT PEMBERITAHUAN --}}
-                    @if ($surat->jenis_surat === 'surat_pemberitahuan')
                         <p style="margin-bottom: 8px;">
-                            Bersama ini kami sampaikan pemberitahuan mengenai hal berikut:
+                            Kami menghimbau kepada murid bersangkutan dan orang tua/wali untuk segera melakukan
+                            pembinaan
+                            dan perbaikan agar tidak berlanjut ke sanksi tingkat berikutnya.
+                        </p>
 
+                        {{-- C. SURAT PEMBERITAHUAN --}}
+                    @elseif ($surat->jenis_surat === 'surat_pemberitahuan')
+                        <p style="margin-bottom: 8px;">
+                            Bersama ini kami sampaikan pemberitahuan resmi mengenai hal berikut @if ($surat->murid)
+                                kepada Orang Tua / Wali dari murid:
+                            @else
+                                :
+                            @endif
                         </p>
 
                         @if ($surat->murid)
-                            <div style="margin: 8px 0 12px 10px;">
-                                <table class="tabel-identitas">
-                                    <tr>
-                                        <td style="width: 140px; font-weight: 600;">Nama Murid</td>
-                                        <td style="width: 10px;">:</td>
-                                        <td style="font-weight: 700;">{{ $surat->murid->nama_lengkap }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">NISM</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->nism ?? '-' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">Kelas / Ruangan</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->nama_ruangan_aktif ?? '-' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">Nama Orang Tua / Wali</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->nama_ayah ?: $surat->murid->waliMurid->nama_kepala_keluarga ?? ($surat->murid->nama_ibu ?? '-') }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: 600;">Dusun / Kampung</td>
-                                        <td>:</td>
-                                        <td>{{ $surat->murid->waliMurid->kampung->nama_kampung ?? ($surat->murid->alamat ?? 'Somorkoneng') }}
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
+                            <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 8px;">
+                                <tr>
+                                    <td style="width: 150px; font-weight: 600;">Nama Murid</td>
+                                    <td style="width: 10px;">:</td>
+                                    <td style="font-weight: 700;">{{ $surat->murid->nama_lengkap }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">NISM</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->nism ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">Kelas / Ruangan</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->nama_ruangan_aktif ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">Nama Orang Tua / Wali</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->nama_ayah ?: $surat->murid->waliMurid->nama_kepala_keluarga ?? ($surat->murid->nama_ibu ?? '-') }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: 600;">Dusun / Kampung</td>
+                                    <td>:</td>
+                                    <td>{{ $surat->murid->waliMurid->kampung->nama_kampung ?? ($surat->murid->alamat ?? 'Somorkoneng') }}
+                                    </td>
+                                </tr>
+                            </table>
                         @endif
 
-                        <div class="tabel-data-box" style="padding: 10px 14px; margin: 10px 0;">
+                        <div
+                            style="background: #f8fafc; border-left: 4px solid #047857; padding: 8px 12px; margin: 10px 0; border-radius: 4px;">
                             @if (!empty($spesifik['kategori_pemberitahuan']))
                                 <div
                                     style="font-size: 8.5pt; font-weight: 700; color: #047857; margin-bottom: 2px; text-transform: uppercase;">
                                     [ {{ $spesifik['kategori_pemberitahuan'] }} ]
                                 </div>
                             @endif
-                            <div style="font-size: 11pt; font-weight: 600; margin-bottom: 4px;">
-                                {{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}
-                            </div>
+                            <div style="font-weight: 700; margin-bottom: 4px;">
+                                {{ $spesifik['pokok_pemberitahuan'] ?? $surat->perihal }}</div>
                             @if (!empty($spesifik['jadwal_terkait']))
-                                <div style="font-size: 9.5pt; color: #334155; margin-top: 4px;">
-                                    <strong>Jadwal / Pelaksanaan:</strong> {{ $spesifik['jadwal_terkait'] }}
-                                </div>
+                                <div style="font-size: 10pt; color: #475569;"><strong>Jadwal Pelaksanaan:</strong>
+                                    {{ $spesifik['jadwal_terkait'] }}</div>
                             @endif
                         </div>
-                    @endif
 
-                    {{-- D. SURAT EDARAN --}}
-                    @if ($surat->jenis_surat === 'surat_edaran')
-                        <div style="text-align: center; margin: 8px 0;">
-                            <div
-                                style="font-weight: 800; font-size: 12pt; text-decoration: underline; text-transform: uppercase;">
-                                SURAT EDARAN RESMI
+                        {{-- D. SURAT EDARAN --}}
+                    @elseif ($surat->jenis_surat === 'surat_edaran')
+                        <div style="text-align: center; margin-bottom: 12px;">
+                            <div style="font-size: 11pt; font-weight: 800; text-transform: uppercase;">
+                                SURAT EDARAN RESMI MADRASAH
                             </div>
-                            @if (!empty($spesifik['nomor_edaran_internal']))
-                                <div style="font-size: 9.5pt; color: #475569;">No:
-                                    {{ $spesifik['nomor_edaran_internal'] }}</div>
-                            @endif
-                            <div style="font-weight: 700; margin-top: 4px; font-size: 11pt;">
+                            <div style="font-size: 10pt; color: #475569;">
+                                {{ $spesifik['nomor_edaran_internal'] ?? $surat->nomor_surat }}
+                            </div>
+                            <div style="font-size: 10.5pt; font-weight: 700; margin-top: 4px;">
                                 TENTANG: {{ strtoupper($spesifik['pokok_maklumat'] ?? $surat->perihal) }}
                             </div>
                         </div>
 
-                        @if (!empty($spesifik['instruksi_poin']))
-                            <div
-                                style="background: #f8fafc; border-left: 3px solid #047857; padding: 8px 12px; margin: 10px 0; font-size: 10.5pt; line-height: 1.5;">
-                                {!! nl2br(e($spesifik['instruksi_poin'])) !!}
-                            </div>
-                        @endif
-                    @endif
-
-                    {{-- E. SURAT PERMOHONAN IZIN --}}
-                    @if ($surat->jenis_surat === 'surat_permohonan_izin')
                         <p style="margin-bottom: 8px;">
-                            Sehubungan dengan akan dilaksanakannya agenda kegiatan
-                            <strong>{{ $spesifik['nama_kegiatan'] ?? $surat->perihal }}</strong>, kami mengajukan
-                            permohonan izin penggunaan tempat/fasilitas pada:
+                            Diberitahukan kepada seluruh Asatidz, Dewan Guru, Murid, dan Wali Murid MDT Hidayatus
+                            Shibyan
+                            mengenai ketetapan bersama sebagai berikut:
                         </p>
 
-                        <div style="margin: 6px 0 12px 10px;">
-                            <table class="tabel-identitas">
+                        <div style="margin: 8px 0 10px 10px; font-size: 10.5pt; line-height: 1.6;">
+                            {!! nl2br(e($spesifik['instruksi_poin'] ?? '')) !!}
+                        </div>
+
+                        @if (!empty($spesifik['berlaku_mulai']))
+                            <p style="margin-bottom: 8px;">
+                                Ketetapan surat edaran ini berlaku sejak
+                                <strong>{{ $spesifik['berlaku_mulai'] }}</strong>
+                                sampai dengan pemberitahuan resmi berikutnya.
+                            </p>
+                        @endif
+
+                        {{-- E. SURAT PERMOHONAN IZIN --}}
+                    @elseif ($surat->jenis_surat === 'surat_permohonan_izin')
+                        <p style="margin-bottom: 8px;">
+                            Sehubungan dengan rencana pelaksanaan kegiatan
+                            <strong>{{ $spesifik['nama_kegiatan'] ?? $surat->perihal }}</strong> oleh MDT Hidayatus
+                            Shibyan
+                            yang insya Allah akan dilaksanakan pada:
+                        </p>
+
+                        <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 10px;">
+                            <tr>
+                                <td style="width: 140px; font-weight: 600;">Hari / Tanggal</td>
+                                <td style="width: 10px;">:</td>
+                                <td style="font-weight: 700;">
+                                    {{ $spesifik['hari_kegiatan'] ?? '-' }},
+                                    {{ isset($spesifik['tanggal_kegiatan']) && $spesifik['tanggal_kegiatan'] ? \Carbon\Carbon::parse($spesifik['tanggal_kegiatan'])->translatedFormat('d F Y') : '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Waktu</td>
+                                <td>:</td>
+                                <td>{{ $spesifik['waktu_kegiatan'] ?? '08.00 WIB s/d Selesai' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Tempat Pelaksanaan</td>
+                                <td>:</td>
+                                <td>{{ $spesifik['tempat_kegiatan'] ?? '-' }}</td>
+                            </tr>
+                            @if (!empty($spesifik['penanggung_jawab']))
                                 <tr>
-                                    <td style="width: 140px; font-weight: 600;">Hari / Tanggal</td>
+                                    <td style="font-weight: 600;">Penanggung Jawab</td>
+                                    <td>:</td>
+                                    <td>{{ $spesifik['penanggung_jawab'] }}</td>
+                                </tr>
+                            @endif
+                        </table>
+
+                        <p style="margin-bottom: 8px;">
+                            Maka dengan ini kami mengajukan permohonan izin untuk
+                            <strong>{{ $spesifik['fasilitas_dimohonkan'] ?? 'peminjaman fasilitas dan pelaksanaan kegiatan tersebut' }}</strong>.
+                        </p>
+
+                        {{-- F. SURAT DISPENSASI --}}
+                    @elseif ($surat->jenis_surat === 'surat_dispensasi')
+                        @if ($surat->is_dispensasi_massal)
+                            <p style="margin-bottom: 8px;">
+                                Sehubungan dengan adanya
+                                <strong>{{ $spesifik['nama_kegiatan_dispensasi'] ?? 'kegiatan resmi madrasah' }}</strong>
+                                yang diadakan oleh MDT Hidayatus Shibyan, yang dilaksanakan pada:
+                            </p>
+
+                            <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 10px;">
+                                @if (!empty($spesifik['hari_kegiatan_dispensasi']))
+                                    <tr>
+                                        <td style="width: 140px; font-weight: 600;">Hari</td>
+                                        <td style="width: 10px;">:</td>
+                                        <td style="font-weight: 700;">{{ $spesifik['hari_kegiatan_dispensasi'] }}</td>
+                                    </tr>
+                                @endif
+                                <tr>
+                                    <td style="width: 140px; font-weight: 600;">Tanggal</td>
                                     <td style="width: 10px;">:</td>
                                     <td style="font-weight: 700;">
-                                        {{ $spesifik['hari_kegiatan'] ?? '-' }},
-                                        {{ isset($spesifik['tanggal_kegiatan']) && $spesifik['tanggal_kegiatan'] ? \Carbon\Carbon::parse($spesifik['tanggal_kegiatan'])->translatedFormat('d F Y') : '-' }}
+                                        {{ isset($spesifik['tanggal_mulai_dispensasi']) && $spesifik['tanggal_mulai_dispensasi'] ? \Carbon\Carbon::parse($spesifik['tanggal_mulai_dispensasi'])->translatedFormat('d F Y') : '-' }}
+                                        @if (
+                                            !empty($spesifik['tanggal_selesai_dispensasi']) &&
+                                                $spesifik['tanggal_selesai_dispensasi'] !== $spesifik['tanggal_mulai_dispensasi']
+                                        )
+                                            s.d.
+                                            {{ \Carbon\Carbon::parse($spesifik['tanggal_selesai_dispensasi'])->translatedFormat('d F Y') }}
+                                        @endif
                                     </td>
                                 </tr>
+                                @if (!empty($spesifik['waktu_kegiatan_dispensasi']))
+                                    <tr>
+                                        <td style="width: 140px; font-weight: 600;">Waktu</td>
+                                        <td>:</td>
+                                        <td>{{ $spesifik['waktu_kegiatan_dispensasi'] }}</td>
+                                    </tr>
+                                @endif
                                 <tr>
-                                    <td style="font-weight: 600;">Waktu / Pukul</td>
+                                    <td style="font-weight: 600;">Tempat</td>
                                     <td>:</td>
-                                    <td>{{ $spesifik['waktu_kegiatan'] ?? '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight: 600;">Lokasi / Tempat</td>
-                                    <td>:</td>
-                                    <td>{{ $spesifik['tempat_kegiatan'] ?? '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight: 600;">Fasilitas Dimohonkan</td>
-                                    <td>:</td>
-                                    <td style="font-weight: 600;">{{ $spesifik['fasilitas_dimohonkan'] ?? '-' }}</td>
+                                    <td>{{ $spesifik['tempat_kegiatan_dispensasi'] ?? 'MDT Hidayatus Shibyan' }}</td>
                                 </tr>
                             </table>
-                        </div>
-                    @endif
 
-                    {{-- F. SURAT DISPENSASI --}}
-                    @if ($surat->jenis_surat === 'surat_dispensasi')
-                        <p style="margin-bottom: 8px;">
-                            Dengan ini kami Kepala MDT Hidayatus Shibyan menerangkan bahwa murid/asatidz di bawah ini:
-                        </p>
+                            <p style="margin-bottom: 8px;">
+                                Maka kami selaku Pengasuh MDT Hidayatus Shibyan Desa Somorkoneng Kecamatan Kwanyar
+                                Kabupaten
+                                Bangkalan mengajukan permohonan dispensasi untuk
+                                <strong>{{ $spesifik['permohonan_dispensasi_khusus'] ?? 'dipulangkan pukul 12.00 WIB agar Murid dapat mempersiapkan diri' }}</strong>.
+                                Adapun Murid yang mengikuti
+                                {{ $spesifik['nama_kegiatan_dispensasi'] ?? 'kegiatan tersebut' }} akan disebut
+                                sebagaimana
+                                terlampir.
+                            </p>
+                        @else
+                            {{-- DISPENSASI 1 MURID (TUNGGAL) --}}
+                            <p style="margin-bottom: 8px;">
+                                Yang bertanda tangan di bawah ini Pengasuh MDT Hidayatus Shibyan menerangkan bahwa murid
+                                di
+                                bawah ini:
+                            </p>
 
-                        @if ($surat->murid)
-                            <div style="margin: 8px 0 12px 10px;">
-                                <table class="tabel-identitas">
+                            @if ($surat->murid)
+                                <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 8px;">
                                     <tr>
-                                        <td style="width: 140px; font-weight: 600;">Nama Murid</td>
+                                        <td style="width: 150px; font-weight: 600;">Nama Murid</td>
                                         <td style="width: 10px;">:</td>
                                         <td style="font-weight: 700;">{{ $surat->murid->nama_lengkap }}</td>
                                     </tr>
@@ -530,76 +602,81 @@
                                         </td>
                                     </tr>
                                 </table>
-                            </div>
-                        @endif
+                            @endif
 
-                        <p style="margin-bottom: 6px;">
-                            Diberikan izin/dispensasi tidak dapat mengikuti kegiatan belajar mengajar karena ditugaskan
-                            mengikuti agenda kegiatan
-                            <strong>{{ $spesifik['nama_kegiatan_dispensasi'] ?? $surat->perihal }}</strong> pada:
-                        </p>
-                        <div style="margin: 6px 0 12px 10px;">
-                            <table class="tabel-identitas">
+                            <p style="margin-bottom: 8px;">
+                                Diberikan izin dan dispensasi kehadiran karena mengikuti kegiatan
+                                <strong>{{ $spesifik['nama_kegiatan_dispensasi'] ?? 'kegiatan resmi madrasah' }}</strong>
+                                pada:
+                            </p>
+
+                            <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 10px;">
                                 <tr>
-                                    <td style="width: 130px; font-weight: 600;">Periode Tanggal</td>
+                                    <td style="width: 140px; font-weight: 600;">Periode Dispensasi</td>
                                     <td style="width: 10px;">:</td>
                                     <td style="font-weight: 700;">
                                         {{ isset($spesifik['tanggal_mulai_dispensasi']) && $spesifik['tanggal_mulai_dispensasi'] ? \Carbon\Carbon::parse($spesifik['tanggal_mulai_dispensasi'])->translatedFormat('d F Y') : '-' }}
-                                        s/d
-                                        {{ isset($spesifik['tanggal_selesai_dispensasi']) && $spesifik['tanggal_selesai_dispensasi'] ? \Carbon\Carbon::parse($spesifik['tanggal_selesai_dispensasi'])->translatedFormat('d F Y') : '-' }}
+                                        @if (
+                                            !empty($spesifik['tanggal_selesai_dispensasi']) &&
+                                                $spesifik['tanggal_selesai_dispensasi'] !== $spesifik['tanggal_mulai_dispensasi']
+                                        )
+                                            s/d
+                                            {{ \Carbon\Carbon::parse($spesifik['tanggal_selesai_dispensasi'])->translatedFormat('d F Y') }}
+                                        @endif
                                         @if (!empty($spesifik['jumlah_hari']))
                                             ({{ $spesifik['jumlah_hari'] }})
                                         @endif
                                     </td>
                                 </tr>
+                                @if (!empty($spesifik['alasan_kegiatan']))
+                                    <tr>
+                                        <td style="font-weight: 600;">Keterangan</td>
+                                        <td>:</td>
+                                        <td>{{ $spesifik['alasan_kegiatan'] }}</td>
+                                    </tr>
+                                @endif
                             </table>
-                        </div>
-                    @endif
+                        @endif
 
-                    {{-- G. SURAT UNDANGAN --}}
-                    @if ($surat->jenis_surat === 'surat_undangan')
+                        {{-- G. SURAT UNDANGAN --}}
+                    @elseif ($surat->jenis_surat === 'surat_undangan')
                         <p style="margin-bottom: 8px;">
-                            Mengharap dengan hormat kehadiran Bapak/Ibu/Saudara/i dalam agenda
+                            Mengharap dengan hormat kehadiran Bapak/Ibu/Saudara pada agenda
                             <strong>{{ $spesifik['nama_acara'] ?? $surat->perihal }}</strong> yang insya Allah akan
                             dilaksanakan pada:
                         </p>
 
-                        <div style="margin: 6px 0 12px 10px;">
-                            <table class="tabel-identitas">
+                        <table class="tabel-identitas" style="margin-left: 15px; margin-bottom: 10px;">
+                            <tr>
+                                <td style="width: 140px; font-weight: 600;">Hari</td>
+                                <td style="width: 10px;">:</td>
+                                <td style="font-weight: 700;">{{ $spesifik['hari_acara'] ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Tanggal</td>
+                                <td>:</td>
+                                <td style="font-weight: 700;">
+                                    {{ isset($spesifik['tanggal_acara']) && $spesifik['tanggal_acara'] ? \Carbon\Carbon::parse($spesifik['tanggal_acara'])->translatedFormat('d F Y') : '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Waktu / Pukul</td>
+                                <td>:</td>
+                                <td>{{ $spesifik['waktu_acara'] ?? '19.30 WIB (Ba\'da Isya) s/d Selesai' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Tempat Acara</td>
+                                <td>:</td>
+                                <td>{{ $spesifik['tempat_acara'] ?? 'Aula MDT Hidayatus Shibyan' }}</td>
+                            </tr>
+                            @if (!empty($spesifik['agenda_acara']))
                                 <tr>
-                                    <td style="width: 130px; font-weight: 600;">Hari / Tanggal</td>
-                                    <td style="width: 10px;">:</td>
-                                    <td style="font-weight: 700;">
-                                        {{ $spesifik['hari_acara'] ?? '-' }},
-                                        {{ isset($spesifik['tanggal_acara']) && $spesifik['tanggal_acara'] ? \Carbon\Carbon::parse($spesifik['tanggal_acara'])->translatedFormat('d F Y') : '-' }}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight: 600;">Waktu / Pukul</td>
+                                    <td style="font-weight: 600;">Susunan Agenda</td>
                                     <td>:</td>
-                                    <td>{{ $spesifik['waktu_acara'] ?? '19.30 WIB s/d Selesai' }}</td>
+                                    <td>{{ $spesifik['agenda_acara'] }}</td>
                                 </tr>
-                                <tr>
-                                    <td style="font-weight: 600;">Tempat</td>
-                                    <td>:</td>
-                                    <td>{{ $spesifik['tempat_acara'] ?? 'Aula MDT Hidayatus Shibyan' }}</td>
-                                </tr>
-                                @if (!empty($spesifik['pakaian_dresscode']))
-                                    <tr>
-                                        <td style="font-weight: 600;">Pakaian / Dresscode</td>
-                                        <td>:</td>
-                                        <td>{{ $spesifik['pakaian_dresscode'] }}</td>
-                                    </tr>
-                                @endif
-                                @if (!empty($spesifik['agenda_acara']))
-                                    <tr>
-                                        <td style="font-weight: 600;">Agenda Pembahasan</td>
-                                        <td>:</td>
-                                        <td style="font-weight: 600;">{{ $spesifik['agenda_acara'] }}</td>
-                                    </tr>
-                                @endif
-                            </table>
-                        </div>
+                            @endif
+                        </table>
                     @endif
 
                     <!-- PARAGRAF TAMBAHAN JIKA DIISI -->
@@ -663,10 +740,6 @@
                             <td class="align-bottom">
                                 <p class="font-bold underline mb-0" style="font-size: 9.5pt;">
                                     {{ $signer['nama'] ?? '-' }}</p>
-                                @if (!empty($signer['nip']) && $signer['nip'] !== '-')
-                                    <p class="text-[8pt] text-slate-600 mt-0.5" style="font-size: 8pt;">NIP.
-                                        {{ $signer['nip'] }}</p>
-                                @endif
                             </td>
                         @endforeach
                     </tr>
@@ -835,10 +908,6 @@
                                 <td class="align-bottom">
                                     <p class="font-bold underline mb-0" style="font-size: 9.5pt;">
                                         {{ $signer['nama'] ?? '-' }}</p>
-                                    @if (!empty($signer['nip']) && $signer['nip'] !== '-')
-                                        <p class="text-[8pt] text-slate-600 mt-0.5" style="font-size: 8pt;">NIP.
-                                            {{ $signer['nip'] }}</p>
-                                    @endif
                                 </td>
                             @endforeach
                         </tr>

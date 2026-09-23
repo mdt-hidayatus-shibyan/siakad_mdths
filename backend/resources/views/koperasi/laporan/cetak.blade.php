@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -235,7 +235,7 @@
     <div style="margin-top: 30px; display: table; width: 100%;">
         <div style="display: table-cell; width: 50%; text-align: center;">
             <div>Mengetahui,</div>
-            <div style="font-weight: bold;">Kepala MDT Hidayatus Shibyan</div>
+            <div style="font-weight: bold;">Pengasuh MDT Hidayatus Shibyan</div>
             <div style="height: 50px;"></div>
             <div style="font-weight: bold; text-decoration: underline;">Ust. Abdul Malik, S.Pd.I</div>
         </div>

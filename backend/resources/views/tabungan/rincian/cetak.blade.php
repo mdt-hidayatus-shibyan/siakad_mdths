@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -420,10 +420,9 @@
     <!-- Tanda Tangan -->
     <div class="footer-sign">
         <div class="sign-box">
-            <p>Mengetahui,<br><strong>Kepala Madrasah</strong></p>
+            <p>Mengetahui,<br><strong>Pengasuh Madrasah</strong></p>
             <div class="sign-space"></div>
-            <p><strong>( ............................................ )</strong><br><span
-                    style="font-size: 8.5px; color: #6b7280;">NIP/NIGM: -</span></p>
+            <p><strong>( ............................................ )</strong></p>
         </div>
 
         <div class="sign-box">

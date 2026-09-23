@@ -1001,7 +1001,6 @@ class SuratKeluarController extends Controller
                     'tanggal_acara'       => $request->input('tanggal_acara'),
                     'waktu_acara'         => $request->input('waktu_acara', '19.30 WIB (Ba\'da Isya) s/d Selesai'),
                     'tempat_acara'        => $request->input('tempat_acara', 'Aula MDT Hidayatus Shibyan'),
-                    'pakaian_dresscode'   => $request->input('pakaian_dresscode', 'Busana Muslim Rapi & Berpeci'),
                     'agenda_acara'        => $request->input('agenda_acara'),
                 ];
                 break;

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -201,7 +201,7 @@
         <tr style="border: none;">
             <td style="width: 50%; border: none; text-align: center; vertical-align: bottom; padding-bottom: 0;">
                 <p style="margin: 0; font-size: 11px;">Mengetahui,</p>
-                <p style="margin: 2px 0 60px 0; font-size: 11px; font-weight: bold;">Kepala Madrasah</p>
+                <p style="margin: 2px 0 60px 0; font-size: 11px; font-weight: bold;">Pengasuh</p>
                 <p style="margin: 0; font-size: 11px; font-weight: bold; text-decoration: underline;">
                     (....................................................)
                 </p>

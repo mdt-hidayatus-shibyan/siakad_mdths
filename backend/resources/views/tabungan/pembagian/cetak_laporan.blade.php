@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -237,7 +237,7 @@
     <!-- TANDA TANGAN -->
     <div class="footer-sign">
         <div class="sign-col">
-            <div>Mengetahui,<br>Kepala Madrasah Diniyah,</div>
+            <div>Mengetahui,<br>Pengasuh Madrasah Diniyah,</div>
             <div class="sign-space"></div>
             <div class="font-bold"><u>Pengurus MDT Hidayatus Shibyan</u></div>
         </div>

@@ -412,7 +412,7 @@
             <td style="width: 50%;">
                 <p style="margin: 0; font-size: 10.5px;">Somor Koneng,
                     {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
-                <p style="margin: 2px 0 6px 0; font-size: 11px; font-weight: bold;">Kepala Madrasah / Sekretaris</p>
+                <p style="margin: 2px 0 6px 0; font-size: 11px; font-weight: bold;">Sekretaris Madrasah</p>
                 <div style="min-height: 55px; display: flex; justify-content: center; align-items: center;">
                     @if (!empty($kepalaMadrasah?->id))
                         {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(55)->generate(
@@ -424,7 +424,7 @@
                 </div>
                 <p
                     style="margin: 4px 0 0 0; font-size: 10.5px; font-weight: bold; text-decoration: underline; text-transform: uppercase;">
-                    {{ $kepalaMadrasah?->anggota?->nama_lengkap ?? ($kepalaMadrasah?->nama ?? 'Nama Kepala/Sekretaris Belum Diatur') }}
+                    {{ $kepalaMadrasah?->anggota?->nama_lengkap ?? ($kepalaMadrasah?->nama ?? 'Nama Sekretaris Belum Diatur') }}
                 </p>
             </td>
         </tr>
