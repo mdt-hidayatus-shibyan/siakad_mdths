@@ -62,7 +62,15 @@ class Ustadz extends Model
     {
         return $this->hasMany(Ruangan::class, 'ustadz_id');
     }
+
     public function jadwalPelajarans()
+    {
+        return $this->belongsToMany(JadwalPelajaran::class, 'jadwal_pelajaran_ustadz', 'ustadz_id', 'jadwal_pelajaran_id')
+            ->withPivot('peran')
+            ->withTimestamps();
+    }
+
+    public function directJadwalPelajarans()
     {
         return $this->hasMany(JadwalPelajaran::class, 'ustadz_id');
     }

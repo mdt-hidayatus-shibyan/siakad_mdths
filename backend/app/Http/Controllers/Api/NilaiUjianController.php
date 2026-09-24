@@ -40,7 +40,7 @@ class NilaiUjianController extends Controller
             ->pluck('id')
             ->toArray();
 
-        $ruanganMengajarIds = JadwalPelajaran::where('ustadz_id', $ustadz->id)
+        $ruanganMengajarIds = JadwalPelajaran::forUstadz($ustadz->id)
             ->whereHas('ruangan', fn($q) => $q->where('tahun_pelajaran_id', $tahunPelajaranId))
             ->pluck('ruangan_id')
             ->toArray();
@@ -169,10 +169,10 @@ class NilaiUjianController extends Controller
 
                 // Filter:
                 // Jika Ustadz adalah Wali Ruangan di ruangan ini: Tampilkan SELURUH mapel ujian di ruangan ini
-                // Jika Ustadz BUKAN Wali Ruangan: Hanya mapel yang diampunya di ruangan ini
+                // Jika Ustadz BUKAN Wali Ruangan: Hanya mapel yang diampunya di ruangan ini (baik utama maupun team teaching)
                 if ($user->ustadz && !$isWaliRuangan) {
                     $mapelDiampuIds = JadwalPelajaran::where('ruangan_id', $ruangan->id)
-                        ->where('ustadz_id', $user->ustadz->id)
+                        ->forUstadz($user->ustadz->id)
                         ->pluck('mata_pelajaran_id')
                         ->toArray();
 

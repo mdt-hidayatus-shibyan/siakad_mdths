@@ -35,9 +35,9 @@ class DashboardController extends Controller
         ];
         $hariIni = $mapHari[Carbon::now()->format('l')];
 
-        // Total Jadwal Mingguan
+        // Total Jadwal Mingguan (Guru Utama maupun Pendamping)
         $totalJadwalMingguan = $ustadzId
-            ? JadwalPelajaran::where('ustadz_id', $ustadzId)->count()
+            ? JadwalPelajaran::forUstadz($ustadzId)->count()
             : 0;
 
         // Cek Libur Hari Ini
@@ -55,14 +55,31 @@ class DashboardController extends Controller
         $formattedJadwal = collect();
 
         if (!$isLiburHariIni) {
-            $jadwalHariIniQuery = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level'])
+            $jadwalHariIniQuery = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level', 'ustadz', 'ustadzs'])
                 ->where('hari', $hariIni);
 
             if ($ustadzId) {
-                $jadwalHariIniQuery->where('ustadz_id', $ustadzId);
+                $jadwalHariIniQuery->forUstadz($ustadzId);
             }
 
-            $jadwalHariIniList = $jadwalHariIniQuery->orderBy('jam_ke')->get();
+            $jadwalHariIniList = $jadwalHariIniQuery->get()->sortBy([
+                fn($a, $b) => strnatcasecmp($a->ruangan?->nama_ruangan ?? '', $b->ruangan?->nama_ruangan ?? ''),
+                fn($a, $b) => (match ($a->jam_ke) {
+                    'Nadzoman' => 1,
+                    '1' => 2,
+                    '2' => 3,
+                    'Ekstra' => 4,
+                    default => 5
+                })
+                    <=> (match ($b->jam_ke) {
+                        'Nadzoman' => 1,
+                        '1' => 2,
+                        '2' => 3,
+                        'Ekstra' => 4,
+                        default => 5
+                    }),
+            ])->values();
+
             $jadwalHariIniCount = $jadwalHariIniList->count();
 
             // Bulk query status presensi hari ini untuk eliminasi N+1
@@ -75,7 +92,7 @@ class DashboardController extends Controller
                 ->toArray()
                 : [];
 
-            $formattedJadwal = $jadwalHariIniList->map(function ($j) use ($sudahAbsenMap, &$presensiSelesaiCount) {
+            $formattedJadwal = $jadwalHariIniList->map(function ($j) use ($sudahAbsenMap, &$presensiSelesaiCount, $ustadzId) {
                 $sudahAbsen = isset($sudahAbsenMap[$j->id]);
 
                 if ($sudahAbsen) {
@@ -90,13 +107,24 @@ class DashboardController extends Controller
                     default => 'Jam Ke-' . $j->jam_ke,
                 };
 
+                // Periksa peran user: apakah Guru Utama atau Guru Pendamping
+                $isUtama = ($j->ustadz_id == $ustadzId);
+                $currentUserPivot = $j->ustadzs->firstWhere('id', $ustadzId);
+                if ($currentUserPivot && isset($currentUserPivot->pivot->is_utama)) {
+                    $isUtama = (bool) $currentUserPivot->pivot->is_utama;
+                }
+
                 return [
-                    'id' => $j->id,
-                    'jam_ke' => $j->jam_ke,
-                    'jam' => $jamText,
-                    'mapel' => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
-                    'kelas' => $j->ruangan->nama_ruangan ?? '-',
-                    'sudah_absen' => $sudahAbsen,
+                    'id'               => $j->id,
+                    'jam_ke'           => $j->jam_ke,
+                    'jam'              => $jamText,
+                    'mapel'            => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
+                    'kelas'            => $j->ruangan->nama_ruangan ?? '-',
+                    'guru'             => $j->daftar_nama_pengampu,
+                    'is_utama'         => $isUtama,
+                    'peran'            => $isUtama ? 'Guru Utama' : 'Guru Pendamping',
+                    'is_team_teaching' => $j->daftar_ustadz->count() > 1,
+                    'sudah_absen'      => $sudahAbsen,
                 ];
             });
         }

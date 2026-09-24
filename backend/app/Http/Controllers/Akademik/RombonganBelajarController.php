@@ -287,6 +287,9 @@ class RombonganBelajarController extends Controller
         $request->validate([
             'murid_id' => 'required|exists:murids,id',
             'ruangan_tujuan_id' => 'required|exists:ruangans,id'
+        ], [
+            'murid_id.required' => 'Data murid tidak valid.',
+            'ruangan_tujuan_id.required' => 'Pilih ruangan tujuan terlebih dahulu.'
         ]);
 
         $ruanganAsal = Ruangan::findOrFail($id);
@@ -295,6 +298,20 @@ class RombonganBelajarController extends Controller
 
         $tahunAktif = TahunPelajaran::where('is_active', 1)->first();
         $tahun_pelajaran_id = $tahunAktif ? $tahunAktif->id : null;
+
+        // Cek kapasitas ruangan tujuan
+        $kapasitasSekarang = $ruanganTujuan->murids()
+            ->wherePivot('tahun_pelajaran_id', $tahun_pelajaran_id)
+            ->count();
+
+        if ($ruanganTujuan->kapasitas && $kapasitasSekarang >= $ruanganTujuan->kapasitas) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => "Ruangan {$ruanganTujuan->nama_ruangan} sudah penuh! (Kapasitas: {$ruanganTujuan->kapasitas} murid)"
+                ], 422);
+            }
+            return back()->with('error', "Ruangan {$ruanganTujuan->nama_ruangan} sudah penuh! (Kapasitas: {$ruanganTujuan->kapasitas} murid)");
+        }
 
         // 1. UPDATE TABEL PIVOT (Berlaku untuk semua murid: Baru maupun Kenaikan)
         // Pindahkan mereka di tahun ajaran aktif ini ke ruangan yang baru
@@ -307,7 +324,6 @@ class RombonganBelajarController extends Controller
             ]);
 
         // 2. KOREKSI MASTER DATA (HANYA JIKA DIA MURID BARU)
-        // Pengecekan: Jika ruangan_masuk sama dengan ruangan asal, berarti dia anak baru yang sedang dikoreksi ruangannya.
         $murid = Murid::findOrFail($muridId);
 
         if ($murid->ruangan_masuk == $ruanganAsal->id) {
@@ -317,7 +333,36 @@ class RombonganBelajarController extends Controller
             ]);
         }
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil memindahkan {$murid->nama_lengkap} ke {$ruanganTujuan->nama_ruangan}."
+            ]);
+        }
+
         return back()->with('success', "Berhasil memindahkan {$murid->nama_lengkap} ke {$ruanganTujuan->nama_ruangan}.");
+    }
+
+    /**
+     * Menampilkan Modal Form Mutasi / Pindah Ruangan (AJAX Partial)
+     */
+    public function modalPindah($id, $murid_id)
+    {
+        $ruangan = Ruangan::with('tahunPelajaran')->findOrFail($id);
+        $murid = Murid::findOrFail($murid_id);
+        $tahunAktifId = $ruangan->tahun_pelajaran_id ?? TahunPelajaran::where('is_active', true)->value('id');
+
+        $ruangansLain = Ruangan::where('tahun_pelajaran_id', $tahunAktifId)
+            ->where('id', '!=', $ruangan->id)
+            ->with(['level.tingkat'])
+            ->withCount(['murids' => function ($q) use ($tahunAktifId) {
+                $q->where('murid_ruangans.tahun_pelajaran_id', $tahunAktifId);
+            }])
+            ->orderBy('level_id', 'asc')
+            ->orderBy('nama_ruangan', 'asc')
+            ->get();
+
+        return view('rombongan-belajar.modal-pindah', compact('ruangan', 'murid', 'ruangansLain', 'tahunAktifId'));
     }
 
     /**

@@ -253,6 +253,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/import', [MuridController::class, 'modalImport'])->name('import');
         Route::post('/import', [MuridController::class, 'import'])->name('import.store');
         Route::get('/template-import', [MuridController::class, 'template'])->name('template');
+        Route::get('/{id}/modal-status', [MuridController::class, 'modalStatus'])->name('modalStatus');
         Route::patch('/{id}/status', [MuridController::class, 'updateStatus'])->name('updateStatus');
         Route::patch('/{id}/update-foto', [MuridController::class, 'updateFoto'])->name('updateFoto');
     });
@@ -347,6 +348,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}/plotting-kenaikan', [RombonganBelajarController::class, 'plottingKenaikan'])->name('plotting-kenaikan');
         Route::post('/{id}/plotting-kenaikan', [RombonganBelajarController::class, 'storePlotting'])->name('store-plotting');
         Route::post('/{id}/pindah-anggota', [RombonganBelajarController::class, 'pindahAnggota'])->name('pindah-anggota');
+        Route::get('/{id}/modal-pindah/{murid_id}', [RombonganBelajarController::class, 'modalPindah'])->name('modalPindah');
         Route::get('/{id}/uploadFoto/{murid_id}', [RombonganBelajarController::class, 'modalUpload'])->name('uploadFoto');
 
         // Print & Export Rombel
@@ -403,6 +405,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // -- Presensi Murid --
     Route::prefix('presensi-murid')->name('presensi-murid.')->group(function () {
         Route::get('/', [PresensiMuridController::class, 'index'])->name('index');
+        Route::get('/progres', [PresensiMuridController::class, 'progresHarian'])->name('progres');
+        Route::get('/modal-input', [PresensiMuridController::class, 'modalInput'])->name('modalInput');
         Route::post('/store', [PresensiMuridController::class, 'storeHarian'])->name('storeHarian');
         Route::get('/bulanan', [PresensiMuridController::class, 'bulanan'])->name('bulanan');
         Route::post('/bulanan/store', [PresensiMuridController::class, 'storeBulanan'])->name('store');
@@ -413,6 +417,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // -- Presensi Ustadz --
     Route::prefix('presensi-ustadz')->name('presensi-ustadz.')->group(function () {
         Route::get('/', [PresensiUstadzController::class, 'index'])->name('index');
+        Route::get('/progres', [PresensiUstadzController::class, 'progresHarian'])->name('progres');
+        Route::get('/modal-input', [PresensiUstadzController::class, 'modalInput'])->name('modalInput');
         Route::post('/harian/store', [PresensiUstadzController::class, 'storeHarian'])->name('storeHarian');
         Route::delete('/harian/{id}/destroy', [PresensiUstadzController::class, 'destroyHarian'])->name('destroyHarian');
         Route::get('/bulanan', [PresensiUstadzController::class, 'bulanan'])->name('bulanan');

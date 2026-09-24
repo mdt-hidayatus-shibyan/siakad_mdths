@@ -503,3 +503,86 @@ html.dark .m3-btn-primary {
         z-index: 20 !important;
     }
 }
+
+/* ==========================================================================
+   M3 PRESENSI OPTION BUTTONS (MURID & USTADZ)
+   ========================================================================== */
+.btn-presensi-opt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.625rem 0.25rem;
+    border-radius: 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    line-height: 1.25;
+    border: 1px solid #e4e4e7;
+    background-color: #ffffff;
+    color: #52525b;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+html.dark .btn-presensi-opt {
+    background-color: #18181b;
+    border-color: #27272a;
+    color: #a1a1aa;
+    box-shadow: none;
+}
+
+.btn-presensi-opt:hover {
+    background-color: #f4f4f5;
+    color: #18181b;
+}
+
+html.dark .btn-presensi-opt:hover {
+    background-color: #27272a;
+    color: #f4f4f5;
+}
+
+/* Checked States based on pure CSS adjacent sibling selector */
+input[type="radio"]:checked + .btn-presensi-opt.opt-hadir {
+    background-color: #10b981 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35) !important;
+}
+
+input[type="radio"]:checked + .btn-presensi-opt.opt-sakit {
+    background-color: #3b82f6 !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.35) !important;
+}
+
+input[type="radio"]:checked + .btn-presensi-opt.opt-izin {
+    background-color: #f59e0b !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.35) !important;
+}
+
+input[type="radio"]:checked + .btn-presensi-opt.opt-alpha {
+    background-color: #f43f5e !important;
+    border-color: #e11d48 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(244, 63, 94, 0.35) !important;
+}
+
+input[type="radio"]:checked + .btn-presensi-opt.opt-dispensasi,
+input[type="radio"]:checked + .btn-presensi-opt.opt-dispen {
+    background-color: #a855f7 !important;
+    border-color: #9333ea !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(168, 85, 247, 0.35) !important;
+}
+
+input[type="radio"]:checked + .btn-presensi-opt.opt-kosong {
+    background-color: #52525b !important;
+    border-color: #3f3f46 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(82, 82, 91, 0.35) !important;
+}

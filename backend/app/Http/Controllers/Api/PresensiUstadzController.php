@@ -79,18 +79,18 @@ class PresensiUstadzController extends Controller
         $ruanganWaliNama = $ruanganWaliList->pluck('nama_ruangan')->join(', ');
 
         // 3. Query Jadwal Pelajaran:
-        // - Mengambil jadwal mengajar pribadi ustadz (ustadz_id = $ustadzId)
+        // - Mengambil jadwal mengajar pribadi ustadz (forUstadz: utama maupun multi-pengampu)
         // - ATAU jika dia adalah Wali Ruangan, mencakup juga seluruh jadwal di ruangan binaannya
-        $query = JadwalPelajaran::with(['mataPelajaran', 'ruangan', 'ustadz'])
+        $query = JadwalPelajaran::with(['mataPelajaran', 'ruangan', 'ustadz', 'ustadzs'])
             ->where('hari', $hari);
 
         if (!empty($ruanganWaliIds)) {
             $query->where(function ($q) use ($ustadzId, $ruanganWaliIds) {
-                $q->where('ustadz_id', $ustadzId)
+                $q->forUstadz($ustadzId)
                     ->orWhereIn('ruangan_id', $ruanganWaliIds);
             });
         } else {
-            $query->where('ustadz_id', $ustadzId);
+            $query->forUstadz($ustadzId);
         }
 
         $jadwals = $query->get()->sortBy([
@@ -145,12 +145,17 @@ class PresensiUstadzController extends Controller
         $presensiTersimpan = PresensiUstadz::with(['guruPengganti'])
             ->where('tanggal', $tanggal)
             ->whereIn('jadwal_pelajaran_id', $jadwals->pluck('id'))
-            ->get()
-            ->keyBy('jadwal_pelajaran_id');
+            ->get();
 
         $data = $jadwals->map(function ($j) use ($presensiTersimpan, $ruanganWaliIds, $ustadzId) {
-            $existing = $presensiTersimpan->get($j->id);
-            $isMilikWali = in_array($j->ruangan_id, $ruanganWaliIds) && ($j->ustadz_id != $ustadzId);
+            $isPengampuJadwal = $j->daftar_ustadz->contains('id', $ustadzId);
+            $isMilikWali = in_array($j->ruangan_id, $ruanganWaliIds) && !$isPengampuJadwal;
+
+            // Jika ustadz login adalah salah satu pengampu jadwal, cari presensi miliknya sendiri
+            // Jika wali ruangan melihat jadwal ustadz lain, cari presensi ustadz utama jadwal
+            $existing = $isPengampuJadwal
+                ? $presensiTersimpan->first(fn($p) => $p->jadwal_pelajaran_id == $j->id && $p->ustadz_id == $ustadzId)
+                : $presensiTersimpan->firstWhere('jadwal_pelajaran_id', $j->id);
 
             $jamText = match ($j->jam_ke) {
                 'Nadzoman' => '13:45 - 14:00 WIB',
@@ -160,20 +165,33 @@ class PresensiUstadzController extends Controller
                 default => 'Jam Ke-' . $j->jam_ke,
             };
 
+            $daftarUstadzStatus = $j->daftar_ustadz->map(function ($u) use ($presensiTersimpan, $j) {
+                $p = $presensiTersimpan->first(fn($item) => $item->jadwal_pelajaran_id == $j->id && $item->ustadz_id == $u->id);
+                return [
+                    'id'            => $u->id,
+                    'nama'          => $u->nama_lengkap,
+                    'is_utama'      => (bool) ($u->pivot->is_utama ?? false),
+                    'sudah_checkin' => $p != null,
+                    'status'        => $p ? $p->status : 'Belum Absen',
+                ];
+            })->values();
+
             return [
-                'jadwal_id' => $j->id,
-                'jam_ke' => $j->jam_ke,
-                'jam' => $jamText,
-                'mapel' => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
-                'ruangan' => $j->ruangan->nama_ruangan ?? '-',
-                'guru_pengajar' => $j->ustadz->nama_lengkap ?? '-',
-                'is_milik_wali' => $isMilikWali,
-                'sudah_checkin' => $existing != null,
-                'status' => $existing ? $existing->status : 'Belum Absen',
-                'ustadz_pengganti_id' => $existing ? $existing->ustadz_pengganti_id : null,
+                'jadwal_id'             => $j->id,
+                'jam_ke'                => $j->jam_ke,
+                'jam'                   => $jamText,
+                'mapel'                 => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
+                'ruangan'               => $j->ruangan->nama_ruangan ?? '-',
+                'guru_pengajar'         => $j->daftar_nama_pengampu,
+                'is_milik_wali'         => $isMilikWali,
+                'is_team_teaching'      => $j->daftar_ustadz->count() > 1,
+                'daftar_ustadz'         => $daftarUstadzStatus,
+                'sudah_checkin'         => $existing != null,
+                'status'                => $existing ? $existing->status : 'Belum Absen',
+                'ustadz_pengganti_id'   => $existing ? $existing->ustadz_pengganti_id : null,
                 'ustadz_pengganti_nama' => $existing && $existing->guruPengganti ? $existing->guruPengganti->nama_lengkap : null,
-                'keterangan' => $existing ? $existing->keterangan : null,
-                'waktu_checkin' => $existing && $existing->updated_at ? $existing->updated_at->format('H:i') : null,
+                'keterangan'            => $existing ? $existing->keterangan : null,
+                'waktu_checkin'         => $existing && $existing->updated_at ? $existing->updated_at->format('H:i') : null,
             ];
         });
 
@@ -198,6 +216,7 @@ class PresensiUstadzController extends Controller
             'jadwal_id' => 'required|exists:jadwal_pelajarans,id',
             'tanggal' => 'required|date',
             'status' => 'required|in:Hadir,Sakit,Izin,Alpha,Kosong',
+            'ustadz_id' => 'nullable|exists:ustadzs,id',
             'ustadz_pengganti_id' => 'nullable|exists:ustadzs,id',
             'keterangan' => 'nullable|string|max:255',
         ]);
@@ -247,9 +266,9 @@ class PresensiUstadzController extends Controller
             ], 422);
         }
 
-        $jadwal = JadwalPelajaran::findOrFail($request->jadwal_id);
+        $jadwal = JadwalPelajaran::with(['ustadz', 'ustadzs'])->findOrFail($request->jadwal_id);
 
-        // Cek hak akses: Wali Ruangan dari kelas jadwal tersebut ATAU Guru Pengajar Pribadi
+        // Cek hak akses: Wali Ruangan dari kelas jadwal tersebut ATAU Guru Pengajar Pribadi / Pengampu
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $ruanganWaliIds = Ruangan::where('ustadz_id', $ustadzId)
             ->when($tahunAktif, function ($q) use ($tahunAktif) {
@@ -261,7 +280,7 @@ class PresensiUstadzController extends Controller
             ->pluck('id')
             ->toArray();
 
-        $isGuruPengajar = ($jadwal->ustadz_id == $ustadzId);
+        $isGuruPengajar = $jadwal->daftar_ustadz->contains('id', $ustadzId);
         $isWaliRuangan = in_array($jadwal->ruangan_id, $ruanganWaliIds);
 
         if (!$isGuruPengajar && !$isWaliRuangan) {
@@ -271,14 +290,22 @@ class PresensiUstadzController extends Controller
             ], 403);
         }
 
+        // Tentukan ustadz_id yang dicatat presensinya:
+        // Jika Ustadz yang login adalah pengampu jadwal ini, catat presensi diri sendiri ($ustadzId).
+        // Jika Ustadz login adalah Wali Ruangan dan BUKAN pengampu jadwal ini, catat untuk ustadz yang dipilih atau ustadz utama jadwal ($jadwal->ustadz_id).
+        $targetUstadzId = $isGuruPengajar ? $ustadzId : ($request->input('ustadz_id') ?? $jadwal->ustadz_id);
+        if (!$jadwal->daftar_ustadz->contains('id', $targetUstadzId)) {
+            $targetUstadzId = $jadwal->ustadz_id;
+        }
+
         try {
             $presensi = PresensiUstadz::updateOrCreate(
                 [
                     'tanggal' => $tanggal,
                     'jadwal_pelajaran_id' => $jadwal->id,
+                    'ustadz_id' => $targetUstadzId,
                 ],
                 [
-                    'ustadz_id' => $jadwal->ustadz_id,
                     'status' => $request->status,
                     'ustadz_pengganti_id' => ($request->status === 'Izin' || $request->status === 'Sakit') ? $request->ustadz_pengganti_id : null,
                     'keterangan' => $request->keterangan,

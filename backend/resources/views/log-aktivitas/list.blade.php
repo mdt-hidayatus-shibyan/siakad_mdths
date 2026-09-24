@@ -26,8 +26,19 @@
                         <!-- 1. IDENTITAS PENGGUNA -->
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-2.5">
-                                @if ($user && $user->ustadz && $user->ustadz->foto)
-                                    <img src="{{ asset('storage/' . $user->ustadz->foto) }}" alt="{{ $user->name }}"
+                                @php
+                                    $userPhoto = $user?->foto_url;
+                                    if (!$userPhoto) {
+                                        if ($user?->administrator && $user->administrator->foto) {
+                                            $userPhoto = asset('storage/' . $user->administrator->foto);
+                                        } elseif ($user?->ustadz && $user->ustadz->foto) {
+                                            $userPhoto =
+                                                $user->ustadz->foto_url ?? asset('storage/' . $user->ustadz->foto);
+                                        }
+                                    }
+                                @endphp
+                                @if ($userPhoto)
+                                    <img src="{{ $userPhoto }}" alt="{{ $user->name ?? 'Pengguna' }}"
                                         class="w-8 h-8 rounded-xl object-cover border border-zinc-200 dark:border-zinc-700 shadow-2xs flex-shrink-0">
                                 @else
                                     <div
@@ -190,9 +201,9 @@
     </div>
 
     <!-- Pagination -->
-    @if ($logs->hasPages())
-        <div class="p-4 border-t border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/20">
-            {{ $logs->links() }}
-        </div>
-    @endif
 </div>
+@if ($logs->hasPages())
+    <div class="mt-4 m3-glass-card p-4 relative z-10">
+        {{ $logs->links('vendor.pagination.custom') }}
+    </div>
+@endif

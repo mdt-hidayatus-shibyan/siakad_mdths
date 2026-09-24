@@ -47,6 +47,10 @@ class JadwalHariIniItem {
   final String jam;
   final String mapel;
   final String kelas;
+  final String? guru;
+  final bool isUtama;
+  final String peran;
+  final bool isTeamTeaching;
   final bool sudahAbsen;
 
   JadwalHariIniItem({
@@ -55,6 +59,10 @@ class JadwalHariIniItem {
     required this.jam,
     required this.mapel,
     required this.kelas,
+    this.guru,
+    this.isUtama = true,
+    this.peran = 'Guru Utama',
+    this.isTeamTeaching = false,
     required this.sudahAbsen,
   });
 
@@ -65,6 +73,12 @@ class JadwalHariIniItem {
       jam: json['jam'] ?? '',
       mapel: json['mapel'] ?? '',
       kelas: json['kelas'] ?? '',
+      guru: json['guru'],
+      isUtama: json['is_utama'] ?? true,
+      peran:
+          json['peran'] ??
+          (json['is_utama'] == false ? 'Guru Pendamping' : 'Guru Utama'),
+      isTeamTeaching: json['is_team_teaching'] ?? false,
       sudahAbsen: json['sudah_absen'] ?? false,
     );
   }

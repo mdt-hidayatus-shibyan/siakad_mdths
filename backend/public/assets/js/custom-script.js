@@ -135,6 +135,11 @@ window.closeDialogModal = function () {
             $modal[0].close();
         }
         $wrapper.html("");
+        $wrapper
+            .removeClass(
+                "sm:max-w-xs sm:max-w-sm sm:max-w-md sm:max-w-xl sm:max-w-2xl sm:max-w-3xl sm:max-w-4xl sm:max-w-5xl",
+            )
+            .addClass("sm:max-w-lg");
     }, 300);
 };
 
@@ -151,9 +156,9 @@ $(document).on(
 // ==========================================
 // B. FUNGSI GLOBAL PEMANGGIL MODAL
 // ==========================================
-// Bisa dipanggil langsung lewat JS: handleModalAction('/url-tujuan');
+// Bisa dipanggil langsung lewat JS: handleModalAction('/url-tujuan', '2xl');
 // Atau otomatis dari class .action-modal
-window.handleModalAction = function (url) {
+window.handleModalAction = function (url, size = null) {
     const $modal = $("#modal-action");
     const $backdrop = $modal.find("el-dialog-backdrop");
     const $panel = $modal.find("el-dialog-panel");
@@ -162,6 +167,16 @@ window.handleModalAction = function (url) {
     if ($modal.length === 0) {
         console.error("Elemen #modal-action tidak ditemukan di halaman!");
         return;
+    }
+
+    // Reset dan atur ukuran modal panel
+    $wrapper.removeClass(
+        "sm:max-w-xs sm:max-w-sm sm:max-w-md sm:max-w-lg sm:max-w-xl sm:max-w-2xl sm:max-w-3xl sm:max-w-4xl sm:max-w-5xl",
+    );
+    if (size) {
+        $wrapper.addClass("sm:max-w-" + size);
+    } else {
+        $wrapper.addClass("sm:max-w-lg");
     }
 
     // Tampilan Loading UI
@@ -184,6 +199,19 @@ window.handleModalAction = function (url) {
     $.get(url)
         .done(function (html) {
             $wrapper.html(html);
+
+            // Deteksi ukuran modal dari konten yang dimuat jika ada
+            const $content = $(html);
+            const contentSize =
+                $content.data("modal-size") ||
+                $content.attr("data-modal-size") ||
+                $wrapper.find("[data-modal-size]").first().data("modal-size");
+            if (contentSize) {
+                $wrapper.removeClass(
+                    "sm:max-w-xs sm:max-w-sm sm:max-w-md sm:max-w-lg sm:max-w-xl sm:max-w-2xl sm:max-w-3xl sm:max-w-4xl sm:max-w-5xl",
+                );
+                $wrapper.addClass("sm:max-w-" + contentSize);
+            }
         })
         .fail(function () {
             $wrapper.html(
@@ -202,8 +230,9 @@ window.handleModalAction = function (url) {
 $(document).on("click", ".action-modal", function (e) {
     e.preventDefault();
     let url = $(this).attr("href") || $(this).data("url");
+    let size = $(this).data("modal-size") || $(this).attr("data-modal-size");
     if (url) {
-        window.handleModalAction(url);
+        window.handleModalAction(url, size);
     }
 });
 

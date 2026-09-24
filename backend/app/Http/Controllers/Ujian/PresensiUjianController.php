@@ -118,11 +118,20 @@ class PresensiUjianController extends Controller
                             ->orderBy('waktu_mulai', 'asc')
                             ->get();
 
+                        foreach ($jadwals as $j) {
+                            if (!$j->pengawas) {
+                                $j->setRelation('pengawas', $j->resolvePengawasForRuangan($ruanganTerpilih));
+                            }
+                        }
+
                         // Evaluasi syarat administrasi murid (Lunas / Terkunci / Dispensasi)
                         $muridsWithStatus = $this->nilaiUjianService->evaluasiSyaratAdmin($ujian, $ruanganTerpilih, $murids);
 
                         if ($request->jadwal_ujian_id) {
                             $jadwalTerpilih = JadwalUjian::with(['mataPelajaran', 'pengawas'])->find($request->jadwal_ujian_id);
+                            if ($jadwalTerpilih && !$jadwalTerpilih->pengawas) {
+                                $jadwalTerpilih->setRelation('pengawas', $jadwalTerpilih->resolvePengawasForRuangan($ruanganTerpilih));
+                            }
 
                             $presensiExisting = PresensiUjian::where('ujian_id', $ujian->id)
                                 ->where('jadwal_ujian_id', $request->jadwal_ujian_id)
@@ -277,6 +286,12 @@ class PresensiUjianController extends Controller
                     ->orderBy('tanggal_ujian', 'asc')
                     ->orderBy('waktu_mulai', 'asc')
                     ->get();
+
+                foreach ($jadwals as $j) {
+                    if (!$j->pengawas) {
+                        $j->setRelation('pengawas', $j->resolvePengawasForRuangan($ruanganTerpilih));
+                    }
+                }
             }
         }
 

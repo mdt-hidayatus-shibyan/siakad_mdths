@@ -88,18 +88,18 @@ class PresensiMuridController extends Controller
         $ruanganWaliNama = $ruanganWaliList->pluck('nama_ruangan')->join(', ');
 
         // 3. Query Jadwal Hari Aktif:
-        // - Mengambil jadwal mengajar pribadi ustadz (ustadz_id = $ustadzId)
+        // - Mengambil jadwal mengajar pribadi ustadz (forUstadz: utama maupun multi-pengampu)
         // - ATAU jika dia adalah Wali Ruangan, mencakup juga seluruh jadwal di ruangan binaannya
-        $query = JadwalPelajaran::with(['mataPelajaran', 'ruangan', 'ustadz'])
+        $query = JadwalPelajaran::with(['mataPelajaran', 'ruangan', 'ustadz', 'ustadzs'])
             ->where('hari', $hari);
 
         if (!empty($ruanganWaliIds)) {
             $query->where(function ($q) use ($ustadzId, $ruanganWaliIds) {
-                $q->where('ustadz_id', $ustadzId)
+                $q->forUstadz($ustadzId)
                     ->orWhereIn('ruangan_id', $ruanganWaliIds);
             });
         } else {
-            $query->where('ustadz_id', $ustadzId);
+            $query->forUstadz($ustadzId);
         }
 
         $jadwals = $query->get()->sortBy([
@@ -162,8 +162,8 @@ class PresensiMuridController extends Controller
 
         $data = $jadwals->map(function ($j) use ($sudahAbsenMap, $ruanganWaliIds, $ustadzId) {
             $sudahAbsen = isset($sudahAbsenMap[$j->id]);
-
-            $isMilikWali = in_array($j->ruangan_id, $ruanganWaliIds) && ($j->ustadz_id != $ustadzId);
+            $isPengampuJadwal = $j->daftar_ustadz->contains('id', $ustadzId);
+            $isMilikWali = in_array($j->ruangan_id, $ruanganWaliIds) && !$isPengampuJadwal;
 
             $jamText = match ($j->jam_ke) {
                 'Nadzoman' => '13:45 - 14:00 WIB',
@@ -178,7 +178,7 @@ class PresensiMuridController extends Controller
                 'jam' => $jamText,
                 'pelajaran' => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
                 'kelas' => $j->ruangan->nama_ruangan ?? '-',
-                'guru' => $j->ustadz->nama_lengkap ?? '-',
+                'guru' => $j->daftar_nama_pengampu,
                 'is_milik_wali' => $isMilikWali,
                 'sudah_absen' => $sudahAbsen,
             ];
@@ -253,9 +253,9 @@ class PresensiMuridController extends Controller
             ], 422);
         }
 
-        $jadwal = JadwalPelajaran::with(['ruangan'])->findOrFail($request->jadwal_id);
+        $jadwal = JadwalPelajaran::with(['ruangan', 'ustadz', 'ustadzs'])->findOrFail($request->jadwal_id);
 
-        // Validasi Otorisasi: Guru Pengajar Pribadi ATAU Wali Ruangan dari kelas terkait
+        // Validasi Otorisasi: Guru Pengajar (Utama atau Team Teaching) ATAU Wali Ruangan dari kelas terkait
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $ruanganWaliIds = Ruangan::where('ustadz_id', $ustadzId)
             ->when($tahunAktif, function ($q) use ($tahunAktif) {
@@ -267,7 +267,7 @@ class PresensiMuridController extends Controller
             ->pluck('id')
             ->toArray();
 
-        $isGuruPengajar = ($jadwal->ustadz_id == $ustadzId);
+        $isGuruPengajar = $jadwal->daftar_ustadz->contains('id', $ustadzId);
         $isWaliRuangan = in_array($jadwal->ruangan_id, $ruanganWaliIds);
 
         if (!$isGuruPengajar && !$isWaliRuangan) {
@@ -375,9 +375,9 @@ class PresensiMuridController extends Controller
             ], 422);
         }
 
-        $jadwal = JadwalPelajaran::findOrFail($request->jadwal_id);
+        $jadwal = JadwalPelajaran::with(['ustadz', 'ustadzs'])->findOrFail($request->jadwal_id);
 
-        // Validasi Otorisasi: Guru Pengajar Pribadi ATAU Wali Ruangan dari kelas terkait
+        // Validasi Otorisasi: Guru Pengajar (Utama atau Team Teaching) ATAU Wali Ruangan dari kelas terkait
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $ruanganWaliIds = Ruangan::where('ustadz_id', $ustadzId)
             ->when($tahunAktif, function ($q) use ($tahunAktif) {
@@ -389,7 +389,7 @@ class PresensiMuridController extends Controller
             ->pluck('id')
             ->toArray();
 
-        $isGuruPengajar = ($jadwal->ustadz_id == $ustadzId);
+        $isGuruPengajar = $jadwal->daftar_ustadz->contains('id', $ustadzId);
         $isWaliRuangan = in_array($jadwal->ruangan_id, $ruanganWaliIds);
 
         if (!$isGuruPengajar && !$isWaliRuangan) {

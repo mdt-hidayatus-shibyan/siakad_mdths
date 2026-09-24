@@ -188,6 +188,8 @@ class SesiPresensiUstadzItem {
   final String ruangan;
   final String guruPengajar;
   final bool isMilikWali;
+  final bool isTeamTeaching;
+  final List<UstadzPresensiStatusItem> daftarUstadz;
   final bool sudahCheckin;
   final String status;
   final int? ustadzPenggantiId;
@@ -203,6 +205,8 @@ class SesiPresensiUstadzItem {
     required this.ruangan,
     required this.guruPengajar,
     this.isMilikWali = false,
+    this.isTeamTeaching = false,
+    this.daftarUstadz = const [],
     required this.sudahCheckin,
     required this.status,
     this.ustadzPenggantiId,
@@ -212,6 +216,7 @@ class SesiPresensiUstadzItem {
   });
 
   factory SesiPresensiUstadzItem.fromJson(Map<String, dynamic> json) {
+    final rawUstadz = json['daftar_ustadz'] as List? ?? [];
     return SesiPresensiUstadzItem(
       jadwalId: json['jadwal_id'] ?? 0,
       jamKe: json['jam_ke'] ?? '',
@@ -220,12 +225,42 @@ class SesiPresensiUstadzItem {
       ruangan: json['ruangan'] ?? '',
       guruPengajar: json['guru_pengajar'] ?? '-',
       isMilikWali: json['is_milik_wali'] ?? false,
+      isTeamTeaching: json['is_team_teaching'] ?? false,
+      daftarUstadz: rawUstadz
+          .map((e) => UstadzPresensiStatusItem.fromJson(e))
+          .toList(),
       sudahCheckin: json['sudah_checkin'] ?? false,
       status: json['status'] ?? 'Belum Absen',
       ustadzPenggantiId: json['ustadz_pengganti_id'],
       ustadzPenggantiNama: json['ustadz_pengganti_nama'],
       keterangan: json['keterangan'],
       waktuCheckin: json['waktu_checkin'],
+    );
+  }
+}
+
+class UstadzPresensiStatusItem {
+  final int id;
+  final String nama;
+  final bool isUtama;
+  final bool sudahCheckin;
+  final String status;
+
+  UstadzPresensiStatusItem({
+    required this.id,
+    required this.nama,
+    required this.isUtama,
+    required this.sudahCheckin,
+    required this.status,
+  });
+
+  factory UstadzPresensiStatusItem.fromJson(Map<String, dynamic> json) {
+    return UstadzPresensiStatusItem(
+      id: json['id'] ?? 0,
+      nama: json['nama'] ?? '',
+      isUtama: json['is_utama'] ?? false,
+      sudahCheckin: json['sudah_checkin'] ?? false,
+      status: json['status'] ?? 'Belum Absen',
     );
   }
 }

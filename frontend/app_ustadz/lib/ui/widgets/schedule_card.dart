@@ -97,9 +97,73 @@ class ScheduleCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            item.mapel,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  item.mapel,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (item.isTeamTeaching || !item.isUtama) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: item.isUtama
+                        ? (isDark
+                              ? const Color(0xFF3B2E05)
+                              : const Color(0xFFFEF3C7))
+                        : (isDark
+                              ? const Color(0xFF0C2A45)
+                              : const Color(0xFFE0F2FE)),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: item.isUtama
+                          ? (isDark
+                                ? AppColors.amberAccent.withValues(alpha: 0.4)
+                                : const Color(0xFFFCD34D))
+                          : (isDark
+                                ? AppColors.skyBlueAccent.withValues(alpha: 0.4)
+                                : const Color(0xFFBAE6FD)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (item.isUtama) ...[
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 12,
+                          color: AppColors.amberAccent,
+                        ),
+                        const SizedBox(width: 3),
+                      ],
+                      Text(
+                        item.peran,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: item.isUtama
+                              ? (isDark
+                                    ? AppColors.amberAccent
+                                    : const Color(0xFFB45309))
+                              : (isDark
+                                    ? AppColors.skyBlueAccent
+                                    : const Color(0xFF0369A1)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 4),
           Row(
@@ -122,6 +186,30 @@ class ScheduleCard extends StatelessWidget {
                       : const Color(0xFF73796E),
                 ),
               ),
+              if (item.guru != null && item.guru!.isNotEmpty) ...[
+                Text(
+                  ' • ',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? const Color(0xFF8D9387)
+                        : const Color(0xFF73796E),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Guru: ${item.guru}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isDark
+                          ? const Color(0xFF8D9387)
+                          : const Color(0xFF73796E),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ],
           ),
           if (!item.sudahAbsen && onAbsenTap != null) ...[

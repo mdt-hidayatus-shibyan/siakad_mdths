@@ -40,8 +40,18 @@
             <span class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-2">Identitas
                 Pengguna</span>
             <div class="flex items-center gap-3">
-                @if ($user && $user->ustadz && $user->ustadz->foto)
-                    <img src="{{ asset('storage/' . $user->ustadz->foto) }}" alt="{{ $user->name }}"
+                @php
+                    $userPhoto = $user?->foto_url;
+                    if (!$userPhoto) {
+                        if ($user?->administrator && $user->administrator->foto) {
+                            $userPhoto = asset('storage/' . $user->administrator->foto);
+                        } elseif ($user?->ustadz && $user->ustadz->foto) {
+                            $userPhoto = $user->ustadz->foto_url ?? asset('storage/' . $user->ustadz->foto);
+                        }
+                    }
+                @endphp
+                @if ($userPhoto)
+                    <img src="{{ $userPhoto }}" alt="{{ $user->name ?? 'Pengguna' }}"
                         class="w-11 h-11 rounded-2xl object-cover border border-zinc-200 dark:border-zinc-700 shadow-2xs flex-shrink-0">
                 @else
                     <div

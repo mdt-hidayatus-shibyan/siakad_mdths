@@ -50,8 +50,8 @@ class PresensiUjianController extends Controller
             ->pluck('id')
             ->toArray();
 
-        // 2. Ruangan tempat mengajar / jadwal ujian pengawas
-        $jadwalRuanganIds = JadwalPelajaran::where('ustadz_id', $ustadz->id)
+        // 2. Ruangan tempat mengajar (baik utama maupun multi-pengampu) / jadwal ujian pengawas
+        $jadwalRuanganIds = JadwalPelajaran::forUstadz($ustadz->id)
             ->whereHas('ruangan', function ($q) use ($tahunPelajaranId) {
                 $q->where('tahun_pelajaran_id', $tahunPelajaranId);
             })
@@ -150,12 +150,38 @@ class PresensiUjianController extends Controller
         ];
 
         if ($selectedRuanganId) {
-            $ruangan = Ruangan::with('level')->find($selectedRuanganId);
+            $ruangan = Ruangan::with(['level', 'waliRuangan'])->find($selectedRuanganId);
         }
 
         // 3. Ambil Jadwal Ujian untuk level ruangan ini
         if ($selectedUjianId && $ruangan) {
             $ustadz = $user->ustadz;
+
+            // Pre-fetch pemetaan guru mapel per ruangan
+            $jadwalKbmList = JadwalPelajaran::with(['ustadz', 'ustadzs', 'ruangan'])
+                ->whereHas('ruangan', fn($q) => $q->where('tahun_pelajaran_id', $tahunPelajaranId))
+                ->get();
+
+            $guruMapelRuanganMap = [];
+            $guruMapelLevelMap = [];
+            foreach ($jadwalKbmList as $jk) {
+                if ($jk->mata_pelajaran_id) {
+                    $daftarPengampu = $jk->daftar_ustadz;
+                    if ($daftarPengampu->isNotEmpty()) {
+                        $primary = $daftarPengampu->first();
+                        $rKey = $jk->mata_pelajaran_id . '_' . $jk->ruangan_id;
+                        if (!isset($guruMapelRuanganMap[$rKey])) {
+                            $guruMapelRuanganMap[$rKey] = $primary;
+                        }
+                        if ($jk->ruangan && $jk->ruangan->level_id) {
+                            $lKey = $jk->mata_pelajaran_id . '_' . $jk->ruangan->level_id;
+                            if (!isset($guruMapelLevelMap[$lKey])) {
+                                $guruMapelLevelMap[$lKey] = $primary;
+                            }
+                        }
+                    }
+                }
+            }
 
             $queryJadwals = JadwalUjian::with(['mataPelajaran', 'pengawas'])
                 ->where('ujian_id', $selectedUjianId)
@@ -168,7 +194,7 @@ class PresensiUjianController extends Controller
                 $isWaliRuangan = ($ruangan->ustadz_id == $ustadz->id);
                 if (!$isWaliRuangan) {
                     $mapelDiampuIds = JadwalPelajaran::where('ruangan_id', $ruangan->id)
-                        ->where('ustadz_id', $ustadz->id)
+                        ->forUstadz($ustadz->id)
                         ->pluck('mata_pelajaran_id')
                         ->toArray();
 
@@ -192,7 +218,9 @@ class PresensiUjianController extends Controller
                 ->orderBy('waktu_mulai', 'asc')
                 ->get();
 
-            $jadwalList = $jadwals->map(function ($j) {
+            $jadwalList = $jadwals->map(function ($j) use ($ruangan, $guruMapelRuanganMap, $guruMapelLevelMap, $ustadz) {
+                $resolvedPengawas = $j->resolvePengawasForRuangan($ruangan, $guruMapelRuanganMap, $guruMapelLevelMap);
+
                 return [
                     'id' => $j->id,
                     'mata_pelajaran_id' => $j->mata_pelajaran_id,
@@ -204,8 +232,8 @@ class PresensiUjianController extends Controller
                     'tanggal_ujian_raw' => $j->getRawOriginal('tanggal_ujian') ?? date('Y-m-d'),
                     'waktu_mulai' => $j->jam_mulai_format,
                     'waktu_selesai' => $j->jam_selesai_format,
-                    'pengawas_id' => $j->pengawas_id,
-                    'pengawas_nama' => $j->pengawas->nama_lengkap ?? null,
+                    'pengawas_id' => $resolvedPengawas?->id,
+                    'pengawas_nama' => $resolvedPengawas?->nama_lengkap ?? 'Belum Ditentukan',
                 ];
             });
 
@@ -221,9 +249,21 @@ class PresensiUjianController extends Controller
                     ->where('ruangan_id', $selectedRuanganId)
                     ->first();
 
+                $defaultPengawas = $jadwalTerpilih ? $jadwalTerpilih->resolvePengawasForRuangan($ruangan, $guruMapelRuanganMap, $guruMapelLevelMap) : null;
+                // Jika ustadz yang login adalah pengampu mapel ini di ruangan ini, prioritaskan ustadz login sebagai pengawas default
+                if ($ustadz && $jadwalTerpilih) {
+                    $isPengampuIni = JadwalPelajaran::where('ruangan_id', $selectedRuanganId)
+                        ->where('mata_pelajaran_id', $jadwalTerpilih->mata_pelajaran_id)
+                        ->forUstadz($ustadz->id)
+                        ->exists();
+                    if ($isPengampuIni) {
+                        $defaultPengawas = $ustadz;
+                    }
+                }
+
                 $pengawasData = [
-                    'ustadz_id' => $presensiPengawas?->ustadz_id ?? $jadwalTerpilih?->pengawas_id,
-                    'ustadz_nama' => $presensiPengawas?->ustadz?->nama_lengkap ?? $jadwalTerpilih?->pengawas?->nama_lengkap ?? 'Ustadz Pengawas',
+                    'ustadz_id' => $presensiPengawas?->ustadz_id ?? $defaultPengawas?->id,
+                    'ustadz_nama' => $presensiPengawas?->ustadz?->nama_lengkap ?? $defaultPengawas?->nama_lengkap ?? 'Ustadz Pengawas',
                     'ustadz_pengganti_id' => $presensiPengawas?->ustadz_pengganti_id,
                     'ustadz_pengganti_nama' => $presensiPengawas?->ustadzPengganti?->nama_lengkap,
                     'status' => $presensiPengawas?->status ?? 'Hadir',

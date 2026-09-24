@@ -245,6 +245,9 @@ class PresensiUjianService
         $ujian = Ujian::with('tahunPelajaran')->findOrFail($ujianId);
         $ruangan = Ruangan::with(['level', 'waliRuangan'])->findOrFail($ruanganId);
         $jadwal = JadwalUjian::with(['mataPelajaran', 'pengawas'])->findOrFail($jadwalId);
+        if (!$jadwal->pengawas) {
+            $jadwal->setRelation('pengawas', $jadwal->resolvePengawasForRuangan($ruangan));
+        }
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruanganId, $ujian->tahun_pelajaran_id, 'Aktif');
 

@@ -5,14 +5,18 @@ namespace App\Http\Controllers\Akademik;
 use App\Http\Controllers\Controller;
 
 use App\Models\BulanHijriyah;
+use App\Models\HariLibur;
 use App\Models\JadwalPelajaran;
 use App\Models\MataPelajaran;
 use App\Models\PengaturanAkademik;
 use App\Models\PresensiMurid;
 use App\Models\Ruangan;
 use App\Models\Semester;
+use App\Models\Ujian\JadwalUjian;
+use App\Models\Ujian\Ujian;
 use App\Repositories\MuridRuanganRepository;
 use App\Services\PresensiMuridService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 
@@ -25,6 +29,170 @@ class PresensiMuridController extends Controller
     {
         $this->muridRuanganRepo = $muridRuanganRepo;
         $this->presensiService = $presensiService;
+    }
+
+    /**
+     * Monitoring Progres Harian Presensi Murid untuk Seluruh Kelas
+     */
+    public function progresHarian(Request $request)
+    {
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+        $ruangan_id = $request->ruangan_id;
+        $status_filter = $request->status; // 'sudah', 'belum'
+
+        $ruangans = Ruangan::with('level')->berdasarkanHakAkses()->orderBy('level_id')->orderBy('nama_ruangan')->get();
+
+        $nama_hari_inggris = Carbon::parse($tanggal)->format('l');
+        $mapHari = [
+            'Sunday'    => 'Ahad',
+            'Monday'    => 'Senin',
+            'Tuesday'   => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday'  => 'Kamis',
+            'Friday'    => 'Jumat',
+            'Saturday'  => 'Sabtu'
+        ];
+        $hari_ini = $mapHari[$nama_hari_inggris] ?? 'Senin';
+
+        // Cek Libur
+        $libur = HariLibur::where('tanggal_mulai', '<=', $tanggal)
+            ->where('tanggal_selesai', '>=', $tanggal)
+            ->first();
+
+        $isLibur = false;
+        $keteranganLibur = null;
+        if ($libur) {
+            $isLibur = true;
+            $keteranganLibur = $libur->keterangan;
+        } elseif ($hari_ini === 'Jumat') {
+            $isLibur = true;
+            $keteranganLibur = 'Libur Rutin (Jumat)';
+        }
+
+        // Cek Ujian
+        $ujian = Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
+            ->whereDate('tanggal_selesai', '>=', $tanggal)
+            ->first();
+        if (!$ujian) {
+            $jadwalUjianAda = JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
+            if ($jadwalUjianAda) {
+                $ujian = $jadwalUjianAda->ujian;
+            }
+        }
+        $isUjian = ($ujian != null);
+        $namaUjian = $ujian ? $ujian->nama_ujian : null;
+        $ujianId = $ujian ? $ujian->id : null;
+
+        // Ambil Jadwal Hari Ini
+        $jadwalQuery = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level', 'ustadz', 'ustadzs'])
+            ->where('hari', $hari_ini);
+
+        if ($ruangan_id) {
+            $jadwalQuery->where('ruangan_id', $ruangan_id);
+        } else {
+            $jadwalQuery->whereIn('ruangan_id', $ruangans->pluck('id'));
+        }
+
+        $jadwals = $jadwalQuery->get()->sortBy([
+            fn($a, $b) => ($a->ruangan?->level?->urutan_level ?? 99) <=> ($b->ruangan?->level?->urutan_level ?? 99),
+            fn($a, $b) => strnatcasecmp($a->ruangan?->nama_ruangan ?? '', $b->ruangan?->nama_ruangan ?? ''),
+            fn($a, $b) => (match ($a->jam_ke) {
+                'Nadzoman' => 1,
+                '1' => 2,
+                '2' => 3,
+                'Ekstra' => 4,
+                default => 5
+            }) <=> (match ($b->jam_ke) {
+                'Nadzoman' => 1,
+                '1' => 2,
+                '2' => 3,
+                'Ekstra' => 4,
+                default => 5
+            }),
+        ])->values();
+
+        // Ambil Presensi Murid pada tanggal ini
+        $presensiDb = PresensiMurid::where('tanggal', $tanggal)
+            ->whereIn('jadwal_pelajaran_id', $jadwals->pluck('id'))
+            ->get()
+            ->groupBy('jadwal_pelajaran_id');
+
+        $totalSesi = $jadwals->count();
+        $totalSudahAbsen = 0;
+        $totalBelumAbsen = 0;
+        $rekapStatus = [
+            'Hadir' => 0,
+            'Sakit' => 0,
+            'Izin' => 0,
+            'Alpha' => 0,
+            'Dispensasi' => 0,
+            'TotalMurid' => 0,
+        ];
+
+        $detailProgres = [];
+
+        foreach ($jadwals as $j) {
+            $records = $presensiDb->get($j->id, collect());
+            $isSudah = $records->isNotEmpty();
+
+            if ($isSudah) {
+                $totalSudahAbsen++;
+            } else {
+                $totalBelumAbsen++;
+            }
+
+            $countHadir = $records->where('status', 'Hadir')->count();
+            $countSakit = $records->where('status', 'Sakit')->count();
+            $countIzin = $records->where('status', 'Izin')->count();
+            $countAlpha = $records->where('status', 'Alpha')->count();
+            $countDispensasi = $records->where('status', 'Dispensasi')->count();
+            $countTotal = $records->count();
+
+            $rekapStatus['Hadir'] += $countHadir;
+            $rekapStatus['Sakit'] += $countSakit;
+            $rekapStatus['Izin'] += $countIzin;
+            $rekapStatus['Alpha'] += $countAlpha;
+            $rekapStatus['Dispensasi'] += $countDispensasi;
+            $rekapStatus['TotalMurid'] += $countTotal;
+
+            $lastUpdated = $records->max('updated_at');
+
+            if ($status_filter === 'sudah' && !$isSudah) continue;
+            if ($status_filter === 'belum' && $isSudah) continue;
+
+            $detailProgres[] = [
+                'jadwal' => $j,
+                'is_sudah' => $isSudah,
+                'hadir' => $countHadir,
+                'sakit' => $countSakit,
+                'izin' => $countIzin,
+                'alpha' => $countAlpha,
+                'dispensasi' => $countDispensasi,
+                'total_murid' => $countTotal,
+                'waktu_update' => $lastUpdated ? Carbon::parse($lastUpdated)->format('H:i') : null,
+            ];
+        }
+
+        $persenSelesai = $totalSesi > 0 ? round(($totalSudahAbsen / $totalSesi) * 100, 1) : 0;
+
+        return view('presensi-murid.progres', compact(
+            'ruangans',
+            'tanggal',
+            'ruangan_id',
+            'status_filter',
+            'hari_ini',
+            'isLibur',
+            'keteranganLibur',
+            'isUjian',
+            'namaUjian',
+            'ujianId',
+            'totalSesi',
+            'totalSudahAbsen',
+            'totalBelumAbsen',
+            'persenSelesai',
+            'rekapStatus',
+            'detailProgres'
+        ));
     }
 
     public function index(Request $request)
@@ -181,6 +349,43 @@ class PresensiMuridController extends Controller
         ));
     }
 
+    /**
+     * Modal Form AJAX Presensi Murid Cepat (Dense Form)
+     */
+    public function modalInput(Request $request)
+    {
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+        $jadwal_id = $request->jadwal_id;
+
+        $jadwal = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level', 'ustadz', 'ustadzs'])->findOrFail($jadwal_id);
+
+        // Cari Tahun Pelajaran dari Tanggal
+        $bulan = BulanHijriyah::where('tanggal_mulai_masehi', '<=', $tanggal)
+            ->where('tanggal_selesai_masehi', '>=', $tanggal)
+            ->first();
+
+        if ($bulan) {
+            $tahun_pelajaran_id = $bulan->tahun_pelajaran_id;
+        } else {
+            $semesterAktif = Semester::where('is_active', 1)->first();
+            $tahun_pelajaran_id = $semesterAktif ? $semesterAktif->tahun_pelajaran_id : null;
+        }
+
+        $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($jadwal->ruangan_id, $tahun_pelajaran_id, 'Aktif');
+
+        $presensiTersimpan = PresensiMurid::where('tanggal', $tanggal)
+            ->where('jadwal_pelajaran_id', $jadwal->id)
+            ->get()
+            ->keyBy('murid_id');
+
+        return view('presensi-murid.modal_input', compact(
+            'jadwal',
+            'tanggal',
+            'murids',
+            'presensiTersimpan'
+        ));
+    }
+
     // ==========================================
     // FUNGSI SIMPAN KHUSUS HARIAN
     // ==========================================
@@ -191,6 +396,12 @@ class PresensiMuridController extends Controller
         $dataPresensi = $request->presensi;
 
         if (!$dataPresensi) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Tidak ada data presensi yang diproses.'
+                ], 422);
+            }
             return back()->with('error', 'Tidak ada data presensi yang diproses.');
         }
 
@@ -206,17 +417,26 @@ class PresensiMuridController extends Controller
         $semesterId = $semester ? $semester->id : null;
 
         foreach ($dataPresensi as $murid_id => $status) {
-            PresensiMurid::updateOrCreate(
-                [
-                    'jadwal_pelajaran_id' => $jadwal_id,
-                    'murid_id' => $murid_id,
-                    'tanggal' => $tanggal
-                ],
-                [
-                    'status' => $status,
-                    'semester_id' => $semesterId
-                ]
-            );
+            if (!empty($status)) {
+                PresensiMurid::updateOrCreate(
+                    [
+                        'jadwal_pelajaran_id' => $jadwal_id,
+                        'murid_id' => $murid_id,
+                        'tanggal' => $tanggal
+                    ],
+                    [
+                        'status' => $status,
+                        'semester_id' => $semesterId
+                    ]
+                );
+            }
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Data presensi murid berhasil disimpan!'
+            ], 200);
         }
 
         return back()->with('success', 'Data presensi berhasil disimpan!');
@@ -273,6 +493,12 @@ class PresensiMuridController extends Controller
         $jam_ke = $request->jam_ke;
 
         if (!$dataPresensi || !$bulan_id || !$ruangan_id || !$jam_ke) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Data presensi bulanan tidak lengkap.'
+                ], 422);
+            }
             return back()->with('error', 'Data presensi bulanan tidak lengkap.');
         }
 
@@ -285,8 +511,21 @@ class PresensiMuridController extends Controller
                 \Illuminate\Support\Facades\Auth::id()
             );
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status'  => 'success',
+                    'message' => 'Data rekap bulanan berhasil disimpan!'
+                ], 200);
+            }
+
             return back()->with('success', 'Data rekap bulanan berhasil disimpan!');
         } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Gagal menyimpan rekap bulanan: ' . $e->getMessage()
+                ], 500);
+            }
             return back()->with('error', 'Gagal menyimpan rekap bulanan: ' . $e->getMessage());
         }
     }

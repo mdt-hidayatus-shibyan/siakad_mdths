@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
@@ -8,10 +8,7 @@ import '../../../providers/presensi_provider.dart';
 class CheckinUstadzSheet extends StatefulWidget {
   final SesiPresensiUstadzItem sesi;
 
-  const CheckinUstadzSheet({
-    super.key,
-    required this.sesi,
-  });
+  const CheckinUstadzSheet({super.key, required this.sesi});
 
   static Future<void> show(BuildContext context, SesiPresensiUstadzItem sesi) {
     HapticHelper.light();
@@ -30,6 +27,7 @@ class CheckinUstadzSheet extends StatefulWidget {
 class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
   late String _selectedStatus;
   int? _selectedBadalId;
+  int? _selectedUstadzId;
   late final TextEditingController _ketController;
 
   @override
@@ -37,6 +35,9 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
     super.initState();
     _selectedStatus = widget.sesi.sudahCheckin ? widget.sesi.status : 'Hadir';
     _selectedBadalId = widget.sesi.ustadzPenggantiId;
+    if (widget.sesi.daftarUstadz.isNotEmpty) {
+      _selectedUstadzId = widget.sesi.daftarUstadz.first.id;
+    }
     _ketController = TextEditingController(text: widget.sesi.keterangan ?? '');
   }
 
@@ -50,7 +51,8 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = context.watch<PresensiProvider>();
-    final isBadalNeeded = _selectedStatus == 'Izin' ||
+    final isBadalNeeded =
+        _selectedStatus == 'Izin' ||
         _selectedStatus == 'Sakit' ||
         _selectedStatus == 'Kosong';
 
@@ -63,9 +65,7 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
       ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF161E16) : Colors.white,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(24),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -107,13 +107,67 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
             ),
             const SizedBox(height: 18),
 
+            // Pilihan Ustadz jika Team Teaching (Multi-Pengampu)
+            if (widget.sesi.isTeamTeaching &&
+                widget.sesi.daftarUstadz.length > 1) ...[
+              const Text(
+                'Pilih Guru Pengampu:',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: widget.sesi.daftarUstadz.map((u) {
+                  final isSelected = _selectedUstadzId == u.id;
+                  return ChoiceChip(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (u.isUtama) ...[
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 14,
+                            color: Colors.amber,
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        Text(u.nama),
+                      ],
+                    ),
+                    selected: isSelected,
+                    onSelected: (val) {
+                      if (val) {
+                        setState(() {
+                          _selectedUstadzId = u.id;
+                          if (u.sudahCheckin) {
+                            _selectedStatus = u.status;
+                          }
+                        });
+                      }
+                    },
+                    selectedColor: isDark
+                        ? AppColors.primaryDark.withValues(alpha: 0.25)
+                        : AppColors.primaryLight.withValues(alpha: 0.15),
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      color: isSelected
+                          ? (isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight)
+                          : (isDark ? Colors.white70 : Colors.black87),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Status Radio/Chips
             const Text(
               'Pilih Status Kehadiran:',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -131,22 +185,22 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
                   },
                   selectedColor: st == 'Hadir'
                       ? (isDark
-                          ? AppColors.hadirBgDark
-                          : AppColors.hadirBgLight)
+                            ? AppColors.hadirBgDark
+                            : AppColors.hadirBgLight)
                       : (isDark
-                          ? const Color(0xFF451A03)
-                          : const Color(0xFFFEF3C7)),
+                            ? const Color(0xFF451A03)
+                            : const Color(0xFFFEF3C7)),
                   labelStyle: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                     color: isSelected
                         ? (st == 'Hadir'
-                            ? (isDark
-                                ? AppColors.hadirTextDark
-                                : AppColors.hadirTextLight)
-                            : (isDark
-                                ? AppColors.sakitTextDark
-                                : AppColors.sakitTextLight))
+                              ? (isDark
+                                    ? AppColors.hadirTextDark
+                                    : AppColors.hadirTextLight)
+                              : (isDark
+                                    ? AppColors.sakitTextDark
+                                    : AppColors.sakitTextLight))
                         : (isDark ? Colors.white70 : Colors.black87),
                   ),
                 );
@@ -158,10 +212,7 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
             if (isBadalNeeded) ...[
               const Text(
                 'Guru Badal / Pengganti (Opsional):',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
               DropdownButtonFormField<int?>(
@@ -200,10 +251,7 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
             // Keterangan Text Field
             const Text(
               'Catatan / Keterangan (Opsional):',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             TextFormField(
@@ -231,6 +279,7 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
                       Navigator.pop(context);
                       final success = await provider.checkinUstadz(
                         jadwalId: widget.sesi.jadwalId,
+                        ustadzId: _selectedUstadzId,
                         status: _selectedStatus,
                         ustadzPenggantiId: _selectedBadalId,
                         keterangan: _ketController.text.trim(),

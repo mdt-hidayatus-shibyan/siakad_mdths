@@ -10,12 +10,186 @@ use App\Models\JadwalPelajaran;
 use App\Models\PresensiUstadz;
 use App\Models\Ruangan;
 use App\Models\Ustadz;
+use App\Models\Ujian\JadwalUjian;
+use App\Models\Ujian\Ujian;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PresensiUstadzController extends Controller
 {
+    /**
+     * Monitoring Progres Harian Presensi Seluruh Ustadz Pengampu
+     */
+    public function progresHarian(Request $request)
+    {
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+        $ruangan_id = $request->ruangan_id;
+        $status_filter = $request->status;
+
+        $ruangans = Ruangan::with('level')->berdasarkanHakAkses()->orderBy('level_id')->orderBy('nama_ruangan')->get();
+
+        $nama_hari_inggris = Carbon::parse($tanggal)->format('l');
+        $mapHari = [
+            'Sunday'    => 'Ahad',
+            'Monday'    => 'Senin',
+            'Tuesday'   => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday'  => 'Kamis',
+            'Friday'    => 'Jumat',
+            'Saturday'  => 'Sabtu'
+        ];
+        $hari_ini = $mapHari[$nama_hari_inggris] ?? 'Senin';
+
+        // Cek Libur
+        $libur = HariLibur::where('tanggal_mulai', '<=', $tanggal)
+            ->where('tanggal_selesai', '>=', $tanggal)
+            ->first();
+
+        $isLibur = false;
+        $keteranganLibur = null;
+        if ($libur) {
+            $isLibur = true;
+            $keteranganLibur = $libur->keterangan;
+        } elseif ($hari_ini === 'Jumat') {
+            $isLibur = true;
+            $keteranganLibur = 'Libur Rutin (Jumat)';
+        }
+
+        // Cek Ujian
+        $ujian = Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
+            ->whereDate('tanggal_selesai', '>=', $tanggal)
+            ->first();
+        if (!$ujian) {
+            $jadwalUjianAda = JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
+            if ($jadwalUjianAda) {
+                $ujian = $jadwalUjianAda->ujian;
+            }
+        }
+        $isUjian = ($ujian != null);
+        $namaUjian = $ujian ? $ujian->nama_ujian : null;
+        $ujianId = $ujian ? $ujian->id : null;
+
+        // Ambil Jadwal Hari Ini
+        $jadwalQuery = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level', 'ustadz', 'ustadzs'])
+            ->where('hari', $hari_ini);
+
+        if ($ruangan_id) {
+            $jadwalQuery->where('ruangan_id', $ruangan_id);
+        } else {
+            $jadwalQuery->whereIn('ruangan_id', $ruangans->pluck('id'));
+        }
+
+        $jadwals = $jadwalQuery->get()->sortBy([
+            fn($a, $b) => ($a->ruangan?->level?->urutan_level ?? 99) <=> ($b->ruangan?->level?->urutan_level ?? 99),
+            fn($a, $b) => strnatcasecmp($a->ruangan?->nama_ruangan ?? '', $b->ruangan?->nama_ruangan ?? ''),
+            fn($a, $b) => (match ($a->jam_ke) {
+                'Nadzoman' => 1,
+                '1' => 2,
+                '2' => 3,
+                'Ekstra' => 4,
+                default => 5
+            }) <=> (match ($b->jam_ke) {
+                'Nadzoman' => 1,
+                '1' => 2,
+                '2' => 3,
+                'Ekstra' => 4,
+                default => 5
+            }),
+        ])->values();
+
+        // Ambil Data Presensi Ustadz pada tanggal ini
+        $presensiUstadzDb = PresensiUstadz::with(['ustadz', 'guruPengganti', 'penginput'])
+            ->where('tanggal', $tanggal)
+            ->whereIn('jadwal_pelajaran_id', $jadwals->pluck('id'))
+            ->get();
+
+        $presensiMap = [];
+        foreach ($presensiUstadzDb as $p) {
+            $presensiMap[$p->jadwal_pelajaran_id . '_' . $p->ustadz_id] = $p;
+        }
+
+        $totalPengampu = 0;
+        $totalHadir = 0;
+        $totalSakit = 0;
+        $totalIzin = 0;
+        $totalAlpha = 0;
+        $totalKosong = 0;
+        $totalBadal = 0;
+        $totalBelum = 0;
+
+        $detailProgres = [];
+
+        foreach ($jadwals as $j) {
+            foreach ($j->daftar_ustadz as $u) {
+                $p = $presensiMap[$j->id . '_' . $u->id] ?? null;
+                $isUtama = ($u->pivot->is_utama ?? false) || ($u->id == $j->ustadz_id);
+                $status = $p ? $p->status : 'Belum Absen';
+
+                $totalPengampu++;
+
+                if ($p) {
+                    if ($p->status === 'Hadir') $totalHadir++;
+                    elseif ($p->status === 'Sakit') $totalSakit++;
+                    elseif ($p->status === 'Izin') $totalIzin++;
+                    elseif ($p->status === 'Alpha') $totalAlpha++;
+                    elseif ($p->status === 'Kosong') $totalKosong++;
+
+                    if ($p->ustadz_pengganti_id && $p->guruPengganti) {
+                        $totalBadal++;
+                    }
+                } else {
+                    $totalBelum++;
+                }
+
+                // Filter status jika dipilih
+                if ($status_filter) {
+                    if ($status_filter === 'Belum' && $p !== null) continue;
+                    if ($status_filter === 'Badal' && (!$p || !$p->ustadz_pengganti_id)) continue;
+                    if (in_array($status_filter, ['Hadir', 'Sakit', 'Izin', 'Alpha', 'Kosong']) && ($status !== $status_filter)) continue;
+                }
+
+                $detailProgres[] = [
+                    'jadwal' => $j,
+                    'ustadz' => $u,
+                    'is_utama' => $isUtama,
+                    'presensi' => $p,
+                    'status' => $status,
+                    'guru_pengganti' => $p?->guruPengganti,
+                    'keterangan' => $p?->keterangan,
+                    'diinput_oleh' => $p?->penginput?->name,
+                    'waktu_input' => $p?->updated_at ? Carbon::parse($p->updated_at)->format('H:i') : null,
+                ];
+            }
+        }
+
+        $persenHadir = $totalPengampu > 0 ? round((($totalHadir + $totalBadal) / $totalPengampu) * 100, 1) : 0;
+        $semuaGuru = Ustadz::orderBy('nama_lengkap')->where('is_active', true)->get();
+
+        return view('presensi-ustadz.progres', compact(
+            'ruangans',
+            'tanggal',
+            'ruangan_id',
+            'status_filter',
+            'hari_ini',
+            'isLibur',
+            'keteranganLibur',
+            'isUjian',
+            'namaUjian',
+            'ujianId',
+            'totalPengampu',
+            'totalHadir',
+            'totalSakit',
+            'totalIzin',
+            'totalAlpha',
+            'totalKosong',
+            'totalBadal',
+            'totalBelum',
+            'persenHadir',
+            'detailProgres',
+            'semuaGuru'
+        ));
+    }
     public function index(Request $request)
     {
         // 1. Tangkap parameter atau gunakan default hari ini
@@ -89,7 +263,7 @@ class PresensiUstadzController extends Controller
             // Jika TIDAK LIBUR, baru kita cari jadwal dan riwayat presensinya
             if (!$isLibur) {
                 // Ambil jadwal pelajaran khusus ruangan dan hari tersebut
-                $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ustadz'])
+                $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ustadzs'])
                     ->where('ruangan_id', $ruangan_id)
                     ->where('hari', $hariIndo)
                     ->orderBy('jam_ke')
@@ -101,7 +275,9 @@ class PresensiUstadzController extends Controller
                         ->where('tanggal', $tanggal)
                         ->whereIn('jadwal_pelajaran_id', $jadwals->pluck('id'))
                         ->get()
-                        ->keyBy('jadwal_pelajaran_id');
+                        ->keyBy(function ($p) {
+                            return $p->jadwal_pelajaran_id . '_' . $p->ustadz_id;
+                        });
                 }
             }
         } else {
@@ -136,6 +312,38 @@ class PresensiUstadzController extends Controller
     }
 
 
+    /**
+     * Modal Form AJAX Presensi Ustadz Cepat
+     */
+    public function modalInput(Request $request)
+    {
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+        $jadwal_id = $request->jadwal_id;
+        $ustadz_id = $request->ustadz_id;
+
+        $jadwal = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level', 'ustadz', 'ustadzs'])->findOrFail($jadwal_id);
+        $ustadz = Ustadz::findOrFail($ustadz_id);
+
+        $presensi = PresensiUstadz::with('guruPengganti')
+            ->where('tanggal', $tanggal)
+            ->where('jadwal_pelajaran_id', $jadwal->id)
+            ->where('ustadz_id', $ustadz->id)
+            ->first();
+
+        $isUtama = ($jadwal->ustadz_id == $ustadz->id) || ($jadwal->ustadzs()->where('ustadz_id', $ustadz->id)->wherePivot('is_utama', true)->exists());
+
+        $semuaGuru = Ustadz::where('is_active', true)->where('id', '!=', $ustadz->id)->orderBy('nama_lengkap')->get();
+
+        return view('presensi-ustadz.modal_input', compact(
+            'jadwal',
+            'ustadz',
+            'tanggal',
+            'presensi',
+            'isUtama',
+            'semuaGuru'
+        ));
+    }
+
     public function storeHarian(Request $request)
     {
         $request->validate([
@@ -147,27 +355,38 @@ class PresensiUstadzController extends Controller
         $tanggal = $request->tanggal;
 
         // Looping semua data presensi yang dikirim dari tabel form
-        foreach ($request->presensi as $jadwal_id => $data) {
-
-            // Pastikan status diisi
-            if (!empty($data['status'])) {
-
-                // Gunakan updateOrCreate: Jika sudah ada data, update. Jika belum, buat baru.
-                PresensiUstadz::updateOrCreate(
-                    [
-                        'tanggal' => $tanggal,
-                        'jadwal_pelajaran_id' => $jadwal_id,
-                    ],
-                    [
-                        'ustadz_id' => $data['ustadz_id'],
-                        'status' => $data['status'],
-                        // Guru pengganti HANYA disimpan jika status bukan Hadir/Kosong
-                        'ustadz_pengganti_id' => in_array($data['status'], ['Izin', 'Sakit', 'Alpha']) ? ($data['ustadz_pengganti_id'] ?? null) : null,
-                        'keterangan' => $data['keterangan'] ?? null,
-                        'diinput_oleh_id' => Auth::id(), // Catat siapa yang klik simpan
-                    ]
-                );
+        foreach ($request->presensi as $jadwal_id => $ustadzDataList) {
+            // Support format multi-ustadz [jadwal_id][ustadz_id] maupun flat array [jadwal_id]
+            if (isset($ustadzDataList['status'])) {
+                $ustadzDataList = [($ustadzDataList['ustadz_id'] ?? null) => $ustadzDataList];
             }
+
+            foreach ($ustadzDataList as $ustadz_id => $data) {
+                $finalUstadzId = !empty($ustadz_id) ? $ustadz_id : ($data['ustadz_id'] ?? null);
+
+                if (!empty($data['status']) && !empty($finalUstadzId)) {
+                    PresensiUstadz::updateOrCreate(
+                        [
+                            'tanggal' => $tanggal,
+                            'jadwal_pelajaran_id' => $jadwal_id,
+                            'ustadz_id' => $finalUstadzId,
+                        ],
+                        [
+                            'status' => $data['status'],
+                            'ustadz_pengganti_id' => in_array($data['status'], ['Izin', 'Sakit', 'Alpha']) ? ($data['ustadz_pengganti_id'] ?? null) : null,
+                            'keterangan' => $data['keterangan'] ?? null,
+                            'diinput_oleh_id' => Auth::id(),
+                        ]
+                    );
+                }
+            }
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Data presensi guru berhasil disimpan!'
+            ], 200);
         }
 
         return back()->with('success', 'Data presensi guru berhasil disimpan!');
@@ -179,6 +398,13 @@ class PresensiUstadzController extends Controller
 
         // Hapus data dari database
         $presensi->delete();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Data presensi berhasil dihapus (dibatalkan)!'
+            ], 200);
+        }
 
         return back()->with('success', 'Data presensi berhasil dihapus (dibatalkan)!');
     }
@@ -207,7 +433,7 @@ class PresensiUstadzController extends Controller
             $jumlahHari = $start->diffInDays($end) + 1;
 
             // Ambil semua jadwal di ruangan ini lalu kelompokkan per hari
-            $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ustadz'])
+            $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ustadzs'])
                 ->where('ruangan_id', $ruangan_id)
                 ->get()
                 ->groupBy('hari');
@@ -242,10 +468,10 @@ class PresensiUstadzController extends Controller
                 ->whereIn('jadwal_pelajaran_id', $jadwals->flatten()->pluck('id'))
                 ->get();
 
-            // Format data presensi agar mudah dicari di tabel
+            // Format data presensi agar mudah dicari di tabel: [$tanggal][$jadwal_id][$ustadz_id]
             $presensiFormatted = [];
             foreach ($presensiDb as $p) {
-                $presensiFormatted[$p->tanggal][$p->jadwal_pelajaran_id] = $p;
+                $presensiFormatted[$p->tanggal][$p->jadwal_pelajaran_id][$p->ustadz_id] = $p;
             }
 
             $mapHari = [
@@ -328,14 +554,31 @@ class PresensiUstadzController extends Controller
                         $jadwalJamIni = $jadwalHariIni ? $jadwalHariIni->firstWhere('jam_ke', $jam) : null;
 
                         if ($jadwalJamIni) {
-                            $presensi = $presensiFormatted[$tglMasehi][$jadwalJamIni->id] ?? null;
+                            $allPengampu = $jadwalJamIni->daftar_ustadz;
+                            $ustadzPresensiList = [];
+                            foreach ($allPengampu as $u) {
+                                $p = $presensiFormatted[$tglMasehi][$jadwalJamIni->id][$u->id] ?? null;
+                                $isUtama = ($u->pivot->is_utama ?? false) || ($u->id == $jadwalJamIni->ustadz_id);
+                                $ustadzPresensiList[] = [
+                                    'ustadz_id' => $u->id,
+                                    'nama_lengkap' => $u->nama_lengkap,
+                                    'is_utama' => (bool) $isUtama,
+                                    'presensi' => $p,
+                                ];
+                            }
+
+                            $primaryPresensi = $presensiFormatted[$tglMasehi][$jadwalJamIni->id][$jadwalJamIni->ustadz_id]
+                                ?? (!empty($ustadzPresensiList[0]['presensi']) ? $ustadzPresensiList[0]['presensi'] : null);
+
                             $matrix[$tglMasehi][$jam] = [
                                 'is_jadwal' => true,
                                 'jadwal_id' => $jadwalJamIni->id,
                                 'ustadz_id' => $jadwalJamIni->ustadz_id,
                                 'mapel' => $jadwalJamIni->mataPelajaran->nama_mapel,
-                                'guru_utama' => $jadwalJamIni->ustadz->nama_lengkap,
-                                'presensi' => $presensi
+                                'guru_utama' => $jadwalJamIni->ustadz->nama_lengkap ?? ($allPengampu->first()?->nama_lengkap ?? '-'),
+                                'presensi' => $primaryPresensi,
+                                'daftar_pengampu' => $ustadzPresensiList,
+                                'is_team' => count($ustadzPresensiList) > 1,
                             ];
                         } else {
                             $matrix[$tglMasehi][$jam] = ['is_jadwal' => false];
@@ -362,15 +605,22 @@ class PresensiUstadzController extends Controller
             [
                 'tanggal' => $request->tanggal,
                 'jadwal_pelajaran_id' => $request->jadwal_pelajaran_id,
+                'ustadz_id' => $request->ustadz_id,
             ],
             [
-                'ustadz_id' => $request->ustadz_id,
                 'status' => $request->status,
                 'ustadz_pengganti_id' => in_array($request->status, ['Izin', 'Sakit', 'Alpha']) ? $request->ustadz_pengganti_id : null,
                 'keterangan' => $request->keterangan,
                 'diinput_oleh_id' => Auth::id(),
             ]
         );
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Data presensi ustadz berhasil disimpan!'
+            ], 200);
+        }
 
         return back()->with('success', 'Data presensi berhasil diperbarui langsung dari matriks bulanan!');
     }

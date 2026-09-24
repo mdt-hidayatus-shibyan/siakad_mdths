@@ -232,9 +232,9 @@ class AkademikController extends Controller
 
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
 
-        // 1. Jadwal Mengajar Pribadi Ustadz
-        $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ruangan.level', 'ruangan.gedung'])
-            ->where('ustadz_id', $ustadzId)
+        // 1. Jadwal Mengajar Pribadi Ustadz (Mendukung Multi-Pengampu / Team Teaching)
+        $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ustadzs', 'ruangan.level', 'ruangan.gedung'])
+            ->forUstadz($ustadzId)
             ->get();
 
         $hariOrder = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Sabtu'];
@@ -256,17 +256,27 @@ class AkademikController extends Controller
                     };
 
                     return [
-                        'id'          => $j->id,
-                        'jam_ke'      => $j->jam_ke,
-                        'jam'         => $jamText,
-                        'mapel'       => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
-                        'ustadz'      => $j->ustadz->nama_lengkap ?? 'Pengajar',
-                        'kode_ustadz' => $j->ustadz->kode_ustadz ?? '-',
-                        'ustadz_foto' => $j->ustadz && $j->ustadz->foto ? asset('storage/' . $j->ustadz->foto) : null,
-                        'ruangan'     => $j->ruangan->nama_ruangan ?? '-',
-                        'nama_gedung' => $j->ruangan->gedung->nama_gedung ?? null,
-                        'nama_kamar'  => $j->ruangan->nama_kamar ?? null,
-                        'level'       => $j->ruangan->level->nama_level ?? '-',
+                        'id'            => $j->id,
+                        'jam_ke'        => $j->jam_ke,
+                        'jam'           => $jamText,
+                        'mapel'         => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
+                        'ustadz'        => $j->daftar_nama_pengampu,
+                        'kode_ustadz'   => $j->ustadz->kode_ustadz ?? '-',
+                        'ustadz_foto'   => $j->ustadz && $j->ustadz->foto ? asset('storage/' . $j->ustadz->foto) : null,
+                        'daftar_ustadz' => $j->daftar_ustadz->map(function ($u) {
+                            return [
+                                'id'       => $u->id,
+                                'nama'     => $u->nama_lengkap,
+                                'kode'     => $u->kode_ustadz ?? '-',
+                                'foto'     => $u->foto ? asset('storage/' . $u->foto) : null,
+                                'is_utama' => (bool) ($u->pivot->is_utama ?? false),
+                                'urutan'   => (int) ($u->pivot->urutan ?? 1),
+                            ];
+                        })->values(),
+                        'ruangan'       => $j->ruangan->nama_ruangan ?? '-',
+                        'nama_gedung'   => $j->ruangan->gedung->nama_gedung ?? null,
+                        'nama_kamar'    => $j->ruangan->nama_kamar ?? null,
+                        'level'         => $j->ruangan->level->nama_level ?? '-',
                     ];
                 })
             ];
@@ -292,7 +302,7 @@ class AkademikController extends Controller
                 $ruanganWaliId = $ruanganWali->id;
                 $levelWaliNama = $ruanganWali->level->nama_level ?? '-';
 
-                $jadwalRuangan = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ruangan.level', 'ruangan.gedung'])
+                $jadwalRuangan = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ustadzs', 'ruangan.level', 'ruangan.gedung'])
                     ->where('ruangan_id', $ruanganWali->id)
                     ->get();
 
@@ -314,17 +324,27 @@ class AkademikController extends Controller
                             };
 
                             return [
-                                'id'          => $j->id,
-                                'jam_ke'      => $j->jam_ke,
-                                'jam'         => $jamText,
-                                'mapel'       => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
-                                'ustadz'      => $j->ustadz->nama_lengkap ?? 'Pengajar',
-                                'kode_ustadz' => $j->ustadz->kode_ustadz ?? '-',
-                                'ustadz_foto' => $j->ustadz && $j->ustadz->foto ? asset('storage/' . $j->ustadz->foto) : null,
-                                'ruangan'     => $j->ruangan->nama_ruangan ?? '-',
-                                'nama_gedung' => $j->ruangan->gedung->nama_gedung ?? null,
-                                'nama_kamar'  => $j->ruangan->nama_kamar ?? null,
-                                'level'       => $j->ruangan->level->nama_level ?? '-',
+                                'id'            => $j->id,
+                                'jam_ke'        => $j->jam_ke,
+                                'jam'           => $jamText,
+                                'mapel'         => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
+                                'ustadz'        => $j->daftar_nama_pengampu,
+                                'kode_ustadz'   => $j->ustadz->kode_ustadz ?? '-',
+                                'ustadz_foto'   => $j->ustadz && $j->ustadz->foto ? asset('storage/' . $j->ustadz->foto) : null,
+                                'daftar_ustadz' => $j->daftar_ustadz->map(function ($u) {
+                                    return [
+                                        'id'       => $u->id,
+                                        'nama'     => $u->nama_lengkap,
+                                        'kode'     => $u->kode_ustadz ?? '-',
+                                        'foto'     => $u->foto ? asset('storage/' . $u->foto) : null,
+                                        'is_utama' => (bool) ($u->pivot->is_utama ?? false),
+                                        'urutan'   => (int) ($u->pivot->urutan ?? 1),
+                                    ];
+                                })->values(),
+                                'ruangan'       => $j->ruangan->nama_ruangan ?? '-',
+                                'nama_gedung'   => $j->ruangan->gedung->nama_gedung ?? null,
+                                'nama_kamar'    => $j->ruangan->nama_kamar ?? null,
+                                'level'         => $j->ruangan->level->nama_level ?? '-',
                             ];
                         })
                     ];
@@ -378,7 +398,7 @@ class AkademikController extends Controller
                 ->pluck('id')
                 ->toArray();
 
-            $ruanganMengajarIds = JadwalPelajaran::where('ustadz_id', $ustadzId)
+            $ruanganMengajarIds = JadwalPelajaran::forUstadz($ustadzId)
                 ->whereHas('ruangan', fn($q) => $q->where('tahun_pelajaran_id', $tahunId))
                 ->pluck('ruangan_id')
                 ->toArray();
@@ -498,31 +518,44 @@ class AkademikController extends Controller
         }
 
         // 3. Pre-fetch Data Pemetaan Pengawas Default untuk mencegah N+1 query
-        // 3.1 Mapping Wali Ruangan per level_id
-        $waliPerLevel = Ruangan::with('waliRuangan')
+        // 3.1 Mapping Semua Ruangan di Tahun Aktif
+        $allRuangans = Ruangan::with(['waliRuangan', 'level'])
             ->where('tahun_pelajaran_id', $tahunId)
-            ->whereNotNull('ustadz_id')
-            ->get()
-            ->keyBy('level_id');
+            ->get();
+        $ruangansByLevel = $allRuangans->groupBy('level_id');
 
-        // 3.2 Mapping Guru Pengampu KBM per "mata_pelajaran_id_level_id" & per "mata_pelajaran_id"
-        $jadwalKbmList = JadwalPelajaran::with(['ustadz', 'ruangan'])
+        // 3.2 Mapping Guru Pengampu KBM per "mata_pelajaran_id_ruangan_id" & per "mata_pelajaran_id_level_id"
+        $jadwalKbmList = JadwalPelajaran::with(['ustadz', 'ustadzs', 'ruangan'])
             ->whereHas('ruangan', fn($q) => $q->where('tahun_pelajaran_id', $tahunId))
-            ->whereNotNull('ustadz_id')
             ->get();
 
+        $guruMapelRuanganMap = [];
         $guruMapelLevelMap = [];
         $guruMapelGeneralMap = [];
         foreach ($jadwalKbmList as $jk) {
-            if ($jk->mata_pelajaran_id && $jk->ustadz) {
-                if ($jk->ruangan && $jk->ruangan->level_id) {
-                    $key = $jk->mata_pelajaran_id . '_' . $jk->ruangan->level_id;
-                    if (!isset($guruMapelLevelMap[$key])) {
-                        $guruMapelLevelMap[$key] = $jk->ustadz;
+            if ($jk->mata_pelajaran_id) {
+                $pengampus = $jk->daftar_ustadz;
+                if ($pengampus->isNotEmpty()) {
+                    // Key ruangan: mapel_id + ruangan_id (paling akurat)
+                    $rKey = $jk->mata_pelajaran_id . '_' . $jk->ruangan_id;
+                    if (!isset($guruMapelRuanganMap[$rKey])) {
+                        $guruMapelRuanganMap[$rKey] = collect();
                     }
-                }
-                if (!isset($guruMapelGeneralMap[$jk->mata_pelajaran_id])) {
-                    $guruMapelGeneralMap[$jk->mata_pelajaran_id] = $jk->ustadz;
+                    $guruMapelRuanganMap[$rKey] = $guruMapelRuanganMap[$rKey]->concat($pengampus)->unique('id')->values();
+
+                    // Key level: mapel_id + level_id (fallback)
+                    if ($jk->ruangan && $jk->ruangan->level_id) {
+                        $lKey = $jk->mata_pelajaran_id . '_' . $jk->ruangan->level_id;
+                        if (!isset($guruMapelLevelMap[$lKey])) {
+                            $guruMapelLevelMap[$lKey] = collect();
+                        }
+                        $guruMapelLevelMap[$lKey] = $guruMapelLevelMap[$lKey]->concat($pengampus)->unique('id')->values();
+                    }
+
+                    if (!isset($guruMapelGeneralMap[$jk->mata_pelajaran_id])) {
+                        $guruMapelGeneralMap[$jk->mata_pelajaran_id] = collect();
+                    }
+                    $guruMapelGeneralMap[$jk->mata_pelajaran_id] = $guruMapelGeneralMap[$jk->mata_pelajaran_id]->concat($pengampus)->unique('id')->values();
                 }
             }
         }
@@ -571,40 +604,96 @@ class AkademikController extends Controller
                 ];
             }
 
-            // Algoritma Penentuan Pengawas:
-            // 1. Pengawas eksplisit di jadwal_ujians.ustadz_id
-            $resolvedPengawas = $j->pengawas;
+            $waktuMulaiStr = $j->jam_mulai_format;
+            $waktuSelesaiStr = $j->jam_selesai_format;
+            $jamText = ($waktuMulaiStr && $waktuSelesaiStr)
+                ? "{$waktuMulaiStr} - {$waktuSelesaiStr} WIB"
+                : ($waktuMulaiStr ? "{$waktuMulaiStr} WIB" : 'Waktu Belum Diatur');
+
             $isCustomMapel = !empty($j->nama_mata_pelajaran_custom) || empty($j->mata_pelajaran_id);
 
-            if (!$resolvedPengawas) {
-                if ($isCustomMapel) {
-                    // Mata pelajaran custom -> default wali ruangan di level tersebut
-                    $resolvedPengawas = $waliPerLevel[$j->level_id]->waliRuangan ?? ($waliPerLevel[$j->level_id]->ustadz ?? null);
-                } else {
-                    // Mata pelajaran reguler -> default guru pengampu mapel di level tersebut
-                    $mapKey = $j->mata_pelajaran_id . '_' . $j->level_id;
-                    $resolvedPengawas = $guruMapelLevelMap[$mapKey]
-                        ?? ($guruMapelGeneralMap[$j->mata_pelajaran_id]
-                            ?? ($waliPerLevel[$j->level_id]->waliRuangan ?? ($waliPerLevel[$j->level_id]->ustadz ?? null)));
-                }
-            }
-
-            $pengawasId = $resolvedPengawas->id ?? null;
-            $namaPengawas = $resolvedPengawas->nama_lengkap ?? 'Belum Ditentukan';
-            $kodePengawas = $resolvedPengawas->kode_ustadz ?? null;
-            $pengawasFoto = ($resolvedPengawas && $resolvedPengawas->foto) ? asset('storage/' . $resolvedPengawas->foto) : null;
-
-            $isMySchedule = ($ustadzId && $pengawasId == $ustadzId);
-            if ($isMySchedule) {
-                $totalJadwalSaya++;
-            }
-
-            // Mode "Semua Tugas Saya" (Lintas Ruangan): HANYA tampilkan tugas ustadz login
+            // Mode "Semua Tugas Saya" (Lintas Ruangan): Iterasi setiap ruangan di level tsb
             if ($isAllTasksMode) {
-                if (!$isMySchedule) {
-                    continue;
+                $targetRooms = $ruangansByLevel[$j->level_id] ?? collect();
+                foreach ($targetRooms as $tr) {
+                    $resolvedPengawas = collect();
+                    if ($j->pengawas) {
+                        $resolvedPengawas = collect([$j->pengawas]);
+                    } else {
+                        if ($isCustomMapel) {
+                            $trWali = $tr->waliRuangan ?? ($tr->ustadz ?? null);
+                            $resolvedPengawas = $trWali ? collect([$trWali]) : collect();
+                        } else {
+                            $rKey = $j->mata_pelajaran_id . '_' . $tr->id;
+                            $lKey = $j->mata_pelajaran_id . '_' . $tr->level_id;
+                            $resolvedPengawas = $guruMapelRuanganMap[$rKey]
+                                ?? ($guruMapelLevelMap[$lKey]
+                                    ?? ($guruMapelGeneralMap[$j->mata_pelajaran_id]
+                                        ?? collect([$tr->waliRuangan ?? ($tr->ustadz ?? null)]->filter())));
+                        }
+                    }
+
+                    $isMySchedule = ($ustadzId && $resolvedPengawas->contains('id', $ustadzId));
+
+                    if (!$isMySchedule) {
+                        continue;
+                    }
+
+                    $totalJadwalSaya++;
+                    $totalJadwalSemua++;
+
+                    $primaryPengawas = $resolvedPengawas->firstWhere('id', $ustadzId) ?? $resolvedPengawas->first();
+                    $namaPengawas = $resolvedPengawas->pluck('nama_lengkap')->join(' • ') ?: 'Belum Ditentukan';
+
+                    $groupedPerTanggal[$tanggalKey]['sesi'][] = [
+                        'id' => $j->id,
+                        'ujian_id' => $j->ujian_id,
+                        'nama_ujian' => $j->ujian->nama_ujian ?? '-',
+                        'tipe_ujian' => $j->ujian->tipe_ujian ?? '-',
+                        'semester' => $j->ujian->semester->nama_semester ?? ($j->ujian && $j->ujian->semester_id == 9 ? 'Semester 1 (Ganjil)' : 'Semester 2 (Genap)'),
+                        'mata_pelajaran_id' => $j->mata_pelajaran_id,
+                        'is_custom_mapel' => $isCustomMapel,
+                        'nama_mapel' => $j->nama_mapel,
+                        'level_id' => $j->level_id,
+                        'ruangan_id' => $tr->id,
+                        'nama_ruangan' => $tr->nama_ruangan,
+                        'nama_level' => $tr->nama_ruangan . ' (' . ($tr->level->nama_level ?? $j->level->nama_level ?? '-') . ')',
+                        'waktu_mulai' => $waktuMulaiStr,
+                        'waktu_selesai' => $waktuSelesaiStr,
+                        'jam' => $jamText,
+                        'ustadz_id' => $primaryPengawas?->id,
+                        'nama_pengawas' => $namaPengawas,
+                        'kode_pengawas' => $primaryPengawas?->kode_ustadz ?? null,
+                        'pengawas_foto' => ($primaryPengawas && $primaryPengawas->foto) ? asset('storage/' . $primaryPengawas->foto) : null,
+                        'is_my_schedule' => true,
+                    ];
+                    $groupedPerTanggal[$tanggalKey]['total_sesi']++;
                 }
             } else {
+                // Mode Per Ruangan Terpilih
+                $resolvedPengawas = collect();
+                if ($j->pengawas) {
+                    $resolvedPengawas = collect([$j->pengawas]);
+                } else {
+                    if ($isCustomMapel) {
+                        $rWali = $ruangan->waliRuangan ?? ($ruangan->ustadz ?? null);
+                        $resolvedPengawas = $rWali ? collect([$rWali]) : collect();
+                    } else {
+                        $rKey = $j->mata_pelajaran_id . '_' . ($ruangan->id ?? 0);
+                        $lKey = $j->mata_pelajaran_id . '_' . ($ruangan->level_id ?? 0);
+                        $resolvedPengawas = $guruMapelRuanganMap[$rKey]
+                            ?? ($guruMapelLevelMap[$lKey]
+                                ?? ($guruMapelGeneralMap[$j->mata_pelajaran_id]
+                                    ?? collect([$ruangan->waliRuangan ?? ($ruangan->ustadz ?? null)]->filter())));
+                    }
+                }
+
+                $isMySchedule = ($ustadzId && $resolvedPengawas->contains('id', $ustadzId));
+
+                if ($isMySchedule) {
+                    $totalJadwalSaya++;
+                }
+
                 // Jika BUKAN ruangan binaannya ($isWaliRuangan == false) dan login sebagai Ustadz,
                 // maka HANYA tampilkan tugas mengawas/menguji Ustadz tersebut
                 if ($ustadzId && !$isWaliRuangan && !$isMySchedule) {
@@ -615,36 +704,35 @@ class AkademikController extends Controller
                 if ($request->boolean('only_me') && !$isMySchedule) {
                     continue;
                 }
+
+                $primaryPengawas = $resolvedPengawas->firstWhere('id', $ustadzId) ?? $resolvedPengawas->first();
+                $namaPengawas = $resolvedPengawas->pluck('nama_lengkap')->join(' • ') ?: 'Belum Ditentukan';
+
+                $totalJadwalSemua++;
+                $groupedPerTanggal[$tanggalKey]['sesi'][] = [
+                    'id' => $j->id,
+                    'ujian_id' => $j->ujian_id,
+                    'nama_ujian' => $j->ujian->nama_ujian ?? '-',
+                    'tipe_ujian' => $j->ujian->tipe_ujian ?? '-',
+                    'semester' => $j->ujian->semester->nama_semester ?? ($j->ujian && $j->ujian->semester_id == 9 ? 'Semester 1 (Ganjil)' : 'Semester 2 (Genap)'),
+                    'mata_pelajaran_id' => $j->mata_pelajaran_id,
+                    'is_custom_mapel' => $isCustomMapel,
+                    'nama_mapel' => $j->nama_mapel,
+                    'level_id' => $j->level_id,
+                    'ruangan_id' => $ruangan->id ?? 0,
+                    'nama_ruangan' => $ruangan->nama_ruangan ?? '',
+                    'nama_level' => $j->level->nama_level ?? '-',
+                    'waktu_mulai' => $waktuMulaiStr,
+                    'waktu_selesai' => $waktuSelesaiStr,
+                    'jam' => $jamText,
+                    'ustadz_id' => $primaryPengawas?->id,
+                    'nama_pengawas' => $namaPengawas,
+                    'kode_pengawas' => $primaryPengawas?->kode_ustadz ?? null,
+                    'pengawas_foto' => ($primaryPengawas && $primaryPengawas->foto) ? asset('storage/' . $primaryPengawas->foto) : null,
+                    'is_my_schedule' => $isMySchedule,
+                ];
+                $groupedPerTanggal[$tanggalKey]['total_sesi']++;
             }
-
-            $waktuMulaiStr = $j->jam_mulai_format;
-            $waktuSelesaiStr = $j->jam_selesai_format;
-            $jamText = ($waktuMulaiStr && $waktuSelesaiStr)
-                ? "{$waktuMulaiStr} - {$waktuSelesaiStr} WIB"
-                : ($waktuMulaiStr ? "{$waktuMulaiStr} WIB" : 'Waktu Belum Diatur');
-
-            $groupedPerTanggal[$tanggalKey]['sesi'][] = [
-                'id' => $j->id,
-                'ujian_id' => $j->ujian_id,
-                'nama_ujian' => $j->ujian->nama_ujian ?? '-',
-                'tipe_ujian' => $j->ujian->tipe_ujian ?? '-',
-                'semester' => $j->ujian->semester->nama_semester ?? ($j->ujian && $j->ujian->semester_id == 9 ? 'Semester 1 (Ganjil)' : 'Semester 2 (Genap)'),
-                'mata_pelajaran_id' => $j->mata_pelajaran_id,
-                'is_custom_mapel' => $isCustomMapel,
-                'nama_mapel' => $j->nama_mapel,
-                'level_id' => $j->level_id,
-                'nama_level' => $j->level->nama_level ?? '-',
-                'waktu_mulai' => $waktuMulaiStr,
-                'waktu_selesai' => $waktuSelesaiStr,
-                'jam' => $jamText,
-                'ustadz_id' => $pengawasId,
-                'nama_pengawas' => $namaPengawas,
-                'kode_pengawas' => $kodePengawas,
-                'pengawas_foto' => $pengawasFoto,
-                'is_my_schedule' => $isMySchedule,
-            ];
-            $groupedPerTanggal[$tanggalKey]['total_sesi']++;
-            $totalJadwalSemua++;
         }
 
         // Filter tanggal yang tidak memiliki sesi (misal karena only_me / tugas saya)

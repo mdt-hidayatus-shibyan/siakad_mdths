@@ -102,6 +102,7 @@ class PresensiRepository {
     required int jadwalId,
     required String tanggal,
     required String status,
+    int? ustadzId,
     int? ustadzPenggantiId,
     String? keterangan,
   }) async {
@@ -112,6 +113,7 @@ class PresensiRepository {
           'jadwal_id': jadwalId,
           'tanggal': tanggal,
           'status': status,
+          if (ustadzId != null) 'ustadz_id': ustadzId,
           if (ustadzPenggantiId != null)
             'ustadz_pengganti_id': ustadzPenggantiId,
           if (keterangan != null && keterangan.isNotEmpty)

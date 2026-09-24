@@ -86,13 +86,26 @@ class MuridController extends Controller
         return redirect()->back()->with('success', 'Data Murid diperbarui!');
     }
 
+    /**
+     * Menampilkan Modal Ubah Status Santri (AJAX Partial)
+     */
+    public function modalStatus($id)
+    {
+        $murid = Murid::with(['waliMurid.kampung', 'ruangans'])->findOrFail($id);
+        return view('murid.modal-status', compact('murid'));
+    }
+
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
             'status' => 'required|in:Aktif,Lulus,Pindah,Berhenti,Meninggal'
+        ], [
+            'status.required' => 'Pilih status baru santri.',
+            'status.in' => 'Pilihan status tidak valid.'
         ]);
 
         $murid = Murid::findOrFail($id);
+        $statusLama = $murid->status;
         $murid->status = $request->status;
         $murid->save();
 
@@ -113,6 +126,13 @@ class MuridController extends Controller
                     ->where('id', $murid->wali_murid_id)
                     ->update(['is_active' => 1]);
             }
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => "Status {$murid->nama_lengkap} berhasil diperbarui menjadi {$murid->status}!"
+            ], 200);
         }
 
         return redirect()->back()->with('success', 'Status keaktifan murid berhasil diperbarui!');

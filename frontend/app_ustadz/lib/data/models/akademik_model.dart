@@ -263,6 +263,35 @@ class MataPelajaranResponse {
   }
 }
 
+class UstadzPengampuItem {
+  final int id;
+  final String nama;
+  final String? kode;
+  final String? foto;
+  final bool isUtama;
+  final int urutan;
+
+  UstadzPengampuItem({
+    required this.id,
+    required this.nama,
+    this.kode,
+    this.foto,
+    this.isUtama = false,
+    this.urutan = 1,
+  });
+
+  factory UstadzPengampuItem.fromJson(Map<String, dynamic> json) {
+    return UstadzPengampuItem(
+      id: json['id'] ?? 0,
+      nama: json['nama'] ?? '',
+      kode: json['kode'],
+      foto: json['foto'],
+      isUtama: json['is_utama'] == true || json['is_utama'] == 1,
+      urutan: json['urutan'] ?? 1,
+    );
+  }
+}
+
 class SesiJadwalItem {
   final int id;
   final String jamKe;
@@ -271,6 +300,7 @@ class SesiJadwalItem {
   final String? ustadz;
   final String? kodeUstadz;
   final String? ustadzFoto;
+  final List<UstadzPengampuItem> daftarUstadz;
   final String ruangan;
   final String? namaGedung;
   final String? namaKamar;
@@ -284,11 +314,14 @@ class SesiJadwalItem {
     this.ustadz,
     this.kodeUstadz,
     this.ustadzFoto,
+    this.daftarUstadz = const [],
     required this.ruangan,
     this.namaGedung,
     this.namaKamar,
     required this.level,
   });
+
+  bool get isTeamTeaching => daftarUstadz.length > 1;
 
   String get lokasiGedungKamar {
     final list = <String>[];
@@ -303,6 +336,7 @@ class SesiJadwalItem {
   }
 
   factory SesiJadwalItem.fromJson(Map<String, dynamic> json) {
+    final rawPengampu = json['daftar_ustadz'] as List? ?? [];
     return SesiJadwalItem(
       id: json['id'] ?? 0,
       jamKe: json['jam_ke']?.toString() ?? '',
@@ -311,6 +345,9 @@ class SesiJadwalItem {
       ustadz: json['ustadz'],
       kodeUstadz: json['kode_ustadz'],
       ustadzFoto: json['ustadz_foto'],
+      daftarUstadz: rawPengampu
+          .map((e) => UstadzPengampuItem.fromJson(e))
+          .toList(),
       ruangan: json['ruangan'] ?? '',
       namaGedung: json['nama_gedung'],
       namaKamar: json['nama_kamar'],

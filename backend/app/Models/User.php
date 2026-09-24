@@ -52,6 +52,17 @@ class User extends Authenticatable
         return $this->hasMany(ActivityLog::class);
     }
 
+    public function getFotoUrlAttribute()
+    {
+        if ($this->administrator && $this->administrator->foto) {
+            return asset('storage/' . $this->administrator->foto);
+        }
+        if ($this->ustadz && $this->ustadz->foto) {
+            return $this->ustadz->foto_url ?? asset('storage/' . $this->ustadz->foto);
+        }
+        return null;
+    }
+
     public function isOnline()
     {
         if (!$this->last_seen_at) {

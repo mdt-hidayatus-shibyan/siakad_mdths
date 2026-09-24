@@ -22,7 +22,7 @@
             </div>
             <div>
                 <h3 class="text-base font-black text-zinc-900 dark:text-white tracking-tight flex items-center gap-2">
-                    Foto Santri (3x4 cm)
+                    Foto Murid (3x4 cm)
                 </h3>
                 <p class="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
                     {{ $ruangan->nama_ruangan }} &bull; {{ $murid->nama_lengkap }}
@@ -515,7 +515,7 @@
                         },
                         error: function(xhr) {
                             const msg = xhr.responseJSON?.message ||
-                            'Gagal menghapus foto!';
+                                'Gagal menghapus foto!';
                             if (typeof Toast !== 'undefined') {
                                 Toast.fire({
                                     icon: 'error',

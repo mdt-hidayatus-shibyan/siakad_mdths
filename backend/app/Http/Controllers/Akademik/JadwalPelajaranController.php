@@ -55,7 +55,7 @@ class JadwalPelajaranController extends Controller
         $asatidzs = Ustadz::where('is_active', 1)->where('is_active', true)->orderBy('nama_lengkap')->get();
 
         // Ambil jadwal lalu kelompokkan berdasarkan Hari
-        $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ustadz'])
+        $jadwals = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ustadzs'])
             ->where('ruangan_id', $ruangan_id)
             ->orderByRaw("FIELD(hari, 'Sabtu', 'Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis')")
             ->orderByRaw("FIELD(jam_ke, 'Nadzoman', '1', '2', 'Ekstra')")
@@ -99,11 +99,42 @@ class JadwalPelajaranController extends Controller
         foreach ($jadwalsInput as $hari => $jams) {
             foreach ($jams as $jam_ke => $data) {
                 $mapelId = $data['mata_pelajaran_id'] ?? null;
-                $ustadzId = $data['ustadz_id'] ?? null;
-                if (!empty($mapelId) && !empty($ustadzId)) {
+
+                // Guru Utama
+                $ustadzUtamaId = $data['ustadz_utama_id'] ?? ($data['ustadz_id'] ?? null);
+
+                // Guru Pendamping (bisa lebih dari 1)
+                $pendampingIds = $data['ustadz_pendamping_ids'] ?? [];
+                if (!is_array($pendampingIds)) {
+                    $pendampingIds = !empty($pendampingIds) ? [$pendampingIds] : [];
+                }
+
+                // Filter pendamping agar tidak duplikat dengan guru utama
+                $pendampingIds = array_values(array_filter($pendampingIds, function ($pId) use ($ustadzUtamaId) {
+                    return !empty($pId) && $pId != $ustadzUtamaId;
+                }));
+
+                // Gabungkan seluruh pengampu: [0 => Utama, 1..n => Pendamping]
+                $allUstadzIds = [];
+                if (!empty($ustadzUtamaId)) {
+                    $allUstadzIds[] = (int) $ustadzUtamaId;
+                }
+                foreach ($pendampingIds as $pId) {
+                    $allUstadzIds[] = (int) $pId;
+                }
+
+                // Fallback jika dikirim via format array ustadz_ids
+                if (empty($allUstadzIds) && !empty($data['ustadz_ids'])) {
+                    $raw = is_array($data['ustadz_ids']) ? $data['ustadz_ids'] : [$data['ustadz_ids']];
+                    $allUstadzIds = array_values(array_unique(array_filter($raw)));
+                }
+
+                if (!empty($mapelId) && !empty($allUstadzIds)) {
                     $waktu = $this->setJamWaktu(['jam_ke' => $jam_ke]);
 
-                    JadwalPelajaran::updateOrCreate(
+                    $primaryId = $allUstadzIds[0];
+
+                    $jadwal = JadwalPelajaran::updateOrCreate(
                         [
                             'ruangan_id' => $ruangan_id,
                             'hari'       => $hari,
@@ -111,12 +142,22 @@ class JadwalPelajaranController extends Controller
                         ],
                         [
                             'mata_pelajaran_id' => $mapelId,
-                            'ustadz_id'         => $ustadzId,
+                            'ustadz_id'         => $primaryId,
                             'jam_mulai'         => $waktu['jam_mulai'] ?? null,
                             'jam_selesai'       => $waktu['jam_selesai'] ?? null,
                         ]
                     );
-                } elseif (empty($mapelId) && empty($ustadzId)) {
+
+                    // Sync pivot dengan atribut is_utama & urutan
+                    $syncData = [];
+                    foreach ($allUstadzIds as $index => $uId) {
+                        $syncData[$uId] = [
+                            'is_utama' => ($index === 0),
+                            'urutan'   => $index + 1,
+                        ];
+                    }
+                    $jadwal->ustadzs()->sync($syncData);
+                } elseif (empty($mapelId) && empty($allUstadzIds)) {
                     JadwalPelajaran::where('ruangan_id', $ruangan_id)
                         ->where('hari', $hari)
                         ->where('jam_ke', (string) $jam_ke)
@@ -127,7 +168,7 @@ class JadwalPelajaranController extends Controller
             }
         }
         if ($errorCount > 0) {
-            return back()->with('warning', "Tersimpan! Namun ada $errorCount jadwal yang diabaikan karena Anda lupa mengisi salah satu (Mapel atau Guru).");
+            return back()->with('warning', "Tersimpan! Namun ada $errorCount jadwal yang diabaikan karena Anda lupa mengisi salah satu (Mapel atau Guru Utama).");
         }
         return back()->with('success', 'Semua jadwal berhasil diperbarui!');
     }
@@ -170,7 +211,7 @@ class JadwalPelajaranController extends Controller
         // =========================================================================
         // 3. AMBIL JADWAL (DIFILTER BERDASARKAN RELASI RUANGAN)
         // =========================================================================
-        $jadwalQuery = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ruangan']);
+        $jadwalQuery = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ustadzs', 'ruangan']);
 
         if ($tahunPelajaranId) {
             // Ini kuncinya: Filter jadwal yang ruangannya punya tahun_pelajaran_id yang dicari
@@ -182,7 +223,7 @@ class JadwalPelajaranController extends Controller
         $jadwalRaw = $jadwalQuery->get();
 
         // =========================================================================
-        // 4. LOGIKA MATRIKS & DETEKSI BENTROK (Tetap Sama)
+        // 4. LOGIKA MATRIKS & DETEKSI BENTROK (Multi-Ustadz Team Teaching)
         // =========================================================================
         $matrix = [];
         $checkBentrok = [];
@@ -190,7 +231,10 @@ class JadwalPelajaranController extends Controller
 
         foreach ($jadwalRaw as $jadwal) {
             $matrix[$jadwal->hari][$jadwal->jam_ke][$jadwal->ruangan_id] = $jadwal;
-            $checkBentrok[$jadwal->hari][$jadwal->jam_ke][$jadwal->ustadz_id][] = $jadwal->id;
+            $allUstadz = $jadwal->daftar_ustadz;
+            foreach ($allUstadz as $u) {
+                $checkBentrok[$jadwal->hari][$jadwal->jam_ke][$u->id][] = $jadwal->id;
+            }
         }
 
         foreach ($checkBentrok as $hari => $jamData) {

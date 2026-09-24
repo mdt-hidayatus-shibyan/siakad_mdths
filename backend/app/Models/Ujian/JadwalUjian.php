@@ -90,4 +90,48 @@ class JadwalUjian extends Model
     {
         return $this->hasMany(PresensiPengawasUjian::class, 'jadwal_ujian_id');
     }
+
+    /**
+     * Resolusi pengawas ujian berdasarkan ruangan (guru mapel KBM ruangan tsb atau wali ruangan untuk custom mapel)
+     */
+    public function resolvePengawasForRuangan($ruangan, $guruMapelRuanganMap = null, $guruMapelLevelMap = null)
+    {
+        if ($this->pengawas) {
+            return $this->pengawas;
+        }
+
+        if (!$ruangan) {
+            return null;
+        }
+
+        $isCustomMapel = !empty($this->nama_mata_pelajaran_custom) || empty($this->mata_pelajaran_id);
+        if ($isCustomMapel) {
+            return $ruangan->waliRuangan ?? ($ruangan->ustadz ?? null);
+        }
+
+        if ($guruMapelRuanganMap !== null) {
+            $rKey = $this->mata_pelajaran_id . '_' . $ruangan->id;
+            if (isset($guruMapelRuanganMap[$rKey])) {
+                return $guruMapelRuanganMap[$rKey];
+            }
+        } else {
+            $jp = \App\Models\JadwalPelajaran::with('ustadz')
+                ->where('ruangan_id', $ruangan->id)
+                ->where('mata_pelajaran_id', $this->mata_pelajaran_id)
+                ->whereNotNull('ustadz_id')
+                ->first();
+            if ($jp && $jp->ustadz) {
+                return $jp->ustadz;
+            }
+        }
+
+        if ($guruMapelLevelMap !== null) {
+            $lKey = $this->mata_pelajaran_id . '_' . $ruangan->level_id;
+            if (isset($guruMapelLevelMap[$lKey])) {
+                return $guruMapelLevelMap[$lKey];
+            }
+        }
+
+        return $ruangan->waliRuangan ?? ($ruangan->ustadz ?? null);
+    }
 }

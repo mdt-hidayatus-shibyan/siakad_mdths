@@ -244,38 +244,27 @@
                             <!-- KOLOM STATUS AKTIF -->
                             <td class="text-center">
                                 @can('update murid')
-                                    <!-- Opsional: Bungkus dengan hak akses jika diperlukan -->
-                                    @if ($murid->status == 'Aktif')
-                                        <button type="button"
-                                            onclick="bukaModalStatus('{{ $murid->id }}', 'Aktif', '{{ addslashes($murid->nama_lengkap) }}')"
-                                            class="inline-flex items-center px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400 min-w-[70px] justify-center hover:scale-105 transition-transform outline-none cursor-pointer">
-                                            <span class="w-1.5 h-1.5 rounded-xl bg-emerald-500 mr-1.5"></span> Aktif
-                                        </button>
-                                    @elseif($murid->status == 'Lulus')
-                                        <button type="button"
-                                            onclick="bukaModalStatus('{{ $murid->id }}', 'Lulus', '{{ addslashes($murid->nama_lengkap) }}')"
-                                            class="inline-flex items-center px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 text-blue-600 dark:text-blue-400 min-w-[70px] justify-center hover:scale-105 transition-transform outline-none cursor-pointer">
+                                    <a href="{{ route('murid.modalStatus', $murid->id) }}"
+                                        class="action-modal inline-flex items-center px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest min-w-[70px] justify-center hover:scale-105 active:scale-95 transition-all outline-none cursor-pointer shadow-2xs
+                                        {{ $murid->status == 'Aktif' ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400' : '' }}
+                                        {{ $murid->status == 'Lulus' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 text-blue-600 dark:text-blue-400' : '' }}
+                                        {{ $murid->status == 'Pindah' ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 text-amber-600 dark:text-amber-400' : '' }}
+                                        {{ $murid->status == 'Berhenti' ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400' : '' }}
+                                        {{ $murid->status == 'Meninggal' ? 'bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300' : '' }}
+                                        "
+                                        title="Ubah Status {{ $murid->nama_lengkap }}">
+                                        @if ($murid->status == 'Aktif')
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span> Aktif
+                                        @elseif($murid->status == 'Lulus')
                                             <i class="bi bi-mortarboard-fill mr-1.5"></i> Lulus
-                                        </button>
-                                    @elseif($murid->status == 'Pindah')
-                                        <button type="button"
-                                            onclick="bukaModalStatus('{{ $murid->id }}', 'Pindah', '{{ addslashes($murid->nama_lengkap) }}')"
-                                            class="inline-flex items-center px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 text-amber-600 dark:text-amber-400 min-w-[70px] justify-center hover:scale-105 transition-transform outline-none cursor-pointer">
+                                        @elseif($murid->status == 'Pindah')
                                             <i class="bi bi-arrow-left-right mr-1.5"></i> Pindah
-                                        </button>
-                                    @elseif($murid->status == 'Berhenti')
-                                        <button type="button"
-                                            onclick="bukaModalStatus('{{ $murid->id }}', 'Berhenti', '{{ addslashes($murid->nama_lengkap) }}')"
-                                            class="inline-flex items-center px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 min-w-[70px] justify-center hover:scale-105 transition-transform outline-none cursor-pointer">
+                                        @elseif($murid->status == 'Berhenti')
                                             <i class="bi bi-x-circle-fill mr-1.5"></i> Berhenti
-                                        </button>
-                                    @else
-                                        <button type="button"
-                                            onclick="bukaModalStatus('{{ $murid->id }}', 'Meninggal', '{{ addslashes($murid->nama_lengkap) }}')"
-                                            class="inline-flex items-center px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest bg-black-50 dark:bg-black-900/20 border border-black-200 dark:border-black-800/30 text-white-600 dark:text-white-400 min-w-[70px] justify-center hover:scale-105 transition-transform outline-none cursor-pointer">
-                                            <i class="bi bi-x-circle-fill mr-1.5"></i> Meninggal
-                                        </button>
-                                    @endif
+                                        @else
+                                            <i class="bi bi-heartbreak-fill mr-1.5"></i> Meninggal
+                                        @endif
+                                    </a>
                                 @else
                                     <!-- Tampilan SPAN biasa untuk user yang tidak punya akses edit -->
                                     @if ($murid->status == 'Aktif')
@@ -311,13 +300,12 @@
                             <td class="text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     @can('update rombongan-belajar')
-                                        <!-- Tombol Pindah -->
-                                        <button type="button"
-                                            onclick="bukaModalPindah('{{ $murid->id }}', '{{ addslashes($murid->nama_lengkap) }}')"
-                                            class="inline-flex w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors outline-none"
+                                        <!-- Tombol Pindah (AJAX Modal M3) -->
+                                        <a href="{{ route('rombongan-belajar.modalPindah', [$ruangan->id, $murid->id]) }}"
+                                            class="action-modal inline-flex w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all active:scale-95 outline-none shadow-2xs"
                                             title="Pindah Ruangan">
                                             <i class="bi bi-arrow-left-right text-[13px]"></i>
-                                        </button>
+                                        </a>
                                     @endcan
 
                                     @can('delete rombongan-belajar')
@@ -480,156 +468,12 @@
     </div>
 
 
-    <!-- ============================================== -->
-    <!-- MODAL PINDAH RUANGAN -->
-    <!-- ============================================== -->
-    <div id="modalPindahRuangan" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-zinc-900/60 dark:bg-black/80 backdrop-blur-sm transition-opacity"
-            onclick="tutupModalPindah()"></div>
-
-        <div
-            class="relative bg-white dark:bg-[#121215] border border-zinc-200/80 dark:border-zinc-800/90 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-[modalFadeIn_0.2s_ease-out]">
-
-            <div
-                class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/80 flex justify-between items-center bg-zinc-50/80 dark:bg-black/40">
-                <h3 class="text-base font-black text-zinc-900 dark:text-white tracking-tight">Mutasi Ruangan</h3>
-                <button type="button" onclick="tutupModalPindah()"
-                    class="text-zinc-400 hover:text-red-500 transition-colors w-7 h-7 flex items-center justify-center rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 shrink-0 outline-none">
-                    <i class="bi bi-x-lg text-xs font-bold"></i>
-                </button>
-            </div>
-
-            <form action="{{ route('rombongan-belajar.pindah-anggota', $ruangan->id) }}" method="POST">
-                @csrf
-                <input type="hidden" name="murid_id" id="input_pindah_murid_id">
-
-                <div class="p-5">
-                    <!-- Detail Murid (Highlight Box) -->
-                    <div
-                        class="mb-4 text-center p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/60 dark:border-zinc-800/80">
-                        <div
-                            class="w-10 h-10 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl flex items-center justify-center mx-auto mb-2 text-primary dark:text-primary-dark">
-                            <i class="bi bi-arrow-left-right text-base"></i>
-                        </div>
-                        <p
-                            class="text-[10px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
-                            Pindahkan Murid:</p>
-                        <h4 id="teks_nama_murid"
-                            class="text-sm font-black text-zinc-900 dark:text-white tracking-tight leading-tight">
-                            Nama Murid</h4>
-                    </div>
-
-                    <!-- Dropdown Ruangan -->
-                    <div class="space-y-1.5">
-                        <label
-                            class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Pilih
-                            Ruangan Tujuan</label>
-                        <div class="relative group/select">
-                            <select name="ruangan_tujuan_id" required
-                                class="m3-input-glass w-full appearance-none !pr-9 cursor-pointer">
-                                <option value="" disabled selected>-- Pilih Ruangan --</option>
-                                @foreach ($ruangansLain as $rLain)
-                                    <option value="{{ $rLain->id }}">
-                                        {{ $rLain->nama_ruangan }} (Kap:
-                                        {{ $rLain->murids()->wherePivot('tahun_pelajaran_id', $ruangan->tahun_pelajaran_id)->count() }}/{{ $rLain->kapasitas }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400 group-focus-within/select:text-primary dark:group-focus-within/select:text-primary-dark">
-                                <i class="bi bi-chevron-down text-xs font-bold"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    class="px-5 py-3.5 border-t border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/80 dark:bg-black/40 flex justify-end">
-                    <button type="submit" class="m3-btn-primary w-full py-2.5 outline-none">
-                        <i class="bi bi-check2-circle text-sm"></i>
-                        <span>Eksekusi Mutasi</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
 
 
 
-    <!-- MODAL UPDATE STATUS -->
-    <div id="modalUpdateStatus" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-zinc-900/60 dark:bg-black/80 backdrop-blur-sm transition-opacity"
-            onclick="tutupModalStatus()">
-        </div>
 
-        <div
-            class="relative bg-white dark:bg-[#121215] rounded-2xl overflow-hidden shadow-2xl w-full max-w-sm border border-zinc-200/80 dark:border-zinc-800/90 animate-[modalFadeIn_0.2s_ease-out]">
 
-            <form id="formUpdateStatus" action="" method="POST">
-                @csrf
-                @method('PATCH')
-
-                <div
-                    class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between bg-zinc-50/80 dark:bg-black/40">
-                    <h3 class="text-base font-black text-zinc-900 dark:text-white tracking-tight">
-                        Update Status Murid
-                    </h3>
-                    <button type="button" onclick="tutupModalStatus()"
-                        class="text-zinc-400 hover:text-red-500 transition-colors w-7 h-7 flex items-center justify-center rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 shrink-0 outline-none">
-                        <i class="bi bi-x-lg text-xs font-bold"></i>
-                    </button>
-                </div>
-
-                <div class="p-5 space-y-4">
-                    <div class="space-y-1">
-                        <p
-                            class="text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">
-                            Nama Murid</p>
-                        <div id="modalStatusNama"
-                            class="text-sm font-black text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900 px-3.5 py-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
-                            -
-                        </div>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label
-                            class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">
-                            Ubah Status Menjadi <span class="text-rose-500">*</span>
-                        </label>
-                        <div class="relative group">
-                            <select id="selectStatus" name="status" required
-                                class="m3-input-glass w-full appearance-none !pr-9 cursor-pointer">
-                                <option value="Aktif">Aktif</option>
-                                <option value="Lulus">Lulus</option>
-                                <option value="Pindah">Pindah</option>
-                                <option value="Berhenti">Berhenti</option>
-                                <option value="Meninggal">Meninggal</option>
-                            </select>
-                            <div
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-primary">
-                                <i class="bi bi-chevron-down text-xs font-bold"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer / Buttons -->
-                <div
-                    class="px-5 py-3.5 bg-zinc-50/80 dark:bg-black/40 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-end gap-2">
-                    <button type="button" onclick="tutupModalStatus()"
-                        class="px-4 py-2 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors outline-none">
-                        Batal
-                    </button>
-                    <button type="submit" class="m3-btn-primary px-5 py-2">
-                        <i class="bi bi-check2-circle text-xs"></i>
-                        <span>Simpan Status</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
 
     <!-- Styling Animations -->
@@ -704,16 +548,7 @@
                 }
             });
 
-            // === FUNGSI MODAL MUTASI RUANGAN ===
-            function bukaModalPindah(muridId, namaMurid) {
-                document.getElementById('input_pindah_murid_id').value = muridId;
-                document.getElementById('teks_nama_murid').innerText = namaMurid;
-                document.getElementById('modalPindahRuangan').classList.remove('hidden');
-            }
 
-            function tutupModalPindah() {
-                document.getElementById('modalPindahRuangan').classList.add('hidden');
-            }
 
 
 
@@ -739,29 +574,6 @@
                         document.getElementById('form-detach-' + muridId).submit();
                     }
                 });
-            }
-
-            function bukaModalStatus(id, currentStatus, namaLengkap) {
-                // 1. Set nama lengkap di dalam modal
-                document.getElementById('modalStatusNama').textContent = namaLengkap;
-
-                // 2. Set opsi status saat ini agar otomatis terpilih
-                document.getElementById('selectStatus').value = currentStatus;
-
-                // 3. Ubah attribute 'action' pada form ke route yang benar
-                // Kita menggunakan route helper blade dan me-replace parameter ':id' dengan id asli dari javascript
-                let baseAction = "{{ route('murid.updateStatus', ':id') }}";
-                baseAction = baseAction.replace(':id', id);
-
-                document.getElementById('formUpdateStatus').action = baseAction;
-
-                // 4. Tampilkan Modal
-                document.getElementById('modalUpdateStatus').classList.remove('hidden');
-            }
-
-            function tutupModalStatus() {
-                // Sembunyikan Modal
-                document.getElementById('modalUpdateStatus').classList.add('hidden');
             }
         </script>
     @endpush

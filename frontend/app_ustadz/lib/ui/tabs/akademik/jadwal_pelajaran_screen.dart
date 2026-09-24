@@ -340,39 +340,88 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                               ),
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.primaryDark.withValues(
-                                      alpha: 0.15,
-                                    )
-                                  : AppColors.primaryContainerLight,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isDark
-                                    ? AppColors.primaryDark.withValues(
-                                        alpha: 0.25,
-                                      )
-                                    : AppColors.primaryLight.withValues(
-                                        alpha: 0.15,
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              if (s.isTeamTeaching)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.indigo.withValues(alpha: 0.2)
+                                        : Colors.indigo.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? Colors.indigo.withValues(alpha: 0.4)
+                                          : Colors.indigo.shade200,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.groups_rounded,
+                                        size: 13,
+                                        color: isDark
+                                            ? Colors.indigoAccent.shade100
+                                            : Colors.indigo.shade700,
                                       ),
-                                width: 0.8,
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Team (${s.daftarUstadz.length})',
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? Colors.indigoAccent.shade100
+                                              : Colors.indigo.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.primaryDark.withValues(
+                                          alpha: 0.15,
+                                        )
+                                      : AppColors.primaryContainerLight,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.primaryDark.withValues(
+                                            alpha: 0.25,
+                                          )
+                                        : AppColors.primaryLight.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Ruangan: ${s.ruangan}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
+                                  ),
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              'Ruangan: ${s.ruangan}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight,
-                              ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
@@ -415,8 +464,8 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                         ],
                       ),
 
-                      // Info Ustadz Pengampu (Khusus mode Wali Ruangan / Jadwal Kelas)
-                      if (isWaliMode) ...[
+                      // Info Ustadz Pengampu (Khusus mode Wali Ruangan ATAU Team Teaching di Jadwal Saya)
+                      if (isWaliMode || s.isTeamTeaching) ...[
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -435,43 +484,165 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                               width: 0.8,
                             ),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              AppAvatar(
-                                name: s.ustadz ?? 'Ustadz',
-                                imageUrl: s.ustadzFoto,
-                                radius: 14,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      s.ustadz ?? 'Pengajar',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
+                              if (s.isTeamTeaching) ...[
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.people_alt_rounded,
+                                        size: 13,
+                                        color: isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (s.kodeUstadz != null &&
-                                        s.kodeUstadz != '-') ...[
-                                      const SizedBox(height: 1),
+                                      const SizedBox(width: 5),
                                       Text(
-                                        'Kode: ${s.kodeUstadz}',
+                                        'Pengampu Bersama (${s.daftarUstadz.length} Ustadz/Ustadzah):',
                                         style: TextStyle(
-                                          fontSize: 10,
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.bold,
                                           color: isDark
-                                              ? const Color(0xFF8D9387)
-                                              : const Color(0xFF73796E),
+                                              ? AppColors.primaryDark
+                                              : AppColors.primaryLight,
                                         ),
                                       ),
                                     ],
+                                  ),
+                                ),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 6,
+                                  children: s.daftarUstadz.map((u) {
+                                    final isUtama = u.isUtama;
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isUtama
+                                            ? (isDark
+                                                  ? const Color(0xFF1D281D)
+                                                  : const Color(0xFFF0FDF4))
+                                            : (isDark
+                                                  ? Colors.white.withValues(
+                                                      alpha: 0.05,
+                                                    )
+                                                  : Colors.white),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: isUtama
+                                              ? (isDark
+                                                    ? AppColors.primaryDark
+                                                    : AppColors.primaryLight)
+                                              : (isDark
+                                                    ? const Color(0xFF263326)
+                                                    : const Color(0xFFE2E8F0)),
+                                          width: isUtama ? 1.0 : 0.7,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          AppAvatar(
+                                            name: u.nama,
+                                            imageUrl: u.foto,
+                                            radius: 10,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            u.nama,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: isUtama
+                                                  ? FontWeight.bold
+                                                  : FontWeight.w600,
+                                              color: isUtama
+                                                  ? (isDark
+                                                        ? AppColors.primaryDark
+                                                        : AppColors
+                                                              .primaryLight)
+                                                  : null,
+                                            ),
+                                          ),
+                                          if (isUtama) ...[
+                                            const SizedBox(width: 5),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 4,
+                                                    vertical: 1,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: isDark
+                                                    ? AppColors.primaryDark
+                                                    : AppColors.primaryLight,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                'Utama',
+                                                style: TextStyle(
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDark
+                                                      ? Colors.black
+                                                      : Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ] else ...[
+                                Row(
+                                  children: [
+                                    AppAvatar(
+                                      name: s.ustadz ?? 'Ustadz',
+                                      imageUrl: s.ustadzFoto,
+                                      radius: 14,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            s.ustadz ?? 'Pengajar',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          if (s.kodeUstadz != null &&
+                                              s.kodeUstadz != '-') ...[
+                                            const SizedBox(height: 1),
+                                            Text(
+                                              'Kode: ${s.kodeUstadz}',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: isDark
+                                                    ? const Color(0xFF8D9387)
+                                                    : const Color(0xFF73796E),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              ),
+                              ],
                             ],
                           ),
                         ),

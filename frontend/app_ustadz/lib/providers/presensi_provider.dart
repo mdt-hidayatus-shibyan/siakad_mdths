@@ -265,6 +265,7 @@ class PresensiProvider extends ChangeNotifier {
   Future<bool> checkinUstadz({
     required int jadwalId,
     required String status,
+    int? ustadzId,
     int? ustadzPenggantiId,
     String? keterangan,
   }) async {
@@ -278,6 +279,7 @@ class PresensiProvider extends ChangeNotifier {
         jadwalId: jadwalId,
         tanggal: dateStr,
         status: status,
+        ustadzId: ustadzId,
         ustadzPenggantiId: ustadzPenggantiId,
         keterangan: keterangan,
       );

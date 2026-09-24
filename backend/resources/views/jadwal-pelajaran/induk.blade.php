@@ -14,7 +14,8 @@
                     class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight transition-colors duration-300">
                     Jadwal Induk Madrasah
                 </h2>
-                <p class="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 transition-colors duration-300">
+                <p
+                    class="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 transition-colors duration-300">
                     Matriks distribusi mata pelajaran dan asatidz seluruh ruangan.
                 </p>
             </div>
@@ -33,8 +34,7 @@
                         class="m3-input-glass w-full md:w-auto !pl-9 !pr-9 appearance-none cursor-pointer min-w-[200px]">
                         <option value="">-- Tahun Aktif --</option>
                         @foreach ($daftarTahun as $tahun)
-                            <option value="{{ $tahun->id }}"
-                                {{ $tahunPelajaranId == $tahun->id ? 'selected' : '' }}>
+                            <option value="{{ $tahun->id }}" {{ $tahunPelajaranId == $tahun->id ? 'selected' : '' }}>
                                 {{ $tahun->nama_hijriyah }} - {{ $tahun->nama_masehi }}
                             </option>
                         @endforeach
@@ -137,7 +137,8 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($jamList as $jam)
-                                        <tr class="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors duration-200">
+                                        <tr
+                                            class="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors duration-200">
 
                                             <!-- Kolom Jam (Sticky) -->
                                             <td
@@ -158,23 +159,50 @@
                                                             $isBentrok = isset($bentrokJadwalIds[$jadwal->id]);
                                                         @endphp
 
+                                                        @php
+                                                            $allUstadz = $jadwal->daftar_ustadz;
+                                                            $primaryUstadz =
+                                                                $allUstadz->firstWhere('pivot.is_utama', 1) ??
+                                                                ($allUstadz->firstWhere('pivot.is_utama', true) ??
+                                                                    ($allUstadz->first() ?? $jadwal->ustadz));
+                                                            $pendampingList = $allUstadz->where(
+                                                                'id',
+                                                                '!=',
+                                                                $primaryUstadz?->id,
+                                                            );
+                                                            $isTeam = $pendampingList->isNotEmpty();
+                                                        @endphp
+
                                                         @if ($isBentrok)
-                                                             <!-- JADWAL BENTROK -->
+                                                            <!-- JADWAL BENTROK -->
                                                             <div
                                                                 class="p-2.5 rounded-xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-800/50 relative overflow-hidden">
                                                                 <div class="absolute -right-2 -top-2 w-7 h-7 bg-rose-500 rounded-lg flex items-end justify-start pl-1.5 pb-1 text-white animate-pulse"
                                                                     title="Jadwal Bentrok!">
-                                                                    <i class="bi bi-exclamation-triangle-fill text-[8px]"></i>
+                                                                    <i
+                                                                        class="bi bi-exclamation-triangle-fill text-[8px]"></i>
                                                                 </div>
                                                                 <h4
                                                                     class="text-xs font-black text-rose-700 dark:text-rose-400 leading-tight mb-1 pr-3 truncate">
                                                                     {{ $jadwal->mataPelajaran->nama_mapel }}
                                                                 </h4>
-                                                                <p
-                                                                    class="text-[10px] font-bold text-rose-600/80 dark:text-rose-500/80 truncate">
-                                                                    <i class="bi bi-person-fill mr-0.5"></i>
-                                                                    {{ $jadwal->ustadz->nama_lengkap }}
-                                                                </p>
+                                                                <div class="space-y-0.5">
+                                                                    <p
+                                                                        class="text-[10px] font-bold text-rose-600/90 dark:text-rose-400/90 truncate flex items-center gap-1">
+                                                                        <i
+                                                                            class="bi bi-star-fill text-[8px] text-amber-500"></i>
+                                                                        <span>{{ $primaryUstadz?->nama_lengkap ?? '-' }}</span>
+                                                                    </p>
+                                                                    @if ($isTeam)
+                                                                        @foreach ($pendampingList as $p)
+                                                                            <p
+                                                                                class="text-[9px] font-semibold text-rose-500/80 dark:text-rose-300/80 truncate flex items-center gap-1 pl-2.5">
+                                                                                <i class="bi bi-person text-[8px]"></i>
+                                                                                <span>{{ $p->nama_lengkap }}</span>
+                                                                            </p>
+                                                                        @endforeach
+                                                                    @endif
+                                                                </div>
                                                             </div>
                                                         @else
                                                             <!-- JADWAL NORMAL -->
@@ -184,11 +212,28 @@
                                                                     class="text-xs font-black text-zinc-900 dark:text-white leading-tight mb-1 truncate">
                                                                     {{ $jadwal->mataPelajaran->nama_mapel }}
                                                                 </h4>
-                                                                <p
-                                                                    class="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 truncate">
-                                                                    <i class="bi bi-person-fill mr-0.5 opacity-70"></i>
-                                                                    {{ $jadwal->ustadz->nama_lengkap }}
-                                                                </p>
+                                                                <div class="space-y-0.5">
+                                                                    <p
+                                                                        class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 truncate flex items-center gap-1">
+                                                                        @if ($isTeam)
+                                                                            <i
+                                                                                class="bi bi-star-fill text-[8px] text-amber-500"></i>
+                                                                        @else
+                                                                            <i
+                                                                                class="bi bi-person-fill text-[9px] opacity-70"></i>
+                                                                        @endif
+                                                                        <span>{{ $primaryUstadz?->nama_lengkap ?? '-' }}</span>
+                                                                    </p>
+                                                                    @if ($isTeam)
+                                                                        @foreach ($pendampingList as $p)
+                                                                            <p class="text-[9px] font-semibold text-sky-600 dark:text-sky-400 truncate flex items-center gap-1 pl-2.5"
+                                                                                title="Guru Pendamping">
+                                                                                <i class="bi bi-people text-[8px]"></i>
+                                                                                <span>{{ $p->nama_lengkap }}</span>
+                                                                            </p>
+                                                                        @endforeach
+                                                                    @endif
+                                                                </div>
                                                             </div>
                                                         @endif
                                                     @else
@@ -222,8 +267,10 @@
 
                 // Reset semua tombol ke gaya Inactive
                 document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('bg-primary', 'dark:bg-primary-dark', 'text-white', 'dark:text-zinc-900', 'border-transparent');
-                    btn.classList.add('bg-white/80', 'dark:bg-zinc-900', 'text-zinc-600', 'dark:text-zinc-400', 'border-zinc-200/80',
+                    btn.classList.remove('bg-primary', 'dark:bg-primary-dark', 'text-white', 'dark:text-zinc-900',
+                        'border-transparent');
+                    btn.classList.add('bg-white/80', 'dark:bg-zinc-900', 'text-zinc-600', 'dark:text-zinc-400',
+                        'border-zinc-200/80',
                         'dark:border-zinc-800', 'hover:bg-zinc-100/80', 'dark:hover:bg-zinc-800/60');
                 });
 
@@ -232,11 +279,12 @@
 
                 // Set gaya tombol yang aktif
                 const activeBtn = document.getElementById('btn-tab-' + tingkatId);
-                activeBtn.classList.remove('bg-white/80', 'dark:bg-zinc-900', 'text-zinc-600', 'dark:text-zinc-400', 'border-zinc-200/80',
+                activeBtn.classList.remove('bg-white/80', 'dark:bg-zinc-900', 'text-zinc-600', 'dark:text-zinc-400',
+                    'border-zinc-200/80',
                     'dark:border-zinc-800', 'hover:bg-zinc-100/80', 'dark:hover:bg-zinc-800/60');
-                activeBtn.classList.add('bg-primary', 'dark:bg-primary-dark', 'text-white', 'dark:text-zinc-900', 'border-transparent');
+                activeBtn.classList.add('bg-primary', 'dark:bg-primary-dark', 'text-white', 'dark:text-zinc-900',
+                    'border-transparent');
             }
         </script>
     @endpush
 </x-app-layout>
-

@@ -186,146 +186,145 @@
             <!-- ============================================== -->
             <!-- FORM INPUT PRESENSI (DENSE LIST) -->
             <!-- ============================================== -->
-            <form action="{{ route('presensi-murid.storeHarian') }}" method="POST" class="relative z-10">
-                @csrf
-                <input type="hidden" name="jadwal_pelajaran_id" value="{{ $jadwal->id }}">
-                <input type="hidden" name="tanggal" value="{{ $tanggal }}">
+            <div id="data-table-container">
+                <form action="{{ route('presensi-murid.storeHarian') }}" method="POST" class="ajax-post relative z-10"
+                    data-refresh-target="#data-table-container">
+                    @csrf
+                    <input type="hidden" name="jadwal_pelajaran_id" value="{{ $jadwal->id }}">
+                    <input type="hidden" name="tanggal" value="{{ $tanggal }}">
 
-                <div class="m3-glass-card overflow-hidden relative">
+                    <div class="m3-glass-card overflow-hidden relative">
 
-                    <!-- Header List Presensi -->
-                    <div
-                        class="bg-zinc-50/70 dark:bg-zinc-950/50 border-b border-zinc-200/80 dark:border-zinc-800 px-5 md:px-6 py-4 flex flex-col md:flex-row justify-between md:items-center gap-4 relative z-10">
-                        <div class="flex items-center gap-3.5">
+                        <!-- Header List Presensi -->
+                        <div
+                            class="bg-zinc-50/70 dark:bg-zinc-950/50 border-b border-zinc-200/80 dark:border-zinc-800 px-5 md:px-6 py-4 flex flex-col md:flex-row justify-between md:items-center gap-4 relative z-10">
+                            <div class="flex items-center gap-3.5">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary dark:text-primary-dark flex items-center justify-center text-lg shrink-0">
+                                    <i class="bi bi-journal-bookmark-fill"></i>
+                                </div>
+                                <div>
+                                    <h3
+                                        class="font-black text-zinc-900 dark:text-white text-base tracking-tight leading-tight uppercase mb-0.5">
+                                        {{ $jadwal->mataPelajaran->nama_mapel }}
+                                    </h3>
+                                    <p
+                                        class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex items-center">
+                                        <i class="bi bi-person-fill mr-1 opacity-70"></i> Pengajar: <span
+                                            class="text-zinc-700 dark:text-zinc-300 ml-1">{{ $jadwal->ustadz->nama_lengkap }}</span>
+                                    </p>
+                                </div>
+                            </div>
+
                             <div
-                                class="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary dark:text-primary-dark flex items-center justify-center text-lg shrink-0">
-                                <i class="bi bi-journal-bookmark-fill"></i>
-                            </div>
-                            <div>
-                                <h3
-                                    class="font-black text-zinc-900 dark:text-white text-base tracking-tight leading-tight uppercase mb-0.5">
-                                    {{ $jadwal->mataPelajaran->nama_mapel }}
-                                </h3>
-                                <p
-                                    class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex items-center">
-                                    <i class="bi bi-person-fill mr-1 opacity-70"></i> Pengajar: <span
-                                        class="text-zinc-700 dark:text-zinc-300 ml-1">{{ $jadwal->ustadz->nama_lengkap }}</span>
-                                </p>
+                                class="text-left md:text-right flex items-center md:items-end gap-2 md:flex-col md:gap-1.5">
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="setSemuaPresensi('Hadir')"
+                                        class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-black rounded-lg transition-colors flex items-center gap-1">
+                                        <i class="bi bi-check-all"></i>
+                                        <span>Hadirkan Semua</span>
+                                    </button>
+                                    <button type="button" onclick="kosongkanSemuaPresensi()"
+                                        class="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black rounded-lg transition-colors flex items-center gap-1">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                        <span>Kosongkan</span>
+                                    </button>
+                                </div>
+                                <span
+                                    class="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+                                    <i class="bi bi-calendar-event mr-1"></i>
+                                    {{ \Carbon\Carbon::parse($tanggal)->format('d M Y') }} • Jam
+                                    Ke-{{ $jam_ke }}
+                                </span>
                             </div>
                         </div>
 
-                        <div
-                            class="text-left md:text-right flex items-center md:items-end gap-2 md:flex-col md:gap-1.5">
-                            <div class="flex items-center gap-2">
-                                <button type="button" onclick="setSemuaPresensi('Hadir')"
-                                    class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-black rounded-lg transition-colors flex items-center gap-1">
-                                    <i class="bi bi-check-all"></i>
-                                    <span>Hadirkan Semua</span>
-                                </button>
-                                <button type="button" onclick="kosongkanSemuaPresensi()"
-                                    class="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 text-[10px] font-black rounded-lg transition-colors flex items-center gap-1">
-                                    <i class="bi bi-arrow-counterclockwise"></i>
-                                    <span>Kosongkan</span>
-                                </button>
-                            </div>
-                            <span
-                                class="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
-                                <i class="bi bi-calendar-event mr-1"></i>
-                                {{ \Carbon\Carbon::parse($tanggal)->format('d M Y') }} • Jam Ke-{{ $jam_ke }}
-                            </span>
-                        </div>
-                    </div>
+                        <!-- Area List Murid (Padat / Dense) -->
+                        <div class="p-0">
+                            <ul class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                                @foreach ($murids as $murid)
+                                    @php
+                                        $statusSekarang = $presensiTersimpan->has($murid->id)
+                                            ? $presensiTersimpan[$murid->id]->status
+                                            : null;
+                                    @endphp
 
-                    <!-- Area List Murid (Padat / Dense) -->
-                    <div class="p-0">
-                        <ul class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
-                            @foreach ($murids as $murid)
-                                @php
-                                    $statusSekarang = $presensiTersimpan->has($murid->id)
-                                        ? $presensiTersimpan[$murid->id]->status
-                                        : null;
-                                @endphp
+                                    <li
+                                        class="px-5 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
 
-                                <li
-                                    class="px-5 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-
-                                    <!-- Info Identitas -->
-                                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                                        <div
-                                            class="w-7 h-7 rounded-lg {{ $statusSekarang ? 'bg-primary/10 border-primary/20 text-primary dark:text-primary-dark font-black' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 font-bold' }} border flex items-center justify-center shrink-0 text-[11px]">
-                                            {{ $loop->iteration }}
-                                        </div>
-                                        <div class="flex-1 min-w-0 pr-2">
-                                            <div class="flex items-center gap-2">
-                                                <h4 class="font-black text-xs text-zinc-900 dark:text-white truncate">
-                                                    {{ $murid->nama_lengkap }}
-                                                </h4>
-                                                @if (!$statusSekarang)
-                                                    <span id="badge-status-{{ $murid->id }}"
-                                                        class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 uppercase tracking-wider">
-                                                        Belum Diisi
-                                                    </span>
-                                                @else
-                                                    <span id="badge-status-{{ $murid->id }}"
-                                                        class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
-                                                        {{ $statusSekarang }}
-                                                    </span>
-                                                @endif
+                                        <!-- Info Identitas -->
+                                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                                            <div
+                                                class="w-7 h-7 rounded-lg {{ $statusSekarang ? 'bg-primary/10 border-primary/20 text-primary dark:text-primary-dark font-black' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 font-bold' }} border flex items-center justify-center shrink-0 text-[11px]">
+                                                {{ $loop->iteration }}
                                             </div>
-                                            <p
-                                                class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider truncate font-mono mt-0.5">
-                                                NISM: {{ $murid->nism ?? '-' }}
-                                            </p>
+                                            <div class="flex-1 min-w-0 pr-2">
+                                                <div class="flex items-center gap-2">
+                                                    <h4
+                                                        class="font-black text-xs text-zinc-900 dark:text-white truncate">
+                                                        {{ $murid->nama_lengkap }}
+                                                    </h4>
+                                                    @if (!$statusSekarang)
+                                                        <span id="badge-status-{{ $murid->id }}"
+                                                            class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+                                                            Belum Diisi
+                                                        </span>
+                                                    @else
+                                                        <span id="badge-status-{{ $murid->id }}"
+                                                            class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                                                            {{ $statusSekarang }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <p
+                                                    class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider truncate font-mono mt-0.5">
+                                                    NISM: {{ $murid->nism ?? '-' }}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Pilihan Kehadiran Radio Buttons -->
-                                    <div class="shrink-0 w-full md:w-auto">
-                                        <!-- Container kotak pill radio -->
-                                        <div
-                                            class="grid grid-cols-5 gap-1 w-full md:w-[280px] bg-zinc-100/80 dark:bg-zinc-950/60 p-1 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
-                                            @foreach (['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A', 'Dispen' => 'D'] as $val => $label)
-                                                <label class="cursor-pointer relative block w-full text-center">
-                                                    <input type="radio" name="presensi[{{ $murid->id }}]"
-                                                        value="{{ $val }}"
-                                                        class="peer sr-only presensi-radio-{{ $murid->id }}"
-                                                        {{ $statusSekarang == $val ? 'checked' : '' }}
-                                                        onchange="updateStatusBadge('{{ $murid->id }}', '{{ $val }}')">
-
-                                                    <div
-                                                        class="w-full py-1.5 flex items-center justify-center text-[11px] font-black rounded-lg transition-all duration-200 border border-transparent text-zinc-400 dark:text-zinc-500 hover:bg-white dark:hover:bg-zinc-800
-                                                    {{ $val == 'Hadir' ? 'peer-checked:bg-emerald-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-emerald-600' : '' }}
-                                                    {{ $val == 'Sakit' ? 'peer-checked:bg-blue-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-blue-600' : '' }}
-                                                    {{ $val == 'Izin' ? 'peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-amber-600' : '' }}
-                                                    {{ $val == 'Alpha' ? 'peer-checked:bg-rose-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-rose-600' : '' }}
-                                                    {{ $val == 'Dispen' ? 'peer-checked:bg-purple-500 peer-checked:text-white peer-checked:shadow-2xs dark:peer-checked:bg-purple-600' : '' }}
-                                                    ">
-                                                        {{ $label }}
-                                                    </div>
-                                                </label>
-                                            @endforeach
+                                        <!-- Pilihan Kehadiran Radio Buttons -->
+                                        <div class="shrink-0 w-full md:w-auto">
+                                            <!-- Container kotak pill radio -->
+                                            <div
+                                                class="grid grid-cols-5 gap-1 w-full md:w-[280px] bg-zinc-100/80 dark:bg-zinc-950/60 p-1 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
+                                                @foreach (['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A', 'Dispen' => 'D'] as $val => $label)
+                                                    <label class="cursor-pointer relative block w-full text-center">
+                                                        <input type="radio" name="presensi[{{ $murid->id }}]"
+                                                            value="{{ $val }}"
+                                                            class="sr-only presensi-radio-{{ $murid->id }}"
+                                                            {{ $statusSekarang == $val ? 'checked' : '' }}
+                                                            onchange="updateStatusBadge('{{ $murid->id }}', '{{ $val }}')">
+                                                        <div
+                                                            class="btn-presensi-opt opt-{{ strtolower($val) }} !py-1.5 !text-[11px]">
+                                                            {{ $label }}
+                                                        </div>
+                                                    </label>
+                                                @endforeach
+                                            </div>
                                         </div>
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-
-                    <!-- Footer / Tombol Simpan -->
-                    @can('create presensi-murid')
-                        <div
-                            class="px-5 py-3.5 bg-zinc-50/80 dark:bg-zinc-950/70 border-t border-zinc-200/80 dark:border-zinc-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3 z-20 sticky bottom-0">
-                            <div class="text-xs font-bold text-zinc-500 dark:text-zinc-400">
-                                Total: {{ $murids->count() }} Murid
-                            </div>
-                            <button type="submit" class="m3-btn-primary w-full md:w-auto h-10 px-6 text-xs group/btn">
-                                <i class="bi bi-check2-circle text-sm mr-1"></i>
-                                <span>Simpan Presensi Jam Ini</span>
-                            </button>
+                                    </li>
+                                @endforeach
+                            </ul>
                         </div>
-                    @endcan
-                </div>
-            </form>
+
+                        <!-- Footer / Tombol Simpan -->
+                        @can('create presensi-murid')
+                            <div
+                                class="px-5 py-3.5 bg-zinc-50/80 dark:bg-zinc-950/70 border-t border-zinc-200/80 dark:border-zinc-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3 z-20 sticky bottom-0">
+                                <div class="text-xs font-bold text-zinc-500 dark:text-zinc-400">
+                                    Total: {{ $murids->count() }} Murid
+                                </div>
+                                <button type="submit"
+                                    class="m3-btn-primary w-full md:w-auto h-10 px-6 text-xs group/btn">
+                                    <i class="bi bi-check2-circle text-sm mr-1"></i>
+                                    <span>Simpan Presensi Jam Ini</span>
+                                </button>
+                            </div>
+                        @endcan
+                    </div>
+                </form>
+            </div>
 
             <script>
                 function updateStatusBadge(muridId, status) {

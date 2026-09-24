@@ -45,13 +45,14 @@ class BellService {
   static const String _keyOnlyTeachingDays = 'bell_only_teaching_days';
   static const String _keyTeachingSchedule = 'bell_teaching_schedule';
 
-  static const String _channelId = 'mdths_kbm_bell_channel';
+  static const String _channelId = 'mdths_kbm_bell_channel_v3';
   static const String _channelName = 'Bel Masuk KBM MDTHS';
   static const String _channelDesc =
       'Notifikasi jadwal bel masuk jam pertama dan jam kedua';
 
   bool _isEnabled = true;
-  bool _onlyOnTeachingDays = true; // Default: Hanya berbunyi jika ustadz mengajar
+  bool _onlyOnTeachingDays =
+      true; // Default: Hanya berbunyi jika ustadz mengajar
   TimeOfDay _jam1Time = const TimeOfDay(hour: 13, minute: 45);
   TimeOfDay _jam2Time = const TimeOfDay(hour: 15, minute: 30);
   double _volume = 1.0;
@@ -101,11 +102,37 @@ class BellService {
   /// Inisialisasi awal BellService & muat konfigurasi tersimpan
   Future<void> init() async {
     await _loadSettings();
+    _configureAudioContext();
     if (!kIsWeb) {
       await _initLocalNotifications();
       await _syncScheduledAlarms();
     }
     startMonitoring();
+  }
+
+  void _configureAudioContext() {
+    try {
+      _player.setAudioContext(
+        AudioContext(
+          android: const AudioContextAndroid(
+            isSpeakerphoneOn: true,
+            stayAwake: true,
+            contentType: AndroidContentType.sonification,
+            usageType: AndroidUsageType.alarm,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: {
+              AVAudioSessionOptions.mixWithOthers,
+              AVAudioSessionOptions.duckOthers,
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('AudioContext setup warning: $e');
+    }
   }
 
   /// Inisialisasi Notifikasi Sistem Lokal & Timezone
@@ -149,6 +176,16 @@ class BellService {
           >();
 
       if (androidImplementation != null) {
+        // Hapus channel lama agar sistem membuat channel baru dengan custom sound yang benar
+        try {
+          await androidImplementation.deleteNotificationChannel(
+            channelId: 'mdths_kbm_bell_channel',
+          );
+          await androidImplementation.deleteNotificationChannel(
+            channelId: 'mdths_kbm_bell_channel_v2',
+          );
+        } catch (_) {}
+
         const androidChannel = AndroidNotificationChannel(
           _channelId,
           _channelName,
@@ -157,6 +194,7 @@ class BellService {
           sound: RawResourceAndroidNotificationSound('school_bell'),
           playSound: true,
           enableVibration: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
         );
         await androidImplementation.createNotificationChannel(androidChannel);
         await androidImplementation.requestNotificationsPermission();
@@ -212,7 +250,8 @@ class BellService {
             await _scheduleSingleBell(
               id: idJam2,
               title: '🔔 Bel Masuk Jam Ke-2 (${_formatTime(_jam2Time)})',
-              body: 'Saatnya memulai Kegiatan Belajar Mengajar (KBM) Jam Kedua.',
+              body:
+                  'Saatnya memulai Kegiatan Belajar Mengajar (KBM) Jam Kedua.',
               scheduledDate: time2,
             );
           }
@@ -351,9 +390,7 @@ class BellService {
 
     _teachingSchedule = scheduleMap;
     final prefs = await SharedPreferences.getInstance();
-    final jsonMap = _teachingSchedule.map(
-      (k, v) => MapEntry(k.toString(), v),
-    );
+    final jsonMap = _teachingSchedule.map((k, v) => MapEntry(k.toString(), v));
     await prefs.setString(_keyTeachingSchedule, jsonEncode(jsonMap));
     await _syncScheduledAlarms();
   }
@@ -543,15 +580,21 @@ class BellService {
 
     if (!_activeDays.contains(weekday)) return;
 
-    // Jika fitur 'Hanya saat ada jadwal mengajar' aktif dan hari ini ustadz tidak mengajar -> Lewati
-    if (_onlyOnTeachingDays && !hasTeachingScheduleOn(weekday)) return;
+    // Jika fitur 'Hanya saat ada jadwal mengajar' aktif dan jadwal sudah tersinkronisasi, periksa jadwal hari ini
+    if (_onlyOnTeachingDays &&
+        _teachingSchedule.isNotEmpty &&
+        !hasTeachingScheduleOn(weekday)) {
+      return;
+    }
 
     final currentHour = now.hour;
     final currentMinute = now.minute;
 
     // Check Jam 1 (Default 13:45)
     if (currentHour == _jam1Time.hour && currentMinute == _jam1Time.minute) {
-      if (!_onlyOnTeachingDays || hasTeachingSessionOn(weekday, 1)) {
+      if (!_onlyOnTeachingDays ||
+          _teachingSchedule.isEmpty ||
+          hasTeachingSessionOn(weekday, 1)) {
         final triggerKey =
             '${now.year}-${now.month}-${now.day}_jam1_${_jam1Time.hour}:${_jam1Time.minute}';
         if (_lastTriggeredKey != triggerKey) {
@@ -568,7 +611,9 @@ class BellService {
 
     // Check Jam 2 (Default 15:30)
     if (currentHour == _jam2Time.hour && currentMinute == _jam2Time.minute) {
-      if (!_onlyOnTeachingDays || hasTeachingSessionOn(weekday, 2)) {
+      if (!_onlyOnTeachingDays ||
+          _teachingSchedule.isEmpty ||
+          hasTeachingSessionOn(weekday, 2)) {
         final triggerKey =
             '${now.year}-${now.month}-${now.day}_jam2_${_jam2Time.hour}:${_jam2Time.minute}';
         if (_lastTriggeredKey != triggerKey) {
@@ -624,39 +669,46 @@ class BellService {
       await _player.setVolume(_volume);
 
       Uint8List? audioBytes;
-      if (kIsWeb) {
+      try {
         final byteData = await rootBundle.load('assets/audio/school-bell.wav');
         audioBytes = byteData.buffer.asUint8List();
+      } catch (e) {
+        debugPrint('Gagal membaca rootBundle school-bell.wav: $e');
       }
 
       for (int i = 0; i < repeats; i++) {
         if (_currentSession != session) break;
 
-        if (kIsWeb && audioBytes != null) {
-          await _player.play(BytesSource(audioBytes, mimeType: 'audio/wav'));
-        } else {
-          try {
-            await _player.play(AssetSource('audio/school-bell.wav'));
-          } catch (_) {
-            audioBytes ??= (await rootBundle.load('assets/audio/school-bell.wav'))
-                .buffer
-                .asUint8List();
+        try {
+          if (kIsWeb && audioBytes != null) {
             await _player.play(BytesSource(audioBytes, mimeType: 'audio/wav'));
+          } else {
+            try {
+              await _player.play(AssetSource('audio/school-bell.wav'));
+            } catch (_) {
+              if (audioBytes != null) {
+                await _player.play(
+                  BytesSource(audioBytes, mimeType: 'audio/wav'),
+                );
+              }
+            }
           }
+        } catch (e) {
+          debugPrint('Error saat trigger play audio: $e');
         }
 
+        // Tunggu hingga pemutaran 1 siklus selesai (audio bel ~3 detik)
         try {
-          await _player.onPlayerComplete.first.timeout(
-            const Duration(seconds: 6),
-          );
-        } catch (_) {
-          // Timeout fallback
-        }
+          await Future.any([
+            _player.onPlayerComplete.first,
+            Future.delayed(const Duration(milliseconds: 3200)),
+          ]);
+        } catch (_) {}
 
         if (_currentSession != session) break;
 
         if (i < repeats - 1) {
-          await Future.delayed(const Duration(milliseconds: 400));
+          await Future.delayed(const Duration(milliseconds: 300));
         }
       }
     } catch (e) {
@@ -732,8 +784,12 @@ class BellService {
       final targetDate = now.add(Duration(days: offset));
       final targetWeekday = targetDate.weekday;
 
-      if (!_activeDays.contains(targetWeekday)) continue;
-      if (_onlyOnTeachingDays && !hasTeachingScheduleOn(targetWeekday)) continue;
+      if (!_activeDays.contains(targetWeekday)) {
+        continue;
+      }
+      if (_onlyOnTeachingDays && !hasTeachingScheduleOn(targetWeekday)) {
+        continue;
+      }
 
       final sessions = _onlyOnTeachingDays
           ? (_teachingSchedule[targetWeekday] ?? [1, 2])
