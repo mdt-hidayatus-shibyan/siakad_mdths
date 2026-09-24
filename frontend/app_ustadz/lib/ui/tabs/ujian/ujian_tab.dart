@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'input_nilai_tab_view.dart';
+import 'jadwal_ujian_tab_view.dart';
 import 'persyaratan_ujian_tab_view.dart';
 import 'presensi_ujian_tab_view.dart';
 
@@ -20,7 +21,7 @@ class _UjianTabState extends State<UjianTab>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {});
@@ -42,7 +43,7 @@ class _UjianTabState extends State<UjianTab>
       appBar: const CustomAppBar(titleText: 'Ujian Madrasah'),
       body: Column(
         children: [
-          // Segmented Navigation Pill (3 Tabs)
+          // Segmented Navigation Pill (4 Tabs)
           SegmentedTabBar(
             selectedIndex: _tabController.index,
             onTabChanged: (idx) {
@@ -51,9 +52,17 @@ class _UjianTabState extends State<UjianTab>
             },
             items: [
               SegmentedTabItem(
+                activeIcon: Icons.calendar_month_rounded,
+                inactiveIcon: Icons.calendar_month_outlined,
+                label: 'Jadwal',
+                activeColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
+              ),
+              SegmentedTabItem(
                 activeIcon: Icons.verified_user_rounded,
                 inactiveIcon: Icons.verified_user_outlined,
-                label: 'Syarat Ujian',
+                label: 'Syarat',
                 activeColor: isDark
                     ? AppColors.primaryDark
                     : AppColors.primaryLight,
@@ -82,6 +91,7 @@ class _UjianTabState extends State<UjianTab>
             child: TabBarView(
               controller: _tabController,
               children: const [
+                JadwalUjianTabView(),
                 PersyaratanUjianTabView(),
                 PresensiUjianTabView(),
                 InputNilaiTabView(),

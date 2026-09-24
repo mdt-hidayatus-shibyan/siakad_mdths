@@ -1,4 +1,5 @@
 // Model untuk Kalender Pendidikan, Referensi Pelanggaran, Mata Pelajaran, dan Jadwal Pelajaran
+import 'presensi_ujian_model.dart';
 
 class KalendarEvent {
   final String id;
@@ -377,6 +378,184 @@ class JadwalPelajaranResponse {
       totalJadwalRuanganMingguan: json['total_jadwal_ruangan_mingguan'] ?? 0,
       jadwalRuanganPerHari: rawJadwalRuangan
           .map((e) => HariJadwalItem.fromJson(e))
+          .toList(),
+    );
+  }
+}
+
+class UjianAgendaItem {
+  final int id;
+  final String namaUjian;
+  final String tipeUjian;
+  final String semester;
+  final String? tanggalMulai;
+  final String? tanggalSelesai;
+
+  UjianAgendaItem({
+    required this.id,
+    required this.namaUjian,
+    required this.tipeUjian,
+    required this.semester,
+    this.tanggalMulai,
+    this.tanggalSelesai,
+  });
+
+  factory UjianAgendaItem.fromJson(Map<String, dynamic> json) {
+    return UjianAgendaItem(
+      id: json['id'] ?? 0,
+      namaUjian: json['nama_ujian'] ?? '',
+      tipeUjian: json['tipe_ujian'] ?? 'IMDA 1',
+      semester: json['semester'] ?? '-',
+      tanggalMulai: json['tanggal_mulai'],
+      tanggalSelesai: json['tanggal_selesai'],
+    );
+  }
+}
+
+class SesiJadwalUjianItem {
+  final int id;
+  final int ujianId;
+  final String namaUjian;
+  final String tipeUjian;
+  final String semester;
+  final int? mataPelajaranId;
+  final bool isCustomMapel;
+  final String namaMapel;
+  final int levelId;
+  final String namaLevel;
+  final String waktuMulai;
+  final String waktuSelesai;
+  final String jam;
+  final int? ustadzId;
+  final String namaPengawas;
+  final String? kodePengawas;
+  final String? pengawasFoto;
+  final bool isMySchedule;
+
+  SesiJadwalUjianItem({
+    required this.id,
+    required this.ujianId,
+    required this.namaUjian,
+    required this.tipeUjian,
+    required this.semester,
+    this.mataPelajaranId,
+    this.isCustomMapel = false,
+    required this.namaMapel,
+    required this.levelId,
+    required this.namaLevel,
+    required this.waktuMulai,
+    required this.waktuSelesai,
+    required this.jam,
+    this.ustadzId,
+    required this.namaPengawas,
+    this.kodePengawas,
+    this.pengawasFoto,
+    this.isMySchedule = false,
+  });
+
+  factory SesiJadwalUjianItem.fromJson(Map<String, dynamic> json) {
+    return SesiJadwalUjianItem(
+      id: json['id'] ?? 0,
+      ujianId: json['ujian_id'] ?? 0,
+      namaUjian: json['nama_ujian'] ?? '-',
+      tipeUjian: json['tipe_ujian'] ?? '-',
+      semester: json['semester'] ?? '-',
+      mataPelajaranId: json['mata_pelajaran_id'],
+      isCustomMapel:
+          json['is_custom_mapel'] == true || json['is_custom_mapel'] == 1,
+      namaMapel: json['nama_mapel'] ?? 'Ujian',
+      levelId: json['level_id'] ?? 0,
+      namaLevel: json['nama_level'] ?? '-',
+      waktuMulai: json['waktu_mulai'] ?? '',
+      waktuSelesai: json['waktu_selesai'] ?? '',
+      jam: json['jam'] ?? '',
+      ustadzId: json['ustadz_id'],
+      namaPengawas: json['nama_pengawas'] ?? 'Belum Ditentukan',
+      kodePengawas: json['kode_pengawas'],
+      pengawasFoto: json['pengawas_foto'],
+      isMySchedule:
+          json['is_my_schedule'] == true || json['is_my_schedule'] == 1,
+    );
+  }
+}
+
+class TanggalJadwalUjianItem {
+  final String tanggal;
+  final String hariTanggal;
+  final String hariTanggalSingkat;
+  final int totalSesi;
+  final List<SesiJadwalUjianItem> sesi;
+
+  TanggalJadwalUjianItem({
+    required this.tanggal,
+    required this.hariTanggal,
+    required this.hariTanggalSingkat,
+    required this.totalSesi,
+    required this.sesi,
+  });
+
+  factory TanggalJadwalUjianItem.fromJson(Map<String, dynamic> json) {
+    final rawSesi = json['sesi'] as List? ?? [];
+    return TanggalJadwalUjianItem(
+      tanggal: json['tanggal'] ?? '',
+      hariTanggal: json['hari_tanggal'] ?? '',
+      hariTanggalSingkat: json['hari_tanggal_singkat'] ?? '',
+      totalSesi: json['total_sesi'] ?? 0,
+      sesi: rawSesi.map((e) => SesiJadwalUjianItem.fromJson(e)).toList(),
+    );
+  }
+}
+
+class JadwalUjianResponse {
+  final List<RuanganOptionItem> daftarRuangan;
+  final int? selectedRuanganId;
+  final String selectedRuanganNama;
+  final String namaLevel;
+  final bool isWaliRuangan;
+  final String waliRuanganNama;
+  final List<UjianOptionItem> daftarUjian;
+  final int? selectedUjianId;
+  final int totalJadwal;
+  final int totalJadwalSaya;
+  final List<TanggalJadwalUjianItem> jadwalPerTanggal;
+
+  JadwalUjianResponse({
+    this.daftarRuangan = const [],
+    this.selectedRuanganId,
+    this.selectedRuanganNama = '',
+    this.namaLevel = '',
+    this.isWaliRuangan = false,
+    this.waliRuanganNama = '-',
+    this.daftarUjian = const [],
+    this.selectedUjianId,
+    required this.totalJadwal,
+    required this.totalJadwalSaya,
+    required this.jadwalPerTanggal,
+  });
+
+  factory JadwalUjianResponse.fromJson(Map<String, dynamic> json) {
+    final rawRuangan = json['daftar_ruangan'] as List? ?? [];
+    final rawUjian = json['daftar_ujian'] as List? ?? [];
+    final rawJadwal = json['jadwal_per_tanggal'] as List? ?? [];
+
+    return JadwalUjianResponse(
+      daftarRuangan: rawRuangan
+          .map((e) => RuanganOptionItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      selectedRuanganId: json['selected_ruangan_id'],
+      selectedRuanganNama: json['selected_ruangan_nama'] ?? '',
+      namaLevel: json['nama_level'] ?? '',
+      isWaliRuangan:
+          json['is_wali_ruangan'] == true || json['is_wali_ruangan'] == 1,
+      waliRuanganNama: json['wali_ruangan_nama'] ?? '-',
+      daftarUjian: rawUjian
+          .map((e) => UjianOptionItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      selectedUjianId: json['selected_ujian_id'],
+      totalJadwal: json['total_jadwal'] ?? 0,
+      totalJadwalSaya: json['total_jadwal_saya'] ?? 0,
+      jadwalPerTanggal: rawJadwal
+          .map((e) => TanggalJadwalUjianItem.fromJson(e))
           .toList(),
     );
   }

@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/referensi-pelanggaran', [AkademikController::class, 'getReferensiPelanggaran']);
     Route::get('/mata-pelajaran', [AkademikController::class, 'getMataPelajaran']);
     Route::get('/jadwal-pelajaran', [AkademikController::class, 'getJadwalPelajaran']);
+    Route::get('/jadwal-ujian', [AkademikController::class, 'getJadwalUjian']);
 
     // 2.4 Presensi Murid & Ustadz
     Route::get('/presensi-murid/sesi', [PresensiMuridController::class, 'getSesi']);

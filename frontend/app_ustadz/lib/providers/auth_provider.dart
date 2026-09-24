@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/network/api_client.dart';
+import '../core/services/bell_service.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
 
@@ -269,6 +270,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     await _authRepo.logout();
     _user = null;
+    await BellService.instance.clearTeachingSchedule();
     _isLoading = false;
     notifyListeners();
   }

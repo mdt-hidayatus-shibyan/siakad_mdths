@@ -105,4 +105,37 @@ class AkademikRepository {
       throw Exception('Gagal memuat jadwal pelajaran: ${e.message}');
     }
   }
+
+  /// Ambil Jadwal Ujian Madrasah (Filter Ruangan Kelas & Agenda Ujian)
+  Future<JadwalUjianResponse> getJadwalUjian({
+    int? tahunId,
+    int? ruanganId,
+    int? ujianId,
+    bool? onlyMe,
+  }) async {
+    try {
+      final response = await _client.dio.get(
+        ApiConstants.jadwalUjian,
+        queryParameters: {
+          if (tahunId != null) 'tahun_id': tahunId,
+          if (ruanganId != null) 'ruangan_id': ruanganId,
+          if (ujianId != null && ujianId > 0) 'ujian_id': ujianId,
+          if (onlyMe == true) 'only_me': 1,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return JadwalUjianResponse.fromJson(response.data['data']);
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal memuat jadwal ujian',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal memuat jadwal ujian: ${e.message}');
+    }
+  }
 }

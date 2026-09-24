@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../core/services/bell_service.dart';
 import '../data/models/akademik_model.dart';
 import '../data/repositories/akademik_repository.dart';
 
@@ -189,10 +191,82 @@ class AkademikProvider extends ChangeNotifier {
 
     try {
       _jadwalData = await _repository.getJadwalPelajaran();
+      if (_jadwalData != null) {
+        unawaited(
+          BellService.instance.updateTeachingScheduleFromJadwal(
+            _jadwalData!.jadwalPerHari,
+          ),
+        );
+      }
     } catch (e) {
       _jadwalError = e.toString().replaceAll('Exception: ', '');
     } finally {
       _isLoadingJadwal = false;
+      notifyListeners();
+    }
+  }
+
+  // ==========================================
+  // 5. JADWAL UJIAN STATE (Filter Ruangan Kelas & Agenda Ujian)
+  // ==========================================
+  bool _isLoadingJadwalUjian = false;
+  bool get isLoadingJadwalUjian => _isLoadingJadwalUjian;
+
+  String? _jadwalUjianError;
+  String? get jadwalUjianError => _jadwalUjianError;
+
+  JadwalUjianResponse? _jadwalUjianData;
+  JadwalUjianResponse? get jadwalUjianData => _jadwalUjianData;
+
+  int? _selectedRuanganUjianId;
+  int? get selectedRuanganUjianId => _selectedRuanganUjianId;
+
+  int? _selectedAgendaUjianId;
+  int? get selectedAgendaUjianId => _selectedAgendaUjianId;
+
+  bool _onlyMyJadwalUjian = false;
+  bool get onlyMyJadwalUjian => _onlyMyJadwalUjian;
+
+  void selectRuanganUjian(int ruanganId) {
+    if (_selectedRuanganUjianId == ruanganId) return;
+    _selectedRuanganUjianId = ruanganId;
+    _selectedAgendaUjianId =
+        null; // Reset agar otomatis ambil agenda valid untuk ruangan itu
+    fetchJadwalUjian(ruanganId: ruanganId);
+  }
+
+  void selectAgendaUjian(int ujianId) {
+    if (_selectedAgendaUjianId == ujianId) return;
+    _selectedAgendaUjianId = ujianId;
+    fetchJadwalUjian(ruanganId: _selectedRuanganUjianId, ujianId: ujianId);
+  }
+
+  void setOnlyMyJadwalUjian(bool onlyMe) {
+    if (_onlyMyJadwalUjian == onlyMe) return;
+    _onlyMyJadwalUjian = onlyMe;
+    fetchJadwalUjian();
+  }
+
+  Future<void> fetchJadwalUjian({int? ruanganId, int? ujianId}) async {
+    _isLoadingJadwalUjian = true;
+    _jadwalUjianError = null;
+    notifyListeners();
+
+    try {
+      _jadwalUjianData = await _repository.getJadwalUjian(
+        ruanganId: ruanganId ?? _selectedRuanganUjianId,
+        ujianId: ujianId ?? _selectedAgendaUjianId,
+        onlyMe: _onlyMyJadwalUjian,
+      );
+
+      if (_jadwalUjianData != null) {
+        _selectedRuanganUjianId = _jadwalUjianData!.selectedRuanganId;
+        _selectedAgendaUjianId = _jadwalUjianData!.selectedUjianId;
+      }
+    } catch (e) {
+      _jadwalUjianError = e.toString().replaceAll('Exception: ', '');
+    } finally {
+      _isLoadingJadwalUjian = false;
       notifyListeners();
     }
   }
@@ -220,6 +294,13 @@ class AkademikProvider extends ChangeNotifier {
     _jadwalData = null;
     _selectedHari = 'Ahad';
     _jadwalModeIndex = 0;
+
+    _isLoadingJadwalUjian = false;
+    _jadwalUjianError = null;
+    _jadwalUjianData = null;
+    _selectedRuanganUjianId = null;
+    _selectedAgendaUjianId = null;
+    _onlyMyJadwalUjian = false;
     notifyListeners();
   }
 }

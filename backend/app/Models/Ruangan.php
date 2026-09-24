@@ -76,6 +76,11 @@ class Ruangan extends Model
         return $this->belongsTo(Ustadz::class, 'ustadz_id');
     }
 
+    public function ustadz()
+    {
+        return $this->belongsTo(Ustadz::class, 'ustadz_id');
+    }
+
     public function murids()
     {
         return $this->belongsToMany(Murid::class, 'murid_ruangans', 'ruangan_id', 'murid_id')

@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/services/bell_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/haptic_helper.dart';
+import '../../providers/akademik_provider.dart';
 import '../tabs/home/home_tab.dart';
 import '../tabs/presensi/presensi_tab.dart';
 import '../tabs/pelanggaran/pelanggaran_tab.dart';
@@ -18,6 +22,7 @@ class MainNavigationShell extends StatefulWidget {
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
   late int _currentIndex;
+  StreamSubscription<BellEvent>? _bellSub;
 
   List<Widget> get _tabs => [
     const HomeTab(),
@@ -31,6 +36,146 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<AkademikProvider>().fetchJadwalPelajaran();
+      }
+    });
+
+    _bellSub = BellService.instance.onBellEvent.listen((event) {
+      if (mounted) {
+        _showBellModal(event);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _bellSub?.cancel();
+    super.dispose();
+  }
+
+  void _showBellModal(BellEvent event) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark
+        ? AppColors.primaryDark
+        : AppColors.primaryLight;
+    final isJam1 = event.jam == 1;
+
+    showModalBottomSheet(
+      context: context,
+      isDismissible: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color:
+                      (isJam1
+                              ? const Color(0xFF0284C7)
+                              : const Color(0xFFD97706))
+                          .withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.notifications_active_rounded,
+                  color: isJam1
+                      ? const Color(0xFF0284C7)
+                      : const Color(0xFFD97706),
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                event.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                event.description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        BellService.instance.stopSound();
+                        Navigator.pop(ctx);
+                      },
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      label: const Text('Tutup'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        BellService.instance.stopSound();
+                        Navigator.pop(ctx);
+                        _onTabSelected(1);
+                      },
+                      icon: const Icon(Icons.how_to_reg_rounded, size: 18),
+                      label: const Text('Buka Presensi'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _onTabSelected(int index) {

@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/dashboard_model.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/bell_provider.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../widgets/app_avatar.dart';
 import '../../widgets/glass_card.dart';
@@ -18,6 +19,7 @@ import '../presensi/form_presensi_screen.dart';
 import '../tagihan/tagihan_screen.dart';
 import '../tabungan/tabungan_screen.dart';
 import '../akun/hubungi_admin_screen.dart';
+import '../akun/pengingat_bel_screen.dart';
 import '../laporan/laporan_pengampu_screen.dart';
 import '../laporan/laporan_ruangan_screen.dart';
 import 'kalendar_screen.dart';
@@ -341,7 +343,124 @@ class _HomeTabState extends State<HomeTab> {
                     (p) => _buildPengumumanCard(context, p, isDark),
                   ),
                 const SizedBox(height: 10),
-                // 2. Jadwal Mengajar Hari Ini
+
+                // 2. Banner Pengingat Bel Masuk
+                Consumer<BellProvider>(
+                  builder: (context, bellProvider, _) {
+                    if (!bellProvider.isEnabled) return const SizedBox.shrink();
+                    final nextInfo = bellProvider.nextBellInfo;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white12
+                              : const Color(0xFFBBF7D0),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color:
+                                  (isDark
+                                          ? AppColors.primaryDark
+                                          : const Color(0xFF059669))
+                                      .withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.notifications_active_rounded,
+                              size: 16,
+                              color: isDark
+                                  ? AppColors.primaryDark
+                                  : const Color(0xFF059669),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Bel Masuk KBM Otomatis',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 1),
+                                Text(
+                                  nextInfo['text'] ??
+                                      'Jam 1 (13:45) & Jam 2 (15:30)',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : const Color(0xFF15803D),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              HapticHelper.light();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PengingatBelScreen(),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Atur',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark
+                                          ? AppColors.primaryDark
+                                          : const Color(0xFF059669),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 16,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : const Color(0xFF059669),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
+                // 3. Jadwal Mengajar Hari Ini
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

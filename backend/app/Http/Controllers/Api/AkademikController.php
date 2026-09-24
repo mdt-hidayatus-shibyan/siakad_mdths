@@ -347,4 +347,331 @@ class AkademikController extends Controller
             ]
         ], 200);
     }
+
+    /**
+     * Ambil Jadwal Ujian Madrasah dengan filter Tipe Ujian (IMDA 1, IMDA 2, IMNI)
+     * Algoritma:
+     * - Jika login sebagai Wali Ruangan: tampilkan jadwal ujian level/kelas binaannya.
+    /**
+     * Jadwal Ujian Madrasah Mobile (Pilih Ruangan Kelas & Agenda Ujian)
+     * GET /api/jadwal-ujian
+     */
+    public function getJadwalUjian(Request $request)
+    {
+        $user = $request->user();
+        $ustadz = $user ? $user->ustadz : null;
+        $ustadzId = $ustadz->id ?? null;
+
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        $tahunId = $request->tahun_id ?? ($tahunAktif->id ?? null);
+
+        if (!$tahunId) {
+            $firstTahun = TahunPelajaran::orderBy('id', 'desc')->first();
+            $tahunId = $firstTahun ? $firstTahun->id : null;
+        }
+
+        // 1. Daftar Ruangan yang diampu Ustadz Login (Wali Ruangan & Guru Pengampu KBM)
+        $accessibleRuanganIds = [];
+        if ($ustadzId) {
+            $ruanganWaliIds = Ruangan::where('ustadz_id', $ustadzId)
+                ->where('tahun_pelajaran_id', $tahunId)
+                ->pluck('id')
+                ->toArray();
+
+            $ruanganMengajarIds = JadwalPelajaran::where('ustadz_id', $ustadzId)
+                ->whereHas('ruangan', fn($q) => $q->where('tahun_pelajaran_id', $tahunId))
+                ->pluck('ruangan_id')
+                ->toArray();
+
+            $accessibleRuanganIds = array_values(array_unique(array_merge($ruanganWaliIds, $ruanganMengajarIds)));
+        }
+
+        if (empty($accessibleRuanganIds)) {
+            $accessibleRuanganIds = Ruangan::where('tahun_pelajaran_id', $tahunId)->pluck('id')->toArray();
+        }
+
+        $daftarRuangan = Ruangan::whereIn('id', $accessibleRuanganIds)
+            ->with(['level', 'waliRuangan'])
+            ->orderBy('level_id', 'asc')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'nama_ruangan' => $r->nama_ruangan,
+                    'level_id' => $r->level_id,
+                    'nama_level' => $r->level->nama_level ?? '-',
+                    'wali_ruangan_nama' => $r->waliRuangan?->nama_lengkap ?? '-',
+                ];
+            });
+
+        // Deteksi Ruangan Binaan Ustadz Login
+        $ruanganWali = null;
+        if ($ustadzId && $tahunId) {
+            $ruanganWali = Ruangan::with('level')
+                ->where('tahun_pelajaran_id', $tahunId)
+                ->where('ustadz_id', $ustadzId)
+                ->first();
+        }
+
+        // Cek apakah memilih mode "Semua Tugas Saya" (Lintas Ruangan / ruangan_id = 0)
+        $isAllTasksMode = false;
+        if ($request->has('ruangan_id') && ($request->ruangan_id === 0 || $request->ruangan_id === '0' || $request->ruangan_id === 'tugas_saya')) {
+            $isAllTasksMode = true;
+            $selectedRuanganId = 0;
+            $selectedRuanganNama = 'Semua Tugas Mengawas Saya';
+            $namaLevel = 'Lintas Ruangan';
+            $isWaliRuangan = false;
+            $waliRuanganNama = '-';
+            $ruangan = null;
+        } else {
+            $selectedRuanganId = $request->ruangan_id
+                ? (int) $request->ruangan_id
+                : ($ruanganWali ? $ruanganWali->id : ($daftarRuangan->first()['id'] ?? null));
+
+            if ($selectedRuanganId !== 0 && !$daftarRuangan->contains('id', $selectedRuanganId)) {
+                $selectedRuanganId = $daftarRuangan->first()['id'] ?? null;
+            }
+
+            if ($selectedRuanganId === 0) {
+                $isAllTasksMode = true;
+                $selectedRuanganNama = 'Semua Tugas Mengawas Saya';
+                $namaLevel = 'Lintas Ruangan';
+                $isWaliRuangan = false;
+                $waliRuanganNama = '-';
+                $ruangan = null;
+            } else {
+                $ruangan = null;
+                if ($selectedRuanganId) {
+                    $ruangan = Ruangan::with(['level', 'waliRuangan'])->find($selectedRuanganId);
+                }
+                $selectedRuanganNama = $ruangan?->nama_ruangan ?? '';
+                $namaLevel = $ruangan?->level?->nama_level ?? '';
+                $isWaliRuangan = ($ustadzId && $ruangan && $ruangan->ustadz_id == $ustadzId);
+                $waliRuanganNama = $ruangan?->waliRuangan?->nama_lengkap ?? '-';
+            }
+        }
+
+        // Tambahkan opsi "Semua Tugas Mengawas Saya" ke daftar ruangan untuk dropdown
+        $daftarRuanganList = collect([
+            [
+                'id' => 0,
+                'nama_ruangan' => '⭐ Semua Tugas Mengawas Saya',
+                'level_id' => 0,
+                'nama_level' => 'Semua Ruangan',
+                'wali_ruangan_nama' => '-',
+            ]
+        ])->concat($daftarRuangan)->values();
+
+        // 2. Daftar Agenda Ujian berdasarkan Level Ruangan (Sesuai Aturan Madrasah)
+        // Jika mode Lintas Ruangan (Semua Tugas): tampilkan seluruh agenda ujian di tahun aktif
+        // Kelas Akhir (3 TPQ, 6 IBT, 3 TSA) -> IMDA 1 & IMNI
+        // Kelas Reguler (1-2 TPQ, 1-5 IBT, 1-2 TSA) -> IMDA 1 & IMDA 2
+        $queryUjian = \App\Models\Ujian\Ujian::with('semester')->where('tahun_pelajaran_id', $tahunId);
+
+        if (!$isAllTasksMode && $ruangan && $ruangan->level) {
+            $levelNama = $ruangan->level->nama_level ?? '';
+            $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
+
+            if ($isKelasAkhir) {
+                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+            } else {
+                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
+            }
+        }
+
+        $daftarUjian = $queryUjian->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'nama_ujian' => $u->nama_ujian,
+                    'tipe_ujian' => $u->tipe_ujian ?? $u->jenis_ujian ?? 'IMDA 1',
+                    'semester' => $u->semester->nama_semester ?? ($u->semester_id == 9 ? 'Semester 1 (Ganjil)' : 'Semester 2 (Genap)'),
+                    'tanggal_mulai' => $u->tanggal_mulai ? (is_string($u->tanggal_mulai) ? $u->tanggal_mulai : $u->tanggal_mulai->format('Y-m-d')) : null,
+                    'tanggal_selesai' => $u->tanggal_selesai ? (is_string($u->tanggal_selesai) ? $u->tanggal_selesai : $u->tanggal_selesai->format('Y-m-d')) : null,
+                ];
+            });
+
+        $selectedUjianId = $request->ujian_id ? (int) $request->ujian_id : ($daftarUjian->first()['id'] ?? null);
+        if ($selectedUjianId !== null && !$daftarUjian->contains('id', $selectedUjianId)) {
+            $selectedUjianId = $daftarUjian->first()['id'] ?? null;
+        }
+
+        // 3. Pre-fetch Data Pemetaan Pengawas Default untuk mencegah N+1 query
+        // 3.1 Mapping Wali Ruangan per level_id
+        $waliPerLevel = Ruangan::with('waliRuangan')
+            ->where('tahun_pelajaran_id', $tahunId)
+            ->whereNotNull('ustadz_id')
+            ->get()
+            ->keyBy('level_id');
+
+        // 3.2 Mapping Guru Pengampu KBM per "mata_pelajaran_id_level_id" & per "mata_pelajaran_id"
+        $jadwalKbmList = JadwalPelajaran::with(['ustadz', 'ruangan'])
+            ->whereHas('ruangan', fn($q) => $q->where('tahun_pelajaran_id', $tahunId))
+            ->whereNotNull('ustadz_id')
+            ->get();
+
+        $guruMapelLevelMap = [];
+        $guruMapelGeneralMap = [];
+        foreach ($jadwalKbmList as $jk) {
+            if ($jk->mata_pelajaran_id && $jk->ustadz) {
+                if ($jk->ruangan && $jk->ruangan->level_id) {
+                    $key = $jk->mata_pelajaran_id . '_' . $jk->ruangan->level_id;
+                    if (!isset($guruMapelLevelMap[$key])) {
+                        $guruMapelLevelMap[$key] = $jk->ustadz;
+                    }
+                }
+                if (!isset($guruMapelGeneralMap[$jk->mata_pelajaran_id])) {
+                    $guruMapelGeneralMap[$jk->mata_pelajaran_id] = $jk->ustadz;
+                }
+            }
+        }
+
+        // 4. Query Jadwal Ujian
+        $jadwalQuery = \App\Models\Ujian\JadwalUjian::with([
+            'ujian.semester',
+            'mataPelajaran',
+            'level',
+            'pengawas',
+        ]);
+
+        if ($selectedUjianId) {
+            $jadwalQuery->where('ujian_id', $selectedUjianId);
+        } else {
+            $jadwalQuery->whereHas('ujian', fn($q) => $q->where('tahun_pelajaran_id', $tahunId));
+        }
+
+        if (!$isAllTasksMode && $ruangan && $ruangan->level_id) {
+            $jadwalQuery->where('level_id', $ruangan->level_id);
+        }
+
+        $jadwalList = $jadwalQuery
+            ->orderBy('tanggal_ujian', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // 5. Kelompokkan jadwal per tanggal ujian & resolusi pengawas default
+        $groupedPerTanggal = [];
+        $totalJadwalSaya = 0;
+        $totalJadwalSemua = 0;
+
+        foreach ($jadwalList as $j) {
+            $tanggalRaw = $j->getRawOriginal('tanggal_ujian');
+            $tanggalKey = $tanggalRaw ? Carbon::parse($tanggalRaw)->format('Y-m-d') : 'Tanpa Tanggal';
+
+            if (!isset($groupedPerTanggal[$tanggalKey])) {
+                $carbonDate = $tanggalRaw ? Carbon::parse($tanggalRaw)->locale('id') : null;
+                $groupedPerTanggal[$tanggalKey] = [
+                    'tanggal' => $tanggalKey,
+                    'hari_tanggal' => $carbonDate ? $carbonDate->isoFormat('dddd, D MMMM YYYY') : 'Tanggal Belum Ditentukan',
+                    'hari_tanggal_singkat' => $carbonDate ? $carbonDate->isoFormat('dddd, DD MMM YYYY') : 'Belum Ditentukan',
+                    'total_sesi' => 0,
+                    'sesi' => [],
+                ];
+            }
+
+            // Algoritma Penentuan Pengawas:
+            // 1. Pengawas eksplisit di jadwal_ujians.ustadz_id
+            $resolvedPengawas = $j->pengawas;
+            $isCustomMapel = !empty($j->nama_mata_pelajaran_custom) || empty($j->mata_pelajaran_id);
+
+            if (!$resolvedPengawas) {
+                if ($isCustomMapel) {
+                    // Mata pelajaran custom -> default wali ruangan di level tersebut
+                    $resolvedPengawas = $waliPerLevel[$j->level_id]->waliRuangan ?? ($waliPerLevel[$j->level_id]->ustadz ?? null);
+                } else {
+                    // Mata pelajaran reguler -> default guru pengampu mapel di level tersebut
+                    $mapKey = $j->mata_pelajaran_id . '_' . $j->level_id;
+                    $resolvedPengawas = $guruMapelLevelMap[$mapKey]
+                        ?? ($guruMapelGeneralMap[$j->mata_pelajaran_id]
+                            ?? ($waliPerLevel[$j->level_id]->waliRuangan ?? ($waliPerLevel[$j->level_id]->ustadz ?? null)));
+                }
+            }
+
+            $pengawasId = $resolvedPengawas->id ?? null;
+            $namaPengawas = $resolvedPengawas->nama_lengkap ?? 'Belum Ditentukan';
+            $kodePengawas = $resolvedPengawas->kode_ustadz ?? null;
+            $pengawasFoto = ($resolvedPengawas && $resolvedPengawas->foto) ? asset('storage/' . $resolvedPengawas->foto) : null;
+
+            $isMySchedule = ($ustadzId && $pengawasId == $ustadzId);
+            if ($isMySchedule) {
+                $totalJadwalSaya++;
+            }
+
+            // Mode "Semua Tugas Saya" (Lintas Ruangan): HANYA tampilkan tugas ustadz login
+            if ($isAllTasksMode) {
+                if (!$isMySchedule) {
+                    continue;
+                }
+            } else {
+                // Jika BUKAN ruangan binaannya ($isWaliRuangan == false) dan login sebagai Ustadz,
+                // maka HANYA tampilkan tugas mengawas/menguji Ustadz tersebut
+                if ($ustadzId && !$isWaliRuangan && !$isMySchedule) {
+                    continue;
+                }
+
+                // Jika filter 'only_me' aktif dan bukan jadwal ustadz ini, skip
+                if ($request->boolean('only_me') && !$isMySchedule) {
+                    continue;
+                }
+            }
+
+            $waktuMulaiStr = $j->jam_mulai_format;
+            $waktuSelesaiStr = $j->jam_selesai_format;
+            $jamText = ($waktuMulaiStr && $waktuSelesaiStr)
+                ? "{$waktuMulaiStr} - {$waktuSelesaiStr} WIB"
+                : ($waktuMulaiStr ? "{$waktuMulaiStr} WIB" : 'Waktu Belum Diatur');
+
+            $groupedPerTanggal[$tanggalKey]['sesi'][] = [
+                'id' => $j->id,
+                'ujian_id' => $j->ujian_id,
+                'nama_ujian' => $j->ujian->nama_ujian ?? '-',
+                'tipe_ujian' => $j->ujian->tipe_ujian ?? '-',
+                'semester' => $j->ujian->semester->nama_semester ?? ($j->ujian && $j->ujian->semester_id == 9 ? 'Semester 1 (Ganjil)' : 'Semester 2 (Genap)'),
+                'mata_pelajaran_id' => $j->mata_pelajaran_id,
+                'is_custom_mapel' => $isCustomMapel,
+                'nama_mapel' => $j->nama_mapel,
+                'level_id' => $j->level_id,
+                'nama_level' => $j->level->nama_level ?? '-',
+                'waktu_mulai' => $waktuMulaiStr,
+                'waktu_selesai' => $waktuSelesaiStr,
+                'jam' => $jamText,
+                'ustadz_id' => $pengawasId,
+                'nama_pengawas' => $namaPengawas,
+                'kode_pengawas' => $kodePengawas,
+                'pengawas_foto' => $pengawasFoto,
+                'is_my_schedule' => $isMySchedule,
+            ];
+            $groupedPerTanggal[$tanggalKey]['total_sesi']++;
+            $totalJadwalSemua++;
+        }
+
+        // Filter tanggal yang tidak memiliki sesi (misal karena only_me / tugas saya)
+        $filteredGrouped = array_values(array_filter($groupedPerTanggal, function ($tgl) {
+            return count($tgl['sesi']) > 0;
+        }));
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'tahun_aktif' => [
+                    'id' => $tahunId,
+                    'nama_hijriyah' => $tahunAktif->nama_hijriyah ?? '-',
+                    'nama_masehi' => $tahunAktif->nama_masehi ?? '-',
+                ],
+                'daftar_ruangan' => $daftarRuanganList,
+                'selected_ruangan_id' => $selectedRuanganId,
+                'selected_ruangan_nama' => $selectedRuanganNama,
+                'nama_level' => $namaLevel,
+                'is_wali_ruangan' => $isWaliRuangan,
+                'wali_ruangan_nama' => $waliRuanganNama,
+                'daftar_ujian' => $daftarUjian,
+                'selected_ujian_id' => $selectedUjianId,
+                'total_jadwal' => $totalJadwalSemua,
+                'total_jadwal_saya' => $totalJadwalSaya,
+                'jadwal_per_tanggal' => $filteredGrouped,
+            ]
+        ], 200);
+    }
 }

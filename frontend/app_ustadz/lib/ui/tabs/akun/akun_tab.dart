@@ -8,6 +8,7 @@ import '../../../core/utils/haptic_helper.dart';
 import '../../../core/utils/session_helper.dart';
 import '../../../providers/app_version_provider.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/bell_provider.dart';
 import '../../../providers/kas_provider.dart';
 import '../../../providers/theme_provider.dart';
 import '../../auth/login_screen.dart';
@@ -17,6 +18,7 @@ import '../../widgets/glass_card.dart';
 import '../laporan/laporan_pengampu_screen.dart';
 import '../laporan/laporan_ruangan_screen.dart';
 import 'hubungi_admin_screen.dart';
+import 'pengingat_bel_screen.dart';
 import 'tentang_aplikasi_screen.dart';
 
 class AkunTab extends StatefulWidget {
@@ -2204,6 +2206,57 @@ class _AkunTabState extends State<AkunTab> {
                       ],
                     ),
                     onTap: _showColorPresetDialog,
+                  ),
+                  const Divider(height: 1),
+                  Consumer<BellProvider>(
+                    builder: (context, bellProvider, _) {
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            bellProvider.isEnabled
+                                ? Icons.notifications_active_rounded
+                                : Icons.notifications_off_rounded,
+                            size: 16,
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                          ),
+                        ),
+                        title: const Text(
+                          'Pengingat Bel Masuk',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          bellProvider.isEnabled
+                              ? 'Aktif • Jam 1 (${bellProvider.jam1Formatted}) & Jam 2 (${bellProvider.jam2Formatted})'
+                              : 'Dinonaktifkan',
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () {
+                          HapticHelper.light();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PengingatBelScreen(),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ],
               ),

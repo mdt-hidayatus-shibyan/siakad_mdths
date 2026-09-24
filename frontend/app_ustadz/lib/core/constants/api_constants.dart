@@ -80,6 +80,7 @@ class ApiConstants {
 
   static const String mataPelajaran = '/mata-pelajaran';
   static const String jadwalPelajaran = '/jadwal-pelajaran';
+  static const String jadwalUjian = '/jadwal-ujian';
   static const String referensiPelanggaranMaster = '/referensi-pelanggaran';
 
   // Laporan Terpadu
