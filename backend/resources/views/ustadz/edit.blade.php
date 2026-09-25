@@ -71,13 +71,28 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                        <div>
+                            <label
+                                class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">NIGM
+                                (No. Induk Guru)</label>
+                            <input type="text" name="nigm" value="{{ old('nigm', $ustadz->nigm) }}"
+                                placeholder="Otomatis jika dikosongkan"
+                                class="m3-input-glass w-full text-xs font-bold font-mono @error('nigm') !border-rose-500 @enderror">
+                            @error('nigm')
+                                <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                         <div>
                             <label
                                 class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">NIK
                                 (16 Digit)</label>
                             <input type="text" name="nik" value="{{ old('nik', $ustadz->nik) }}" maxlength="16"
-                                placeholder="16 digit angka" class="m3-input-glass w-full text-xs font-bold font-mono">
+                                placeholder="16 digit angka"
+                                class="m3-input-glass w-full text-xs font-bold font-mono @error('nik') !border-rose-500 @enderror">
+                            @error('nik')
+                                <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
                             <label
@@ -85,7 +100,10 @@
                                 HP / WhatsApp</label>
                             <input type="text" name="no_hp" value="{{ old('no_hp', $ustadz->no_hp) }}"
                                 placeholder="Cth: 08123456789"
-                                class="m3-input-glass w-full text-xs font-bold font-mono">
+                                class="m3-input-glass w-full text-xs font-bold font-mono @error('no_hp') !border-rose-500 @enderror">
+                            @error('no_hp')
+                                <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 

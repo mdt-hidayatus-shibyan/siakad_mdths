@@ -19,25 +19,75 @@ class Ustadz extends Model
 
         // Event creating: Berjalan TEPAT SEBELUM data disimpan ke database
         static::creating(function ($ustadz) {
-
-            // Jika kode belum diisi secara manual
+            // 1. Generate kode ustadz otomatis jika belum diisi
             if (empty($ustadz->kode_ustadz)) {
+                $ustadz->kode_ustadz = static::generateKodeUstadz();
+            }
 
-                // Cari data ustadz terakhir berdasarkan urutan ID
-                $lastustadz = static::orderBy('id', 'desc')->first();
-
-                if (!$lastustadz || empty($lastustadz->kode_ustadz)) {
-                    // Jika ini adalah ustadz pertama di madrasah, mulai dari A
-                    $ustadz->kode_ustadz = 'A';
-                } else {
-                    // Ambil huruf terakhir, lalu increment (Contoh: 'Z' otomatis jadi 'AA')
-                    $nextKode = $lastustadz->kode_ustadz;
-                    $nextKode++;
-
-                    $ustadz->kode_ustadz = $nextKode;
-                }
+            // 2. Generate NIGM otomatis jika belum diisi
+            if (empty($ustadz->nigm)) {
+                $ustadz->nigm = static::generateNigm();
             }
         });
+    }
+
+    /**
+     * Generate Nomor Induk Guru Madrasah (NIGM) Otomatis Berurutan
+     */
+    public static function generateNigm(): string
+    {
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        $prefixTahun = '1447';
+
+        if ($tahunAktif && !empty($tahunAktif->nama_hijriyah)) {
+            $parts = explode('-', $tahunAktif->nama_hijriyah);
+            $cleanYear = preg_replace('/[^0-9]/', '', $parts[0] ?? '');
+            if (!empty($cleanYear)) {
+                $prefixTahun = $cleanYear;
+            }
+        }
+
+        $prefix = $prefixTahun . '1';
+
+        // Ambil NIGM numerik tertinggi dengan prefix yang sama
+        $lastNigm = static::where('nigm', 'LIKE', $prefix . '%')
+            ->orderByRaw('CAST(nigm AS UNSIGNED) DESC')
+            ->value('nigm');
+
+        if ($lastNigm && is_numeric($lastNigm)) {
+            $nextNumber = (int) $lastNigm + 1;
+            $candidate = (string) $nextNumber;
+        } else {
+            $candidate = $prefix . '001';
+        }
+
+        // Pastikan tidak tabrakan dengan data unik lain
+        while (static::where('nigm', $candidate)->exists()) {
+            $candidate = (string) (((int) $candidate) + 1);
+        }
+
+        return $candidate;
+    }
+
+    /**
+     * Generate Kode Ustadz Alfabetis Otomatis (A, B, ... Z, AA, AB, dst)
+     */
+    public static function generateKodeUstadz(): string
+    {
+        $lastUstadz = static::orderBy('id', 'desc')->first();
+
+        if (!$lastUstadz || empty($lastUstadz->kode_ustadz)) {
+            return 'A';
+        }
+
+        $nextKode = $lastUstadz->kode_ustadz;
+        $nextKode++;
+
+        while (static::where('kode_ustadz', $nextKode)->exists()) {
+            $nextKode++;
+        }
+
+        return $nextKode;
     }
 
     public static function getTandaTanganByWaliRuangan($ruangan_id)

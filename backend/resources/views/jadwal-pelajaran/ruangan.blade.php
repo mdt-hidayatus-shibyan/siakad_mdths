@@ -55,6 +55,24 @@
             '2' => '15:30 - 16:15',
             'Ekstra' => '20:00 - 21:00',
         ];
+
+        // Pre-calculate asatidz display properties untuk performa optimal
+        $asatidzData = $asatidzs->map(function ($a) {
+            $words = explode(' ', trim($a->nama_lengkap));
+            $initials =
+                count($words) >= 2
+                    ? strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1))
+                    : strtoupper(substr($a->nama_lengkap, 0, 2));
+            return [
+                'id' => $a->id,
+                'nama' => $a->nama_lengkap,
+                'nigm' => $a->nigm ?? '-',
+                'kode' => $a->kode_ustadz ?? '-',
+                'gender' => $a->jenis_kelamin,
+                'foto' => $a->foto ? asset('storage/' . $a->foto) : '',
+                'initials' => $initials,
+            ];
+        });
     @endphp
 
     <form action="{{ route('jadwal-pelajaran.mass-store', $ruangan->id) }}" method="POST" class="relative z-10"
@@ -147,6 +165,8 @@
                                                 <option value=""></option>
                                                 @foreach ($mataPelajarans as $mapel)
                                                     <option value="{{ $mapel->id }}"
+                                                        data-kode="{{ $mapel->kode_mapel }}"
+                                                        data-nama="{{ $mapel->nama_mapel }}"
                                                         {{ $jadwal && $jadwal->mata_pelajaran_id == $mapel->id ? 'selected' : '' }}>
                                                         ({{ $mapel->kode_mapel }})
                                                         - {{ $mapel->nama_mapel }}
@@ -194,11 +214,17 @@
                                                 class="select2-jadwal-utama w-full"
                                                 data-placeholder="-- Pilih Guru Utama --">
                                                 <option value=""></option>
-                                                @foreach ($asatidzs as $asatidz)
-                                                    <option value="{{ $asatidz->id }}"
-                                                        {{ $ustadzUtamaId == $asatidz->id ? 'selected' : '' }}>
-                                                        ({{ $asatidz->nigm }})
-                                                        - {{ $asatidz->nama_lengkap }}
+                                                @foreach ($asatidzData as $u)
+                                                    <option value="{{ $u['id'] }}"
+                                                        data-nama="{{ $u['nama'] }}"
+                                                        data-nigm="{{ $u['nigm'] }}"
+                                                        data-kode="{{ $u['kode'] }}"
+                                                        data-gender="{{ $u['gender'] }}"
+                                                        data-foto="{{ $u['foto'] }}"
+                                                        data-initials="{{ $u['initials'] }}"
+                                                        {{ $ustadzUtamaId == $u['id'] ? 'selected' : '' }}>
+                                                        ({{ $u['nigm'] }})
+                                                        - {{ $u['nama'] }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -220,12 +246,18 @@
                                             <select id="guru_pendamping_{{ $hari }}_{{ $jam }}"
                                                 name="jadwal[{{ $hari }}][{{ $jam }}][ustadz_pendamping_ids][]"
                                                 multiple="multiple" class="select2-jadwal-pendamping w-full"
-                                                data-placeholder="-- Tambah Pendamping --">
-                                                @foreach ($asatidzs as $asatidz)
-                                                    <option value="{{ $asatidz->id }}"
-                                                        {{ in_array($asatidz->id, $ustadzPendampingIds) ? 'selected' : '' }}>
-                                                        ({{ $asatidz->nigm }})
-                                                        - {{ $asatidz->nama_lengkap }}
+                                                data-placeholder="-- Tambah Guru Pendamping --">
+                                                @foreach ($asatidzData as $u)
+                                                    <option value="{{ $u['id'] }}"
+                                                        data-nama="{{ $u['nama'] }}"
+                                                        data-nigm="{{ $u['nigm'] }}"
+                                                        data-kode="{{ $u['kode'] }}"
+                                                        data-gender="{{ $u['gender'] }}"
+                                                        data-foto="{{ $u['foto'] }}"
+                                                        data-initials="{{ $u['initials'] }}"
+                                                        {{ in_array($u['id'], $ustadzPendampingIds) ? 'selected' : '' }}>
+                                                        ({{ $u['nigm'] }})
+                                                        - {{ $u['nama'] }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -264,28 +296,30 @@
 
     <!-- STYLING KHUSUS UNTUK SELECT2 (M3 Glassmorphism Theme) -->
     @push('style')
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         <style>
-            .select2-container--default .select2-selection--single,
-            .select2-container--default .select2-selection--multiple {
+            /* ==========================================================================
+                   Select2 Modern M3 Theme (Glassmorphism & OLED Dark Mode)
+                   ========================================================================== */
+
+            /* 1. Base Container & Single Selection */
+            .select2-container--default .select2-selection--single {
                 min-height: 38px !important;
+                height: 38px !important;
                 border-radius: 0.75rem !important;
-                border: 1px solid rgba(228, 228, 231, 0.8) !important;
-                background-color: #ffffff;
-                display: flex;
-                align-items: center;
-                font-size: 12px;
-                font-weight: 600;
-                transition: all 0.2s ease;
+                border: 1px solid rgba(228, 228, 231, 0.85) !important;
+                background-color: #ffffff !important;
+                display: flex !important;
+                align-items: center !important;
+                font-size: 12px !important;
+                font-weight: 600 !important;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
 
-            .select2-container--default .select2-selection--single:focus,
-            .select2-container--default.select2-container--open .select2-selection--single,
-            .select2-container--default .select2-selection--multiple:focus,
-            .select2-container--default.select2-container--open .select2-selection--multiple {
-                border-color: #146C2E !important;
-                box-shadow: 0 0 0 3px rgba(20, 108, 46, 0.15);
-                outline: none;
+            .select2-container--default.select2-container--focus .select2-selection--single,
+            .select2-container--default.select2-container--open .select2-selection--single {
+                border-color: #146c2e !important;
+                box-shadow: 0 0 0 3px rgba(20, 108, 46, 0.15) !important;
+                outline: none !important;
             }
 
             .select2-container--default .select2-selection--single .select2-selection__rendered {
@@ -293,72 +327,243 @@
                 padding-left: 0.75rem !important;
                 padding-right: 2rem !important;
                 line-height: normal !important;
-            }
-
-            .select2-container--default .select2-selection--multiple .select2-selection__rendered {
-                padding: 2px 6px !important;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 4px;
-            }
-
-            /* Chip Pendamping - Sky Blue Theme */
-            .select2-container--default .select2-selection--multiple .select2-selection__choice {
-                background-color: #f0f9ff !important;
-                border: 1px solid #bae6fd !important;
-                color: #0369a1 !important;
-                border-radius: 0.5rem !important;
-                padding: 1px 6px !important;
-                font-size: 11px !important;
-                font-weight: 700 !important;
-                margin: 0 !important;
-            }
-
-            .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-                color: #0369a1 !important;
-                margin-right: 4px !important;
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
             }
 
             .select2-container--default .select2-selection--single .select2-selection__arrow {
                 height: 36px !important;
                 right: 0.5rem !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
             }
 
-            .select2-dropdown {
+            /* 2. Multiple Selection Container (Guru Pendamping) */
+            .select2-container--default .select2-selection--multiple {
+                min-height: 38px !important;
                 border-radius: 0.75rem !important;
-                border: 1px solid rgba(228, 228, 231, 0.8) !important;
-                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-                overflow: hidden;
-                font-size: 12px;
-                font-weight: 600;
+                border: 1px solid rgba(228, 228, 231, 0.85) !important;
+                background-color: #ffffff !important;
+                display: flex !important;
+                align-items: center !important;
+                padding: 3px 6px !important;
+                font-size: 12px !important;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
 
-            .select2-search__field {
+            .select2-container--default.select2-container--focus .select2-selection--multiple,
+            .select2-container--default.select2-container--open .select2-selection--multiple {
+                border-color: #0284c7 !important;
+                box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+                outline: none !important;
+            }
+
+            .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
+                gap: 4px !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            /* 3. Chip / Tag Guru Pendamping (Sky Blue M3 Pill) */
+            .select2-container--default .select2-selection--multiple .select2-selection__choice {
+                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+                border: 1px solid #bae6fd !important;
+                color: #0369a1 !important;
+                border-radius: 9999px !important;
+                padding: 2.5px 8px 2.5px 6px !important;
+                margin: 1.5px 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 4px !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+                transition: all 0.15s ease !important;
+            }
+
+            .select2-container--default .select2-selection--multiple .select2-selection__choice:hover {
+                border-color: #7dd3fc !important;
+                box-shadow: 0 2px 5px rgba(2, 132, 199, 0.12) !important;
+                transform: translateY(-0.5px);
+            }
+
+            /* Remove Button on Chips */
+            .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+                position: static !important;
+                border: none !important;
+                background: rgba(3, 105, 161, 0.12) !important;
+                color: #0284c7 !important;
+                border-radius: 9999px !important;
+                width: 15px !important;
+                height: 15px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 12px !important;
+                font-weight: 800 !important;
+                margin-right: 3px !important;
+                margin-left: 0 !important;
+                padding: 0 !important;
+                cursor: pointer !important;
+                transition: all 0.15s ease !important;
+                float: none !important;
+                line-height: 1 !important;
+            }
+
+            .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+                background: #ef4444 !important;
+                color: #ffffff !important;
+                transform: scale(1.1);
+            }
+
+            .select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                display: inline-flex !important;
+                align-items: center !important;
+            }
+
+            /* Search input inline */
+            .select2-container--default .select2-selection--multiple .select2-search--inline {
+                display: inline-flex !important;
+                align-items: center !important;
+                margin: 0 !important;
+            }
+
+            .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+                margin: 0 !important;
+                padding: 2px 4px !important;
+                font-size: 11.5px !important;
+                font-weight: 600 !important;
+                height: 24px !important;
+                border: none !important;
+                background: transparent !important;
+                color: #18181b !important;
+            }
+
+            .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder {
+                color: #a1a1aa !important;
+                font-weight: 500 !important;
+            }
+
+            /* 4. Dropdown Container & Search */
+            .select2-dropdown {
+                border-radius: 0.875rem !important;
+                border: 1px solid rgba(228, 228, 231, 0.9) !important;
+                box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+                overflow: hidden !important;
+                font-size: 12px !important;
+                font-weight: 600 !important;
+                background-color: #ffffff !important;
+                z-index: 9999 !important;
+            }
+
+            .select2-dropdown .select2-search--dropdown {
+                padding: 6px 8px !important;
+                background: #f8fafc;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .select2-dropdown .select2-search__field {
                 border-radius: 0.5rem !important;
                 padding: 6px 10px !important;
                 outline: none !important;
-                border: 1px solid #d4d4d8 !important;
-                font-size: 12px;
+                border: 1px solid #e2e8f0 !important;
+                font-size: 11.5px !important;
+                background: #ffffff !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                transition: all 0.15s ease;
             }
 
-            .select2-search__field:focus {
-                border-color: #146C2E !important;
+            .select2-dropdown .select2-search__field:focus {
+                border-color: #0284c7 !important;
+                box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15) !important;
+            }
+
+            /* Results Option */
+            .select2-results__options {
+                max-height: 230px !important;
+                padding: 5px !important;
             }
 
             .select2-results__option {
-                padding: 7px 12px !important;
+                padding: 6px 10px !important;
+                border-radius: 0.5rem !important;
+                margin-bottom: 2px !important;
+                font-size: 12px !important;
+                font-weight: 600 !important;
+                color: #27272a !important;
+                transition: all 0.15s ease !important;
             }
 
             .select2-container--default .select2-results__option--highlighted[aria-selected] {
-                background-color: #146C2E !important;
-                color: white !important;
+                background-color: #0284c7 !important;
+                color: #ffffff !important;
             }
 
-            /* Dark Mode Select2 */
+            .select2-container--default .select2-results__option--highlighted[aria-selected] .select2-text-name {
+                color: #ffffff !important;
+            }
+
+            .select2-container--default .select2-results__option--highlighted[aria-selected] .select2-badge-kode {
+                background-color: rgba(255, 255, 255, 0.25) !important;
+                color: #ffffff !important;
+                border-color: rgba(255, 255, 255, 0.4) !important;
+            }
+
+            .select2-container--default .select2-results__option--highlighted[aria-selected] .select2-badge-nigm {
+                color: rgba(255, 255, 255, 0.85) !important;
+            }
+
+            .select2-container--default .select2-results__option[aria-selected=true] {
+                background-color: #f0f9ff !important;
+                color: #0369a1 !important;
+            }
+
+            .select2-container--default .select2-results__option--highlighted[aria-selected=true] {
+                background-color: #0284c7 !important;
+                color: #ffffff !important;
+            }
+
+            /* Clear Button */
+            .select2-container--default .select2-selection--single .select2-selection__clear,
+            .select2-container--default .select2-selection--multiple .select2-selection__clear {
+                margin-right: 0.5rem !important;
+                font-size: 14px !important;
+                color: #a1a1aa !important;
+                cursor: pointer !important;
+                transition: color 0.15s ease !important;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__clear:hover,
+            .select2-container--default .select2-selection--multiple .select2-selection__clear:hover {
+                color: #ef4444 !important;
+            }
+
+            /* ==========================================================================
+                   Dark Mode Overrides
+                   ========================================================================== */
             .dark .select2-container--default .select2-selection--single,
             .dark .select2-container--default .select2-selection--multiple {
                 background-color: #0c0c0e !important;
                 border-color: #27272a !important;
+            }
+
+            .dark .select2-container--default.select2-container--focus .select2-selection--single,
+            .dark .select2-container--default.select2-container--open .select2-selection--single {
+                border-color: #22c55e !important;
+                box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+            }
+
+            .dark .select2-container--default.select2-container--focus .select2-selection--multiple,
+            .dark .select2-container--default.select2-container--open .select2-selection--multiple {
+                border-color: #38bdf8 !important;
+                box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
             }
 
             .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
@@ -366,60 +571,249 @@
             }
 
             .dark .select2-container--default .select2-selection--multiple .select2-selection__choice {
-                background-color: #082f49 !important;
-                border-color: #0369a1 !important;
+                background: linear-gradient(135deg, rgba(8, 47, 73, 0.75) 0%, rgba(12, 74, 110, 0.55) 100%) !important;
+                border-color: rgba(56, 189, 248, 0.35) !important;
                 color: #bae6fd !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+            }
+
+            .dark .select2-container--default .select2-selection--multiple .select2-selection__choice:hover {
+                border-color: rgba(56, 189, 248, 0.6) !important;
+                box-shadow: 0 2px 6px rgba(56, 189, 248, 0.2) !important;
             }
 
             .dark .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-                color: #bae6fd !important;
+                background: rgba(56, 189, 248, 0.15) !important;
+                color: #7dd3fc !important;
+            }
+
+            .dark .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+                background: #f43f5e !important;
+                color: #ffffff !important;
+            }
+
+            .dark .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+                color: #f4f4f5 !important;
             }
 
             .dark .select2-dropdown {
-                background-color: #0c0c0e !important;
+                background-color: #121215 !important;
                 border-color: #27272a !important;
+                box-shadow: 0 14px 35px -5px rgba(0, 0, 0, 0.6) !important;
             }
 
-            .dark .select2-search__field {
-                background-color: #18181b !important;
+            .dark .select2-dropdown .select2-search--dropdown {
+                background: #18181b !important;
+                border-bottom: 1px solid #27272a !important;
+            }
+
+            .dark .select2-dropdown .select2-search__field {
+                background-color: #0c0c0e !important;
                 border-color: #3f3f46 !important;
-                color: #fff !important;
+                color: #ffffff !important;
+            }
+
+            .dark .select2-results__option {
+                color: #e4e4e7 !important;
             }
 
             .dark .select2-container--default .select2-results__option[aria-selected=true] {
-                background-color: #18181b !important;
+                background-color: #082f49 !important;
+                color: #bae6fd !important;
             }
 
             .dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
-                background-color: #22C55E !important;
-                color: #000000 !important;
+                background-color: #0284c7 !important;
+                color: #ffffff !important;
             }
         </style>
     @endpush
 
     <!-- SCRIPT INITIALIZATION -->
     @push('script')
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
         <script>
             $(document).ready(function() {
-                // Inisialisasi Select2
+                // Helper template formatter untuk option ustadz
+                function formatUstadzOption(state) {
+                    if (!state.id) return state.text;
+
+                    var $elem = $(state.element);
+                    var nama = $elem.data('nama') || state.text;
+                    var nigm = $elem.data('nigm');
+                    var kode = $elem.data('kode');
+                    var foto = $elem.data('foto');
+                    var initials = $elem.data('initials') || 'U';
+                    var gender = $elem.data('gender');
+
+                    var avatarHtml = '';
+                    if (foto) {
+                        avatarHtml =
+                            '<img src="' + foto +
+                            '" class="w-6 h-6 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0" onerror="this.style.display=\'none\'" />';
+                    } else {
+                        var bgClass = gender === 'P' ?
+                            'bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300' :
+                            'bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300';
+                        avatarHtml = '<span class="w-6 h-6 rounded-full ' + bgClass +
+                            ' text-[10px] font-black flex items-center justify-center shrink-0">' + initials +
+                            '</span>';
+                    }
+
+                    var badgeHtml = '';
+                    if (kode && kode !== '-') {
+                        badgeHtml +=
+                            '<span class="select2-badge-kode text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 shrink-0">Kode: ' +
+                            kode + '</span>';
+                    }
+                    if (nigm && nigm !== '-') {
+                        badgeHtml +=
+                            '<span class="select2-badge-nigm text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 shrink-0">#' +
+                            nigm + '</span>';
+                    }
+
+                    var html = '<div class="flex items-center justify-between gap-2 py-0.5 w-full">' +
+                        '<div class="flex items-center gap-2 min-w-0">' +
+                        avatarHtml +
+                        '<span class="select2-text-name text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate">' +
+                        nama + '</span>' +
+                        '</div>' +
+                        '<div class="flex items-center gap-1.5 shrink-0">' +
+                        badgeHtml +
+                        '</div>' +
+                        '</div>';
+
+                    return $(html);
+                }
+
+                // Helper template formatter untuk selection chip guru pendamping (Multiple)
+                function formatUstadzPendampingSelection(state) {
+                    if (!state.id) return state.text;
+
+                    var $elem = $(state.element);
+                    var nama = $elem.data('nama') || state.text;
+                    var kode = $elem.data('kode');
+                    var initials = $elem.data('initials') || '';
+                    var foto = $elem.data('foto');
+                    var gender = $elem.data('gender');
+
+                    var avatarTag = '';
+                    if (foto) {
+                        avatarTag = '<img src="' + foto +
+                            '" class="w-4 h-4 rounded-full object-cover shrink-0 inline-block align-middle" onerror="this.style.display=\'none\'" />';
+                    } else if (initials) {
+                        var bgClass = gender === 'P' ?
+                            'bg-rose-200/80 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300' :
+                            'bg-sky-200/80 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300';
+                        avatarTag = '<span class="w-4 h-4 rounded-full ' + bgClass +
+                            ' text-[8px] font-black inline-flex items-center justify-center shrink-0">' +
+                            initials + '</span>';
+                    }
+
+                    var kodeTag = (kode && kode !== '-') ?
+                        '<span class="text-[9px] font-black opacity-80">(' + kode + ')</span>' : '';
+
+                    var html = '<span class="inline-flex items-center gap-1.5 leading-none">' +
+                        avatarTag +
+                        '<span class="font-bold text-[11px] leading-tight">' + nama + '</span>' +
+                        kodeTag +
+                        '</span>';
+
+                    return $(html);
+                }
+
+                // Helper template formatter untuk selection guru utama (Single)
+                function formatUstadzUtamaSelection(state) {
+                    if (!state.id) return state.text;
+
+                    var $elem = $(state.element);
+                    var nama = $elem.data('nama') || state.text;
+                    var kode = $elem.data('kode');
+                    var initials = $elem.data('initials') || '';
+                    var foto = $elem.data('foto');
+                    var gender = $elem.data('gender');
+
+                    var avatarTag = '';
+                    if (foto) {
+                        avatarTag = '<img src="' + foto +
+                            '" class="w-4.5 h-4.5 rounded-full object-cover shrink-0 inline-block align-middle mr-1.5" onerror="this.style.display=\'none\'" />';
+                    } else if (initials) {
+                        var bgClass = gender === 'P' ?
+                            'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300' :
+                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300';
+                        avatarTag = '<span class="w-4.5 h-4.5 rounded-full ' + bgClass +
+                            ' text-[9px] font-black inline-flex items-center justify-center shrink-0 mr-1.5">' +
+                            initials + '</span>';
+                    }
+
+                    var kodeTag = (kode && kode !== '-') ?
+                        ' <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 ml-1 shrink-0">[' +
+                        kode + ']</span>' : '';
+
+                    var html = '<span class="inline-flex items-center truncate">' +
+                        avatarTag +
+                        '<span class="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate">' +
+                        nama + '</span>' +
+                        kodeTag +
+                        '</span>';
+
+                    return $(html);
+                }
+
+                // Helper template formatter untuk option mata pelajaran
+                function formatMapelOption(state) {
+                    if (!state.id) return state.text;
+
+                    var $elem = $(state.element);
+                    var kode = $elem.data('kode');
+                    var nama = $elem.data('nama') || state.text;
+
+                    var html = '<div class="flex items-center justify-between gap-2 py-0.5 w-full">' +
+                        '<div class="flex items-center gap-2 min-w-0">' +
+                        '<span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center justify-center text-xs shrink-0"><i class="bi bi-book-half text-[11px]"></i></span>' +
+                        '<span class="select2-text-name text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate">' +
+                        nama + '</span>' +
+                        '</div>' +
+                        (kode ?
+                            '<span class="select2-badge-kode text-[10px] font-black px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 shrink-0">' +
+                            kode + '</span>' : '') +
+                        '</div>';
+
+                    return $(html);
+                }
+
+                // 1. Inisialisasi Mapel
                 $('.select2-jadwal').select2({
                     width: '100%',
                     allowClear: true,
-                    placeholder: '-- Pilih Mapel --'
+                    placeholder: '-- Pilih Mapel --',
+                    templateResult: formatMapelOption,
+                    escapeMarkup: function(m) {
+                        return m;
+                    }
                 });
 
+                // 2. Inisialisasi Guru Utama
                 $('.select2-jadwal-utama').select2({
                     width: '100%',
                     allowClear: true,
-                    placeholder: '-- Pilih Guru Utama --'
+                    placeholder: '-- Pilih Guru Utama --',
+                    templateResult: formatUstadzOption,
+                    templateSelection: formatUstadzUtamaSelection,
+                    escapeMarkup: function(m) {
+                        return m;
+                    }
                 });
 
+                // 3. Inisialisasi Guru Pendamping (Multiple Select)
                 $('.select2-jadwal-pendamping').select2({
                     width: '100%',
                     allowClear: true,
-                    placeholder: '-- Tambah Pendamping --'
+                    placeholder: '-- Tambah Guru Pendamping --',
+                    templateResult: formatUstadzOption,
+                    templateSelection: formatUstadzPendampingSelection,
+                    escapeMarkup: function(m) {
+                        return m;
+                    }
                 });
             });
 

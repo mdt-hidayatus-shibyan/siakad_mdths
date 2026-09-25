@@ -9,8 +9,10 @@
                 <i class="bi bi-arrow-left text-base"></i>
             </a>
             <div>
-                <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">Tambah Ustadz Baru</h2>
-                <p class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">Lengkapi formulir di bawah ini dengan data yang valid.</p>
+                <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">Tambah Ustadz
+                    Baru</h2>
+                <p class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">Lengkapi formulir
+                    di bawah ini dengan data yang valid.</p>
             </div>
         </div>
     </div>
@@ -22,12 +24,15 @@
         <!-- CARD 1: PROFIL -->
         <div class="m3-glass-card p-5 sm:p-8 shadow-2xs">
             <div class="flex items-center gap-3 mb-6 pb-3 border-b border-zinc-200/80 dark:border-zinc-800">
-                <div class="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary-dark/20 text-primary dark:text-primary-dark flex items-center justify-center shrink-0 border border-primary/20 shadow-2xs">
+                <div
+                    class="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary-dark/20 text-primary dark:text-primary-dark flex items-center justify-center shrink-0 border border-primary/20 shadow-2xs">
                     <i class="bi bi-person-vcard-fill text-lg"></i>
                 </div>
                 <div>
-                    <h3 class="text-base md:text-lg font-black text-zinc-900 dark:text-white tracking-tight">Informasi Pribadi & Berkas</h3>
-                    <p class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">Data biodata identitas pendidik</p>
+                    <h3 class="text-base md:text-lg font-black text-zinc-900 dark:text-white tracking-tight">Informasi
+                        Pribadi & Berkas</h3>
+                    <p class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">
+                        Data biodata identitas pendidik</p>
                 </div>
             </div>
 
@@ -38,7 +43,8 @@
                             class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">Nama
                             Lengkap <span class="text-rose-500">*</span></label>
                         <input type="text" name="nama_lengkap" value="{{ old('nama_lengkap') }}" required
-                            placeholder="Contoh: Ahmad, S.Pd.I" class="m3-input-glass w-full text-xs font-bold uppercase">
+                            placeholder="Contoh: Ahmad, S.Pd.I"
+                            class="m3-input-glass w-full text-xs font-bold uppercase">
                     </div>
                     <div>
                         <label
@@ -61,21 +67,38 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div>
+                        <label
+                            class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">NIGM
+                            (No. Induk Guru)</label>
+                        <input type="text" name="nigm" value="{{ old('nigm') }}"
+                            placeholder="Otomatis jika dikosongkan"
+                            class="m3-input-glass w-full text-xs font-bold font-mono @error('nigm') !border-rose-500 @enderror">
+                        @error('nigm')
+                            <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p>
+                        @enderror
+                    </div>
                     <div>
                         <label
                             class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">NIK
                             (16 Digit)</label>
                         <input type="text" name="nik" value="{{ old('nik') }}" maxlength="16"
                             placeholder="Opsional 16 digit angka"
-                            class="m3-input-glass w-full text-xs font-bold font-mono">
+                            class="m3-input-glass w-full text-xs font-bold font-mono @error('nik') !border-rose-500 @enderror">
+                        @error('nik')
+                            <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label
                             class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">No.
                             HP / WhatsApp</label>
                         <input type="text" name="no_hp" value="{{ old('no_hp') }}" placeholder="Cth: 08123456789"
-                            class="m3-input-glass w-full text-xs font-bold font-mono">
+                            class="m3-input-glass w-full text-xs font-bold font-mono @error('no_hp') !border-rose-500 @enderror">
+                        @error('no_hp')
+                            <p class="text-[10px] font-bold text-rose-500 mt-1 ml-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
@@ -110,8 +133,8 @@
                             class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">Tahun
                             Mulai Mengajar</label>
                         <input type="number" name="tahun_mulai_mengajar" min="1950" max="{{ date('Y') }}"
-                            placeholder="{{ date('Y') }}"
-                            value="{{ old('tahun_mulai_mengajar') }}" class="m3-input-glass w-full text-xs font-bold font-mono">
+                            placeholder="{{ date('Y') }}" value="{{ old('tahun_mulai_mengajar') }}"
+                            class="m3-input-glass w-full text-xs font-bold font-mono">
                     </div>
                 </div>
 
@@ -146,7 +169,7 @@
                         class="p-4 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 shadow-2xs">
                         <label
                             class="block text-[11px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-3 ml-1">Tanda
-                            Tangan Digital <span class="text-rose-500">*</span></label>
+                            Tangan Digital </label>
                         <div class="flex items-center gap-3">
                             <div id="preview-ttd-container"
                                 class="relative w-12 h-12 rounded-xl overflow-hidden border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center shadow-2xs shrink-0">
@@ -157,7 +180,7 @@
                             </div>
                             <div class="flex-1">
                                 <input type="file" name="tanda_tangan" accept="image/png, image/jpeg, image/jpg"
-                                    onchange="previewTtd(this)" required
+                                    onchange="previewTtd(this)"
                                     class="block w-full text-xs font-bold text-zinc-500 dark:text-zinc-400
                                     file:mr-3 file:py-1.5 file:px-3
                                     file:rounded-xl file:border-0
@@ -180,8 +203,10 @@
                     <i class="bi bi-shield-lock-fill text-lg"></i>
                 </div>
                 <div>
-                    <h3 class="text-base md:text-lg font-black text-zinc-900 dark:text-white tracking-tight">Pengaturan Akun & Status</h3>
-                    <p class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">Kredensial login aplikasi</p>
+                    <h3 class="text-base md:text-lg font-black text-zinc-900 dark:text-white tracking-tight">Pengaturan
+                        Akun & Status</h3>
+                    <p class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">
+                        Kredensial login aplikasi</p>
                 </div>
             </div>
 
@@ -204,13 +229,16 @@
 
                     <div
                         class="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3 shadow-2xs">
-                        <i class="bi bi-info-circle-fill text-blue-600 dark:text-blue-400 text-base shrink-0 mt-0.5"></i>
+                        <i
+                            class="bi bi-info-circle-fill text-blue-600 dark:text-blue-400 text-base shrink-0 mt-0.5"></i>
                         <div>
                             <p
                                 class="text-[10px] font-black text-blue-800 dark:text-blue-300 uppercase tracking-wider mb-0.5">
                                 Akses Login Opsional</p>
                             <p class="text-xs font-bold text-blue-900 dark:text-blue-300/80 leading-relaxed">
-                                Kosongkan <span class="font-mono">Username & Email</span> jika belum membutuhkan akses login. Jika diisi, Default Password: <span class="font-mono underline">madrasah123</span>
+                                Kosongkan <span class="font-mono">Username & Email</span> jika belum membutuhkan akses
+                                login. Jika diisi, Default Password: <span
+                                    class="font-mono underline">madrasah123</span>
                             </p>
                         </div>
                     </div>
@@ -231,7 +259,8 @@
                         <div
                             class="relative w-11 h-6 bg-zinc-200 dark:bg-zinc-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary dark:border-zinc-600 shadow-2xs">
                         </div>
-                        <span class="ml-3 text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Aktif</span>
+                        <span
+                            class="ml-3 text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Aktif</span>
                     </label>
                 </div>
             </div>
@@ -240,7 +269,8 @@
         <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
             <a href="{{ route('ustadz.index') }}"
                 class="h-11 px-6 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-black text-xs flex items-center justify-center outline-none shadow-2xs">Batal</a>
-            <button type="submit" class="m3-btn-primary w-full sm:w-auto h-11 px-8 text-xs font-black shadow-2xs group/btn">
+            <button type="submit"
+                class="m3-btn-primary w-full sm:w-auto h-11 px-8 text-xs font-black shadow-2xs group/btn">
                 <i class="bi bi-save2-fill mr-1.5 text-sm"></i> Simpan Data Ustadz
             </button>
         </div>
@@ -299,4 +329,3 @@
         }
     </script>
 </x-app-layout>
-

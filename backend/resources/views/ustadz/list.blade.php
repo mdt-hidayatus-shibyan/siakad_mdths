@@ -52,6 +52,16 @@
                         </span>
                     </span>
 
+                    <!-- NIGM Badge -->
+                    @if ($ustadz->nigm)
+                        <span
+                            class="inline-flex items-center px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider shadow-2xs font-mono">
+                            NIGM: <span class="text-zinc-900 dark:text-white ml-1 font-black">
+                                {{ $ustadz->nigm }}
+                            </span>
+                        </span>
+                    @endif
+
                     <!-- Phone Badge -->
                     @if ($ustadz->no_hp)
                         <span

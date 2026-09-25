@@ -259,8 +259,7 @@
                                                                                         (Badal:
                                                                                         {{ $p->guruPengganti->nama_lengkap }})
                                                                                     </span>
-                                                                                    @elseif
-                                                                                    ($p->keterangan)
+                                                                                @elseif($p->keterangan)
                                                                                     <span
                                                                                         class="text-[8px] text-zinc-400 dark:text-zinc-500 italic truncate"
                                                                                         title="{{ $p->keterangan }}">

@@ -133,6 +133,16 @@ readonly class UstadzService
             if ($formType === 'profil' || !$formType) {
                 $data = $requestData;
 
+                // Jika NIGM belum ada dan dikosongkan pada form, generate NIGM otomatis
+                if (empty($data['nigm'])) {
+                    if (empty($ustadz->nigm)) {
+                        $data['nigm'] = Ustadz::generateNigm();
+                    } else {
+                        // Pertahankan NIGM lama jika field dikosongkan tidak sengaja atau set default
+                        $data['nigm'] = $ustadz->nigm;
+                    }
+                }
+
                 if ($foto) {
                     $newFotoPath = $foto->store('uploads/ustadz/foto', 'public');
                     $data['foto'] = $newFotoPath;
