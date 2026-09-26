@@ -171,7 +171,7 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Input No. KK / No. Registrasi / NISM wajib diisi.',
+                'message' => 'Input No. Registrasi atau NISM salah satu anak wajib diisi.',
                 'errors'  => $validator->errors()
             ], 422);
         }
@@ -179,16 +179,16 @@ class AuthController extends Controller
         $idInput = trim($request->identifier);
         $idHash = hash_sensitive($idInput);
 
-        // 1. Cari berdasarkan Wali Murid (No. KK / No. Registrasi)
+        // 1. Cari berdasarkan No. Registrasi Wali Murid
         $wali = \App\Models\WaliMurid::with(['kampung', 'murids.ruangans'])
             ->where(function ($q) use ($idInput, $idHash) {
-                $q->where('no_kk_hash', $idHash)
-                    ->orWhere('no_registrasi', $idInput);
+                $q->where('no_registrasi', $idInput)
+                    ->orWhere('no_kk_hash', $idHash);
             })
             ->where('is_active', true)
             ->first();
 
-        // 2. Jika tidak ketemu, cari berdasarkan NISM / NISN / NIK Murid
+        // 2. Jika tidak ketemu, cari berdasarkan NISM / NISN Murid (salah satu anak)
         if (!$wali) {
             $murid = \App\Models\Murid::where('nism', $idInput)
                 ->orWhere('nisn', $idInput)
@@ -213,7 +213,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Data Wali/Murid tidak ditemukan atau status sedang nonaktif. Pastikan No. KK / No. Registrasi / NISM sudah benar.'
+                'message' => 'Data Wali/Murid tidak ditemukan atau status sedang nonaktif. Pastikan No. Registrasi atau NISM anak sudah benar.'
             ], 404);
         }
 
@@ -359,6 +359,161 @@ class AuthController extends Controller
     }
 
     /**
+     * Login Cepat Wali Murid via Pemindaian QR Code (Kartu Pelajar / Kartu Santri)
+     */
+    public function loginQr(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'qr_data' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data QR Code tidak valid atau kosong.',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        $rawInput = trim($request->input('qr_data'));
+        $wali = null;
+        $murid = null;
+
+        // 1. Coba decode jika QR berupa JSON payload
+        $jsonData = json_decode($rawInput, true);
+        if (is_array($jsonData)) {
+            // Cek identifier dari JSON
+            $noReg = $jsonData['no_registrasi'] ?? $jsonData['no_reg'] ?? null;
+            $waliId = $jsonData['wali_id'] ?? null;
+            $nism = $jsonData['nism'] ?? null;
+
+            if ($noReg || $waliId) {
+                $wali = \App\Models\WaliMurid::with(['kampung', 'murids.ruangans'])
+                    ->where('is_active', true)
+                    ->where(function ($q) use ($noReg, $waliId) {
+                        if ($noReg) $q->where('no_registrasi', $noReg);
+                        if ($waliId) $q->orWhere('id', $waliId);
+                    })
+                    ->first();
+            }
+
+            if (!$wali && $nism) {
+                $murid = \App\Models\Murid::where('nism', $nism)->first();
+                if ($murid && $murid->wali_murid_id) {
+                    $wali = \App\Models\WaliMurid::with(['kampung', 'murids.ruangans'])
+                        ->where('id', $murid->wali_murid_id)
+                        ->where('is_active', true)
+                        ->first();
+                }
+            }
+        }
+
+        // 2. Jika bukan JSON atau tidak ketemu via JSON, coba cari sebagai raw identifier (NISM, No Reg, No KK)
+        if (!$wali) {
+            $idHash = hash_sensitive($rawInput);
+
+            // Cari via no_registrasi atau no_kk_hash
+            $wali = \App\Models\WaliMurid::with(['kampung', 'murids.ruangans'])
+                ->where('is_active', true)
+                ->where(function ($q) use ($rawInput, $idHash) {
+                    $q->where('no_registrasi', $rawInput)
+                        ->orWhere('no_kk_hash', $idHash);
+                })
+                ->first();
+
+            // Cari via NISM / NISN / NIK Murid
+            if (!$wali) {
+                $murid = \App\Models\Murid::where('nism', $rawInput)
+                    ->orWhere('nisn', $rawInput)
+                    ->orWhere('nik_hash', $idHash)
+                    ->first();
+
+                if ($murid && $murid->wali_murid_id) {
+                    $wali = \App\Models\WaliMurid::with(['kampung', 'murids.ruangans'])
+                        ->where('id', $murid->wali_murid_id)
+                        ->where('is_active', true)
+                        ->first();
+                }
+            }
+        }
+
+        if (!$wali) {
+            ActivityLogService::recordFailedLogin(
+                $request,
+                'app_murid',
+                substr($rawInput, 0, 50),
+                'QR Code tidak dikenali atau akun Wali Murid sedang nonaktif.'
+            );
+
+            return response()->json([
+                'success' => false,
+                'message' => 'QR Code tidak valid atau data Wali Murid tidak ditemukan. Pastikan Anda memindai Kartu Santri / Akses Resmi MDT Hidayatus Shibyan.'
+            ], 404);
+        }
+
+        // Akun virtual untuk session token wali murid
+        $user = \App\Models\User::firstOrCreate(
+            ['username' => 'wali_' . $wali->no_registrasi],
+            [
+                'name'      => $wali->nama_kepala_keluarga,
+                'email'     => 'wali_' . $wali->no_registrasi . '@mdthidayatusshibyan.sch.id',
+                'password'  => Hash::make('wali_' . $wali->no_registrasi),
+                'is_active' => true,
+            ]
+        );
+
+        // Pastikan role 'wali-murid' telah ditetapkan ke akun user
+        if (!$user->hasRole('wali-murid')) {
+            $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'wali-murid', 'guard_name' => 'web']);
+            $user->assignRole($role);
+        }
+
+        // Sinkronisasi nama jika kepala keluarga telah diubah di master data
+        if ($user->name !== $wali->nama_kepala_keluarga) {
+            $user->update(['name' => $wali->nama_kepala_keluarga]);
+        }
+
+        $token = $user->createToken('WaliAppToken')->plainTextToken;
+
+        // Update status online & last_seen_at
+        $user->update([
+            'last_seen_at' => Carbon::now(),
+            'is_login'     => true,
+            'is_logout'    => false,
+        ]);
+
+        // Catat riwayat login Wali Murid ke ActivityLog
+        ActivityLogService::recordLogin($request, $user, 'app_murid', "Login berhasil via QR Code Kartu Santri ke Aplikasi Wali Murid ({$wali->nama_kepala_keluarga})", [
+            'wali_id'       => $wali->id,
+            'no_registrasi' => $wali->no_registrasi,
+            'no_kk'         => $wali->no_kk,
+            'login_via'     => 'QR_CODE_SCAN',
+            'total_anak'    => $wali->murids->where('status', 'Aktif')->count(),
+        ]);
+
+        return response()->json([
+            'success'        => true,
+            'message'        => 'Login via QR Code Berhasil',
+            'token'          => $token,
+            'role'           => $user->roles->first()->name ?? 'wali-murid',
+            'is_first_login' => !(bool) $wali->is_pin_changed,
+            'wali'           => [
+                'id'                   => $wali->id,
+                'no_registrasi'        => $wali->no_registrasi,
+                'no_kk'                => $wali->no_kk,
+                'nama_kepala_keluarga' => $wali->nama_kepala_keluarga,
+                'kepala_keluarga'      => $wali->kepala_keluarga,
+                'no_hp'                => $wali->no_hp,
+                'alamat'               => $wali->alamat_detail,
+                'kampung'              => $wali->kampung->nama_kampung ?? '-',
+                'total_anak'           => $wali->murids->where('status', 'Aktif')->count(),
+                'is_first_login'       => !(bool) $wali->is_pin_changed,
+                'is_pin_changed'       => (bool) $wali->is_pin_changed,
+            ]
+        ], 200);
+    }
+
+    /**
      * Update PIN Keamanan Wali Murid
      */
     public function updatePinWali(Request $request)
@@ -429,6 +584,11 @@ class AuthController extends Controller
             'pin'            => Hash::make($request->pin_baru),
             'is_pin_changed' => true,
         ]);
+
+        // Keamanan: Revoke token sesi di perangkat lain agar wajib login ulang dengan PIN baru
+        if ($user && $user->currentAccessToken()) {
+            $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
+        }
 
         return response()->json([
             'success' => true,
@@ -651,7 +811,10 @@ class AuthController extends Controller
             'password' => Hash::make($request->password)
         ]);
 
-        // Hapus token yang sudah dipakai
+        // Keamanan: Revoke SEMUA token sesi aktif karena reset password dari lupa sandi
+        $user->tokens()->delete();
+
+        // Hapus token reset yang sudah dipakai
         DB::table('password_reset_tokens')->where('email', $user->email)->delete();
 
         return response()->json([
@@ -733,6 +896,11 @@ class AuthController extends Controller
         }
 
         $user->update(['password' => Hash::make($request->new_password)]);
+
+        // Keamanan: Revoke semua sesi token di perangkat lain demi keamanan, sisakan sesi perangkat ini
+        if ($user->currentAccessToken()) {
+            $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
+        }
 
         return response()->json([
             'success' => true,

@@ -89,4 +89,25 @@ class WaliMurid extends Model
                     });
             });
     }
+
+    /**
+     * Generate payload QR Code untuk Login Cepat Aplikasi Wali Murid
+     */
+    public function getQrLoginPayload(?Murid $murid = null): string
+    {
+        $appKey = config('app.key') ?? 'mdt_hs_secret_key';
+        $authHash = hash_hmac('sha256', $this->no_registrasi . '|' . $this->id, $appKey);
+
+        $payload = [
+            'app'           => 'mdt_hidayatus_shibyan',
+            'type'          => 'wali_login',
+            'no_registrasi' => (string) $this->no_registrasi,
+            'wali_id'       => (int) $this->id,
+            'nism'          => $murid ? (string) $murid->nism : ($this->murids->first()->nism ?? ''),
+            'nama_wali'     => (string) $this->nama_kepala_keluarga,
+            'auth_key'      => substr($authHash, 0, 16),
+        ];
+
+        return json_encode($payload);
+    }
 }

@@ -1,4 +1,4 @@
-﻿{{-- <script src="https://cdn.tailwindcss.com"></script> --}}
+{{-- <script src="https://cdn.tailwindcss.com"></script> --}}
 <!DOCTYPE html>
 <html lang="id">
 
@@ -248,77 +248,111 @@
             <!-- ============================================== -->
             <!-- SISI BELAKANG (BACK)                           -->
             <!-- ============================================== -->
-            <div class="id-card flex flex-col justify-between relative bg-zinc-50">
+            <div class="id-card flex flex-col justify-between relative bg-white border border-zinc-200">
 
-                <div class="absolute left-0 top-0 bottom-0 w-[3mm] bg-emerald-700"></div>
-
-                <div class="pl-[7mm] pr-4 pt-4 relative z-10">
-                    <h4
-                        class="text-[9px] font-black text-emerald-800 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                        <i class="bi bi-info-square-fill"></i> Ketentuan Kartu
-                    </h4>
-                    <ol
-                        class="list-decimal pl-3 text-[5px] font-bold text-zinc-600 space-y-[1.5px] leading-snug text-justify pr-2">
-                        <li>Kartu ini adalah kartu identitas resmi Murid dan berlaku selama yang bersangkutan berstatus
-                            aktif sebagai Murid.</li>
-                        <li>Wajib dibawa, dijaga, dan dikenakan selama berada di lingkungan / mengikuti kegiatan
-                            madrasah.</li>
-                        <li>Kartu tidak dapat dipindahtangankan atau dipinjamkan kepada orang lain dengan alasan apapun.
-                        </li>
-                        <li>Apabila kartu hilang atau rusak, harap melapor ke bagian Administrasi untuk diterbitkan
-                            kartu pengganti.</li>
-                        <li>Barang siapa menemukan kartu ini, dimohon kebijaksanaannya untuk mengembalikan ke alamat
-                            resmi madrasah.</li>
-                    </ol>
+                <!-- Header Stripe Belakang -->
+                <div
+                    class="h-[7mm] bg-gradient-to-r from-emerald-800 to-emerald-700 flex items-center justify-between px-3 text-white">
+                    <span class="text-[6.5px] font-black tracking-widest uppercase flex items-center gap-1">
+                        <i class="bi bi-qr-code-scan text-[8px]"></i> Akses Aplikasi Wali & Ketentuan
+                    </span>
+                    <span class="text-[5.5px] font-bold text-emerald-100 uppercase tracking-wider">
+                        MDT Hidayatus Shibyan
+                    </span>
                 </div>
 
-                <!-- TTD PENGASUH DAN QR CODE TTE -->
-                <div class="pl-[7mm] pr-4 pb-3 flex justify-between items-end relative z-10">
+                <!-- Konten 2 Kolom -->
+                <div class="px-3 pt-1.5 pb-1 flex gap-2.5 items-start flex-1">
 
-                    <div class="text-[5px] font-bold text-zinc-400 space-y-0.5">
-                        <!-- Baris Email -->
-                        <div class="flex items-center gap-1">
-                            <i class="bi bi-envelope-fill"></i>
-                            {{ getSetting('app_email') ?? 'info@madrasah.sch.id' }}
-                        </div>
-
-                        <!-- Baris WhatsApp -->
-                        <div class="flex items-center gap-1">
-                            <i class="bi bi-whatsapp"></i>
-                            {{ getSetting('app_phone') ?? '0812-3456-7890' }}
-                        </div>
-                    </div>
-
-                    <!-- Area Verifikasi Tanda Tangan Elektronik -->
-                    <div class="w-[35mm] flex flex-col items-center text-center">
-                        <p class="text-[5.5px] font-bold text-zinc-600 mb-0.5">Bangkalan,
-                            {{ \Carbon\Carbon::now()->locale('id')->isoFormat('D MMMM YYYY') }}</p>
-                        <p class="text-[6.5px] font-black text-emerald-800 uppercase mb-0.5">Pengasuh</p>
-
-                        <!-- QR Code Tanda Tangan Pengasuh -->
+                    <!-- KOLOM 1: QR CODE LOGIN WALI MURID (UTAMA) -->
+                    <div
+                        class="w-[30mm] shrink-0 flex flex-col items-center justify-between border border-emerald-500/30 rounded-md p-1.5 bg-emerald-50/50 shadow-2xs">
                         <div
-                            class="my-0.5 border border-zinc-300 p-0.5 bg-white rounded-sm shadow-sm flex items-center justify-center [&>svg]:w-[12mm] [&>svg]:h-[12mm]">
-                            @if (!empty($pengasuh?->id))
-                                {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(45)->margin(0)->generate(
-                                        \Illuminate\Support\Facades\URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $pengasuh->id]),
-                                    ) !!}
+                            class="text-[5.5px] font-black text-emerald-800 uppercase tracking-wider text-center mb-1 leading-none">
+                            <i class="bi bi-phone-fill text-[6px]"></i> QR Login Wali
+                        </div>
+
+                        <!-- QR Code Container -->
+                        <div
+                            class="border border-emerald-600/30 p-1 bg-white rounded shadow-sm flex items-center justify-center [&>svg]:w-[18mm] [&>svg]:h-[18mm]">
+                            @if ($murid->qr_login_payload)
+                                {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(68)->margin(0)->generate($murid->qr_login_payload) !!}
                             @else
                                 <div
-                                    class="w-[12mm] h-[12mm] bg-zinc-100 flex items-center justify-center text-[4px] text-zinc-400 text-center">
+                                    class="w-[18mm] h-[18mm] bg-zinc-100 flex items-center justify-center text-[4px] text-zinc-400">
                                     QR KOSONG</div>
                             @endif
                         </div>
 
-                        <!-- Nama Pengurus (Dibuat wrap agar tidak terpotong) -->
-                        <p
-                            class="font-black text-[7.5px] text-zinc-900 border-b border-zinc-400 pb-[2px] w-full mt-0.5 leading-tight">
-                            {{ $pengasuh?->anggota?->nama_lengkap ?? 'Nama Pengasuh Belum Diatur' }}
-                        </p>
+                        <div class="text-center mt-1 w-full leading-none">
+                            <span class="text-[4.5px] font-extrabold text-zinc-700 block tracking-tight">
+                                No. Reg: <b
+                                    class="text-emerald-700 font-black">{{ $murid->waliMurid->no_registrasi ?? '-' }}</b>
+                            </span>
+                            <span class="text-[3.8px] font-medium text-zinc-500 block mt-0.5 leading-tight">
+                                Scan di App Android Wali Murid
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- KOLOM 2: KETENTUAN & TTD PENGASUH -->
+                    <div class="flex-1 flex flex-col justify-between h-full pt-0.5">
+
+                        <div>
+                            <h4
+                                class="text-[6.5px] font-black text-emerald-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                <i class="bi bi-shield-lock-fill text-[6px]"></i> Ketentuan Kartu & Akun
+                            </h4>
+                            <ol
+                                class="list-decimal pl-2.5 text-[4.5px] font-medium text-zinc-600 space-y-[1px] leading-tight text-justify pr-1">
+                                <li>Kartu ini adalah identitas resmi santri & akses portal digital wali murid.</li>
+                                <li>Scan QR Code untuk login otomatis ke aplikasi seluler monitoring santri.</li>
+                                <li>Jaga kerahasiaan QR Code ini dari pihak yang tidak berkepentingan.</li>
+                                <li>Bila kartu hilang, segera hubungi sekretariat madrasah.</li>
+                            </ol>
+                        </div>
+
+                        <!-- TTD Pengasuh & Kontak -->
+                        <div class="flex justify-between items-end border-t border-zinc-200/80 pt-1 mt-1">
+                            <div class="text-[4px] font-medium text-zinc-500 space-y-0.5 leading-tight">
+                                <div class="flex items-center gap-1 text-emerald-800 font-bold">
+                                    <i class="bi bi-whatsapp"></i> {{ getSetting('app_phone', '0812-3456-7890') }}
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <i class="bi bi-globe"></i>
+                                    {{ getSetting('app_email', 'mdthidayatusshibyan.sch.id') }}
+                                </div>
+                            </div>
+
+                            <!-- TTD Pengasuh -->
+                            <div class="text-center w-[22mm] shrink-0">
+                                <p class="text-[4.5px] font-bold text-zinc-500 leading-tight">Pengasuh,</p>
+                                <div
+                                    class="my-0.5 border border-zinc-300 p-0.5 bg-white rounded-xs shadow-2xs inline-flex items-center justify-center [&>svg]:w-[7mm] [&>svg]:h-[7mm]">
+                                    @if (!empty($pengasuh?->id))
+                                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(28)->margin(0)->generate(
+                                                \Illuminate\Support\Facades\URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $pengasuh->id]),
+                                            ) !!}
+                                    @else
+                                        <span class="text-[3px] text-zinc-300">TTE</span>
+                                    @endif
+                                </div>
+                                <p
+                                    class="font-black text-[5px] text-zinc-800 border-b border-zinc-300 pb-0.2 truncate leading-tight">
+                                    {{ $pengasuh?->anggota?->nama_lengkap ?? 'Pengasuh MDT' }}
+                                </p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Motif Halus di Background -->
-                <i class="bi bi-qr-code absolute left-[5mm] bottom-[5mm] text-[30mm] text-zinc-200/50 z-0"></i>
+                <!-- Footer Stripe -->
+                <div
+                    class="h-[2mm] bg-zinc-100 border-t border-zinc-200 flex items-center justify-between px-3 text-[4px] text-zinc-400">
+                    <span>Dokumen Sah MDT Hidayatus Shibyan</span>
+                    <span>Tahun Pelajaran Aktif</span>
+                </div>
             </div>
         @endforeach
 

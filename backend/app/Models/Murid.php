@@ -97,10 +97,24 @@ class Murid extends Model
             return $this->foto;
         }
 
-        if (str_starts_with($this->foto, 'storage/')) {
-            return asset($this->foto);
+        return asset('storage/' . $this->foto);
+    }
+
+    /**
+     * Accessor untuk mendapatkan payload QR Code Login Cepat Wali Murid
+     */
+    public function getQrLoginPayloadAttribute(): string
+    {
+        if ($this->waliMurid) {
+            return $this->waliMurid->getQrLoginPayload($this);
         }
 
-        return asset('storage/' . $this->foto);
+        // Fallback jika belum terhubung ke data wali murid
+        return json_encode([
+            'app'           => 'mdt_hidayatus_shibyan',
+            'type'          => 'wali_login',
+            'nism'          => (string) $this->nism,
+            'nama_murid'    => (string) $this->nama_lengkap,
+        ]);
     }
 }

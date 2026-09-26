@@ -34,7 +34,7 @@ class NilaiUjianController extends Controller
         $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()->id;
 
         // Ambil daftar ruangan beserta jumlah murid aktifnya
-        $daftarRuangan = Ruangan::where('tahun_pelajaran_id', $tahunPelajaranId)
+        $daftarRuangan = Ruangan::berdasarkanHakAkses()->where('tahun_pelajaran_id', $tahunPelajaranId)
             ->withCount(['murids' => fn($q) => $q->where('status', 'Aktif')])
             ->orderBy('level_id', 'asc')
             ->get();

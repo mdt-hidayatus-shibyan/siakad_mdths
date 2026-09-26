@@ -118,7 +118,8 @@
                                 {{ $murid->nama_ayah ?: '-' }}
                             </a>
                         @else
-                            <span class="text-xs font-bold text-zinc-900 dark:text-white tracking-tight truncate max-w-[150px]">
+                            <span
+                                class="text-xs font-bold text-zinc-900 dark:text-white tracking-tight truncate max-w-[150px]">
                                 {{ $murid->nama_ayah ?: '-' }}
                             </span>
                         @endcan
@@ -191,13 +192,20 @@
 
                 <!-- KOLOM AKSI -->
                 <td class="text-center">
-                    @can('update murid')
-                        <a href="{{ route('murid.edit', $murid->id) }}"
-                            class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all border border-blue-500/20 shadow-2xs outline-none"
-                            title="Edit Murid">
-                            <i class="bi bi-pencil-fill text-[11px]"></i>
+                    <div class="flex items-center justify-center gap-1">
+                        <a href="{{ route('kartu-pelajar.cetak-single', $murid->id) }}" target="_blank"
+                            class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 shadow-2xs outline-none"
+                            title="Cetak Kartu Santri & QR Login Wali">
+                            <i class="bi bi-person-badge text-[12px]"></i>
                         </a>
-                    @endcan
+                        @can('update murid')
+                            <a href="{{ route('murid.edit', $murid->id) }}"
+                                class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all border border-blue-500/20 shadow-2xs outline-none"
+                                title="Edit Murid">
+                                <i class="bi bi-pencil-fill text-[11px]"></i>
+                            </a>
+                        @endcan
+                    </div>
                 </td>
             </tr>
 
@@ -223,4 +231,3 @@
         @endforelse
     </tbody>
 </table>
-

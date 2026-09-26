@@ -39,7 +39,7 @@
                         class="m3-input-glass w-full !pl-9 !pr-9 appearance-none cursor-pointer">
                         @foreach ($daftarTahun as $t)
                             <option value="{{ $t->id }}" {{ $tahunPelajaranId == $t->id ? 'selected' : '' }}>
-                                {{ $t->nama_hijriyah }}
+                                {{ $t->nama_hijriyah }} | {{ $t->nama_masehi }}
                             </option>
                         @endforeach
                     </select>

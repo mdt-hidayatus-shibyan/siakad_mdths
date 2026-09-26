@@ -8,6 +8,7 @@ import '../../providers/dashboard_provider.dart';
 import '../main/main_screen.dart';
 import '../widgets/glass_card.dart';
 import 'ganti_pin_awal_screen.dart';
+import 'qr_scanner_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -183,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // STEP 1: Input No. KK / No. Registrasi / NISM
+  // STEP 1: Input No. Registrasi / NISM Anak
   Widget _buildStep1Identitas(AuthProvider auth, bool isDark) {
     return GlassCard(
       key: const ValueKey('step1'),
@@ -231,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Masukkan No. Kartu Keluarga (KK), No. Registrasi Wali, atau NISM Murid Anda.',
+              'Masukkan No. Registrasi Wali Murid atau NISM salah satu anak Anda.',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -281,12 +282,12 @@ class _LoginScreenState extends State<LoginScreen> {
               keyboardType: TextInputType.text,
               autofocus: true,
               decoration: InputDecoration(
-                labelText: 'No. KK / No. Registrasi / NISM',
+                labelText: 'No. Registrasi / NISM Anak',
                 labelStyle: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.white60 : Colors.black54,
                 ),
-                hintText: 'Contoh: 35260123... / 50001 / 2026001',
+                hintText: 'Contoh: 50001 (No. Reg) atau 14471001 (NISM)',
                 hintStyle: TextStyle(
                   fontSize: 12,
                   color: isDark ? Colors.white24 : Colors.black26,
@@ -330,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Nomor identifikasi wajib diisi.';
+                  return 'No. Registrasi atau NISM wajib diisi.';
                 }
                 return null;
               },
@@ -376,6 +377,91 @@ class _LoginScreenState extends State<LoginScreen> {
                           Icon(Icons.arrow_forward_rounded, size: 18),
                         ],
                       ),
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Divider Pemisah ATAU
+            Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    color: isDark ? Colors.white12 : Colors.black12,
+                    thickness: 1,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'ATAU',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    color: isDark ? Colors.white12 : Colors.black12,
+                    thickness: 1,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // Tombol Masuk Cepat Scan QR Kartu Santri
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton(
+                onPressed: () {
+                  HapticHelper.selection();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const QrScannerLoginScreen(),
+                    ),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: isDark
+                        ? AppColors.primaryDark.withValues(alpha: 0.5)
+                        : AppColors.primaryLight.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                  backgroundColor: isDark
+                      ? AppColors.primaryDark.withValues(alpha: 0.08)
+                      : AppColors.primaryLight.withValues(alpha: 0.05),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.qr_code_scanner_rounded,
+                      size: 20,
+                      color: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Pindai QR Kartu Murid',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

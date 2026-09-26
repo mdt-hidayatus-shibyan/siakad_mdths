@@ -87,14 +87,14 @@
             @if (session('success'))
                 Toast.fire({
                     icon: 'success',
-                    title: "{{ session('success') }}"
+                    title: {!! json_encode(session('success')) !!}
                 });
             @endif
 
             @if (session('error'))
                 Toast.fire({
                     icon: 'error',
-                    title: "{{ session('error') }}"
+                    title: {!! json_encode(session('error')) !!}
                 });
             @endif
         </script>

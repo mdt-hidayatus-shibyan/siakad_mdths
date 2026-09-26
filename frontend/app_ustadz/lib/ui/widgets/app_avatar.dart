@@ -28,7 +28,7 @@ class AppAvatar extends StatelessWidget {
     this.shape = BoxShape.circle,
     this.borderRadius,
     this.fit = BoxFit.cover,
-    this.alignment = Alignment.topCenter,
+    this.alignment = Alignment.center,
     this.onTap,
   });
 
@@ -74,7 +74,7 @@ class AppAvatar extends StatelessWidget {
         fit: fit,
         alignment: alignment,
         cacheWidth: memCacheSize,
-        cacheHeight: memCacheSize,
+        filterQuality: FilterQuality.medium,
         errorBuilder: (context, error, stackTrace) => fallbackChild,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
@@ -111,7 +111,14 @@ class AppAvatar extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
-      child: avatarContent,
+      child: shape == BoxShape.circle
+          ? ClipOval(
+              child: SizedBox(width: size, height: size, child: avatarContent),
+            )
+          : ClipRRect(
+              borderRadius: borderRadius ?? BorderRadius.circular(radius * 0.5),
+              child: SizedBox(width: size, height: size, child: avatarContent),
+            ),
     );
 
     if (onTap != null) {

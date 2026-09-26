@@ -29,7 +29,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Step 1: Validasi keberadaan No. KK / NISM
+  /// Step 1: Validasi keberadaan No. Registrasi / NISM Anak
   Future<Map<String, dynamic>> checkIdentifier(String identifier) async {
     _isLoading = true;
     _errorMessage = null;
@@ -52,6 +52,27 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     final result = await _authRepo.loginWali(identifier, pin);
+
+    _isLoading = false;
+    if (result['success'] == true) {
+      _currentWali = result['wali'] as WaliModel;
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } else {
+      _errorMessage = result['message'] as String?;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Login via QR Code Scan
+  Future<bool> loginWithQr(String qrData) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await _authRepo.loginQr(qrData);
 
     _isLoading = false;
     if (result['success'] == true) {

@@ -3,6 +3,7 @@ class ApiEndpoints {
 
   // Auth & Session
   static const String loginWali = '/wali/login';
+  static const String loginQrWali = '/wali/login-qr';
   static const String logout = '/logout';
   static const String profile = '/profile';
 

@@ -30,12 +30,14 @@ class KasRuanganController extends Controller
         $ruanganId = $request->ruangan_id;
 
         // 3. Query utama (ditambah Join dan Select agar tidak ada ID yang bentrok)
-        $query = Ruangan::with(['pengaturanKas', 'level'])
+        $query = Ruangan::with(['pengaturanKas', 'level', 'waliRuangan'])
             ->select('ruangans.*') // Wajib agar hasil select tidak tertimpa ID dari tabel levels
             ->join('levels', 'ruangans.level_id', '=', 'levels.id')
             ->berdasarkanHakAkses()
             ->where('ruangans.tahun_pelajaran_id', $tahunPelajaranId)
-            ->withSum('pembayaranKas as total_terkumpul', 'jumlah_bayar');
+            ->withSum('pembayaranKas as total_terkumpul', 'jumlah_bayar')
+            ->withSum(['setoranKas as total_disetor' => fn($q) => $q->where('status', 'Diterima')], 'jumlah_setor')
+            ->withCount('murids');
 
         // 4. Terapkan filter ruangan jika user memilihnya
         if ($ruanganId) {
@@ -47,12 +49,34 @@ class KasRuanganController extends Controller
             ->orderBy('ruangans.nama_ruangan', 'asc')
             ->get();
 
-        return view('kas-ruangan.kas-ruangan.index', compact('ruangans', 'daftarTahun', 'tahunPelajaranId', 'daftarRuangan', 'ruanganId'));
+        // 6. Ringkasan Statistik Global untuk Banner Header
+        $totalKasTerkumpul = $ruangans->sum('total_terkumpul');
+        $totalKasDisetor = $ruangans->sum('total_disetor');
+        $totalSisaKas = $totalKasTerkumpul - $totalKasDisetor;
+        $totalMurid = $ruangans->sum('murids_count');
+        $totalRuangan = $ruangans->count();
+
+        return view('kas-ruangan.kas-ruangan.index', compact(
+            'ruangans',
+            'daftarTahun',
+            'tahunPelajaranId',
+            'daftarRuangan',
+            'ruanganId',
+            'totalKasTerkumpul',
+            'totalKasDisetor',
+            'totalSisaKas',
+            'totalMurid',
+            'totalRuangan'
+        ));
     }
 
     public function showKasRuangan($ruangan_id)
     {
-        $ruangan = Ruangan::with(['pengaturanKas', 'level'])->findOrFail($ruangan_id);
+        $ruangan = Ruangan::with(['pengaturanKas', 'level', 'waliRuangan'])
+            ->withSum('pembayaranKas as total_terkumpul', 'jumlah_bayar')
+            ->withSum(['setoranKas as total_disetor' => fn($q) => $q->where('status', 'Diterima')], 'jumlah_setor')
+            ->findOrFail($ruangan_id);
+
         $murids = $ruangan->murids()->with(['pembayaranKas' => function ($query) use ($ruangan_id) {
             $query->where('ruangan_id', $ruangan_id);
         }])->get();

@@ -123,8 +123,14 @@ class BackupController extends Controller
         } catch (\Exception $e) {
             // Nyalakan kembali jika terjadi error di tengah jalan
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            Log::error('Restore Database Error: ' . $e->getMessage());
 
-            return back()->with('error', 'Gagal memulihkan database. Pastikan file SQL valid. Error: ' . $e->getMessage());
+            $errMsg = $e->getMessage();
+            if (strlen($errMsg) > 200) {
+                $errMsg = substr($errMsg, 0, 200) . '...';
+            }
+
+            return back()->with('error', 'Gagal memulihkan database: ' . $errMsg);
         }
     }
 }

@@ -760,20 +760,13 @@
                     style="margin-top: 10px; padding-top: 6px; border-top: 1px solid #cbd5e1; display: flex; align-items: center; gap: 8px;">
                     <div
                         style="flex-shrink: 0; background: #fff; padding: 2px; border: 1px solid #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                        @php
-                            $primary = !empty($activeSigners) ? $activeSigners[0] : null;
-                        @endphp
-                        @if (!empty($primary['id_relasi']) && !empty($primary['tipe_relasi']))
-                            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate(URL::signedRoute('profil.publik', ['tipe' => $primary['tipe_relasi'], 'id' => $primary['id_relasi']])) !!}
-                        @else
-                            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate($surat->qr_token ?: url('/')) !!}
-                        @endif
+                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate(route('surat.verifikasi.show', $surat->qr_token ?: $surat->id)) !!}
                     </div>
                     <div style="font-size: 7pt; color: #1e293b; line-height: 1.25; text-align: justify; flex: 1;">
                         Dokumen ini ditandatangani secara elektronik oleh Pejabat Berwenang MDT Hidayatus Shibyan dan
                         distempel digital resmi oleh Sistem Administrasi Persuratan MDTHS. Untuk verifikasi keabsahan,
                         kunjungi <span
-                            style="text-decoration: underline; color: #059669; font-weight: 600;">{{ url('/') }}</span>
+                            style="text-decoration: underline; color: #059669; font-weight: 600;">{{ url('/verifikasi-surat') }}</span>
                         dan masukkan nomor surat, atau scan QRCode di samping.
                     </div>
                 </div>
@@ -918,11 +911,7 @@
                         style="margin-top: 10px; padding-top: 6px; border-top: 1px solid #cbd5e1; display: flex; align-items: center; gap: 8px;">
                         <div
                             style="flex-shrink: 0; background: #fff; padding: 2px; border: 1px solid #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                            @if (!empty($primary['id_relasi']) && !empty($primary['tipe_relasi']))
-                                {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate(URL::signedRoute('profil.publik', ['tipe' => $primary['tipe_relasi'], 'id' => $primary['id_relasi']])) !!}
-                            @else
-                                {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate($surat->qr_token ?: url('/')) !!}
-                            @endif
+                            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(38)->margin(0)->generate(route('surat.verifikasi.show', $surat->qr_token ?: $surat->id)) !!}
                         </div>
                         <div style="font-size: 7pt; color: #1e293b; line-height: 1.25; text-align: justify; flex: 1;">
                             Dokumen ini ditandatangani secara elektronik oleh Pejabat Berwenang MDT Hidayatus Shibyan
@@ -930,7 +919,7 @@
                             distempel digital resmi oleh Sistem Administrasi Persuratan MDTHS. Untuk verifikasi
                             keabsahan,
                             kunjungi <span
-                                style="text-decoration: underline; color: #059669; font-weight: 600;">{{ url('/') }}</span>
+                                style="text-decoration: underline; color: #059669; font-weight: 600;">{{ url('/verifikasi-surat') }}</span>
                             dan masukkan nomor surat, atau scan QRCode di samping.
                         </div>
                     </div>

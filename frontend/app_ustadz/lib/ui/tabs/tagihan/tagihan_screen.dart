@@ -5,6 +5,7 @@ import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/tagihan_model.dart';
 import '../../../providers/tagihan_provider.dart';
+import '../../widgets/app_avatar.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass_card.dart';
@@ -1156,25 +1157,16 @@ class _TagihanScreenState extends State<TagihanScreen>
                         Expanded(
                           child: Row(
                             children: [
-                              CircleAvatar(
+                              AppAvatar(
                                 radius: 18,
+                                name: m.nama,
+                                imageUrl: m.foto,
+                                fit: BoxFit.cover,
+                                alignment: Alignment.topCenter,
                                 backgroundColor: isPutra
                                     ? Colors.blue.withValues(alpha: 0.15)
                                     : Colors.pink.withValues(alpha: 0.15),
-                                backgroundImage: m.foto != null
-                                    ? NetworkImage(m.foto!)
-                                    : null,
-                                child: m.foto == null
-                                    ? Icon(
-                                        isPutra
-                                            ? Icons.face_rounded
-                                            : Icons.face_3_rounded,
-                                        size: 20,
-                                        color: isPutra
-                                            ? Colors.blue
-                                            : Colors.pink,
-                                      )
-                                    : null,
+                                textColor: isPutra ? Colors.blue : Colors.pink,
                               ),
                               const SizedBox(width: 10),
                               Expanded(
@@ -1806,25 +1798,16 @@ class _TagihanScreenState extends State<TagihanScreen>
                               ),
 
                             // Avatar Santri
-                            CircleAvatar(
+                            AppAvatar(
                               radius: 18,
+                              name: m.nama,
+                              imageUrl: m.foto,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.topCenter,
                               backgroundColor: isPutra
                                   ? Colors.blue.withValues(alpha: 0.15)
                                   : Colors.pink.withValues(alpha: 0.15),
-                              backgroundImage: m.foto != null
-                                  ? NetworkImage(m.foto!)
-                                  : null,
-                              child: m.foto == null
-                                  ? Icon(
-                                      isPutra
-                                          ? Icons.face_rounded
-                                          : Icons.face_3_rounded,
-                                      size: 20,
-                                      color: isPutra
-                                          ? Colors.blue
-                                          : Colors.pink,
-                                    )
-                                  : null,
+                              textColor: isPutra ? Colors.blue : Colors.pink,
                             ),
                             const SizedBox(width: 10),
 

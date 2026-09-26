@@ -44,9 +44,32 @@ class KartuPelajarController extends Controller
         $request->validate([
             'murid_ids' => 'required|array|min:1',
         ]);
-        $murids = Murid::with(['ruangans' => function ($q) use ($request) {
-            $q->where('ruangan_id', $request->ruangan_id_cetak);
-        }])->whereIn('id', $request->murid_ids)->get();
+        $murids = Murid::with([
+            'ruangans' => function ($q) use ($request) {
+                if ($request->filled('ruangan_id_cetak')) {
+                    $q->where('ruangans.id', $request->ruangan_id_cetak);
+                }
+            },
+            'waliMurid.kampung'
+        ])->whereIn('id', $request->murid_ids)->get();
+
+        $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
+        return view('kartu-pelajar.cetak', compact('murids', 'pengasuh'));
+    }
+
+    /**
+     * Cetak kartu tanda pelajar perorangan / single
+     */
+    public function cetakSingle($id)
+    {
+        $murids = Murid::with(['ruangans', 'waliMurid.kampung'])
+            ->where('id', $id)
+            ->get();
+
+        if ($murids->isEmpty()) {
+            abort(404, 'Data murid tidak ditemukan.');
+        }
+
         $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
         return view('kartu-pelajar.cetak', compact('murids', 'pengasuh'));
     }

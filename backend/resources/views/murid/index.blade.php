@@ -44,6 +44,12 @@
 
                 <div id="dropdownOpsiData" class="m3-dropdown-menu hidden right-0 left-auto min-w-[180px]">
 
+                    <a href="{{ route('kartu-pelajar.index') }}"
+                        class="m3-dropdown-item hover:!text-primary dark:hover:!text-primary-dark">
+                        <i class="bi bi-person-badge text-base text-primary dark:text-primary-dark"></i>
+                        <span>Cetak Kartu Pelajar</span>
+                    </a>
+
                     <a href="#" class="m3-dropdown-item hover:!text-emerald-600 dark:hover:!text-emerald-400">
                         <i class="bi bi-file-earmark-excel text-base text-emerald-600 dark:text-emerald-400"></i>
                         <span>Export Excel</span>

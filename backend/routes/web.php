@@ -66,6 +66,7 @@ use App\Http\Controllers\Arsip\ArsipRaporController;
 use App\Http\Controllers\Arsip\ArsipSKController;
 use App\Http\Controllers\Arsip\ArsipIjazahController;
 use App\Http\Controllers\Persuratan\SuratKeluarController;
+use App\Http\Controllers\Persuratan\VerifikasiSuratController;
 
 // 7. Keuangan Madrasah Controllers
 use App\Http\Controllers\Keuangan\TagihanMuridController;
@@ -151,6 +152,13 @@ Route::prefix('spmb')->name('spmb.')->middleware('throttle:30,1')->group(functio
 Route::get('/verifikasi-profil/{tipe}/{id}', PublicProfileController::class)
     ->name('profil.publik')
     ->middleware('signed');
+
+// Verifikasi & Pengesahan Surat Keluar Resmi (Publik)
+Route::prefix('verifikasi-surat')->name('surat.verifikasi.')->group(function () {
+    Route::get('/', [VerifikasiSuratController::class, 'index'])->name('index');
+    Route::post('/cari', [VerifikasiSuratController::class, 'cari'])->name('cari');
+    Route::get('/{token}', [VerifikasiSuratController::class, 'show'])->name('show');
+});
 
 // Storage File Delivery Route (Secured against Directory Traversal)
 Route::get('/storage/{path}', function ($path) {
@@ -263,6 +271,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('kartu-pelajar')->name('kartu-pelajar.')->group(function () {
         Route::get('/', [KartuPelajarController::class, 'index'])->name('index');
         Route::post('/cetak', [KartuPelajarController::class, 'cetak'])->name('cetak');
+        Route::get('/{id}/cetak-single', [KartuPelajarController::class, 'cetakSingle'])->name('cetak-single');
         Route::get('/{ruangan_id}/upload-foto/{murid_id}', [KartuPelajarController::class, 'modalUpload'])->name('uploadFoto');
     });
 

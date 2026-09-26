@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\AppVersionApiController;
 Route::get('/app-version', [AppVersionApiController::class, 'getAppVersion']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/wali/login', [AuthController::class, 'loginWali'])->middleware('throttle:5,1');
+Route::post('/wali/login-qr', [AuthController::class, 'loginQr'])->middleware('throttle:10,1');
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1');
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
