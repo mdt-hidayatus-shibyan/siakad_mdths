@@ -63,7 +63,12 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          14,
+          16,
+          120 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // 1. SEARCH BAR
           TextField(

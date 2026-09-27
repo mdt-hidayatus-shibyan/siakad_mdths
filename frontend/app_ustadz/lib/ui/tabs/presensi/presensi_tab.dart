@@ -156,7 +156,12 @@ class _PresensiTabState extends State<PresensiTab>
                 RefreshIndicator(
                   onRefresh: () => presensi.fetchSesi(),
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      16,
+                      16,
+                      120 + MediaQuery.of(context).padding.bottom,
+                    ),
                     children: [
                       // 1. DATE PICKER SELECTOR BAR
                       Container(
@@ -613,7 +618,12 @@ class _PresensiTabState extends State<PresensiTab>
                 RefreshIndicator(
                   onRefresh: () => presensi.fetchSesiUstadz(),
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      16,
+                      16,
+                      120 + MediaQuery.of(context).padding.bottom,
+                    ),
                     children: [
                       // 1. DATE PICKER SELECTOR BAR
                       Container(

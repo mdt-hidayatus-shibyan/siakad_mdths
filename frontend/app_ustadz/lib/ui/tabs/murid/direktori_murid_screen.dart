@@ -140,7 +140,12 @@ class _DirektoriMuridScreenState extends State<DirektoriMuridScreen> {
             color: isDark ? const Color(0xFF101710) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            28 + MediaQuery.of(context).padding.bottom,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,7 +378,12 @@ class _DirektoriMuridScreenState extends State<DirektoriMuridScreen> {
           ruanganId: widget.ruanganId,
         ),
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            40 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // Search Bar
             TextField(

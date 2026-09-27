@@ -91,7 +91,12 @@ class _LaporanPelanggaranScreenState extends State<LaporanPelanggaranScreen>
         onRefresh: () async => _loadData(),
         color: primary,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            40 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // 1. FILTER BAR (KATEGORI & RUANGAN)
             SingleChildScrollView(
@@ -202,7 +207,7 @@ class _LaporanPelanggaranScreenState extends State<LaporanPelanggaranScreen>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${data?.totalMurid ?? 0} Santri Kelas Binaan',
+                              '${data?.totalMurid ?? 0} Murid Binaan',
                               style: TextStyle(
                                 fontSize: 10.5,
                                 color: isDark
@@ -288,7 +293,7 @@ class _LaporanPelanggaranScreenState extends State<LaporanPelanggaranScreen>
               margin: EdgeInsets.zero,
               items: const [
                 SegmentedTabItem(
-                  label: 'Leaderboard Santri',
+                  label: 'Leaderboard',
                   activeIcon: Icons.leaderboard_rounded,
                   inactiveIcon: Icons.leaderboard_outlined,
                 ),

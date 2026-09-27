@@ -5,10 +5,11 @@ import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/auth_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
-import '../penilaian/leger_screen.dart';
+import 'laporan_kenaikan_screen.dart';
 import 'laporan_pelanggaran_screen.dart';
 import 'laporan_presensi_murid_screen.dart';
 import 'laporan_presensi_ustadz_screen.dart';
+import 'laporan_ujian_screen.dart';
 
 class LaporanRuanganScreen extends StatelessWidget {
   const LaporanRuanganScreen({super.key});
@@ -27,7 +28,12 @@ class LaporanRuanganScreen extends StatelessWidget {
         subtitleText: 'Rekapitulasi Kelas Binaan',
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // 1. BANNER IDENTITAS KELAS BINAAN
           GlassCard(
@@ -119,7 +125,7 @@ class LaporanRuanganScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                '4 Laporan Tersedia',
+                '5 Laporan Tersedia',
                 style: TextStyle(
                   fontSize: 11,
                   color: isDark
@@ -132,7 +138,9 @@ class LaporanRuanganScreen extends StatelessWidget {
           const SizedBox(height: 10),
 
           // 3. DAFTAR KARTU LAPORAN
-          // 3.1 Presensi Murid Kelas Binaan
+          // 3.1 Kenaikan & Kelulusan Kelas Binaan
+
+          // 3.2 Presensi Murid Kelas Binaan
           _buildReportCard(
             context: context,
             isDark: isDark,
@@ -156,7 +164,7 @@ class LaporanRuanganScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // 3.2 Presensi Ustadz Pengajar di Ruangan
+          // 3.3 Presensi Ustadz Pengajar di Ruangan
           _buildReportCard(
             context: context,
             isDark: isDark,
@@ -181,7 +189,7 @@ class LaporanRuanganScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // 3.3 Laporan Ujian & Leger Kelas
+          // 3.4 Laporan Ujian & Leger Kelas
           _buildReportCard(
             context: context,
             isDark: isDark,
@@ -196,17 +204,14 @@ class LaporanRuanganScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => LegerRuanganScreen(
-                    ruanganId: user?.ruanganWaliId ?? 0,
-                    ruanganName: ruanganName,
-                  ),
+                  builder: (_) =>
+                      LaporanUjianScreen(initialRuanganId: user?.ruanganWaliId),
                 ),
               );
             },
           ),
           const SizedBox(height: 10),
 
-          // 3.4 Laporan Buku Kasus & Pelanggaran
           _buildReportCard(
             context: context,
             isDark: isDark,
@@ -222,6 +227,30 @@ class LaporanRuanganScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => const LaporanPelanggaranScreen(),
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 10),
+          // 3.5 Laporan Buku Kasus & Pelanggaran
+          _buildReportCard(
+            context: context,
+            isDark: isDark,
+            primary: primary,
+            icon: Icons.military_tech_rounded,
+            badgeText: 'Kenaikan & Kelulusan',
+            title: 'Kenaikan Kelas',
+            subtitle:
+                'Status kenaikan/kelulusan murid, bobot perhitungan (ujian, presensi, pelanggaran), & KKM.',
+            onTap: () {
+              HapticHelper.light();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LaporanKenaikanScreen(
+                    initialRuanganId: user?.ruanganWaliId,
+                  ),
                 ),
               );
             },

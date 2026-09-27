@@ -472,7 +472,12 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
       body: RefreshIndicator(
         onRefresh: () async => _loadData(),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            10,
+            16,
+            40 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // 0. Pemilih Ruangan (Jika Wali mengampu >1 Ruangan)
             if (roomList.length > 1) ...[

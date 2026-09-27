@@ -233,7 +233,7 @@ class ScheduleCard extends StatelessWidget {
                         onPressed: onPresensiGuruTap,
                         icon: const Icon(Icons.badge_rounded, size: 16),
                         label: const Text(
-                          'Check-in Ustadz',
+                          'Presensi Ustadz',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,

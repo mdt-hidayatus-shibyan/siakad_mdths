@@ -418,7 +418,9 @@ class _AkunTabState extends State<AkunTab> {
               20,
               12,
               20,
-              MediaQuery.of(context).viewInsets.bottom + 20,
+              MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom +
+                  20,
             ),
             child: Form(
               key: formKey,
@@ -777,7 +779,9 @@ class _AkunTabState extends State<AkunTab> {
               20,
               12,
               20,
-              MediaQuery.of(context).viewInsets.bottom + 20,
+              MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom +
+                  20,
             ),
             child: Form(
               key: formKey,
@@ -952,7 +956,9 @@ class _AkunTabState extends State<AkunTab> {
               20,
               12,
               20,
-              MediaQuery.of(context).viewInsets.bottom + 20,
+              MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom +
+                  20,
             ),
             child: Form(
               key: formKey,
@@ -1160,7 +1166,9 @@ class _AkunTabState extends State<AkunTab> {
               20,
               12,
               20,
-              MediaQuery.of(context).viewInsets.bottom + 20,
+              MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom +
+                  20,
             ),
             child: Form(
               key: formKey,
@@ -1473,7 +1481,12 @@ class _AkunTabState extends State<AkunTab> {
           }
         },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            120 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // =================================================================
             // 1. HERO PROFIL CARD

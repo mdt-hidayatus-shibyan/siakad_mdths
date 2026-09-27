@@ -225,7 +225,12 @@ class _CatatanUstadzScreenState extends State<CatatanUstadzScreen> {
                           'Gunakan tombol "Catatan Baru" di bawah untuk mencatat keluhan murid atau aspirasi madrasah.',
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        0,
+                        16,
+                        80 + MediaQuery.of(context).padding.bottom,
+                      ),
                       itemCount: provider.catatanList.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (ctx, idx) {

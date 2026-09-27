@@ -57,7 +57,12 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
         onRefresh: () => akademik.fetchJadwalPelajaran(),
         color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            40 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // 1. Tab Switcher jika Ustadz adalah Wali Ruangan
             if (isWali)

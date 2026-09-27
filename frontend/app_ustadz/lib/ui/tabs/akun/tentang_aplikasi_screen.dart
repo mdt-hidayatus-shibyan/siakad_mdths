@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import '../../../core/constants/app_version_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
-import '../../../providers/app_version_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 
@@ -14,18 +13,13 @@ class TentangAplikasiScreen extends StatefulWidget {
 }
 
 class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AppVersionProvider>().fetchAppVersion();
-    });
-  }
-
   Future<void> _handleRefresh() async {
     HapticHelper.light();
-    await context.read<AppVersionProvider>().fetchAppVersion(refresh: true);
-    HapticHelper.medium();
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (mounted) {
+      setState(() {});
+      HapticHelper.medium();
+    }
   }
 
   @override
@@ -34,9 +28,6 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
     final primaryColor = isDark
         ? AppColors.primaryDark
         : AppColors.primaryLight;
-
-    final versionProvider = context.watch<AppVersionProvider>();
-    final versionData = versionProvider.appVersion;
 
     return Scaffold(
       appBar: const CustomAppBar(
@@ -47,28 +38,18 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
         onRefresh: _handleRefresh,
         color: primaryColor,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            40 + MediaQuery.of(context).padding.bottom,
+          ),
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Loading Indicator banner jika sedang sinkronisasi
-              if (versionProvider.isLoading)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Center(
-                    child: SizedBox(
-                      height: 2,
-                      child: LinearProgressIndicator(
-                        backgroundColor: primaryColor.withValues(alpha: 0.1),
-                        valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                      ),
-                    ),
-                  ),
-                ),
-
               // 1. HERO HEADER: Logo, Nama Aplikasi & Badge Versi Aktif
               GlassCard(
                 padding: const EdgeInsets.symmetric(
@@ -124,7 +105,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
 
                       // App Title & Subtitle
                       Text(
-                        versionData.appTitle,
+                        AppVersionConfig.appTitle,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
@@ -136,7 +117,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        versionData.appSubtitle,
+                        AppVersionConfig.appSubtitle,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -173,7 +154,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  'Versi ${versionData.version} (Build ${versionData.buildNumber})',
+                                  'Versi ${AppVersionConfig.version} (Build ${AppVersionConfig.buildNumber})',
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -183,7 +164,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                               ],
                             ),
                           ),
-                          if (versionData.isLatest)
+                          if (AppVersionConfig.isLatest)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
@@ -210,7 +191,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    versionData.statusBadge,
+                                    AppVersionConfig.statusBadge,
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -278,7 +259,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Versi ${versionData.version}',
+                                    'Versi ${AppVersionConfig.version}',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
@@ -289,7 +270,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    versionData.releaseSubtitle,
+                                    AppVersionConfig.releaseSubtitle,
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: isDark
@@ -311,7 +292,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              versionData.releaseBadge,
+                              AppVersionConfig.releaseBadge,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -345,8 +326,8 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      if (versionData.newFeatures.isNotEmpty) ...[
-                        ...versionData.newFeatures.map(
+                      if (AppVersionConfig.newFeatures.isNotEmpty) ...[
+                        ...AppVersionConfig.newFeatures.map(
                           (feat) => _buildChangelogBullet(
                             title: feat.title,
                             desc: feat.description,
@@ -394,8 +375,8 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      if (versionData.improvements.isNotEmpty) ...[
-                        ...versionData.improvements.map(
+                      if (AppVersionConfig.improvements.isNotEmpty) ...[
+                        ...AppVersionConfig.improvements.map(
                           (imp) => _buildChangelogBullet(
                             title: imp.title,
                             desc: imp.description,
@@ -475,7 +456,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  versionData.devName,
+                                  AppVersionConfig.devName,
                                   style: TextStyle(
                                     fontSize: 14.5,
                                     fontWeight: FontWeight.bold,
@@ -486,7 +467,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '${versionData.devRole} • ${versionData.devInstitution}',
+                                  '${AppVersionConfig.devRole} • ${AppVersionConfig.devInstitution}',
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w500,
@@ -502,7 +483,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                       ),
                       const SizedBox(height: 14),
                       Text(
-                        versionData.devDescription,
+                        AppVersionConfig.devDescription,
                         style: TextStyle(
                           fontSize: 11.5,
                           height: 1.45,
@@ -514,7 +495,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                       const SizedBox(height: 12),
 
                       // Detail Developer Info
-                      ...versionData.devDetails.map(
+                      ...AppVersionConfig.devDetails.map(
                         (item) => _buildDevInfoRow(
                           icon: item.icon,
                           label: item.label,
@@ -530,7 +511,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
-                        children: versionData.techStacks
+                        children: AppVersionConfig.techStacks
                             .map(
                               (stack) =>
                                   _buildTechBadge(stack, primaryColor, isDark),
@@ -548,7 +529,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                 child: Column(
                   children: [
                     Text(
-                      '© ${versionData.copyrightYear} ${versionData.copyrightOwner}',
+                      '© ${AppVersionConfig.copyrightYear} ${AppVersionConfig.copyrightOwner}',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -557,7 +538,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      versionData.copyrightSubtitle,
+                      AppVersionConfig.copyrightSubtitle,
                       style: TextStyle(
                         fontSize: 10,
                         color: isDark ? Colors.white24 : Colors.black26,

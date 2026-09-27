@@ -56,7 +56,12 @@ class DetailPengumumanScreen extends StatelessWidget {
         subtitleText: 'Informasi resmi dan pemberitahuan madrasah.',
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // ===================================================================
           // 1. KONTEN UTAMA PENGUMUMAN

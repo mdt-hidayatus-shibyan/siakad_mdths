@@ -35,7 +35,12 @@ class _PengumumanScreenState extends State<PengumumanScreen> {
       body: RefreshIndicator(
         onRefresh: () => context.read<DashboardProvider>().fetchPengumuman(),
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            40 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             if (dashboard.isLoading)
               const ShimmerLoadingList(count: 3, height: 100)

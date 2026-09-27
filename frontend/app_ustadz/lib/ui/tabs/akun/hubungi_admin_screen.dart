@@ -239,7 +239,12 @@ class _HubungiAdminScreenState extends State<HubungiAdminScreen>
     return RefreshIndicator(
       onRefresh: () async => bantuan.fetchKontak(),
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // Banner Pengantar
           GlassCard(
@@ -518,7 +523,12 @@ class _HubungiAdminScreenState extends State<HubungiAdminScreen>
     return RefreshIndicator(
       onRefresh: () async => bantuan.fetchKontak(),
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // Kartu WhatsApp Direct
           Container(
@@ -789,7 +799,12 @@ class _HubungiAdminScreenState extends State<HubungiAdminScreen>
     return RefreshIndicator(
       onRefresh: () async => bantuan.fetchRiwayat(),
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
         itemCount: riwayat.length,
         itemBuilder: (ctx, idx) {
           final item = riwayat[idx] as Map<String, dynamic>;

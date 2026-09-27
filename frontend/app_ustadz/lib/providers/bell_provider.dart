@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/services/bell_service.dart';
+import '../core/services/system_settings_service.dart';
 
 class BellProvider extends ChangeNotifier {
   final BellService _service = BellService.instance;
@@ -9,6 +10,9 @@ class BellProvider extends ChangeNotifier {
 
   BellEvent? _lastEvent;
   BellEvent? get lastEvent => _lastEvent;
+
+  AppPermissionsStatus? _permissionStatus;
+  AppPermissionsStatus? get permissionStatus => _permissionStatus;
 
   bool get isEnabled => _service.isEnabled;
   bool get onlyOnTeachingDays => _service.onlyOnTeachingDays;
@@ -29,6 +33,7 @@ class BellProvider extends ChangeNotifier {
 
   Future<void> _init() async {
     await _service.init();
+    await refreshPermissionStatus();
     _sub = _service.onBellEvent.listen((event) {
       _lastEvent = event;
       notifyListeners();
@@ -39,6 +44,19 @@ class BellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Cek status izin sistem secara berkala / saat dibutuhkan
+  Future<void> refreshPermissionStatus() async {
+    _permissionStatus = await _service.checkPermissionsStatus();
+    notifyListeners();
+  }
+
+  /// Alur 1-Klik Otomatis Izin Aplikasi seperti aplikasi Islamic Prayer / Pengingat Sholat
+  Future<AppPermissionsStatus> requestAllPermissionsSeamlessly() async {
+    _permissionStatus = await _service.requestAllPermissionsSeamlessly();
+    notifyListeners();
+    return _permissionStatus!;
+  }
+
   String _formatTime(TimeOfDay t) {
     final h = t.hour.toString().padLeft(2, '0');
     final m = t.minute.toString().padLeft(2, '0');
@@ -47,6 +65,9 @@ class BellProvider extends ChangeNotifier {
 
   Future<void> setEnabled(bool val) async {
     await _service.setEnabled(val);
+    if (val) {
+      await refreshPermissionStatus();
+    }
     notifyListeners();
   }
 
@@ -88,20 +109,29 @@ class BellProvider extends ChangeNotifier {
     await _service.scheduleTestNotification(delaySeconds: delaySeconds);
   }
 
+  Future<void> requestBatteryExemption() async {
+    await _service.requestBatteryExemption();
+    await refreshPermissionStatus();
+  }
+
   Future<void> openExactAlarmSettings() async {
     await _service.openExactAlarmSettings();
+    await refreshPermissionStatus();
   }
 
   Future<void> openNotificationSettings() async {
     await _service.openNotificationSettings();
+    await refreshPermissionStatus();
   }
 
   Future<void> openBatterySettings() async {
     await _service.openBatterySettings();
+    await refreshPermissionStatus();
   }
 
   Future<void> openAppSettings() async {
     await _service.openAppSettings();
+    await refreshPermissionStatus();
   }
 
   Future<void> stopSound() async {

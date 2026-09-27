@@ -148,7 +148,12 @@ class _LaporanPresensiUstadzScreenState
         onRefresh: () async => _loadData(),
         color: primary,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            40 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // 1. FORM SELECT FILTER (Ruangan, Ustadz Pengajar, Semester, Bulan Hijriyah)
             GlassCard(

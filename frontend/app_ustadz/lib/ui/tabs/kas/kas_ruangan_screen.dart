@@ -1689,7 +1689,12 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 40),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          6,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // Ringkasan Finansial Card
           if (kas.ringkasan != null)
@@ -2136,7 +2141,12 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 40),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          6,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // Setoran Summary Card
           GlassCard(

@@ -147,7 +147,12 @@ class _KalendarScreenState extends State<KalendarScreen> {
         onRefresh: () => akademik.fetchKalendar(),
         color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 40),
+          padding: EdgeInsets.fromLTRB(
+            14,
+            10,
+            14,
+            40 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // 1. TOP CARD: MONTH HEADER & MODE SWITCHER (Responsive & Compact)
             GlassCard(

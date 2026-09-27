@@ -24,7 +24,12 @@ class LaporanPengampuScreen extends StatelessWidget {
         subtitleText: 'Aktivitas & Tugas Mengajar',
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // 1. BANNER IDENTITAS PENGAMPU
           GlassCard(

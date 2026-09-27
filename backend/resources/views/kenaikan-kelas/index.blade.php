@@ -15,8 +15,7 @@
     </div>
 
     <!-- FILTER AREA -->
-    <div
-        class="m3-glass-card p-4 sm:p-5 mb-6 relative z-10 animate-[modalFadeIn_0.2s_ease-out]">
+    <div class="m3-glass-card p-4 sm:p-5 mb-6 relative z-10 animate-[modalFadeIn_0.2s_ease-out]">
         <form action="{{ request()->url() }}" method="GET" id="formKenaikan"
             class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3.5 items-end">
 
@@ -33,8 +32,7 @@
                     <select name="tahun_id" onchange="document.getElementById('formKenaikan').submit()"
                         class="m3-input-glass w-full !pl-9 !pr-9 appearance-none cursor-pointer">
                         @foreach ($daftarTahun as $t)
-                            <option value="{{ $t->id }}"
-                                {{ $tahunPelajaranId == $t->id ? 'selected' : '' }}>
+                            <option value="{{ $t->id }}" {{ $tahunPelajaranId == $t->id ? 'selected' : '' }}>
                                 {{ $t->nama_hijriyah }} | {{ $t->nama_masehi }}
                             </option>
                         @endforeach
@@ -59,8 +57,7 @@
                         class="m3-input-glass w-full !pl-9 !pr-9 appearance-none cursor-pointer">
                         <option value="">-- Silakan Pilih Ruangan --</option>
                         @foreach ($daftarRuangan as $r)
-                            <option value="{{ $r->id }}"
-                                {{ request('ruangan_id') == $r->id ? 'selected' : '' }}>
+                            <option value="{{ $r->id }}" {{ request('ruangan_id') == $r->id ? 'selected' : '' }}>
                                 {{ $r->nama_ruangan }}
                             </option>
                         @endforeach
@@ -83,8 +80,7 @@
             $levelNaikId = isset($daftarLevel) && $daftarLevel->count() > 1 ? $daftarLevel[1]->id : $levelSekarangId;
         @endphp
 
-        <div
-            class="m3-glass-card overflow-hidden relative group animate-[modalFadeIn_0.2s_ease-out]">
+        <div class="m3-glass-card overflow-hidden relative group animate-[modalFadeIn_0.2s_ease-out]">
 
             <form action="{{ route('kenaikan-kelas.simpan') }}" method="POST" id="formSimpanKeputusan"
                 class="relative z-10 flex flex-col h-full">
@@ -154,13 +150,15 @@
                                 <th
                                     class="py-3 px-3 border-r border-zinc-200/80 dark:border-zinc-800 text-center bg-primary/5 dark:bg-primary-dark/10 text-primary dark:text-primary-dark w-28">
                                     Final Akumulasi</th>
-                                <th class="py-3 px-3.5 border-r border-zinc-200/80 dark:border-zinc-800 w-32">Rekomendasi
+                                <th class="py-3 px-3.5 border-r border-zinc-200/80 dark:border-zinc-800 w-32">
+                                    Rekomendasi
                                 </th>
                                 <th class="py-3 px-3 border-r border-zinc-200/80 dark:border-zinc-800 w-36 text-center">
                                     Keputusan</th>
                                 <th class="py-3 px-3 border-r border-zinc-200/80 dark:border-zinc-800 w-36 text-center">
                                     Level Tujuan</th>
-                                <th class="py-3 px-3.5 border-r border-zinc-200/80 dark:border-zinc-800 w-48 text-center">
+                                <th
+                                    class="py-3 px-3.5 border-r border-zinc-200/80 dark:border-zinc-800 w-48 text-center">
                                     Catatan Khusus</th>
                                 <th class="py-3 px-3 text-center w-32">Aksi & Berkas</th>
                             </tr>
@@ -198,15 +196,33 @@
                                     </td>
 
                                     <!-- Sel Nilai Sem 1 -->
-                                    <td
-                                        class="py-2.5 px-3 text-center font-black text-zinc-700 dark:text-zinc-300 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
-                                        {{ $row->skor_sem1 ?: '-' }}
+                                    <td class="py-2.5 px-3 text-center font-black text-zinc-700 dark:text-zinc-300 border-r border-zinc-200/80 dark:border-zinc-800 align-middle"
+                                        title="Ujian: {{ $row->detail_sem1['rata_ujian'] ?? 0 }} ({{ $config->bobot_imda ?? 60 }}%) | Hadir: {{ $row->detail_sem1['nilai_hadir'] ?? 100 }} [A:{{ $row->detail_sem1['alpha'] ?? 0 }}, I:{{ $row->detail_sem1['izin'] ?? 0 }}] ({{ $config->bobot_presensi ?? 24 }}%) | Disiplin: {{ $row->detail_sem1['nilai_pelanggaran'] ?? 100 }} [Poin: {{ $row->detail_sem1['poin_pelanggaran'] ?? 0 }}] ({{ $config->bobot_pelanggaran ?? 16 }}%)">
+                                        <div class="flex flex-col items-center">
+                                            <span>{{ $row->skor_sem1 ?: '-' }}</span>
+                                            @if (isset($row->detail_sem1))
+                                                <span
+                                                    class="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 tracking-tight">
+                                                    A:{{ $row->detail_sem1['alpha'] }}
+                                                    I:{{ $row->detail_sem1['izin'] }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </td>
 
                                     <!-- Sel Nilai Sem 2 -->
-                                    <td
-                                        class="py-2.5 px-3 text-center font-black text-zinc-700 dark:text-zinc-300 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
-                                        {{ $row->skor_sem2 ?: '-' }}
+                                    <td class="py-2.5 px-3 text-center font-black text-zinc-700 dark:text-zinc-300 border-r border-zinc-200/80 dark:border-zinc-800 align-middle"
+                                        title="Ujian: {{ $row->detail_sem2['rata_ujian'] ?? 0 }} ({{ $config->bobot_imda ?? 60 }}%) | Hadir: {{ $row->detail_sem2['nilai_hadir'] ?? 100 }} [A:{{ $row->detail_sem2['alpha'] ?? 0 }}, I:{{ $row->detail_sem2['izin'] ?? 0 }}] ({{ $config->bobot_presensi ?? 24 }}%) | Disiplin: {{ $row->detail_sem2['nilai_pelanggaran'] ?? 100 }} [Poin: {{ $row->detail_sem2['poin_pelanggaran'] ?? 0 }}] ({{ $config->bobot_pelanggaran ?? 16 }}%)">
+                                        <div class="flex flex-col items-center">
+                                            <span>{{ $row->skor_sem2 ?: '-' }}</span>
+                                            @if (isset($row->detail_sem2))
+                                                <span
+                                                    class="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 tracking-tight">
+                                                    A:{{ $row->detail_sem2['alpha'] }}
+                                                    I:{{ $row->detail_sem2['izin'] }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </td>
 
                                     <!-- Sel Akumulasi Final -->
@@ -216,7 +232,8 @@
                                     </td>
 
                                     <!-- Sel Rekomendasi -->
-                                    <td class="py-2.5 px-3.5 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
+                                    <td
+                                        class="py-2.5 px-3.5 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
                                         @if ($row->rekomendasi == 'Tinggal Kelas')
                                             <span
                                                 class="inline-flex items-center gap-1 text-[9px] font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/40 px-2 py-0.5 rounded uppercase tracking-wider">
@@ -236,7 +253,8 @@
                                     </td>
 
                                     <!-- Sel Kunci Keputusan -->
-                                    <td class="py-2.5 px-2.5 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
+                                    <td
+                                        class="py-2.5 px-2.5 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
                                         <select name="keputusan[{{ $row->murid->id }}]"
                                             onchange="ubahLevelTujuan(this, {{ $row->murid->id }}, {{ $levelSekarangId ?? 'null' }}, {{ $levelNaikId ?? 'null' }}, {{ $isTerminal ? 'true' : 'false' }})"
                                             {{ $row->sudah_dikunci ? 'disabled' : '' }}
@@ -257,7 +275,8 @@
                                     </td>
 
                                     <!-- Sel Level Tujuan -->
-                                    <td class="py-2.5 px-2.5 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
+                                    <td
+                                        class="py-2.5 px-2.5 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
                                         <select name="level_tujuan[{{ $row->murid->id }}]"
                                             id="level_tujuan_{{ $row->murid->id }}"
                                             {{ ($row->keputusan_final == 'Lulus' && $isTerminal) || $row->sudah_dikunci ? 'disabled' : '' }}
@@ -275,7 +294,8 @@
                                     </td>
 
                                     <!-- Sel Catatan -->
-                                    <td class="py-2.5 px-2.5 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
+                                    <td
+                                        class="py-2.5 px-2.5 border-r border-zinc-200/80 dark:border-zinc-800 align-middle">
                                         <input type="text" name="catatan[{{ $row->murid->id }}]"
                                             value="{{ $row->catatan }}" placeholder="Catatan..."
                                             {{ $row->sudah_dikunci ? 'disabled' : '' }}
@@ -375,11 +395,15 @@
                 }
 
                 if (status === 'Tinggal Kelas') {
-                    selectObj.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'bg-emerald-50/50', 'dark:bg-emerald-950/30', 'border-emerald-200/80', 'dark:border-emerald-800/40');
-                    selectObj.classList.add('text-rose-600', 'dark:text-rose-400', 'bg-rose-50/50', 'dark:bg-rose-950/30', 'border-rose-200/80', 'dark:border-rose-800/40');
+                    selectObj.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'bg-emerald-50/50',
+                        'dark:bg-emerald-950/30', 'border-emerald-200/80', 'dark:border-emerald-800/40');
+                    selectObj.classList.add('text-rose-600', 'dark:text-rose-400', 'bg-rose-50/50', 'dark:bg-rose-950/30',
+                        'border-rose-200/80', 'dark:border-rose-800/40');
                 } else {
-                    selectObj.classList.remove('text-rose-600', 'dark:text-rose-400', 'bg-rose-50/50', 'dark:bg-rose-950/30', 'border-rose-200/80', 'dark:border-rose-800/40');
-                    selectObj.classList.add('text-emerald-600', 'dark:text-emerald-400', 'bg-emerald-50/50', 'dark:bg-emerald-950/30', 'border-emerald-200/80', 'dark:border-emerald-800/40');
+                    selectObj.classList.remove('text-rose-600', 'dark:text-rose-400', 'bg-rose-50/50', 'dark:bg-rose-950/30',
+                        'border-rose-200/80', 'dark:border-rose-800/40');
+                    selectObj.classList.add('text-emerald-600', 'dark:text-emerald-400', 'bg-emerald-50/50',
+                        'dark:bg-emerald-950/30', 'border-emerald-200/80', 'dark:border-emerald-800/40');
                 }
             }
 
@@ -460,4 +484,3 @@
     @endif
 
 </x-app-layout>
-

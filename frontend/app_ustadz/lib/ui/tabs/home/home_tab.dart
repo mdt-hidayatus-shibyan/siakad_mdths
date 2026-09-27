@@ -149,7 +149,12 @@ class _HomeTabState extends State<HomeTab> {
           color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 100),
+            padding: EdgeInsets.fromLTRB(
+              18,
+              12,
+              18,
+              120 + MediaQuery.of(context).padding.bottom,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

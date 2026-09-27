@@ -184,7 +184,12 @@ class _DetailCatatanUstadzScreenState extends State<DetailCatatanUstadzScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
         physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

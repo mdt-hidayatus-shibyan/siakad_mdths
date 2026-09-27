@@ -86,7 +86,12 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
       ),
       color: primaryColor,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          120 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // ===================================================================
           // 1. FILTER RUANGAN KELAS & AGENDA UJIAN
@@ -105,11 +110,14 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
                       color: primaryColor,
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Pilih Ruangan & Agenda Ujian',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
+                    const Expanded(
+                      child: Text(
+                        'Pilih Ruangan & Agenda Ujian',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

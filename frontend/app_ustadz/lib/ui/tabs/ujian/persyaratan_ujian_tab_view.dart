@@ -374,7 +374,12 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
     return RefreshIndicator(
       onRefresh: () => provider.fetchData(),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 140),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          120 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // ===================================================================
           // 1. FILTER RUANGAN KELAS & AGENDA UJIAN
@@ -392,11 +397,14 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                       color: primaryColor,
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Pilih Ruangan Kelas & Agenda Ujian',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
+                    const Expanded(
+                      child: Text(
+                        'Pilih Ruangan Kelas & Agenda Ujian',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

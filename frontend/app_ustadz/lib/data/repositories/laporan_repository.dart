@@ -149,4 +149,64 @@ class LaporanRepository {
       throw Exception('Gagal memuat laporan presensi ustadz: ${e.message}');
     }
   }
+
+  /// Mengambil data laporan kenaikan kelas & kelulusan murid (khusus kelas binaan)
+  Future<LaporanKenaikanKelasData> getLaporanKenaikanKelas({
+    int? ruanganId,
+    int? tahunId,
+  }) async {
+    try {
+      final Map<String, dynamic> params = {};
+      if (ruanganId != null) params['ruangan_id'] = ruanganId;
+      if (tahunId != null) params['tahun_id'] = tahunId;
+
+      final response = await _client.dio.get(
+        ApiConstants.laporanKenaikanKelas,
+        queryParameters: params,
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return LaporanKenaikanKelasData.fromJson(response.data['data']);
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal memuat laporan kenaikan kelas',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal memuat laporan kenaikan kelas: ${e.message}');
+    }
+  }
+
+  /// Mengambil data laporan ujian & leger kelas (khusus kelas binaan / pengampu)
+  Future<LaporanUjianData> getLaporanUjian({
+    int? ruanganId,
+    int? ujianId,
+  }) async {
+    try {
+      final Map<String, dynamic> params = {};
+      if (ruanganId != null) params['ruangan_id'] = ruanganId;
+      if (ujianId != null) params['ujian_id'] = ujianId;
+
+      final response = await _client.dio.get(
+        ApiConstants.laporanUjian,
+        queryParameters: params,
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return LaporanUjianData.fromJson(response.data['data']);
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal memuat laporan ujian',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal memuat laporan ujian: ${e.message}');
+    }
+  }
 }

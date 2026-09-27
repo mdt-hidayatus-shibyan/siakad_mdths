@@ -169,11 +169,11 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
             const Center(child: Text('Tidak ada data murid di kelas ini.'))
           else
             ListView.builder(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 16,
                 12,
                 16,
-                125,
+                125 + MediaQuery.of(context).padding.bottom,
               ), // Bottom padding for sticky bar
               itemCount: presensi.muridList.length,
               itemBuilder: (context, index) {
@@ -357,7 +357,12 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                20 + MediaQuery.of(context).padding.bottom,
+              ),
               decoration: BoxDecoration(
                 color: isDark
                     ? const Color(0xF2000000)

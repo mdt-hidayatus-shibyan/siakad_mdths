@@ -39,6 +39,7 @@ class AppTheme {
           statusBarIconBrightness: Brightness.dark,
           systemNavigationBarColor: Colors.transparent,
           systemNavigationBarIconBrightness: Brightness.dark,
+          systemNavigationBarContrastEnforced: true,
         ),
       ),
       cardTheme: CardThemeData(
@@ -134,6 +135,7 @@ class AppTheme {
           statusBarIconBrightness: Brightness.light,
           systemNavigationBarColor: Colors.transparent,
           systemNavigationBarIconBrightness: Brightness.light,
+          systemNavigationBarContrastEnforced: true,
         ),
       ),
       cardTheme: CardThemeData(

@@ -61,7 +61,10 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
         left: 20,
         right: 20,
         top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom +
+            24,
       ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF161E16) : Colors.white,

@@ -85,8 +85,13 @@ class RiwayatKenaikanController extends Controller
                     ? $semuaUjianTahunIni->where('tipe_ujian', 'IMNI')->pluck('id')->toArray()
                     : $semuaUjianTahunIni->where('tipe_ujian', 'IMDA 2')->pluck('id')->toArray();
 
-                // 👇 PERBAIKAN 1: Filter Bulan Hijriyah berdasarkan tahun pelajaran & hapus with('semester')
-                $semuaBulanHijriyah = BulanHijriyah::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
+                $semesters = \App\Models\Semester::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
+                $sem1 = $semesters->first(fn($s) => str_contains($s->nama_semester, '1') || str_contains(strtolower($s->nama_semester), 'ganjil'));
+                $sem2 = $semesters->first(fn($s) => str_contains($s->nama_semester, '2') || str_contains(strtolower($s->nama_semester), 'genap'));
+
+                $semuaBulanHijriyah = BulanHijriyah::where('tahun_pelajaran_id', $tahunPelajaranId)->orderBy('urutan', 'asc')->get();
+                $bulanSem1 = $semuaBulanHijriyah->filter(fn($b) => $b->urutan <= 5);
+                $bulanSem2 = $semuaBulanHijriyah->filter(fn($b) => $b->urutan > 5);
 
                 $muridIds = $ruanganTerpilih->murids->pluck('id');
                 $semuaPresensiKamar = PresensiMurid::whereIn('murid_id', $muridIds)->get();
@@ -113,12 +118,10 @@ class RiwayatKenaikanController extends Controller
                     // =========================================================
                     $rataUjian1 = $nilaiMurid->whereIn('ujian_id', $idDauri1)->avg('nilai') ?? 0;
 
-                    $presensiSem1 = $presensiMuridIni->filter(function ($p) use ($semuaBulanHijriyah) {
-                        $bulan = $semuaBulanHijriyah->first(function ($b) use ($p) {
-                            return $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi;
-                        });
-                        // 👇 PERBAIKAN 2: Cek langsung ke string/enum kolom 'semester'
-                        return $bulan && in_array((string)$bulan->semester, ['1', 'Ganjil', 'Semester 1']);
+                    $presensiSem1 = $presensiMuridIni->filter(function ($p) use ($sem1, $bulanSem1) {
+                        return ($sem1 && $p->semester_id == $sem1->id)
+                            || ($sem1 && $sem1->tanggal_mulai && $sem1->tanggal_selesai && $p->tanggal >= substr($sem1->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem1->tanggal_selesai, 0, 10))
+                            || ($bulanSem1->isNotEmpty() && $bulanSem1->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
                     });
 
                     // Hitung riil jumlah Alpha dan Izin Semester 1
@@ -127,15 +130,11 @@ class RiwayatKenaikanController extends Controller
 
                     $poinKehadiran1 = ($jumlahAlpha1 * $tarifAlpha) + ($jumlahIzin1 * $tarifIzin);
 
-                    $poinPelanggaran1 = $pelanggaranMuridIni->filter(function ($p) use ($semuaBulanHijriyah) {
-                        $bulan = $semuaBulanHijriyah->first(function ($b) use ($p) {
-                            return $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi;
-                        });
-                        // 👇 PERBAIKAN 3: Cek langsung ke string/enum kolom 'semester'
-                        return $bulan && in_array((string)$bulan->semester, ['1', 'Ganjil', 'Semester 1']);
-                    })->sum(function ($p) {
-                        return $p->referensiPelanggaran->poin ?? 0;
+                    $pelanggaranSem1 = $pelanggaranMuridIni->filter(function ($p) use ($sem1, $bulanSem1) {
+                        return ($sem1 && $sem1->tanggal_mulai && $sem1->tanggal_selesai && $p->tanggal >= substr($sem1->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem1->tanggal_selesai, 0, 10))
+                            || ($bulanSem1->isNotEmpty() && $bulanSem1->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
                     });
+                    $poinPelanggaran1 = $pelanggaranSem1->sum(fn($p) => (float)($p->referensiPelanggaran->poin ?? 0));
 
                     $nilaiHadir1 = max(0, ((15 - $poinKehadiran1) / 15) * 100);
                     $nilaiPelanggaran1 = max(0, ((30 - $poinPelanggaran1) / 30) * 100);
@@ -146,12 +145,10 @@ class RiwayatKenaikanController extends Controller
                     // =========================================================
                     $rataUjian2 = $nilaiMurid->whereIn('ujian_id', $idUjianSem2)->avg('nilai') ?? 0;
 
-                    $presensiSem2 = $presensiMuridIni->filter(function ($p) use ($semuaBulanHijriyah) {
-                        $bulan = $semuaBulanHijriyah->first(function ($b) use ($p) {
-                            return $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi;
-                        });
-                        // 👇 PERBAIKAN 4: Cek langsung ke string/enum kolom 'semester'
-                        return $bulan && in_array((string)$bulan->semester, ['2', 'Genap', 'Semester 2']);
+                    $presensiSem2 = $presensiMuridIni->filter(function ($p) use ($sem2, $bulanSem2) {
+                        return ($sem2 && $p->semester_id == $sem2->id)
+                            || ($sem2 && $sem2->tanggal_mulai && $sem2->tanggal_selesai && $p->tanggal >= substr($sem2->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem2->tanggal_selesai, 0, 10))
+                            || ($bulanSem2->isNotEmpty() && $bulanSem2->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
                     });
 
                     $jumlahAlpha2 = $presensiSem2->where('status', 'Alpha')->count();
@@ -159,15 +156,11 @@ class RiwayatKenaikanController extends Controller
 
                     $poinKehadiran2 = ($jumlahAlpha2 * $tarifAlpha) + ($jumlahIzin2 * $tarifIzin);
 
-                    $poinPelanggaran2 = $pelanggaranMuridIni->filter(function ($p) use ($semuaBulanHijriyah) {
-                        $bulan = $semuaBulanHijriyah->first(function ($b) use ($p) {
-                            return $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi;
-                        });
-                        // 👇 PERBAIKAN 5: Cek langsung ke string/enum kolom 'semester'
-                        return $bulan && in_array((string)$bulan->semester, ['2', 'Genap', 'Semester 2']);
-                    })->sum(function ($p) {
-                        return $p->referensiPelanggaran->poin ?? 0;
+                    $pelanggaranSem2 = $pelanggaranMuridIni->filter(function ($p) use ($sem2, $bulanSem2) {
+                        return ($sem2 && $sem2->tanggal_mulai && $sem2->tanggal_selesai && $p->tanggal >= substr($sem2->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem2->tanggal_selesai, 0, 10))
+                            || ($bulanSem2->isNotEmpty() && $bulanSem2->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
                     });
+                    $poinPelanggaran2 = $pelanggaranSem2->sum(fn($p) => (float)($p->referensiPelanggaran->poin ?? 0));
 
                     $nilaiHadir2 = max(0, ((15 - $poinKehadiran2) / 15) * 100);
                     $nilaiPelanggaran2 = max(0, ((30 - $poinPelanggaran2) / 30) * 100);
@@ -210,7 +203,25 @@ class RiwayatKenaikanController extends Controller
                         'level_tujuan_id' => $levelTujuanId,
                         'catatan' => $riwayatExisting ? $riwayatExisting->catatan_wali_kelas : '',
                         'sudah_dikunci' => $riwayatExisting ? true : false,
-                        'detail' => "Sem 1 (Poin Lgg: $poinPelanggaran1) | Sem 2 (Poin Lgg: $poinPelanggaran2)"
+                        'detail' => "Sem 1 (Ujian: " . round($rataUjian1, 1) . ", Hadir: " . round($nilaiHadir1, 1) . ", Lgg: " . round($poinPelanggaran1, 1) . ") | Sem 2 (Ujian: " . round($rataUjian2, 1) . ", Hadir: " . round($nilaiHadir2, 1) . ", Lgg: " . round($poinPelanggaran2, 1) . ")",
+                        'detail_sem1' => [
+                            'rata_ujian' => round($rataUjian1, 2),
+                            'alpha' => $jumlahAlpha1,
+                            'izin' => $jumlahIzin1,
+                            'poin_hadir' => round($poinKehadiran1, 2),
+                            'nilai_hadir' => round($nilaiHadir1, 2),
+                            'poin_pelanggaran' => round($poinPelanggaran1, 2),
+                            'nilai_pelanggaran' => round($nilaiPelanggaran1, 2),
+                        ],
+                        'detail_sem2' => [
+                            'rata_ujian' => round($rataUjian2, 2),
+                            'alpha' => $jumlahAlpha2,
+                            'izin' => $jumlahIzin2,
+                            'poin_hadir' => round($poinKehadiran2, 2),
+                            'nilai_hadir' => round($nilaiHadir2, 2),
+                            'poin_pelanggaran' => round($poinPelanggaran2, 2),
+                            'nilai_pelanggaran' => round($nilaiPelanggaran2, 2),
+                        ],
                     ]);
                 }
             }

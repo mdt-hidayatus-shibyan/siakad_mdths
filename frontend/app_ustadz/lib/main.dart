@@ -29,13 +29,13 @@ void main() async {
   // Inisialisasi awal SharedPreferences & In-Memory Cache
   await StorageService.init();
 
-  // Enforce Android 17 Full Edge-to-Edge System Bar Transparency
+  // Enforce Android Full Edge-to-Edge System Bar with Contrast Enforcement for 3-button Nav
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarContrastEnforced: false,
+      systemNavigationBarContrastEnforced: true,
     ),
   );
 

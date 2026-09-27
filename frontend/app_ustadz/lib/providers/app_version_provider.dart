@@ -1,45 +1,19 @@
 import 'package:flutter/material.dart';
-import '../core/constants/api_constants.dart';
-import '../core/network/api_client.dart';
 import '../data/models/app_version_model.dart';
 
+/// Provider versi aplikasi mandiri (local source of truth)
+/// Tidak melakukan request ke API server agar versi yang ditampilkan
+/// selalu sesuai 100% dengan build aplikasi yang sedang terpasang di HP.
 class AppVersionProvider extends ChangeNotifier {
-  final ApiClient _client = ApiClient();
-
-  AppVersionModel _appVersion = AppVersionModel.fromConfigFallback();
-  bool _isLoading = false;
-  String? _errorMessage;
+  AppVersionModel _appVersion = AppVersionModel.fromConfig();
 
   AppVersionModel get appVersion => _appVersion;
-  bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  bool get isLoading => false;
+  String? get errorMessage => null;
 
-  /// Ambil data versi & changelog aplikasi dari Backend API
+  /// Memuat ulang data konfigurasi versi lokal jika dipanggil
   Future<void> fetchAppVersion({bool refresh = false}) async {
-    if (_isLoading) return;
-
-    _isLoading = true;
-    _errorMessage = null;
+    _appVersion = AppVersionModel.fromConfig();
     notifyListeners();
-
-    try {
-      final response = await _client.dio.get(
-        ApiConstants.appVersion,
-        queryParameters: {'app': 'ustadz'},
-      );
-
-      if (response.data != null && response.data['success'] == true) {
-        final data = response.data['data'];
-        if (data is Map<String, dynamic>) {
-          _appVersion = AppVersionModel.fromJson(data);
-        }
-      }
-    } catch (e) {
-      // Jika terjadi kendala jaringan / offline, tetap gunakan data fallback
-      _errorMessage = 'Gagal menyinkronkan data versi terbaru dari server.';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
   }
 }

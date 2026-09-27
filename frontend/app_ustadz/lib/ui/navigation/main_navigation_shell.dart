@@ -95,110 +95,113 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       isDismissible: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white24 : Colors.black12,
-                  borderRadius: BorderRadius.circular(2),
+        return SafeArea(
+          top: false,
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color:
-                      (isJam1
-                              ? const Color(0xFF0284C7)
-                              : const Color(0xFFD97706))
-                          .withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.notifications_active_rounded,
-                  color: isJam1
-                      ? const Color(0xFF0284C7)
-                      : const Color(0xFFD97706),
-                  size: 36,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                event.title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                event.description,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white70 : Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () {
-                        BellService.instance.stopSound();
-                        Navigator.pop(ctx);
-                      },
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      label: const Text('Tutup'),
-                    ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () {
-                        BellService.instance.stopSound();
-                        Navigator.pop(ctx);
-                        _onTabSelected(1);
-                      },
-                      icon: const Icon(Icons.how_to_reg_rounded, size: 18),
-                      label: const Text('Buka Presensi'),
-                    ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color:
+                        (isJam1
+                                ? const Color(0xFF0284C7)
+                                : const Color(0xFFD97706))
+                            .withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
                   ),
-                ],
-              ),
-            ],
+                  child: Icon(
+                    Icons.notifications_active_rounded,
+                    color: isJam1
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFFD97706),
+                    size: 36,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  event.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  event.description,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () {
+                          BellService.instance.stopSound();
+                          Navigator.pop(ctx);
+                        },
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        label: const Text('Tutup'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () {
+                          BellService.instance.stopSound();
+                          Navigator.pop(ctx);
+                          _onTabSelected(1);
+                        },
+                        icon: const Icon(Icons.how_to_reg_rounded, size: 18),
+                        label: const Text('Buka Presensi'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -217,13 +220,17 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final isThreeButtonNav = bottomInset > 24;
 
     return Scaffold(
       extendBody: true, // Content flows smoothly behind floating navigation
       body: IndexedStack(index: _currentIndex, children: _tabs),
       bottomNavigationBar: SafeArea(
+        top: false,
+        bottom: true,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: EdgeInsets.fromLTRB(16, 0, 16, isThreeButtonNav ? 6 : 12),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(32),

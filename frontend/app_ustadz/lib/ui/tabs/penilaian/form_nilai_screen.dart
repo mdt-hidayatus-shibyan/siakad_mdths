@@ -368,7 +368,12 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
             )
           else
             ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                110 + MediaQuery.of(context).padding.bottom,
+              ),
               itemCount: nilai.muridNilaiList.length,
               itemBuilder: (context, index) {
                 final murid = nilai.muridNilaiList[index];
@@ -393,7 +398,7 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
             Positioned(
               left: 16,
               right: 16,
-              bottom: 16,
+              bottom: 16 + MediaQuery.of(context).padding.bottom,
               child: GlassCard(
                 padding: const EdgeInsets.all(12),
                 child: Row(

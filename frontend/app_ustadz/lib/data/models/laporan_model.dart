@@ -747,3 +747,512 @@ class LaporanPresensiUstadzData {
     );
   }
 }
+
+// =========================================================================
+// 4. LAPORAN KENAIKAN KELAS & KELULUSAN MODELS
+// =========================================================================
+
+class TahunFilterItem {
+  final int id;
+  final String namaLengkap;
+  final String namaHijriyah;
+  final String namaMasehi;
+  final bool isActive;
+
+  const TahunFilterItem({
+    required this.id,
+    required this.namaLengkap,
+    required this.namaHijriyah,
+    required this.namaMasehi,
+    required this.isActive,
+  });
+
+  factory TahunFilterItem.fromJson(Map<String, dynamic> json) {
+    return TahunFilterItem(
+      id: json['id'] ?? 0,
+      namaLengkap: json['nama_lengkap'] ?? '',
+      namaHijriyah: json['nama_hijriyah'] ?? '',
+      namaMasehi: json['nama_masehi'] ?? '',
+      isActive: json['is_active'] == true || json['is_active'] == 1,
+    );
+  }
+}
+
+class DetailPerhitunganKenaikan {
+  final int bobotUjian;
+  final int bobotPresensi;
+  final int bobotPelanggaran;
+  final double tarifAlpha;
+  final double tarifIzin;
+  final double rataUjianSem1;
+  final double rataUjianSem2;
+  final int jumlahAlphaSem1;
+  final int jumlahIzinSem1;
+  final double poinPresensiSem1;
+  final double nilaiPresensiSem1;
+  final int jumlahAlphaSem2;
+  final int jumlahIzinSem2;
+  final double poinPresensiSem2;
+  final double nilaiPresensiSem2;
+  final double poinPelanggaranSem1;
+  final double nilaiPelanggaranSem1;
+  final double poinPelanggaranSem2;
+  final double nilaiPelanggaranSem2;
+
+  const DetailPerhitunganKenaikan({
+    required this.bobotUjian,
+    required this.bobotPresensi,
+    required this.bobotPelanggaran,
+    this.tarifAlpha = 0.50,
+    this.tarifIzin = 0.16,
+    required this.rataUjianSem1,
+    required this.rataUjianSem2,
+    this.jumlahAlphaSem1 = 0,
+    this.jumlahIzinSem1 = 0,
+    this.poinPresensiSem1 = 0.0,
+    this.nilaiPresensiSem1 = 100.0,
+    this.jumlahAlphaSem2 = 0,
+    this.jumlahIzinSem2 = 0,
+    this.poinPresensiSem2 = 0.0,
+    this.nilaiPresensiSem2 = 100.0,
+    required this.poinPelanggaranSem1,
+    this.nilaiPelanggaranSem1 = 100.0,
+    required this.poinPelanggaranSem2,
+    this.nilaiPelanggaranSem2 = 100.0,
+  });
+
+  factory DetailPerhitunganKenaikan.fromJson(Map<String, dynamic> json) {
+    return DetailPerhitunganKenaikan(
+      bobotUjian: json['bobot_ujian'] ?? 60,
+      bobotPresensi: json['bobot_presensi'] ?? 24,
+      bobotPelanggaran: json['bobot_pelanggaran'] ?? 16,
+      tarifAlpha: (json['tarif_alpha'] is num)
+          ? (json['tarif_alpha'] as num).toDouble()
+          : 0.50,
+      tarifIzin: (json['tarif_izin'] is num)
+          ? (json['tarif_izin'] as num).toDouble()
+          : 0.16,
+      rataUjianSem1: (json['rata_ujian_sem1'] is num)
+          ? (json['rata_ujian_sem1'] as num).toDouble()
+          : 0.0,
+      rataUjianSem2: (json['rata_ujian_sem2'] is num)
+          ? (json['rata_ujian_sem2'] as num).toDouble()
+          : 0.0,
+      jumlahAlphaSem1: json['jumlah_alpha_sem1'] ?? 0,
+      jumlahIzinSem1: json['jumlah_izin_sem1'] ?? 0,
+      poinPresensiSem1: (json['poin_presensi_sem1'] is num)
+          ? (json['poin_presensi_sem1'] as num).toDouble()
+          : 0.0,
+      nilaiPresensiSem1: (json['nilai_presensi_sem1'] is num)
+          ? (json['nilai_presensi_sem1'] as num).toDouble()
+          : 100.0,
+      jumlahAlphaSem2: json['jumlah_alpha_sem2'] ?? 0,
+      jumlahIzinSem2: json['jumlah_izin_sem2'] ?? 0,
+      poinPresensiSem2: (json['poin_presensi_sem2'] is num)
+          ? (json['poin_presensi_sem2'] as num).toDouble()
+          : 0.0,
+      nilaiPresensiSem2: (json['nilai_presensi_sem2'] is num)
+          ? (json['nilai_presensi_sem2'] as num).toDouble()
+          : 100.0,
+      poinPelanggaranSem1: (json['poin_pelanggaran_sem1'] is num)
+          ? (json['poin_pelanggaran_sem1'] as num).toDouble()
+          : 0.0,
+      nilaiPelanggaranSem1: (json['nilai_pelanggaran_sem1'] is num)
+          ? (json['nilai_pelanggaran_sem1'] as num).toDouble()
+          : 100.0,
+      poinPelanggaranSem2: (json['poin_pelanggaran_sem2'] is num)
+          ? (json['poin_pelanggaran_sem2'] as num).toDouble()
+          : 0.0,
+      nilaiPelanggaranSem2: (json['nilai_pelanggaran_sem2'] is num)
+          ? (json['nilai_pelanggaran_sem2'] as num).toDouble()
+          : 100.0,
+    );
+  }
+}
+
+class MuridKenaikanItem {
+  final int muridId;
+  final String nama;
+  final String nism;
+  final String jenisKelamin;
+  final String? foto;
+  final String wali;
+  final double skorSem1;
+  final double skorSem2;
+  final double nilaiAkumulasi;
+  final String rekomendasi;
+  final String keputusanFinal;
+  final String levelTujuanNama;
+  final String catatan;
+  final bool sudahDikunci;
+  final DetailPerhitunganKenaikan? detailPerhitungan;
+
+  const MuridKenaikanItem({
+    required this.muridId,
+    required this.nama,
+    required this.nism,
+    required this.jenisKelamin,
+    this.foto,
+    required this.wali,
+    required this.skorSem1,
+    required this.skorSem2,
+    required this.nilaiAkumulasi,
+    required this.rekomendasi,
+    required this.keputusanFinal,
+    required this.levelTujuanNama,
+    required this.catatan,
+    required this.sudahDikunci,
+    this.detailPerhitungan,
+  });
+
+  factory MuridKenaikanItem.fromJson(Map<String, dynamic> json) {
+    return MuridKenaikanItem(
+      muridId: json['murid_id'] ?? 0,
+      nama: json['nama'] ?? '',
+      nism: json['nism'] ?? '',
+      jenisKelamin: json['jenis_kelamin'] ?? 'L',
+      foto: json['foto'],
+      wali: json['wali'] ?? '-',
+      skorSem1: (json['skor_sem1'] is num)
+          ? (json['skor_sem1'] as num).toDouble()
+          : 0.0,
+      skorSem2: (json['skor_sem2'] is num)
+          ? (json['skor_sem2'] as num).toDouble()
+          : 0.0,
+      nilaiAkumulasi: (json['nilai_akumulasi'] is num)
+          ? (json['nilai_akumulasi'] as num).toDouble()
+          : 0.0,
+      rekomendasi: json['rekomendasi'] ?? 'Tinggal Kelas',
+      keputusanFinal:
+          json['keputusan_final'] ?? json['rekomendasi'] ?? 'Tinggal Kelas',
+      levelTujuanNama: json['level_tujuan_nama'] ?? '-',
+      catatan: json['catatan'] ?? '',
+      sudahDikunci: json['sudah_dikunci'] == true || json['sudah_dikunci'] == 1,
+      detailPerhitungan: json['detail_perhitungan'] != null
+          ? DetailPerhitunganKenaikan.fromJson(json['detail_perhitungan'])
+          : null,
+    );
+  }
+}
+
+class BobotKonfigurasiKenaikan {
+  final int bobotUjian;
+  final int bobotPresensi;
+  final int bobotPelanggaran;
+  final double kkm;
+
+  const BobotKonfigurasiKenaikan({
+    required this.bobotUjian,
+    required this.bobotPresensi,
+    required this.bobotPelanggaran,
+    this.kkm = 55.0,
+  });
+
+  factory BobotKonfigurasiKenaikan.fromJson(Map<String, dynamic> json) {
+    return BobotKonfigurasiKenaikan(
+      bobotUjian: json['bobot_ujian'] ?? 60,
+      bobotPresensi: json['bobot_presensi'] ?? 24,
+      bobotPelanggaran: json['bobot_pelanggaran'] ?? 16,
+      kkm: (json['kkm'] is num) ? (json['kkm'] as num).toDouble() : 55.0,
+    );
+  }
+}
+
+class LaporanKenaikanKelasData {
+  final int ruanganId;
+  final String namaRuangan;
+  final String levelNama;
+  final bool isKelasAkhir;
+  final bool isWaliRuangan;
+  final String waliRuanganNama;
+  final int tahunPelajaranId;
+  final String tahunPelajaran;
+  final List<TahunFilterItem> tahunList;
+  final int totalMurid;
+  final int totalNaikKelas;
+  final int totalLulus;
+  final int totalTinggalKelas;
+  final double kkm;
+  final List<RuanganFilterItem> ruanganList;
+  final BobotKonfigurasiKenaikan bobotKonfigurasi;
+  final List<MuridKenaikanItem> dataKenaikan;
+
+  const LaporanKenaikanKelasData({
+    required this.ruanganId,
+    required this.namaRuangan,
+    required this.levelNama,
+    this.isKelasAkhir = false,
+    this.isWaliRuangan = true,
+    required this.waliRuanganNama,
+    required this.tahunPelajaranId,
+    required this.tahunPelajaran,
+    required this.tahunList,
+    required this.totalMurid,
+    required this.totalNaikKelas,
+    required this.totalLulus,
+    required this.totalTinggalKelas,
+    this.kkm = 55.0,
+    required this.ruanganList,
+    required this.bobotKonfigurasi,
+    required this.dataKenaikan,
+  });
+
+  factory LaporanKenaikanKelasData.fromJson(Map<String, dynamic> json) {
+    final tList = json['tahun_list'] as List? ?? [];
+    final rList = json['ruangan_list'] as List? ?? [];
+    final kList = json['data_kenaikan'] as List? ?? [];
+
+    return LaporanKenaikanKelasData(
+      ruanganId: json['ruangan_id'] ?? 0,
+      namaRuangan: json['nama_ruangan'] ?? '',
+      levelNama: json['level_nama'] ?? '-',
+      isKelasAkhir:
+          json['is_kelas_akhir'] == true || json['is_kelas_akhir'] == 1,
+      isWaliRuangan:
+          json['is_wali_ruangan'] == true || json['is_wali_ruangan'] == 1,
+      waliRuanganNama: json['wali_ruangan_nama'] ?? '-',
+      tahunPelajaranId: json['tahun_pelajaran_id'] ?? 0,
+      tahunPelajaran: json['tahun_pelajaran'] ?? '',
+      tahunList: tList.map((e) => TahunFilterItem.fromJson(e)).toList(),
+      totalMurid: json['total_murid'] ?? 0,
+      totalNaikKelas: json['total_naik_kelas'] ?? 0,
+      totalLulus: json['total_lulus'] ?? 0,
+      totalTinggalKelas: json['total_tinggal_kelas'] ?? 0,
+      kkm: (json['kkm'] is num) ? (json['kkm'] as num).toDouble() : 55.0,
+      ruanganList: rList.map((e) => RuanganFilterItem.fromJson(e)).toList(),
+      bobotKonfigurasi: json['bobot_konfigurasi'] != null
+          ? BobotKonfigurasiKenaikan.fromJson(json['bobot_konfigurasi'])
+          : const BobotKonfigurasiKenaikan(
+              bobotUjian: 60,
+              bobotPresensi: 24,
+              bobotPelanggaran: 16,
+            ),
+      dataKenaikan: kList.map((e) => MuridKenaikanItem.fromJson(e)).toList(),
+    );
+  }
+}
+
+// =========================================================================
+// 6. LAPORAN UJIAN & LEGER KELAS MODELS
+// =========================================================================
+
+class UjianFilterItem {
+  final int id;
+  final String namaUjian;
+  final String tipeUjian;
+  final String semester;
+
+  const UjianFilterItem({
+    required this.id,
+    required this.namaUjian,
+    required this.tipeUjian,
+    this.semester = '-',
+  });
+
+  factory UjianFilterItem.fromJson(Map<String, dynamic> json) {
+    return UjianFilterItem(
+      id: json['id'] ?? 0,
+      namaUjian: json['nama_ujian'] ?? '',
+      tipeUjian: json['tipe_ujian'] ?? 'IMDA',
+      semester: json['semester'] ?? '-',
+    );
+  }
+}
+
+class MapelHeaderItem {
+  final int id;
+  final int? mapelId;
+  final String namaMapel;
+  final String? kodeMapel;
+  final double kkm;
+
+  const MapelHeaderItem({
+    required this.id,
+    this.mapelId,
+    required this.namaMapel,
+    this.kodeMapel,
+    this.kkm = 60.0,
+  });
+
+  factory MapelHeaderItem.fromJson(Map<String, dynamic> json) {
+    return MapelHeaderItem(
+      id: json['id'] ?? 0,
+      mapelId: json['mapel_id'],
+      namaMapel: json['nama_mapel'] ?? '',
+      kodeMapel: json['kode_mapel'],
+      kkm: (json['kkm'] is num) ? (json['kkm'] as num).toDouble() : 60.0,
+    );
+  }
+}
+
+class NilaiMapelMuridItem {
+  final int jadwalId;
+  final int mapelId;
+  final String namaMapel;
+  final double? nilai;
+  final bool isPublished;
+
+  const NilaiMapelMuridItem({
+    required this.jadwalId,
+    required this.mapelId,
+    required this.namaMapel,
+    this.nilai,
+    this.isPublished = false,
+  });
+
+  factory NilaiMapelMuridItem.fromJson(Map<String, dynamic> json) {
+    return NilaiMapelMuridItem(
+      jadwalId: json['jadwal_id'] ?? json['mapel_id'] ?? 0,
+      mapelId: json['mapel_id'] ?? 0,
+      namaMapel: json['nama_mapel'] ?? '',
+      nilai: (json['nilai'] is num) ? (json['nilai'] as num).toDouble() : null,
+      isPublished: json['is_published'] == true || json['is_published'] == 1,
+    );
+  }
+}
+
+class MuridRekapUjianItem {
+  final int muridId;
+  final String nama;
+  final String nism;
+  final String jenisKelamin;
+  final String? foto;
+  final String wali;
+  final double totalNilai;
+  final double rataRata;
+  final int ranking;
+  final String predikat;
+  final String statusTuntas;
+  final int jumlahMapelDiikuti;
+  final int totalMapel;
+  final List<NilaiMapelMuridItem> mapelNilai;
+
+  const MuridRekapUjianItem({
+    required this.muridId,
+    required this.nama,
+    required this.nism,
+    required this.jenisKelamin,
+    this.foto,
+    required this.wali,
+    required this.totalNilai,
+    required this.rataRata,
+    required this.ranking,
+    required this.predikat,
+    required this.statusTuntas,
+    required this.jumlahMapelDiikuti,
+    required this.totalMapel,
+    required this.mapelNilai,
+  });
+
+  factory MuridRekapUjianItem.fromJson(Map<String, dynamic> json) {
+    final list = json['mapel_nilai'] as List? ?? [];
+    return MuridRekapUjianItem(
+      muridId: json['murid_id'] ?? 0,
+      nama: json['nama'] ?? '',
+      nism: json['nism'] ?? '',
+      jenisKelamin: json['jenis_kelamin'] ?? 'L',
+      foto: json['foto'],
+      wali: json['wali'] ?? '-',
+      totalNilai: (json['total_nilai'] is num)
+          ? (json['total_nilai'] as num).toDouble()
+          : 0.0,
+      rataRata: (json['rata_rata'] is num)
+          ? (json['rata_rata'] as num).toDouble()
+          : 0.0,
+      ranking: json['ranking'] ?? 0,
+      predikat: json['predikat'] ?? 'E',
+      statusTuntas: json['status_tuntas'] ?? 'Belum Tuntas',
+      jumlahMapelDiikuti: json['jumlah_mapel_diikuti'] ?? 0,
+      totalMapel: json['total_mapel'] ?? 0,
+      mapelNilai: list.map((e) => NilaiMapelMuridItem.fromJson(e)).toList(),
+    );
+  }
+}
+
+class LaporanUjianData {
+  final int ruanganId;
+  final String namaRuangan;
+  final String levelNama;
+  final bool isWaliRuangan;
+  final String waliRuanganNama;
+  final bool isKelasAkhir;
+  final UjianFilterItem? ujian;
+  final String tahunPelajaran;
+  final int totalMurid;
+  final int totalMapel;
+  final double rataRataKelas;
+  final double nilaiTertinggi;
+  final double nilaiTerendah;
+  final double persentaseTuntas;
+  final int jumlahTuntas;
+  final int jumlahBelumTuntas;
+  final List<UjianFilterItem> daftarUjian;
+  final List<RuanganFilterItem> ruanganList;
+  final List<MapelHeaderItem> mapelHeader;
+  final List<MuridRekapUjianItem> rekapMurid;
+
+  const LaporanUjianData({
+    required this.ruanganId,
+    required this.namaRuangan,
+    required this.levelNama,
+    this.isWaliRuangan = true,
+    required this.waliRuanganNama,
+    this.isKelasAkhir = false,
+    this.ujian,
+    required this.tahunPelajaran,
+    required this.totalMurid,
+    required this.totalMapel,
+    required this.rataRataKelas,
+    required this.nilaiTertinggi,
+    required this.nilaiTerendah,
+    required this.persentaseTuntas,
+    required this.jumlahTuntas,
+    required this.jumlahBelumTuntas,
+    required this.daftarUjian,
+    required this.ruanganList,
+    required this.mapelHeader,
+    required this.rekapMurid,
+  });
+
+  factory LaporanUjianData.fromJson(Map<String, dynamic> json) {
+    final dUjian = json['daftar_ujian'] as List? ?? [];
+    final rList = json['ruangan_list'] as List? ?? [];
+    final mHeader = json['mapel_header'] as List? ?? [];
+    final rMurid = json['rekap_murid'] as List? ?? [];
+
+    return LaporanUjianData(
+      ruanganId: json['ruangan_id'] ?? 0,
+      namaRuangan: json['nama_ruangan'] ?? '',
+      levelNama: json['level_nama'] ?? '-',
+      isWaliRuangan:
+          json['is_wali_ruangan'] == true || json['is_wali_ruangan'] == 1,
+      waliRuanganNama: json['wali_ruangan_nama'] ?? '-',
+      isKelasAkhir:
+          json['is_kelas_akhir'] == true || json['is_kelas_akhir'] == 1,
+      ujian: json['ujian'] != null
+          ? UjianFilterItem.fromJson(json['ujian'])
+          : null,
+      tahunPelajaran: json['tahun_pelajaran'] ?? '',
+      totalMurid: json['total_murid'] ?? 0,
+      totalMapel: json['total_mapel'] ?? mHeader.length,
+      rataRataKelas: (json['rata_rata_kelas'] is num)
+          ? (json['rata_rata_kelas'] as num).toDouble()
+          : 0.0,
+      nilaiTertinggi: (json['nilai_tertinggi'] is num)
+          ? (json['nilai_tertinggi'] as num).toDouble()
+          : 0.0,
+      nilaiTerendah: (json['nilai_terendah'] is num)
+          ? (json['nilai_terendah'] as num).toDouble()
+          : 0.0,
+      persentaseTuntas: (json['persentase_tuntas'] is num)
+          ? (json['persentase_tuntas'] as num).toDouble()
+          : 0.0,
+      jumlahTuntas: json['jumlah_tuntas'] ?? 0,
+      jumlahBelumTuntas: json['jumlah_belum_tuntas'] ?? 0,
+      daftarUjian: dUjian.map((e) => UjianFilterItem.fromJson(e)).toList(),
+      ruanganList: rList.map((e) => RuanganFilterItem.fromJson(e)).toList(),
+      mapelHeader: mHeader.map((e) => MapelHeaderItem.fromJson(e)).toList(),
+      rekapMurid: rMurid.map((e) => MuridRekapUjianItem.fromJson(e)).toList(),
+    );
+  }
+}

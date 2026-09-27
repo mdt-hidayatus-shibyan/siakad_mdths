@@ -120,7 +120,12 @@ class _DetailTabunganScreenState extends State<DetailTabunganScreen> {
               ),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  12,
+                  16,
+                  90 + MediaQuery.of(context).padding.bottom,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

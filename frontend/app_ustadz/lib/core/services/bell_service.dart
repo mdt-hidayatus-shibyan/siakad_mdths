@@ -13,6 +13,7 @@ import '../../data/models/akademik_model.dart';
 import '../utils/haptic_helper.dart';
 import 'system_settings_service.dart';
 
+/// Model payload untuk event bel masuk
 class BellEvent {
   final int jam; // 1 = Jam Pertama, 2 = Jam Kedua
   final String title;
@@ -29,6 +30,7 @@ class BellEvent {
   });
 }
 
+/// Service terpadu pengingat bel masuk KBM, alarm presisi, audio stream alarm, dan perizinan sistem.
 class BellService {
   static final BellService instance = BellService._internal();
   BellService._internal();
@@ -38,6 +40,7 @@ class BellService {
       FlutterLocalNotificationsPlugin();
   Timer? _timer;
 
+  // Preference Keys
   static const String _keyEnabled = 'bell_enabled';
   static const String _keyJam1 = 'bell_jam1';
   static const String _keyJam2 = 'bell_jam2';
@@ -46,27 +49,29 @@ class BellService {
   static const String _keyOnlyTeachingDays = 'bell_only_teaching_days';
   static const String _keyTeachingSchedule = 'bell_teaching_schedule';
 
-  static const String _channelId = 'mdths_kbm_bell_channel_v4';
+  // Android Notification Channel
+  static const String _channelId = 'mdths_kbm_bell_channel_v6';
   static const String _channelName = 'Bel Masuk KBM MDTHS';
   static const String _channelDesc =
       'Notifikasi jadwal bel masuk jam pertama dan jam kedua';
 
+  static const List<String> _dayNames = [
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+    'Ahad',
+  ];
+
+  // State
   bool _isEnabled = true;
-  bool _onlyOnTeachingDays =
-      true; // Default true: Hanya berbunyi jika ustadz memiliki jadwal mengajar
+  bool _onlyOnTeachingDays = true;
   TimeOfDay _jam1Time = const TimeOfDay(hour: 13, minute: 45);
   TimeOfDay _jam2Time = const TimeOfDay(hour: 15, minute: 30);
   double _volume = 1.0;
-  List<int> _activeDays = [
-    1,
-    2,
-    3,
-    4,
-    6,
-    7,
-  ]; // 1=Senin..4=Kamis, 6=Sabtu, 7=Ahad
-
-  // Map jadwal mengajar ustadz: key = weekday (1..7), value = list sesi [1, 2]
+  List<int> _activeDays = [1, 2, 3, 4, 6, 7]; // Senin-Kamis, Sabtu-Ahad
   Map<int, List<int>> _teachingSchedule = {};
 
   bool _isPlaying = false;
@@ -74,11 +79,9 @@ class BellService {
   String? _lastTriggeredKey;
   bool _isNotificationInitialized = false;
 
-  // Stream Controller for bell events to broadcast to UI
   final _bellEventController = StreamController<BellEvent>.broadcast();
   Stream<BellEvent> get onBellEvent => _bellEventController.stream;
 
-  // Stream Controller for playing state changes
   final _playingStateController = StreamController<bool>.broadcast();
   Stream<bool> get onPlayingStateChanged => _playingStateController.stream;
 
@@ -94,51 +97,72 @@ class BellService {
   bool get isPlaying => _isPlaying;
 
   bool hasTeachingScheduleOn(int weekday) =>
-      _teachingSchedule.containsKey(weekday) &&
-      (_teachingSchedule[weekday]?.isNotEmpty ?? false);
+      _teachingSchedule[weekday]?.isNotEmpty ?? false;
 
   bool hasTeachingSessionOn(int weekday, int jam) =>
       _teachingSchedule[weekday]?.contains(jam) ?? false;
 
-  /// Periksa apakah izin notifikasi diizinkan sistem
+  // ===========================================================================
+  // 1. PERIZINAN SISTEM (SEAMLESS 1-TAP APPROVAL)
+  // ===========================================================================
+
+  Future<AppPermissionsStatus> checkPermissionsStatus() =>
+      SystemSettingsService.checkPermissionsStatus();
+
+  Future<AppPermissionsStatus> requestAllPermissionsSeamlessly() async {
+    if (kIsWeb) {
+      return const AppPermissionsStatus(
+        notifications: true,
+        exactAlarm: true,
+        batteryIgnored: true,
+      );
+    }
+
+    try {
+      final android = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (android != null) {
+        await android.requestNotificationsPermission();
+        await android.requestExactAlarmsPermission();
+      }
+
+      await SystemSettingsService.requestBatteryExemption();
+      final status = await SystemSettingsService.checkPermissionsStatus();
+      if (!status.exactAlarm) {
+        await SystemSettingsService.openExactAlarmSettings();
+      }
+      return await SystemSettingsService.checkPermissionsStatus();
+    } catch (e) {
+      debugPrint('Error requestAllPermissionsSeamlessly: $e');
+      return await SystemSettingsService.checkPermissionsStatus();
+    }
+  }
+
   Future<bool> checkNotificationPermission() async {
     if (kIsWeb) return true;
     final android = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-    if (android != null) {
-      final allowed = await android.areNotificationsEnabled();
-      return allowed ?? true;
-    }
-    return true;
+    return (await android?.areNotificationsEnabled()) ?? true;
   }
 
-  /// Buka layar pengaturan izin alarm sistem (Exact Alarms Setting)
-  Future<void> openExactAlarmSettings() async {
-    if (kIsWeb) return;
-    await SystemSettingsService.openExactAlarmSettings();
-  }
+  Future<void> requestBatteryExemption() =>
+      SystemSettingsService.requestBatteryExemption();
+  Future<void> openExactAlarmSettings() =>
+      SystemSettingsService.openExactAlarmSettings();
+  Future<void> openNotificationSettings() =>
+      SystemSettingsService.openNotificationSettings();
+  Future<void> openBatterySettings() =>
+      SystemSettingsService.openBatterySettings();
+  Future<void> openAppSettings() => SystemSettingsService.openAppSettings();
 
-  /// Buka / Minta izin notifikasi sistem
-  Future<void> openNotificationSettings() async {
-    if (kIsWeb) return;
-    await SystemSettingsService.openNotificationSettings();
-  }
+  // ===========================================================================
+  // 2. INISIALISASI & NOTIFIKASI
+  // ===========================================================================
 
-  /// Buka layar pengaturan penghemat baterai sistem
-  Future<void> openBatterySettings() async {
-    if (kIsWeb) return;
-    await SystemSettingsService.openBatterySettings();
-  }
-
-  /// Buka layar info aplikasi utama (App Info)
-  Future<void> openAppSettings() async {
-    if (kIsWeb) return;
-    await SystemSettingsService.openAppSettings();
-  }
-
-  /// Inisialisasi awal BellService & muat konfigurasi tersimpan
   Future<void> init() async {
     await _loadSettings();
     _configureAudioContext();
@@ -174,7 +198,6 @@ class BellService {
     }
   }
 
-  /// Inisialisasi Notifikasi Sistem Lokal & Timezone
   Future<void> _initLocalNotifications() async {
     if (_isNotificationInitialized) return;
 
@@ -183,23 +206,17 @@ class BellService {
       try {
         final timezoneInfo = await FlutterTimezone.getLocalTimezone();
         tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
-      } catch (e) {
-        debugPrint(
-          'Gagal mendapatkan local timezone, fallback ke Asia/Jakarta: $e',
-        );
+      } catch (_) {
         tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
       }
 
-      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-      const darwinInit = DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      );
-
       const initSettings = InitializationSettings(
-        android: androidInit,
-        iOS: darwinInit,
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        ),
       );
 
       await _notificationsPlugin.initialize(
@@ -209,26 +226,22 @@ class BellService {
         },
       );
 
-      final androidImplementation = _notificationsPlugin
+      final android = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >();
 
-      if (androidImplementation != null) {
-        // Hapus channel lama agar sistem membuat channel baru dengan custom sound yang benar
-        try {
-          await androidImplementation.deleteNotificationChannel(
-            channelId: 'mdths_kbm_bell_channel',
-          );
-          await androidImplementation.deleteNotificationChannel(
-            channelId: 'mdths_kbm_bell_channel_v2',
-          );
-          await androidImplementation.deleteNotificationChannel(
-            channelId: 'mdths_kbm_bell_channel_v3',
-          );
-        } catch (_) {}
+      if (android != null) {
+        // Hapus channel versi lama
+        for (final v in ['', '_v2', '_v3', '_v4', '_v5']) {
+          try {
+            await android.deleteNotificationChannel(
+              channelId: 'mdths_kbm_bell_channel$v',
+            );
+          } catch (_) {}
+        }
 
-        const androidChannel = AndroidNotificationChannel(
+        const channel = AndroidNotificationChannel(
           _channelId,
           _channelName,
           description: _channelDesc,
@@ -238,124 +251,24 @@ class BellService {
           enableVibration: true,
           audioAttributesUsage: AudioAttributesUsage.alarm,
         );
-        await androidImplementation.createNotificationChannel(androidChannel);
-        await androidImplementation.requestNotificationsPermission();
-        await androidImplementation.requestExactAlarmsPermission();
+        await android.createNotificationChannel(channel);
+        await android.requestNotificationsPermission();
+        await android.requestExactAlarmsPermission();
       }
 
       _isNotificationInitialized = true;
     } catch (e) {
-      debugPrint('Error inisialisasi local notifications: $e');
+      debugPrint('Error init local notifications: $e');
     }
   }
 
-  /// Sinkronisasi Jadwal Alarm Presisi ke Sistem Operasi (Hemat Baterai 0% Idle CPU)
-  Future<void> _syncScheduledAlarms() async {
-    if (kIsWeb || !_isNotificationInitialized) return;
-
-    try {
-      await _notificationsPlugin.cancelAll();
-
-      if (!_isEnabled) return;
-
-      if (_onlyOnTeachingDays && _teachingSchedule.isNotEmpty) {
-        // Hanya jadwalkan alarm di hari & jam ustadz mengajar
-        for (final entry in _teachingSchedule.entries) {
-          final day = entry.key;
-          final sessions = entry.value;
-
-          if (!_activeDays.contains(day)) continue;
-
-          if (sessions.contains(1)) {
-            final idJam1 = day * 10 + 1;
-            final time1 = _nextInstanceOfWeekdayAndTime(
-              day,
-              _jam1Time.hour,
-              _jam1Time.minute,
-            );
-            await _scheduleSingleBell(
-              id: idJam1,
-              title: '🔔 Bel Masuk Jam Ke-1 (${_formatTime(_jam1Time)})',
-              body:
-                  'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
-              jam: 1,
-              scheduledDate: time1,
-            );
-          }
-
-          if (sessions.contains(2)) {
-            final idJam2 = day * 10 + 2;
-            final time2 = _nextInstanceOfWeekdayAndTime(
-              day,
-              _jam2Time.hour,
-              _jam2Time.minute,
-            );
-            await _scheduleSingleBell(
-              id: idJam2,
-              title: '🔔 Bel Masuk Jam Ke-2 (${_formatTime(_jam2Time)})',
-              body:
-                  'Bel jam kedua sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
-              jam: 2,
-              scheduledDate: time2,
-            );
-          }
-        }
-      } else {
-        // Mode Standar: Jadwalkan untuk semua hari aktif yang dipilih
-        for (final day in _activeDays) {
-          final idJam1 = day * 10 + 1;
-          final time1 = _nextInstanceOfWeekdayAndTime(
-            day,
-            _jam1Time.hour,
-            _jam1Time.minute,
-          );
-          await _scheduleSingleBell(
-            id: idJam1,
-            title: '🔔 Bel Masuk Jam Ke-1 (${_formatTime(_jam1Time)})',
-            body:
-                'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
-            jam: 1,
-            scheduledDate: time1,
-          );
-
-          final idJam2 = day * 10 + 2;
-          final time2 = _nextInstanceOfWeekdayAndTime(
-            day,
-            _jam2Time.hour,
-            _jam2Time.minute,
-          );
-          await _scheduleSingleBell(
-            id: idJam2,
-            title: '🔔 Bel Masuk Jam Ke-2 (${_formatTime(_jam2Time)})',
-            body:
-                'Bel jam kedua sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
-            jam: 2,
-            scheduledDate: time2,
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('Gagal sinkronisasi alarm bel sistem: $e');
-    }
-  }
-
-  /// Helper untuk membangun detail notifikasi Android tingkat profesional
-  AndroidNotificationDetails _buildProfessionalAndroidDetails({
+  NotificationDetails _buildNotificationDetails({
     required String title,
     required String body,
     required int jam,
     String? subText,
   }) {
-    final bigTextStyle = BigTextStyleInformation(
-      body,
-      contentTitle: title,
-      summaryText: subText ?? 'MDTHS • Jam Ke-$jam KBM',
-      htmlFormatContentTitle: false,
-      htmlFormatBigText: false,
-      htmlFormatSummaryText: false,
-    );
-
-    return AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       _channelId,
       _channelName,
       channelDescription: _channelDesc,
@@ -365,7 +278,11 @@ class BellService {
       playSound: true,
       enableVibration: true,
       vibrationPattern: Int64List.fromList([0, 500, 250, 500, 250, 500]),
-      styleInformation: bigTextStyle,
+      styleInformation: BigTextStyleInformation(
+        body,
+        contentTitle: title,
+        summaryText: subText ?? 'MDTHS • Jam Ke-$jam KBM',
+      ),
       fullScreenIntent: true,
       visibility: NotificationVisibility.public,
       category: AndroidNotificationCategory.alarm,
@@ -375,11 +292,9 @@ class BellService {
       ledOnMs: 1000,
       ledOffMs: 500,
       enableLights: true,
-      channelShowBadge: true,
       autoCancel: true,
-      ongoing: false,
       ticker: '🔔 $title',
-      actions: const <AndroidNotificationAction>[
+      actions: const [
         AndroidNotificationAction(
           'action_presensi',
           '📝 Masuk & Presensi',
@@ -393,9 +308,133 @@ class BellService {
         ),
       ],
     );
+
+    const darwinDetails = DarwinNotificationDetails(
+      sound: 'school_bell.wav',
+      presentSound: true,
+      presentAlert: true,
+      presentBanner: true,
+      presentBadge: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+      subtitle: 'Pengingat KBM & Presensi',
+    );
+
+    return NotificationDetails(android: androidDetails, iOS: darwinDetails);
   }
 
-  /// Munculkan notifikasi instan langsung di Notification Center
+  Future<void> _zonedScheduleSafe({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledDate,
+    required NotificationDetails details,
+    DateTimeComponents? matchDateTimeComponents,
+    String? payload,
+  }) async {
+    final modes = [
+      AndroidScheduleMode.alarmClock,
+      AndroidScheduleMode.exactAllowWhileIdle,
+      AndroidScheduleMode.inexactAllowWhileIdle,
+    ];
+
+    for (final mode in modes) {
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          id: id,
+          title: title,
+          body: body,
+          scheduledDate: scheduledDate,
+          notificationDetails: details,
+          androidScheduleMode: mode,
+          matchDateTimeComponents: matchDateTimeComponents,
+          payload: payload,
+        );
+        return;
+      } catch (_) {}
+    }
+  }
+
+  // ===========================================================================
+  // 3. SINKRONISASI ALARM SISTEM
+  // ===========================================================================
+
+  Future<void> _syncScheduledAlarms() async {
+    if (kIsWeb || !_isNotificationInitialized) return;
+
+    try {
+      await _notificationsPlugin.cancelAll();
+      if (!_isEnabled) return;
+
+      final targetSchedule = <int, List<int>>{};
+      if (_onlyOnTeachingDays && _teachingSchedule.isNotEmpty) {
+        for (final entry in _teachingSchedule.entries) {
+          if (_activeDays.contains(entry.key)) {
+            targetSchedule[entry.key] = entry.value;
+          }
+        }
+      } else {
+        for (final day in _activeDays) {
+          targetSchedule[day] = [1, 2];
+        }
+      }
+
+      for (final entry in targetSchedule.entries) {
+        final day = entry.key;
+        final sessions = entry.value;
+
+        if (sessions.contains(1)) {
+          await _scheduleSingleBell(
+            id: day * 10 + 1,
+            jam: 1,
+            time: _jam1Time,
+            day: day,
+          );
+        }
+        if (sessions.contains(2)) {
+          await _scheduleSingleBell(
+            id: day * 10 + 2,
+            jam: 2,
+            time: _jam2Time,
+            day: day,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Gagal sinkronisasi alarm bel sistem: $e');
+    }
+  }
+
+  Future<void> _scheduleSingleBell({
+    required int id,
+    required int jam,
+    required TimeOfDay time,
+    required int day,
+  }) async {
+    final scheduledDate = _nextInstanceOfWeekdayAndTime(
+      day,
+      time.hour,
+      time.minute,
+    );
+    final title = '🔔 Bel Masuk Jam Ke-$jam (${_formatTime(time)})';
+    final body =
+        'Bel jam ${jam == 1 ? "pertama" : "kedua"} sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.';
+    final details = _buildNotificationDetails(
+      title: title,
+      body: body,
+      jam: jam,
+    );
+
+    await _zonedScheduleSafe(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: scheduledDate,
+      details: details,
+      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+      payload: 'bell_jam_$jam',
+    );
+  }
+
   Future<void> showImmediateNotification({
     required int id,
     required String title,
@@ -405,24 +444,11 @@ class BellService {
   }) async {
     if (kIsWeb || !_isNotificationInitialized) return;
     try {
-      final androidDetails = _buildProfessionalAndroidDetails(
+      final details = _buildNotificationDetails(
         title: title,
         body: body,
         jam: jam,
         subText: subText,
-      );
-      const darwinDetails = DarwinNotificationDetails(
-        sound: 'school_bell.wav',
-        presentSound: true,
-        presentAlert: true,
-        presentBanner: true,
-        presentBadge: true,
-        interruptionLevel: InterruptionLevel.timeSensitive,
-        subtitle: 'Pengingat KBM & Presensi',
-      );
-      final details = NotificationDetails(
-        android: androidDetails,
-        iOS: darwinDetails,
       );
       await _notificationsPlugin.show(
         id: id,
@@ -436,146 +462,48 @@ class BellService {
     }
   }
 
-  Future<void> _scheduleSingleBell({
-    required int id,
-    required String title,
-    required String body,
-    required int jam,
-    required tz.TZDateTime scheduledDate,
-  }) async {
-    final androidDetails = _buildProfessionalAndroidDetails(
-      title: title,
-      body: body,
-      jam: jam,
+  Future<void> showTestNotificationInstant() async {
+    await showImmediateNotification(
+      id: 9998,
+      title: '🔔 Uji Coba Bel Masuk (Seketika)',
+      body:
+          'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+      jam: 1,
+      subText: 'Uji Notifikasi Instan MDTHS',
     );
-
-    const darwinDetails = DarwinNotificationDetails(
-      sound: 'school_bell.wav',
-      presentSound: true,
-      presentAlert: true,
-      presentBanner: true,
-      presentBadge: true,
-      interruptionLevel: InterruptionLevel.timeSensitive,
-      subtitle: 'Pengingat KBM & Presensi',
-    );
-
-    final details = NotificationDetails(
-      android: androidDetails,
-      iOS: darwinDetails,
-    );
-
-    try {
-      await _notificationsPlugin.zonedSchedule(
-        id: id,
-        title: title,
-        body: body,
-        scheduledDate: scheduledDate,
-        notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.alarmClock,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      );
-    } catch (e) {
-      debugPrint(
-        'zonedSchedule alarmClock failed: $e, trying exactAllowWhileIdle',
-      );
-      try {
-        await _notificationsPlugin.zonedSchedule(
-          id: id,
-          title: title,
-          body: body,
-          scheduledDate: scheduledDate,
-          notificationDetails: details,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        );
-      } catch (e2) {
-        debugPrint(
-          'zonedSchedule exactAllowWhileIdle failed: $e2, trying inexact fallback',
-        );
-        try {
-          await _notificationsPlugin.zonedSchedule(
-            id: id,
-            title: title,
-            body: body,
-            scheduledDate: scheduledDate,
-            notificationDetails: details,
-            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-          );
-        } catch (e3) {
-          debugPrint('zonedSchedule inexact fallback failed: $e3');
-        }
-      }
-    }
   }
 
-  /// Jadwalkan uji coba notifikasi bel masuk setelah delay detik
   Future<void> scheduleTestNotification({int delaySeconds = 5}) async {
     if (kIsWeb || !_isNotificationInitialized) {
       await playBellSound(repeats: 2);
       return;
     }
 
+    try {
+      await _notificationsPlugin.cancel(id: 9999);
+    } catch (_) {}
+
     final testTime = tz.TZDateTime.now(
       tz.local,
     ).add(Duration(seconds: delaySeconds));
-
-    final androidDetails = _buildProfessionalAndroidDetails(
-      title: '🔔 Uji Coba Bel Masuk ($delaySeconds Detik)',
-      body:
-          'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+    final title = '🔔 Uji Coba Bel Masuk ($delaySeconds Detik)';
+    const body =
+        'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.';
+    final details = _buildNotificationDetails(
+      title: title,
+      body: body,
       jam: 1,
       subText: 'Uji Coba Sistem Notifikasi MDTHS',
     );
 
-    const darwinDetails = DarwinNotificationDetails(
-      sound: 'school_bell.wav',
-      presentSound: true,
-      presentAlert: true,
-      presentBanner: true,
-      presentBadge: true,
-      interruptionLevel: InterruptionLevel.timeSensitive,
-      subtitle: 'Uji Coba Sistem Notifikasi MDTHS',
+    await _zonedScheduleSafe(
+      id: 9999,
+      title: title,
+      body: body,
+      scheduledDate: testTime,
+      details: details,
+      payload: 'bell_test',
     );
-
-    final details = NotificationDetails(
-      android: androidDetails,
-      iOS: darwinDetails,
-    );
-
-    try {
-      await _notificationsPlugin.zonedSchedule(
-        id: 9999,
-        title: '🔔 Uji Coba Bel Masuk ($delaySeconds Detik)',
-        body:
-            'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
-        scheduledDate: testTime,
-        notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.alarmClock,
-      );
-    } catch (_) {
-      try {
-        await _notificationsPlugin.zonedSchedule(
-          id: 9999,
-          title: '🔔 Uji Coba Bel Masuk ($delaySeconds Detik)',
-          body:
-              'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
-          scheduledDate: testTime,
-          notificationDetails: details,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        );
-      } catch (_) {
-        await _notificationsPlugin.zonedSchedule(
-          id: 9999,
-          title: '🔔 Uji Coba Bel Masuk ($delaySeconds Detik)',
-          body:
-              'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
-          scheduledDate: testTime,
-          notificationDetails: details,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        );
-      }
-    }
   }
 
   tz.TZDateTime _nextInstanceOfWeekdayAndTime(
@@ -584,23 +512,24 @@ class BellService {
     int minute,
   ) {
     tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduledDate = tz.TZDateTime(
+    tz.TZDateTime scheduled = tz.TZDateTime(
       tz.local,
       now.year,
       now.month,
       now.day,
       hour,
       minute,
-      0,
     );
-
-    while (scheduledDate.weekday != weekday || scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    while (scheduled.weekday != weekday || scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
     }
-    return scheduledDate;
+    return scheduled;
   }
 
-  /// Sinkronkan jadwal mengajar ustadz yang login dari data API
+  // ===========================================================================
+  // 4. JADWAL MENGAJAR & PERSISTENSI SETTINGS
+  // ===========================================================================
+
   Future<void> updateTeachingScheduleFromJadwal(
     List<HariJadwalItem> jadwalPerHari,
   ) async {
@@ -613,17 +542,11 @@ class BellService {
       final sessions = <int>{};
       for (final s in item.sesi) {
         final jk = s.jamKe.trim();
-        if (jk.contains('1') && !jk.contains('2')) {
-          sessions.add(1);
-        } else if (jk.contains('2') && !jk.contains('1')) {
-          sessions.add(2);
-        } else {
-          if (s.jam.contains('13:') || jk.contains('1')) sessions.add(1);
-          if (s.jam.contains('15:') || jk.contains('2')) sessions.add(2);
-          if (sessions.isEmpty) {
-            sessions.addAll([1, 2]);
-          }
-        }
+        final isJam1 = jk.contains('1') || s.jam.contains('13:');
+        final isJam2 = jk.contains('2') || s.jam.contains('15:');
+        if (isJam1) sessions.add(1);
+        if (isJam2) sessions.add(2);
+        if (!isJam1 && !isJam2) sessions.addAll([1, 2]);
       }
 
       if (sessions.isNotEmpty) {
@@ -633,12 +556,13 @@ class BellService {
 
     _teachingSchedule = scheduleMap;
     final prefs = await SharedPreferences.getInstance();
-    final jsonMap = _teachingSchedule.map((k, v) => MapEntry(k.toString(), v));
-    await prefs.setString(_keyTeachingSchedule, jsonEncode(jsonMap));
+    await prefs.setString(
+      _keyTeachingSchedule,
+      jsonEncode(_teachingSchedule.map((k, v) => MapEntry(k.toString(), v))),
+    );
     await _syncScheduledAlarms();
   }
 
-  /// Bersihkan jadwal mengajar saat logout
   Future<void> clearTeachingSchedule() async {
     _teachingSchedule.clear();
     final prefs = await SharedPreferences.getInstance();
@@ -668,73 +592,49 @@ class BellService {
     }
   }
 
-  String _mapWeekdayToDayName(int weekday) {
-    switch (weekday) {
-      case 1:
-        return 'Senin';
-      case 2:
-        return 'Selasa';
-      case 3:
-        return 'Rabu';
-      case 4:
-        return 'Kamis';
-      case 5:
-        return 'Jumat';
-      case 6:
-        return 'Sabtu';
-      case 7:
-        return 'Ahad';
-      default:
-        return 'Hari';
-    }
-  }
+  String _mapWeekdayToDayName(int weekday) =>
+      (weekday >= 1 && weekday <= 7) ? _dayNames[weekday - 1] : 'Hari';
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     _isEnabled = prefs.getBool(_keyEnabled) ?? true;
     _onlyOnTeachingDays = prefs.getBool(_keyOnlyTeachingDays) ?? true;
 
-    final jam1Str = prefs.getString(_keyJam1);
-    if (jam1Str != null) {
-      final parts = jam1Str.split(':');
-      if (parts.length == 2) {
-        _jam1Time = TimeOfDay(
-          hour: int.tryParse(parts[0]) ?? 13,
-          minute: int.tryParse(parts[1]) ?? 45,
-        );
-      }
-    }
-
-    final jam2Str = prefs.getString(_keyJam2);
-    if (jam2Str != null) {
-      final parts = jam2Str.split(':');
-      if (parts.length == 2) {
-        _jam2Time = TimeOfDay(
-          hour: int.tryParse(parts[0]) ?? 15,
-          minute: int.tryParse(parts[1]) ?? 30,
-        );
-      }
-    }
-
+    _jam1Time = _parseTimeOfDay(
+      prefs.getString(_keyJam1),
+      const TimeOfDay(hour: 13, minute: 45),
+    );
+    _jam2Time = _parseTimeOfDay(
+      prefs.getString(_keyJam2),
+      const TimeOfDay(hour: 15, minute: 30),
+    );
     _volume = prefs.getDouble(_keyVolume) ?? 1.0;
 
-    final daysStr = prefs.getStringList(_keyActiveDays);
-    if (daysStr != null && daysStr.isNotEmpty) {
-      _activeDays = daysStr.map((e) => int.tryParse(e) ?? 1).toList();
+    final days = prefs.getStringList(_keyActiveDays);
+    if (days != null && days.isNotEmpty) {
+      _activeDays = days.map((e) => int.tryParse(e) ?? 1).toList();
     }
 
     final scheduleStr = prefs.getString(_keyTeachingSchedule);
     if (scheduleStr != null) {
       try {
         final decoded = jsonDecode(scheduleStr) as Map<String, dynamic>;
-        _teachingSchedule = decoded.map((k, v) {
-          final list = (v as List).map((e) => e as int).toList();
-          return MapEntry(int.parse(k), list);
-        });
-      } catch (e) {
-        debugPrint('Gagal parse cached teaching schedule: $e');
-      }
+        _teachingSchedule = decoded.map(
+          (k, v) =>
+              MapEntry(int.parse(k), (v as List).map((e) => e as int).toList()),
+        );
+      } catch (_) {}
     }
+  }
+
+  TimeOfDay _parseTimeOfDay(String? str, TimeOfDay fallback) {
+    if (str == null) return fallback;
+    final parts = str.split(':');
+    if (parts.length != 2) return fallback;
+    return TimeOfDay(
+      hour: int.tryParse(parts[0]) ?? fallback.hour,
+      minute: int.tryParse(parts[1]) ?? fallback.minute,
+    );
   }
 
   Future<void> setEnabled(bool val) async {
@@ -773,9 +673,7 @@ class BellService {
 
   Future<void> toggleActiveDay(int day) async {
     if (_activeDays.contains(day)) {
-      if (_activeDays.length > 1) {
-        _activeDays.remove(day);
-      }
+      if (_activeDays.length > 1) _activeDays.remove(day);
     } else {
       _activeDays.add(day);
       _activeDays.sort();
@@ -797,51 +695,53 @@ class BellService {
     _activeDays = [1, 2, 3, 4, 6, 7];
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyEnabled);
-    await prefs.remove(_keyOnlyTeachingDays);
-    await prefs.remove(_keyJam1);
-    await prefs.remove(_keyJam2);
-    await prefs.remove(_keyVolume);
-    await prefs.remove('bell_sound_type');
-    await prefs.remove(_keyActiveDays);
+    await Future.wait([
+      prefs.remove(_keyEnabled),
+      prefs.remove(_keyOnlyTeachingDays),
+      prefs.remove(_keyJam1),
+      prefs.remove(_keyJam2),
+      prefs.remove(_keyVolume),
+      prefs.remove(_keyActiveDays),
+    ]);
     await _syncScheduledAlarms();
   }
 
-  /// Monitoring timer saat aplikasi aktif di foreground
+  // ===========================================================================
+  // 5. FOREGROUND MONITORING & AUDIO PLAYBACK
+  // ===========================================================================
+
   void startMonitoring() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) {
-      _checkSchedule();
-    });
+    _timer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _checkSchedule(),
+    );
   }
 
   void _checkSchedule() {
     if (!_isEnabled) return;
-
     final now = DateTime.now();
-    final weekday = now.weekday; // 1 = Senin ... 7 = Ahad
+    final weekday = now.weekday;
 
     if (!_activeDays.contains(weekday)) return;
-
-    // Jika fitur 'Hanya saat ada jadwal mengajar' aktif dan jadwal sudah tersinkronisasi, periksa jadwal hari ini
     if (_onlyOnTeachingDays &&
         _teachingSchedule.isNotEmpty &&
         !hasTeachingScheduleOn(weekday)) {
       return;
     }
 
-    final currentHour = now.hour;
-    final currentMinute = now.minute;
+    final currentH = now.hour;
+    final currentM = now.minute;
 
-    // Check Jam 1 (Default 13:45)
-    if (currentHour == _jam1Time.hour && currentMinute == _jam1Time.minute) {
+    // Check Jam 1
+    if (currentH == _jam1Time.hour && currentM == _jam1Time.minute) {
       if (!_onlyOnTeachingDays ||
           _teachingSchedule.isEmpty ||
           hasTeachingSessionOn(weekday, 1)) {
-        final triggerKey =
+        final key =
             '${now.year}-${now.month}-${now.day}_jam1_${_jam1Time.hour}:${_jam1Time.minute}';
-        if (_lastTriggeredKey != triggerKey) {
-          _lastTriggeredKey = triggerKey;
+        if (_lastTriggeredKey != key) {
+          _lastTriggeredKey = key;
           _triggerBell(
             1,
             '🔔 Bel Masuk Jam Ke-1 (${_formatTime(_jam1Time)})',
@@ -852,15 +752,15 @@ class BellService {
       }
     }
 
-    // Check Jam 2 (Default 15:30)
-    if (currentHour == _jam2Time.hour && currentMinute == _jam2Time.minute) {
+    // Check Jam 2
+    if (currentH == _jam2Time.hour && currentM == _jam2Time.minute) {
       if (!_onlyOnTeachingDays ||
           _teachingSchedule.isEmpty ||
           hasTeachingSessionOn(weekday, 2)) {
-        final triggerKey =
+        final key =
             '${now.year}-${now.month}-${now.day}_jam2_${_jam2Time.hour}:${_jam2Time.minute}';
-        if (_lastTriggeredKey != triggerKey) {
-          _lastTriggeredKey = triggerKey;
+        if (_lastTriggeredKey != key) {
+          _lastTriggeredKey = key;
           _triggerBell(
             2,
             '🔔 Bel Masuk Jam Ke-2 (${_formatTime(_jam2Time)})',
@@ -879,24 +779,15 @@ class BellService {
     String waktu,
   ) async {
     HapticHelper.warning();
-    unawaited(playBellSound(repeats: 3));
-
-    // Tampilkan notifikasi di Notification Center secara profesional
-    await showImmediateNotification(
-      id: jam == 1 ? 1001 : 1002,
-      title: title,
-      body: desc,
-      jam: jam,
+    _bellEventController.add(
+      BellEvent(
+        jam: jam,
+        title: title,
+        description: desc,
+        waktu: waktu,
+        timestamp: DateTime.now(),
+      ),
     );
-
-    final event = BellEvent(
-      jam: jam,
-      title: title,
-      description: desc,
-      waktu: waktu,
-      timestamp: DateTime.now(),
-    );
-    _bellEventController.add(event);
   }
 
   String _formatTime(TimeOfDay t) {
@@ -910,12 +801,30 @@ class BellService {
     _playingStateController.add(playing);
   }
 
-  /// Putar suara bel sekolah (diulang 3x)
+  /// Putar suara bel sekolah (diulang n kali)
   Future<void> playBellSound({int repeats = 3}) async {
     final session = ++_currentSession;
     _setPlayingState(true);
 
     try {
+      // 1. Prioritaskan Native Android MediaPlayer (Stream Alarm 100% Kencang)
+      if (!kIsWeb) {
+        final nativePlayed = await SystemSettingsService.playNativeAlarmSound(
+          repeats: repeats,
+        );
+        if (nativePlayed) {
+          for (int s = 0; s < repeats * 35; s++) {
+            if (_currentSession != session) {
+              await SystemSettingsService.stopNativeAlarmSound();
+              break;
+            }
+            await Future.delayed(const Duration(milliseconds: 100));
+          }
+          return;
+        }
+      }
+
+      // 2. Fallback audioplayers
       await _player.stop();
       await _player.setVolume(_volume);
 
@@ -923,9 +832,7 @@ class BellService {
       try {
         final byteData = await rootBundle.load('assets/audio/school-bell.wav');
         audioBytes = byteData.buffer.asUint8List();
-      } catch (e) {
-        debugPrint('Gagal membaca rootBundle school-bell.wav: $e');
-      }
+      } catch (_) {}
 
       for (int i = 0; i < repeats; i++) {
         if (_currentSession != session) break;
@@ -945,25 +852,21 @@ class BellService {
             }
           }
         } catch (e) {
-          debugPrint('Error saat trigger play audio: $e');
+          debugPrint('Error play audio fallback: $e');
         }
 
-        // Tunggu hingga pemutaran 1 siklus selesai (audio bel ~3 detik)
-        try {
-          await Future.any([
-            _player.onPlayerComplete.first,
-            Future.delayed(const Duration(milliseconds: 3200)),
-          ]);
-        } catch (_) {}
+        await Future.any([
+          _player.onPlayerComplete.first,
+          Future.delayed(const Duration(milliseconds: 3200)),
+        ]);
 
         if (_currentSession != session) break;
-
         if (i < repeats - 1) {
           await Future.delayed(const Duration(milliseconds: 300));
         }
       }
     } catch (e) {
-      debugPrint('Gagal memutar suara bel: $e');
+      debugPrint('Gagal memutar audio bel: $e');
     } finally {
       if (_currentSession == session) {
         _setPlayingState(false);
@@ -971,18 +874,19 @@ class BellService {
     }
   }
 
-  /// Hentikan suara bel yang sedang berputar
   Future<void> stopSound() async {
     _currentSession++;
     _setPlayingState(false);
     try {
+      await SystemSettingsService.stopNativeAlarmSound();
       await _player.stop();
-    } catch (e) {
-      debugPrint('Gagal menghentikan audio bel: $e');
-    }
+    } catch (_) {}
   }
 
-  /// Menghitung info jadwal bel berikutnya dengan memperhitungkan jadwal mengajar
+  // ===========================================================================
+  // 6. PERHITUNGAN JADWAL BERIKUTNYA
+  // ===========================================================================
+
   Map<String, dynamic> getNextBellInfo() {
     if (!_isEnabled) {
       return {'active': false, 'text': 'Notifikasi bel dinonaktifkan'};
@@ -1001,15 +905,15 @@ class BellService {
     final jam1Minutes = _jam1Time.hour * 60 + _jam1Time.minute;
     final jam2Minutes = _jam2Time.hour * 60 + _jam2Time.minute;
 
-    final bool hasTeachingToday =
+    final hasTeachingToday =
         !_onlyOnTeachingDays || hasTeachingScheduleOn(todayWeekday);
 
     if (_activeDays.contains(todayWeekday) && hasTeachingToday) {
-      final sessionsToday = _onlyOnTeachingDays
+      final sessions = _onlyOnTeachingDays
           ? (_teachingSchedule[todayWeekday] ?? [1, 2])
           : [1, 2];
 
-      if (sessionsToday.contains(1) && nowMinutes < jam1Minutes) {
+      if (sessions.contains(1) && nowMinutes < jam1Minutes) {
         final diff = jam1Minutes - nowMinutes;
         return {
           'active': true,
@@ -1018,7 +922,7 @@ class BellService {
           'text':
               'Hari Ini: Jam Ke-1 (${_formatTime(_jam1Time)}) • ${_formatDuration(diff)} lagi',
         };
-      } else if (sessionsToday.contains(2) && nowMinutes < jam2Minutes) {
+      } else if (sessions.contains(2) && nowMinutes < jam2Minutes) {
         final diff = jam2Minutes - nowMinutes;
         return {
           'active': true,
@@ -1030,14 +934,12 @@ class BellService {
       }
     }
 
-    // Cari hari mengajar berikutnya dalam 7 hari ke depan
+    // Cari jadwal hari mendatang dalam 7 hari
     for (int offset = 1; offset <= 7; offset++) {
       final targetDate = now.add(Duration(days: offset));
       final targetWeekday = targetDate.weekday;
 
-      if (!_activeDays.contains(targetWeekday)) {
-        continue;
-      }
+      if (!_activeDays.contains(targetWeekday)) continue;
       if (_onlyOnTeachingDays && !hasTeachingScheduleOn(targetWeekday)) {
         continue;
       }
@@ -1045,8 +947,8 @@ class BellService {
       final sessions = _onlyOnTeachingDays
           ? (_teachingSchedule[targetWeekday] ?? [1, 2])
           : [1, 2];
-
       final dayName = _mapWeekdayToDayName(targetWeekday);
+
       if (sessions.contains(1)) {
         return {
           'active': true,
@@ -1073,9 +975,7 @@ class BellService {
   }
 
   String _formatDuration(int minutes) {
-    if (minutes < 60) {
-      return '$minutes menit';
-    }
+    if (minutes < 60) return '$minutes menit';
     final h = minutes ~/ 60;
     final m = minutes % 60;
     return m > 0 ? '$h jam $m mnt' : '$h jam';

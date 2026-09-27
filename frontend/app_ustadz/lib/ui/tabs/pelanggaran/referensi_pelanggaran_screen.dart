@@ -46,7 +46,12 @@ class _ReferensiPelanggaranScreenState
         onRefresh: () => akademik.fetchReferensiPelanggaran(),
         color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            40 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // 1. Search Bar
             TextField(

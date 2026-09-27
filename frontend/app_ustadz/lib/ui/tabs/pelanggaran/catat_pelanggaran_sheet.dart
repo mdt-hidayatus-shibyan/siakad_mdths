@@ -126,7 +126,12 @@ class _CatatPelanggaranSheetState extends State<CatatPelanggaranSheet> {
                   top: Radius.circular(28),
                 ),
               ),
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                20 + MediaQuery.of(context).padding.bottom,
+              ),
               child: Column(
                 children: [
                   Center(
@@ -351,7 +356,9 @@ class _CatatPelanggaranSheetState extends State<CatatPelanggaranSheet> {
         20,
         12,
         20,
-        MediaQuery.of(context).viewInsets.bottom + 24,
+        MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom +
+            24,
       ),
       child: SingleChildScrollView(
         child: Column(

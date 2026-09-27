@@ -72,7 +72,12 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
         ujianId: provider.selectedUjianId,
       ),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 140),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          120 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // ===================================================================
           // 1. FILTER RUANGAN KELAS (UTAMA) & AGENDA UJIAN
@@ -92,11 +97,14 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                           : AppColors.primaryLight,
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Pilih Ruangan Kelas & Agenda Ujian',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
+                    const Expanded(
+                      child: Text(
+                        'Pilih Ruangan Kelas & Agenda Ujian',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -222,11 +230,15 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                         children: [
                           const Row(
                             children: [
-                              Text(
-                                'Leger Nilai & Ranking 1 Kelas',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
+                              Flexible(
+                                child: Text(
+                                  'Leger Nilai & Ranking Kelas',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ),
                               SizedBox(width: 6),
@@ -240,6 +252,8 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                           const SizedBox(height: 2),
                           Text(
                             'Rekap nilai seluruh mapel & kalkulasi peringkat ${provider.selectedRuanganNama}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark
@@ -267,10 +281,14 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Mata Pelajaran Ujian',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                const Expanded(
+                  child: Text(
+                    'Mata Pelajaran Ujian',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   '${provider.jadwalList.length} Mapel Terjadwal',
                   style: TextStyle(
@@ -350,6 +368,8 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 3),
                           Row(
@@ -362,13 +382,17 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                                     : const Color(0xFF73796E),
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                '${j.tanggalUjian} • ${j.waktuMulai} - ${j.waktuSelesai}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E),
+                              Expanded(
+                                child: Text(
+                                  '${j.tanggalUjian} • ${j.waktuMulai} - ${j.waktuSelesai}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? const Color(0xFF8D9387)
+                                        : const Color(0xFF73796E),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ),
                             ],

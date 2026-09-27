@@ -43,14 +43,17 @@ class _LegerRuanganScreenState extends State<LegerRuanganScreen> {
     super.dispose();
   }
 
-  Future<void> _loadData() {
+  Future<void> _loadData() async {
     final p = context.read<NilaiProvider>();
-    final uId =
-        widget.ujianId ??
-        p.selectedUjianId ??
-        p.daftarUjian.firstOrNull?.id ??
-        0;
-    return p.fetchLeger(ruanganId: widget.ruanganId, ujianId: uId);
+    int? uId =
+        widget.ujianId ?? p.selectedUjianId ?? p.daftarUjian.firstOrNull?.id;
+    if (uId == null || uId == 0) {
+      await p.fetchMapelJadwal(ruanganId: widget.ruanganId);
+      uId = p.selectedUjianId ?? p.daftarUjian.firstOrNull?.id;
+    }
+    if (uId != null && uId > 0) {
+      await p.fetchLeger(ruanganId: widget.ruanganId, ujianId: uId);
+    }
   }
 
   @override
@@ -75,7 +78,12 @@ class _LegerRuanganScreenState extends State<LegerRuanganScreen> {
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            100 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // ===================================================================
             // 1. STATISTIK KELAS & SUMMARY
@@ -100,7 +108,7 @@ class _LegerRuanganScreenState extends State<LegerRuanganScreen> {
               TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Cari santri berdasarkan nama atau NISM...',
+                  hintText: 'Cari murid berdasarkan nama atau NISM...',
                   hintStyle: const TextStyle(fontSize: 12),
                   prefixIcon: const Icon(Icons.search_rounded, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -152,7 +160,7 @@ class _LegerRuanganScreenState extends State<LegerRuanganScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Text(
-                    'Tidak ditemukan santri dengan kata kunci "$_searchQuery"',
+                    'Tidak ditemukan murid dengan kata kunci "$_searchQuery"',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.grey),
                   ),

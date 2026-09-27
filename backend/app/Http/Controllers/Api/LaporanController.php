@@ -13,6 +13,7 @@ use App\Models\PresensiUstadz;
 use App\Models\Ruangan;
 use App\Models\Semester;
 use App\Models\TahunPelajaran;
+use App\Models\Ujian\JadwalUjian;
 use App\Models\Ujian\NilaiUjian;
 use App\Models\Ujian\RiwayatKenaikan;
 use App\Models\Ujian\Ujian;
@@ -38,7 +39,15 @@ class LaporanController extends Controller
     {
         $user = $request->user();
         $ustadzId = $user->ustadz->id ?? null;
-        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        $tahunAktif = null;
+        if ($request->filled('tahun_id')) {
+            $tahunAktif = TahunPelajaran::find($request->tahun_id);
+        } elseif ($request->filled('tahun_pelajaran_id')) {
+            $tahunAktif = TahunPelajaran::find($request->tahun_pelajaran_id);
+        }
+        if (!$tahunAktif) {
+            $tahunAktif = TahunPelajaran::where('is_active', true)->first() ?? TahunPelajaran::orderBy('id', 'desc')->first();
+        }
         $tahunId = $tahunAktif->id ?? 1;
 
         // Ambil daftar ruangan yang diampu ustadz:
@@ -886,7 +895,7 @@ class LaporanController extends Controller
     // =========================================================================
     public function getLaporanUjian(Request $request)
     {
-        [$tahunAktif, $tahunId, $accessibleRuangans, $ruangan] = $this->getContextRuangans($request);
+        [$tahunAktif, $tahunId, $accessibleRuangans, $ruangan, $ustadzId] = $this->getContextRuangans($request);
 
         if (!$ruangan) {
             return response()->json([
@@ -895,22 +904,23 @@ class LaporanController extends Controller
             ], 404);
         }
 
+        $isWaliOfThisRoom = ($ruangan->ustadz_id == $ustadzId);
         $levelNama = $ruangan->level->nama_level ?? '';
         $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
         $allowedTipe = $isKelasAkhir ? ['IMDA 1', 'IMNI'] : ['IMDA 1', 'IMDA 2'];
 
-        $daftarUjian = Ujian::where('tahun_pelajaran_id', $tahunId)
-            ->whereIn('tipe_ujian', $allowedTipe)
+        $daftarUjian = Ujian::with('semester')
+            ->where('tahun_pelajaran_id', $tahunId)
             ->orderBy('id', 'asc')
             ->get();
 
         if ($daftarUjian->isEmpty()) {
-            $daftarUjian = Ujian::where('tahun_pelajaran_id', $tahunId)
-                ->orderBy('id', 'asc')
+            $daftarUjian = Ujian::with('semester')
+                ->orderBy('id', 'desc')
                 ->get();
         }
 
-        $selectedUjianId = $request->ujian_id;
+        $selectedUjianId = $request->filled('ujian_id') ? (int) $request->ujian_id : null;
         $ujian = ($selectedUjianId ? $daftarUjian->firstWhere('id', $selectedUjianId) : null) ?? $daftarUjian->first();
 
         if (!$ujian) {
@@ -920,54 +930,105 @@ class LaporanController extends Controller
             ], 404);
         }
 
+        // 1. Ekstrak Daftar Mapel dari Jadwal Ujian untuk level ruangan ini
+        $jadwals = JadwalUjian::with('mataPelajaran')
+            ->where('ujian_id', $ujian->id)
+            ->where('level_id', $ruangan->level_id)
+            ->orderBy('tanggal_ujian', 'asc')
+            ->get();
+
+        $mapelList = [];
+        foreach ($jadwals as $j) {
+            $namaMapel = $j->mataPelajaran->nama_mapel ?? ($j->nama_mata_pelajaran_custom ?? 'Mata Pelajaran');
+            $mapelList[] = [
+                'id' => $j->id,
+                'mapel_id' => $j->mata_pelajaran_id ?? $j->id,
+                'nama_mapel' => $namaMapel,
+                'kode_mapel' => $j->mataPelajaran->kode_mapel ?? null,
+                'kkm' => 60,
+            ];
+        }
+
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
-        $muridIds = $murids->pluck('id');
 
         $nilaiList = NilaiUjian::with(['jadwalUjian.mataPelajaran', 'mataPelajaran'])
             ->where('ruangan_id', $ruangan->id)
             ->where('ujian_id', $ujian->id)
             ->get();
 
-        $mapelList = $nilaiList->map(function ($n) {
-            $mpl = $n->jadwalUjian?->mataPelajaran ?? $n->mataPelajaran;
-            if ($mpl) {
-                return [
-                    'id' => $mpl->id,
-                    'nama_mapel' => $mpl->nama_mapel,
-                ];
-            }
-            if ($n->jadwalUjian?->nama_mata_pelajaran_custom) {
-                return [
-                    'id' => $n->jadwal_ujian_id,
-                    'nama_mapel' => $n->jadwalUjian->nama_mata_pelajaran_custom,
-                ];
-            }
-            return null;
-        })->filter()->unique('id')->values();
+        // Fallback jika tidak ada JadwalUjian untuk level ini, ambil dari nilai yang sudah terinput
+        if (empty($mapelList) && $nilaiList->isNotEmpty()) {
+            $fallbackMapel = $nilaiList->map(function ($n) {
+                $mpl = $n->jadwalUjian?->mataPelajaran ?? $n->mataPelajaran;
+                if ($mpl) {
+                    return [
+                        'id' => $n->jadwal_ujian_id ?? $mpl->id,
+                        'mapel_id' => $mpl->id,
+                        'nama_mapel' => $mpl->nama_mapel,
+                        'kode_mapel' => $mpl->kode_mapel ?? null,
+                        'kkm' => 60,
+                    ];
+                }
+                if ($n->jadwalUjian?->nama_mata_pelajaran_custom) {
+                    return [
+                        'id' => $n->jadwal_ujian_id,
+                        'mapel_id' => $n->jadwal_ujian_id,
+                        'nama_mapel' => $n->jadwalUjian->nama_mata_pelajaran_custom,
+                        'kode_mapel' => null,
+                        'kkm' => 60,
+                    ];
+                }
+                return null;
+            })->filter()->unique('id')->values()->toArray();
+            $mapelList = $fallbackMapel;
+        }
 
         $rekapMurid = [];
         $semuaRataRata = [];
+        $semuaTotal = [];
 
         foreach ($murids as $m) {
             $nMurid = $nilaiList->where('murid_id', $m->id);
-            $totalNilai = $nMurid->sum('nilai');
-            $mapelCount = $nMurid->count();
-            $rata = $mapelCount > 0 ? round($totalNilai / $mapelCount, 2) : 0;
-            $semuaRataRata[] = $rata;
-
+            $totalNilai = 0.0;
+            $mapelCount = 0;
             $mapelNilai = [];
+
             foreach ($mapelList as $mpl) {
                 $item = $nMurid->first(function ($n) use ($mpl) {
-                    return ($n->jadwalUjian?->mata_pelajaran_id == $mpl['id']) ||
-                        ($n->mata_pelajaran_id == $mpl['id']) ||
-                        ($n->jadwal_ujian_id == $mpl['id']);
+                    return ($n->jadwal_ujian_id && $n->jadwal_ujian_id == $mpl['id']) ||
+                        ($n->mata_pelajaran_id && $n->mata_pelajaran_id == ($mpl['mapel_id'] ?? null));
                 });
+
+                $angka = ($item && $item->nilai !== null) ? (float) $item->nilai : null;
+                if ($angka !== null) {
+                    $totalNilai += $angka;
+                    $mapelCount++;
+                }
+
                 $mapelNilai[] = [
-                    'mapel_id' => $mpl['id'],
+                    'jadwal_id' => $mpl['id'],
+                    'mapel_id' => $mpl['mapel_id'] ?? $mpl['id'],
                     'nama_mapel' => $mpl['nama_mapel'],
-                    'nilai' => $item ? (float)$item->nilai : 0,
+                    'nilai' => $angka,
+                    'is_published' => $item ? (bool) $item->is_published : false,
                 ];
             }
+
+            $rata = $mapelCount > 0 ? round($totalNilai / $mapelCount, 2) : 0.0;
+            if ($mapelCount > 0) {
+                $semuaRataRata[] = $rata;
+                $semuaTotal[] = $totalNilai;
+            }
+
+            // Predikat Nilai
+            $predikat = 'E';
+            if ($rata >= 90) $predikat = 'A+';
+            elseif ($rata >= 85) $predikat = 'A';
+            elseif ($rata >= 80) $predikat = 'B+';
+            elseif ($rata >= 75) $predikat = 'B';
+            elseif ($rata >= 70) $predikat = 'C+';
+            elseif ($rata >= 65) $predikat = 'C';
+            elseif ($rata >= 60) $predikat = 'D';
 
             $rekapMurid[] = [
                 'murid_id' => $m->id,
@@ -976,26 +1037,38 @@ class LaporanController extends Controller
                 'jenis_kelamin' => $m->jenis_kelamin ?? 'L',
                 'foto' => $m->foto ? asset('storage/' . $m->foto) : null,
                 'wali' => $m->nama_ayah ?? $m->waliMurid->nama_kepala_keluarga ?? '-',
-                'total_nilai' => (float)round($totalNilai, 2),
+                'total_nilai' => round($totalNilai, 1),
                 'rata_rata' => $rata,
+                'predikat' => $predikat,
                 'jumlah_mapel_diikuti' => $mapelCount,
-                'status_tuntas' => $rata >= 60 ? 'Tuntas' : 'Belum Tuntas',
+                'total_mapel' => count($mapelList),
+                'status_tuntas' => ($rata >= 60 && $mapelCount > 0) ? 'Tuntas' : 'Belum Tuntas',
                 'mapel_nilai' => $mapelNilai,
             ];
         }
 
-        // Urutkan untuk menentukan Peringkat Bintang Pelajar
-        usort($rekapMurid, fn($a, $b) => $b['rata_rata'] <=> $a['rata_rata']);
+        // Urutkan Peringkat: Total Nilai Descending, Rata-rata Descending, Nama Ascending
+        usort($rekapMurid, function ($a, $b) {
+            if ($a['total_nilai'] == $b['total_nilai']) {
+                if ($a['rata_rata'] == $b['rata_rata']) {
+                    return strcmp($a['nama'], $b['nama']);
+                }
+                return $b['rata_rata'] <=> $a['rata_rata'];
+            }
+            return $b['total_nilai'] <=> $a['total_nilai'];
+        });
+
         foreach ($rekapMurid as $idx => &$item) {
             $item['ranking'] = $idx + 1;
         }
         unset($item);
 
-        $rataKelas = count($semuaRataRata) > 0 ? round(array_sum($semuaRataRata) / count($semuaRataRata), 2) : 0;
-        $nilaiTertinggi = count($semuaRataRata) > 0 ? max($semuaRataRata) : 0;
-        $nilaiTerendah = count($semuaRataRata) > 0 ? min($semuaRataRata) : 0;
-        $tuntasCount = count(array_filter($semuaRataRata, fn($r) => $r >= 60));
-        $persenTuntas = count($semuaRataRata) > 0 ? round(($tuntasCount / count($semuaRataRata)) * 100, 1) : 0;
+        $rataKelas = count($semuaRataRata) > 0 ? round(array_sum($semuaRataRata) / count($semuaRataRata), 2) : 0.0;
+        $nilaiTertinggi = count($semuaTotal) > 0 ? max($semuaTotal) : 0.0;
+        $nilaiTerendah = count($semuaTotal) > 0 ? min($semuaTotal) : 0.0;
+        $tuntasCount = count(array_filter($rekapMurid, fn($r) => $r['status_tuntas'] === 'Tuntas'));
+        $totalMuridCount = count($rekapMurid);
+        $persenTuntas = $totalMuridCount > 0 ? round(($tuntasCount / $totalMuridCount) * 100, 1) : 0.0;
 
         return response()->json([
             'success' => true,
@@ -1003,35 +1076,36 @@ class LaporanController extends Controller
                 'ruangan_id' => $ruangan->id,
                 'nama_ruangan' => $ruangan->nama_ruangan,
                 'level_nama' => $ruangan->level->nama_level ?? '-',
+                'is_wali_ruangan' => (bool) $isWaliOfThisRoom,
+                'wali_ruangan_nama' => $ruangan->waliRuangan->nama_lengkap ?? ($ruangan->waliRuangan->nama ?? '-'),
                 'is_kelas_akhir' => $isKelasAkhir,
                 'ujian' => [
                     'id' => $ujian->id,
                     'nama_ujian' => $ujian->nama_ujian,
-                    'tipe_ujian' => $ujian->tipe_ujian,
-                    'semester' => $ujian->semester ?? '-',
+                    'tipe_ujian' => $ujian->tipe_ujian ?? 'IMDA',
+                    'semester' => $ujian->semester->nama_semester ?? ($ujian->semester ?? '-'),
                 ],
                 'tahun_pelajaran' => $tahunAktif->nama_lengkap ?? ($tahunAktif->nama_masehi ?? 'Tahun Aktif'),
-                'total_murid' => $murids->count(),
+                'total_murid' => $totalMuridCount,
+                'total_mapel' => count($mapelList),
                 'rata_rata_kelas' => $rataKelas,
                 'nilai_tertinggi' => $nilaiTertinggi,
                 'nilai_terendah' => $nilaiTerendah,
                 'persentase_tuntas' => $persenTuntas,
                 'jumlah_tuntas' => $tuntasCount,
-                'jumlah_belum_tuntas' => count($semuaRataRata) - $tuntasCount,
+                'jumlah_belum_tuntas' => $totalMuridCount - $tuntasCount,
                 'daftar_ujian' => $daftarUjian->map(fn($u) => [
                     'id' => $u->id,
                     'nama_ujian' => $u->nama_ujian,
-                    'tipe_ujian' => $u->tipe_ujian,
+                    'tipe_ujian' => $u->tipe_ujian ?? 'IMDA',
+                    'semester' => $u->semester->nama_semester ?? ($u->semester ?? '-'),
                 ]),
                 'ruangan_list' => $accessibleRuangans->map(fn($r) => [
                     'id' => $r->id,
                     'nama_ruangan' => $r->nama_ruangan,
                     'level_nama' => $r->level->nama_level ?? '-',
                 ]),
-                'mapel_header' => $mapelList->map(fn($m) => [
-                    'id' => $m['id'],
-                    'nama_mapel' => $m['nama_mapel'],
-                ]),
+                'mapel_header' => $mapelList,
                 'rekap_murid' => $rekapMurid,
             ]
         ], 200);
@@ -1042,7 +1116,7 @@ class LaporanController extends Controller
     // =========================================================================
     public function getLaporanKenaikanKelas(Request $request)
     {
-        [$tahunAktif, $tahunId, $accessibleRuangans, $ruangan] = $this->getContextRuangans($request);
+        [$tahunAktif, $tahunId, $accessibleRuangans, $ruangan, $ustadzId] = $this->getContextRuangans($request);
 
         if (!$ruangan) {
             return response()->json([
@@ -1071,7 +1145,13 @@ class LaporanController extends Controller
             ? $semuaUjianTahunIni->where('tipe_ujian', 'IMNI')->pluck('id')->toArray()
             : $semuaUjianTahunIni->where('tipe_ujian', 'IMDA 2')->pluck('id')->toArray();
 
-        $semuaBulanHijriyah = BulanHijriyah::where('tahun_pelajaran_id', $tahunId)->get();
+        $semesters = Semester::where('tahun_pelajaran_id', $tahunId)->get();
+        $sem1 = $semesters->first(fn($s) => str_contains($s->nama_semester, '1') || str_contains(strtolower($s->nama_semester), 'ganjil'));
+        $sem2 = $semesters->first(fn($s) => str_contains($s->nama_semester, '2') || str_contains(strtolower($s->nama_semester), 'genap'));
+
+        $semuaBulanHijriyah = BulanHijriyah::where('tahun_pelajaran_id', $tahunId)->orderBy('urutan', 'asc')->get();
+        $bulanSem1 = $semuaBulanHijriyah->filter(fn($b) => $b->urutan <= 5);
+        $bulanSem2 = $semuaBulanHijriyah->filter(fn($b) => $b->urutan > 5);
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
         $muridIds = $murids->pluck('id');
@@ -1100,34 +1180,44 @@ class LaporanController extends Controller
 
             // Semester 1
             $rataUjian1 = $nilaiMurid->whereIn('ujian_id', $idDauri1)->avg('nilai') ?? 0;
-            $presensiSem1 = $presensiMuridIni->filter(function ($p) use ($semuaBulanHijriyah) {
-                $bulan = $semuaBulanHijriyah->first(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi);
-                return $bulan && in_array((string)$bulan->semester, ['1', 'Ganjil', 'Semester 1']);
+            $presensiSem1 = $presensiMuridIni->filter(function ($p) use ($sem1, $bulanSem1) {
+                return ($sem1 && $p->semester_id == $sem1->id)
+                    || ($sem1 && $sem1->tanggal_mulai && $sem1->tanggal_selesai && $p->tanggal >= substr($sem1->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem1->tanggal_selesai, 0, 10))
+                    || ($bulanSem1->isNotEmpty() && $bulanSem1->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
             });
-            $poinKehadiran1 = ($presensiSem1->where('status', 'Alpha')->count() * $tarifAlpha) + ($presensiSem1->where('status', 'Izin')->count() * $tarifIzin);
-            $poinPelanggaran1 = $pelanggaranMuridIni->filter(function ($p) use ($semuaBulanHijriyah) {
-                $bulan = $semuaBulanHijriyah->first(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi);
-                return $bulan && in_array((string)$bulan->semester, ['1', 'Ganjil', 'Semester 1']);
-            })->sum(fn($p) => (float)($p->referensiPelanggaran->poin ?? 0));
-
+            $alpha1 = $presensiSem1->where('status', 'Alpha')->count();
+            $izin1 = $presensiSem1->where('status', 'Izin')->count();
+            $poinKehadiran1 = ($alpha1 * $tarifAlpha) + ($izin1 * $tarifIzin);
             $nilaiHadir1 = max(0, ((15 - $poinKehadiran1) / 15) * 100);
+
+            $pelanggaranSem1 = $pelanggaranMuridIni->filter(function ($p) use ($sem1, $bulanSem1) {
+                return ($sem1 && $sem1->tanggal_mulai && $sem1->tanggal_selesai && $p->tanggal >= substr($sem1->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem1->tanggal_selesai, 0, 10))
+                    || ($bulanSem1->isNotEmpty() && $bulanSem1->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
+            });
+            $poinPelanggaran1 = $pelanggaranSem1->sum(fn($p) => (float)($p->referensiPelanggaran->poin ?? 0));
             $nilaiPelanggaran1 = max(0, ((30 - $poinPelanggaran1) / 30) * 100);
+
             $skorSem1 = ($rataUjian1 * $bobotUjian) + ($nilaiHadir1 * $bobotHadir) + ($nilaiPelanggaran1 * $bobotPelanggaran);
 
             // Semester 2
             $rataUjian2 = $nilaiMurid->whereIn('ujian_id', $idUjianSem2)->avg('nilai') ?? 0;
-            $presensiSem2 = $presensiMuridIni->filter(function ($p) use ($semuaBulanHijriyah) {
-                $bulan = $semuaBulanHijriyah->first(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi);
-                return $bulan && in_array((string)$bulan->semester, ['2', 'Genap', 'Semester 2']);
+            $presensiSem2 = $presensiMuridIni->filter(function ($p) use ($sem2, $bulanSem2) {
+                return ($sem2 && $p->semester_id == $sem2->id)
+                    || ($sem2 && $sem2->tanggal_mulai && $sem2->tanggal_selesai && $p->tanggal >= substr($sem2->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem2->tanggal_selesai, 0, 10))
+                    || ($bulanSem2->isNotEmpty() && $bulanSem2->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
             });
-            $poinKehadiran2 = ($presensiSem2->where('status', 'Alpha')->count() * $tarifAlpha) + ($presensiSem2->where('status', 'Izin')->count() * $tarifIzin);
-            $poinPelanggaran2 = $pelanggaranMuridIni->filter(function ($p) use ($semuaBulanHijriyah) {
-                $bulan = $semuaBulanHijriyah->first(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi);
-                return $bulan && in_array((string)$bulan->semester, ['2', 'Genap', 'Semester 2']);
-            })->sum(fn($p) => (float)($p->referensiPelanggaran->poin ?? 0));
-
+            $alpha2 = $presensiSem2->where('status', 'Alpha')->count();
+            $izin2 = $presensiSem2->where('status', 'Izin')->count();
+            $poinKehadiran2 = ($alpha2 * $tarifAlpha) + ($izin2 * $tarifIzin);
             $nilaiHadir2 = max(0, ((15 - $poinKehadiran2) / 15) * 100);
+
+            $pelanggaranSem2 = $pelanggaranMuridIni->filter(function ($p) use ($sem2, $bulanSem2) {
+                return ($sem2 && $sem2->tanggal_mulai && $sem2->tanggal_selesai && $p->tanggal >= substr($sem2->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem2->tanggal_selesai, 0, 10))
+                    || ($bulanSem2->isNotEmpty() && $bulanSem2->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
+            });
+            $poinPelanggaran2 = $pelanggaranSem2->sum(fn($p) => (float)($p->referensiPelanggaran->poin ?? 0));
             $nilaiPelanggaran2 = max(0, ((30 - $poinPelanggaran2) / 30) * 100);
+
             $skorSem2 = ($rataUjian2 * $bobotUjian) + ($nilaiHadir2 * $bobotHadir) + ($nilaiPelanggaran2 * $bobotPelanggaran);
 
             // Akumulasi Final
@@ -1167,16 +1257,36 @@ class LaporanController extends Controller
                     'bobot_ujian' => (int)($bobotUjian * 100),
                     'bobot_presensi' => (int)($bobotHadir * 100),
                     'bobot_pelanggaran' => (int)($bobotPelanggaran * 100),
+                    'tarif_alpha' => (float)$tarifAlpha,
+                    'tarif_izin' => (float)$tarifIzin,
                     'rata_ujian_sem1' => round($rataUjian1, 2),
                     'rata_ujian_sem2' => round($rataUjian2, 2),
+                    'jumlah_alpha_sem1' => $alpha1,
+                    'jumlah_izin_sem1' => $izin1,
+                    'poin_presensi_sem1' => round($poinKehadiran1, 2),
+                    'nilai_presensi_sem1' => round($nilaiHadir1, 2),
+                    'jumlah_alpha_sem2' => $alpha2,
+                    'jumlah_izin_sem2' => $izin2,
+                    'poin_presensi_sem2' => round($poinKehadiran2, 2),
+                    'nilai_presensi_sem2' => round($nilaiHadir2, 2),
                     'poin_pelanggaran_sem1' => round($poinPelanggaran1, 2),
+                    'nilai_pelanggaran_sem1' => round($nilaiPelanggaran1, 2),
                     'poin_pelanggaran_sem2' => round($poinPelanggaran2, 2),
+                    'nilai_pelanggaran_sem2' => round($nilaiPelanggaran2, 2),
                 ]
             ];
         }
 
         // Urutkan nilai akumulasi tertinggi
         usort($dataMurid, fn($a, $b) => $b['nilai_akumulasi'] <=> $a['nilai_akumulasi']);
+
+        $tahunList = TahunPelajaran::orderBy('id', 'desc')->get()->map(fn($t) => [
+            'id' => $t->id,
+            'nama_lengkap' => $t->nama_lengkap ?? (($t->nama_hijriyah ?? '') . ($t->nama_masehi ? ' | ' . $t->nama_masehi : '')),
+            'nama_hijriyah' => $t->nama_hijriyah ?? '',
+            'nama_masehi' => $t->nama_masehi ?? '',
+            'is_active' => (bool)$t->is_active,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -1185,11 +1295,16 @@ class LaporanController extends Controller
                 'nama_ruangan' => $ruangan->nama_ruangan,
                 'level_nama' => $ruangan->level->nama_level ?? '-',
                 'is_kelas_akhir' => $isKelasAkhir,
+                'is_wali_ruangan' => $ruangan->ustadz_id == $ustadzId,
+                'wali_ruangan_nama' => $ruangan->ustadz->nama_lengkap ?? ($ruangan->ustadz->nama ?? '-'),
+                'tahun_pelajaran_id' => $tahunId,
                 'tahun_pelajaran' => $tahunAktif->nama_lengkap ?? ($tahunAktif->nama_masehi ?? 'Tahun Aktif'),
+                'tahun_list' => $tahunList,
                 'total_murid' => $murids->count(),
                 'total_naik_kelas' => $countNaik,
                 'total_lulus' => $countLulus,
                 'total_tinggal_kelas' => $countTinggal,
+                'kkm' => 55,
                 'ruangan_list' => $accessibleRuangans->map(fn($r) => [
                     'id' => $r->id,
                     'nama_ruangan' => $r->nama_ruangan,
@@ -1199,6 +1314,7 @@ class LaporanController extends Controller
                     'bobot_ujian' => (int)($bobotUjian * 100),
                     'bobot_presensi' => (int)($bobotHadir * 100),
                     'bobot_pelanggaran' => (int)($bobotPelanggaran * 100),
+                    'kkm' => 55,
                 ],
                 'data_kenaikan' => $dataMurid,
             ]

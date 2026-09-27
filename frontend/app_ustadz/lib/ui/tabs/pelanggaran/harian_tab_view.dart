@@ -86,7 +86,12 @@ class _HarianTabViewState extends State<HarianTabView> {
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          14,
+          16,
+          120 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // 1. DATE PICKER SELECTOR BAR
           Container(

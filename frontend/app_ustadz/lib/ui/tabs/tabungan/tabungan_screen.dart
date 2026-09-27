@@ -120,7 +120,12 @@ class _TabunganScreenState extends State<TabunganScreen> {
           provider.fetchTabunganUstadz(tabunganId: provider.selectedTabunganId),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 80),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          10,
+          16,
+          80 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           // Account Switcher (jika ustadz memiliki lebih dari 1 rekening)
           _buildAccountSwitcher(provider, data, isDark),

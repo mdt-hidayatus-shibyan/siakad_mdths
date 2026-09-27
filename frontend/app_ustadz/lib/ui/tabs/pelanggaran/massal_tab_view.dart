@@ -342,7 +342,12 @@ class _MassalTabViewState extends State<MassalTabView> {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        120 + MediaQuery.of(context).padding.bottom,
+      ),
       children: [
         // CARD INFORMASI CARA KERJA
         GlassCard(

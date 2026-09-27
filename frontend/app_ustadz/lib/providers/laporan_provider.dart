@@ -20,6 +20,16 @@ class LaporanProvider extends ChangeNotifier {
   bool _isLoadingPresensiUstadz = false;
   String? _errorPresensiUstadz;
 
+  // State Kenaikan Kelas & Kelulusan
+  LaporanKenaikanKelasData? _kenaikanKelasData;
+  bool _isLoadingKenaikanKelas = false;
+  String? _errorKenaikanKelas;
+
+  // State Laporan Ujian
+  LaporanUjianData? _laporanUjianData;
+  bool _isLoadingLaporanUjian = false;
+  String? _errorLaporanUjian;
+
   // Getters Presensi Murid
   LaporanPresensiMuridData? get presensiMuridData => _presensiMuridData;
   bool get isLoadingPresensiMurid => _isLoadingPresensiMurid;
@@ -34,6 +44,16 @@ class LaporanProvider extends ChangeNotifier {
   LaporanPresensiUstadzData? get presensiUstadzData => _presensiUstadzData;
   bool get isLoadingPresensiUstadz => _isLoadingPresensiUstadz;
   String? get errorPresensiUstadz => _errorPresensiUstadz;
+
+  // Getters Kenaikan Kelas & Kelulusan
+  LaporanKenaikanKelasData? get kenaikanKelasData => _kenaikanKelasData;
+  bool get isLoadingKenaikanKelas => _isLoadingKenaikanKelas;
+  String? get errorKenaikanKelas => _errorKenaikanKelas;
+
+  // Getters Laporan Ujian
+  LaporanUjianData? get laporanUjianData => _laporanUjianData;
+  bool get isLoadingLaporanUjian => _isLoadingLaporanUjian;
+  String? get errorLaporanUjian => _errorLaporanUjian;
 
   /// Memuat Laporan Presensi Murid
   Future<void> fetchPresensiMurid({
@@ -125,6 +145,44 @@ class LaporanProvider extends ChangeNotifier {
       _errorPresensiUstadz = e.toString().replaceAll('Exception: ', '');
     } finally {
       _isLoadingPresensiUstadz = false;
+      notifyListeners();
+    }
+  }
+
+  /// Memuat Laporan Kenaikan Kelas & Kelulusan Murid
+  Future<void> fetchKenaikanKelas({int? ruanganId, int? tahunId}) async {
+    _isLoadingKenaikanKelas = true;
+    _errorKenaikanKelas = null;
+    notifyListeners();
+
+    try {
+      _kenaikanKelasData = await _repo.getLaporanKenaikanKelas(
+        ruanganId: ruanganId,
+        tahunId: tahunId,
+      );
+    } catch (e) {
+      _errorKenaikanKelas = e.toString().replaceAll('Exception: ', '');
+    } finally {
+      _isLoadingKenaikanKelas = false;
+      notifyListeners();
+    }
+  }
+
+  /// Memuat Laporan Ujian & Leger Kelas
+  Future<void> fetchLaporanUjian({int? ruanganId, int? ujianId}) async {
+    _isLoadingLaporanUjian = true;
+    _errorLaporanUjian = null;
+    notifyListeners();
+
+    try {
+      _laporanUjianData = await _repo.getLaporanUjian(
+        ruanganId: ruanganId,
+        ujianId: ujianId,
+      );
+    } catch (e) {
+      _errorLaporanUjian = e.toString().replaceAll('Exception: ', '');
+    } finally {
+      _isLoadingLaporanUjian = false;
       notifyListeners();
     }
   }
