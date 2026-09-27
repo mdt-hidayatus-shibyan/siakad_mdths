@@ -14,8 +14,13 @@ import 'form_presensi_screen.dart';
 
 class PresensiTab extends StatefulWidget {
   final VoidCallback? onNavigateToUjian;
+  final int initialSubTab;
 
-  const PresensiTab({super.key, this.onNavigateToUjian});
+  const PresensiTab({
+    super.key,
+    this.onNavigateToUjian,
+    this.initialSubTab = 0,
+  });
 
   @override
   State<PresensiTab> createState() => _PresensiTabState();
@@ -28,7 +33,11 @@ class _PresensiTabState extends State<PresensiTab>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialSubTab.clamp(0, 1),
+    );
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {});
@@ -40,6 +49,14 @@ class _PresensiTabState extends State<PresensiTab>
       p.fetchSesiUstadz();
       p.fetchDaftarBadal();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant PresensiTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialSubTab != widget.initialSubTab) {
+      _tabController.animateTo(widget.initialSubTab.clamp(0, 1));
+    }
   }
 
   @override

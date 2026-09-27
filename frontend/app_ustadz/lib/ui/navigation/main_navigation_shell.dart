@@ -16,17 +16,44 @@ class MainNavigationShell extends StatefulWidget {
   final int initialIndex;
   const MainNavigationShell({super.key, this.initialIndex = 0});
 
+  static void navigateTo(
+    BuildContext context,
+    int tabIndex, {
+    int? subTabIndex,
+  }) {
+    final state = context.findAncestorStateOfType<_MainNavigationShellState>();
+    state?.navigateToTab(tabIndex, subTabIndex: subTabIndex);
+  }
+
   @override
   State<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
   late int _currentIndex;
+  int _presensiSubTab = 0;
   StreamSubscription<BellEvent>? _bellSub;
 
+  void navigateToTab(int tabIndex, {int? subTabIndex}) {
+    HapticHelper.segmentTick();
+    setState(() {
+      if (subTabIndex != null && tabIndex == 1) {
+        _presensiSubTab = subTabIndex;
+      }
+      _currentIndex = tabIndex;
+    });
+  }
+
   List<Widget> get _tabs => [
-    const HomeTab(),
-    PresensiTab(onNavigateToUjian: () => _onTabSelected(3)),
+    HomeTab(
+      onNavigateToPresensiGuru: () => navigateToTab(1, subTabIndex: 1),
+      onNavigateToPresensiMurid: () => navigateToTab(1, subTabIndex: 0),
+    ),
+    PresensiTab(
+      key: ValueKey('presensi_tab_$_presensiSubTab'),
+      initialSubTab: _presensiSubTab,
+      onNavigateToUjian: () => _onTabSelected(3),
+    ),
     const PelanggaranTab(),
     const UjianTab(),
     const AkunTab(),

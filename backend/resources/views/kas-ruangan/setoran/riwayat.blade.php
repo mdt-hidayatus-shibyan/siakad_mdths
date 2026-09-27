@@ -1,3 +1,5 @@
+@section('title', 'Riwayat Kas Ruangan')
+
 <x-app-layout>
 
     <!-- HEADER (Struktur Sejajar) -->

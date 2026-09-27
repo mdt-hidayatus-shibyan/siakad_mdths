@@ -26,9 +26,18 @@ import 'kalendar_screen.dart';
 import 'pengumuman_screen.dart';
 import 'detail_pengumuman_screen.dart';
 import '../catatan/catatan_ustadz_screen.dart';
+import '../../../providers/presensi_provider.dart';
+import '../presensi/checkin_ustadz_sheet.dart';
 
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key});
+  final VoidCallback? onNavigateToPresensiGuru;
+  final VoidCallback? onNavigateToPresensiMurid;
+
+  const HomeTab({
+    super.key,
+    this.onNavigateToPresensiGuru,
+    this.onNavigateToPresensiMurid,
+  });
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -106,6 +115,23 @@ class _HomeTabState extends State<HomeTab> {
           _isRefreshing = false;
         });
       }
+    }
+  }
+
+  Future<void> _handlePresensiGuru(JadwalHariIniItem j) async {
+    HapticHelper.light();
+    final presensiP = context.read<PresensiProvider>();
+    if (presensiP.sesiUstadzList.isEmpty) {
+      await presensiP.fetchSesiUstadz();
+    }
+    if (!mounted) return;
+    final matching = presensiP.sesiUstadzList
+        .where((s) => s.jadwalId == j.id)
+        .firstOrNull;
+    if (matching != null) {
+      CheckinUstadzSheet.show(context, matching);
+    } else {
+      widget.onNavigateToPresensiGuru?.call();
     }
   }
 
@@ -486,7 +512,7 @@ class _HomeTabState extends State<HomeTab> {
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 3,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color:
@@ -592,6 +618,7 @@ class _HomeTabState extends State<HomeTab> {
                   ...dashboard.dashboardData!.jadwalHariIniList.map(
                     (j) => ScheduleCard(
                       item: j,
+                      onPresensiGuruTap: () => _handlePresensiGuru(j),
                       onAbsenTap: () {
                         HapticHelper.light();
                         Navigator.push(
@@ -655,7 +682,7 @@ class _HomeTabState extends State<HomeTab> {
                           ),
                           _buildQuickAction(
                             icon: Icons.gavel_rounded,
-                            label: 'Ref. Sanksi',
+                            label: 'Ref. Pelanggaran',
                             isDark: isDark,
                             onTap: () {
                               Navigator.push(

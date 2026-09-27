@@ -11,6 +11,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../../data/models/akademik_model.dart';
 import '../utils/haptic_helper.dart';
+import 'system_settings_service.dart';
 
 class BellEvent {
   final int jam; // 1 = Jam Pertama, 2 = Jam Kedua
@@ -45,14 +46,14 @@ class BellService {
   static const String _keyOnlyTeachingDays = 'bell_only_teaching_days';
   static const String _keyTeachingSchedule = 'bell_teaching_schedule';
 
-  static const String _channelId = 'mdths_kbm_bell_channel_v3';
+  static const String _channelId = 'mdths_kbm_bell_channel_v4';
   static const String _channelName = 'Bel Masuk KBM MDTHS';
   static const String _channelDesc =
       'Notifikasi jadwal bel masuk jam pertama dan jam kedua';
 
   bool _isEnabled = true;
   bool _onlyOnTeachingDays =
-      true; // Default: Hanya berbunyi jika ustadz mengajar
+      true; // Default true: Hanya berbunyi jika ustadz memiliki jadwal mengajar
   TimeOfDay _jam1Time = const TimeOfDay(hour: 13, minute: 45);
   TimeOfDay _jam2Time = const TimeOfDay(hour: 15, minute: 30);
   double _volume = 1.0;
@@ -98,6 +99,44 @@ class BellService {
 
   bool hasTeachingSessionOn(int weekday, int jam) =>
       _teachingSchedule[weekday]?.contains(jam) ?? false;
+
+  /// Periksa apakah izin notifikasi diizinkan sistem
+  Future<bool> checkNotificationPermission() async {
+    if (kIsWeb) return true;
+    final android = _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android != null) {
+      final allowed = await android.areNotificationsEnabled();
+      return allowed ?? true;
+    }
+    return true;
+  }
+
+  /// Buka layar pengaturan izin alarm sistem (Exact Alarms Setting)
+  Future<void> openExactAlarmSettings() async {
+    if (kIsWeb) return;
+    await SystemSettingsService.openExactAlarmSettings();
+  }
+
+  /// Buka / Minta izin notifikasi sistem
+  Future<void> openNotificationSettings() async {
+    if (kIsWeb) return;
+    await SystemSettingsService.openNotificationSettings();
+  }
+
+  /// Buka layar pengaturan penghemat baterai sistem
+  Future<void> openBatterySettings() async {
+    if (kIsWeb) return;
+    await SystemSettingsService.openBatterySettings();
+  }
+
+  /// Buka layar info aplikasi utama (App Info)
+  Future<void> openAppSettings() async {
+    if (kIsWeb) return;
+    await SystemSettingsService.openAppSettings();
+  }
 
   /// Inisialisasi awal BellService & muat konfigurasi tersimpan
   Future<void> init() async {
@@ -184,6 +223,9 @@ class BellService {
           await androidImplementation.deleteNotificationChannel(
             channelId: 'mdths_kbm_bell_channel_v2',
           );
+          await androidImplementation.deleteNotificationChannel(
+            channelId: 'mdths_kbm_bell_channel_v3',
+          );
         } catch (_) {}
 
         const androidChannel = AndroidNotificationChannel(
@@ -216,7 +258,7 @@ class BellService {
 
       if (!_isEnabled) return;
 
-      if (_onlyOnTeachingDays) {
+      if (_onlyOnTeachingDays && _teachingSchedule.isNotEmpty) {
         // Hanya jadwalkan alarm di hari & jam ustadz mengajar
         for (final entry in _teachingSchedule.entries) {
           final day = entry.key;
@@ -235,7 +277,8 @@ class BellService {
               id: idJam1,
               title: '🔔 Bel Masuk Jam Ke-1 (${_formatTime(_jam1Time)})',
               body:
-                  'Saatnya memulai Kegiatan Belajar Mengajar (KBM) Jam Pertama.',
+                  'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+              jam: 1,
               scheduledDate: time1,
             );
           }
@@ -251,13 +294,14 @@ class BellService {
               id: idJam2,
               title: '🔔 Bel Masuk Jam Ke-2 (${_formatTime(_jam2Time)})',
               body:
-                  'Saatnya memulai Kegiatan Belajar Mengajar (KBM) Jam Kedua.',
+                  'Bel jam kedua sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+              jam: 2,
               scheduledDate: time2,
             );
           }
         }
       } else {
-        // Mode Manual: Jadwalkan untuk semua hari aktif yang dipilih
+        // Mode Standar: Jadwalkan untuk semua hari aktif yang dipilih
         for (final day in _activeDays) {
           final idJam1 = day * 10 + 1;
           final time1 = _nextInstanceOfWeekdayAndTime(
@@ -269,7 +313,8 @@ class BellService {
             id: idJam1,
             title: '🔔 Bel Masuk Jam Ke-1 (${_formatTime(_jam1Time)})',
             body:
-                'Saatnya memulai Kegiatan Belajar Mengajar (KBM) Jam Pertama.',
+                'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+            jam: 1,
             scheduledDate: time1,
           );
 
@@ -282,7 +327,9 @@ class BellService {
           await _scheduleSingleBell(
             id: idJam2,
             title: '🔔 Bel Masuk Jam Ke-2 (${_formatTime(_jam2Time)})',
-            body: 'Saatnya memulai Kegiatan Belajar Mengajar (KBM) Jam Kedua.',
+            body:
+                'Bel jam kedua sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+            jam: 2,
             scheduledDate: time2,
           );
         }
@@ -292,24 +339,114 @@ class BellService {
     }
   }
 
-  Future<void> _scheduleSingleBell({
-    required int id,
+  /// Helper untuk membangun detail notifikasi Android tingkat profesional
+  AndroidNotificationDetails _buildProfessionalAndroidDetails({
     required String title,
     required String body,
-    required tz.TZDateTime scheduledDate,
-  }) async {
-    const androidDetails = AndroidNotificationDetails(
+    required int jam,
+    String? subText,
+  }) {
+    final bigTextStyle = BigTextStyleInformation(
+      body,
+      contentTitle: title,
+      summaryText: subText ?? 'MDTHS • Jam Ke-$jam KBM',
+      htmlFormatContentTitle: false,
+      htmlFormatBigText: false,
+      htmlFormatSummaryText: false,
+    );
+
+    return AndroidNotificationDetails(
       _channelId,
       _channelName,
       channelDescription: _channelDesc,
       importance: Importance.max,
       priority: Priority.max,
-      sound: RawResourceAndroidNotificationSound('school_bell'),
+      sound: const RawResourceAndroidNotificationSound('school_bell'),
       playSound: true,
       enableVibration: true,
+      vibrationPattern: Int64List.fromList([0, 500, 250, 500, 250, 500]),
+      styleInformation: bigTextStyle,
       fullScreenIntent: true,
+      visibility: NotificationVisibility.public,
       category: AndroidNotificationCategory.alarm,
       audioAttributesUsage: AudioAttributesUsage.alarm,
+      color: const Color(0xFF146C2E),
+      ledColor: const Color(0xFF10B981),
+      ledOnMs: 1000,
+      ledOffMs: 500,
+      enableLights: true,
+      channelShowBadge: true,
+      autoCancel: true,
+      ongoing: false,
+      ticker: '🔔 $title',
+      actions: const <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'action_presensi',
+          '📝 Masuk & Presensi',
+          showsUserInterface: true,
+          cancelNotification: true,
+        ),
+        AndroidNotificationAction(
+          'action_dismiss',
+          '🔕 Tutup',
+          cancelNotification: true,
+        ),
+      ],
+    );
+  }
+
+  /// Munculkan notifikasi instan langsung di Notification Center
+  Future<void> showImmediateNotification({
+    required int id,
+    required String title,
+    required String body,
+    required int jam,
+    String? subText,
+  }) async {
+    if (kIsWeb || !_isNotificationInitialized) return;
+    try {
+      final androidDetails = _buildProfessionalAndroidDetails(
+        title: title,
+        body: body,
+        jam: jam,
+        subText: subText,
+      );
+      const darwinDetails = DarwinNotificationDetails(
+        sound: 'school_bell.wav',
+        presentSound: true,
+        presentAlert: true,
+        presentBanner: true,
+        presentBadge: true,
+        interruptionLevel: InterruptionLevel.timeSensitive,
+        subtitle: 'Pengingat KBM & Presensi',
+      );
+      final details = NotificationDetails(
+        android: androidDetails,
+        iOS: darwinDetails,
+      );
+      await _notificationsPlugin.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: details,
+        payload: 'bell_jam_$jam',
+      );
+    } catch (e) {
+      debugPrint('Error showing immediate notification: $e');
+    }
+  }
+
+  Future<void> _scheduleSingleBell({
+    required int id,
+    required String title,
+    required String body,
+    required int jam,
+    required tz.TZDateTime scheduledDate,
+  }) async {
+    final androidDetails = _buildProfessionalAndroidDetails(
+      title: title,
+      body: body,
+      jam: jam,
     );
 
     const darwinDetails = DarwinNotificationDetails(
@@ -317,22 +454,128 @@ class BellService {
       presentSound: true,
       presentAlert: true,
       presentBanner: true,
+      presentBadge: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+      subtitle: 'Pengingat KBM & Presensi',
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: darwinDetails,
     );
 
-    await _notificationsPlugin.zonedSchedule(
-      id: id,
-      title: title,
-      body: body,
-      scheduledDate: scheduledDate,
-      notificationDetails: details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduledDate,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.alarmClock,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+      );
+    } catch (e) {
+      debugPrint(
+        'zonedSchedule alarmClock failed: $e, trying exactAllowWhileIdle',
+      );
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          id: id,
+          title: title,
+          body: body,
+          scheduledDate: scheduledDate,
+          notificationDetails: details,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        );
+      } catch (e2) {
+        debugPrint(
+          'zonedSchedule exactAllowWhileIdle failed: $e2, trying inexact fallback',
+        );
+        try {
+          await _notificationsPlugin.zonedSchedule(
+            id: id,
+            title: title,
+            body: body,
+            scheduledDate: scheduledDate,
+            notificationDetails: details,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+          );
+        } catch (e3) {
+          debugPrint('zonedSchedule inexact fallback failed: $e3');
+        }
+      }
+    }
+  }
+
+  /// Jadwalkan uji coba notifikasi bel masuk setelah delay detik
+  Future<void> scheduleTestNotification({int delaySeconds = 5}) async {
+    if (kIsWeb || !_isNotificationInitialized) {
+      await playBellSound(repeats: 2);
+      return;
+    }
+
+    final testTime = tz.TZDateTime.now(
+      tz.local,
+    ).add(Duration(seconds: delaySeconds));
+
+    final androidDetails = _buildProfessionalAndroidDetails(
+      title: '🔔 Uji Coba Bel Masuk ($delaySeconds Detik)',
+      body:
+          'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+      jam: 1,
+      subText: 'Uji Coba Sistem Notifikasi MDTHS',
     );
+
+    const darwinDetails = DarwinNotificationDetails(
+      sound: 'school_bell.wav',
+      presentSound: true,
+      presentAlert: true,
+      presentBanner: true,
+      presentBadge: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+      subtitle: 'Uji Coba Sistem Notifikasi MDTHS',
+    );
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+    );
+
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id: 9999,
+        title: '🔔 Uji Coba Bel Masuk ($delaySeconds Detik)',
+        body:
+            'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+        scheduledDate: testTime,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.alarmClock,
+      );
+    } catch (_) {
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          id: 9999,
+          title: '🔔 Uji Coba Bel Masuk ($delaySeconds Detik)',
+          body:
+              'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+          scheduledDate: testTime,
+          notificationDetails: details,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        );
+      } catch (_) {
+        await _notificationsPlugin.zonedSchedule(
+          id: 9999,
+          title: '🔔 Uji Coba Bel Masuk ($delaySeconds Detik)',
+          body:
+              'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
+          scheduledDate: testTime,
+          notificationDetails: details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+      }
+    }
   }
 
   tz.TZDateTime _nextInstanceOfWeekdayAndTime(
@@ -602,7 +845,7 @@ class BellService {
           _triggerBell(
             1,
             '🔔 Bel Masuk Jam Ke-1 (${_formatTime(_jam1Time)})',
-            'Saatnya memulai Kegiatan Belajar Mengajar (KBM) Jam Pertama.',
+            'Bel jam pertama sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
             _formatTime(_jam1Time),
           );
         }
@@ -621,7 +864,7 @@ class BellService {
           _triggerBell(
             2,
             '🔔 Bel Masuk Jam Ke-2 (${_formatTime(_jam2Time)})',
-            'Saatnya memulai Kegiatan Belajar Mengajar (KBM) Jam Kedua.',
+            'Bel jam kedua sudah berbunyi! Silahkan masuk ke dalam ruangan kelas dan jangan lupa lakukan presensi Ustadz dan Murid.',
             _formatTime(_jam2Time),
           );
         }
@@ -637,6 +880,14 @@ class BellService {
   ) async {
     HapticHelper.warning();
     unawaited(playBellSound(repeats: 3));
+
+    // Tampilkan notifikasi di Notification Center secara profesional
+    await showImmediateNotification(
+      id: jam == 1 ? 1001 : 1002,
+      title: title,
+      body: desc,
+      jam: jam,
+    );
 
     final event = BellEvent(
       jam: jam,

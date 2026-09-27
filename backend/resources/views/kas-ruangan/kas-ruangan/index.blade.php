@@ -1,3 +1,6 @@
+@section('title', 'Kas Ruangan')
+
+
 <x-app-layout>
 
     <!-- 1. HEADER & FILTER SECTION -->

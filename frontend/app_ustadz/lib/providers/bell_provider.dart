@@ -84,6 +84,26 @@ class BellProvider extends ChangeNotifier {
     await _service.playBellSound(repeats: 3);
   }
 
+  Future<void> scheduleTestNotification({int delaySeconds = 5}) async {
+    await _service.scheduleTestNotification(delaySeconds: delaySeconds);
+  }
+
+  Future<void> openExactAlarmSettings() async {
+    await _service.openExactAlarmSettings();
+  }
+
+  Future<void> openNotificationSettings() async {
+    await _service.openNotificationSettings();
+  }
+
+  Future<void> openBatterySettings() async {
+    await _service.openBatterySettings();
+  }
+
+  Future<void> openAppSettings() async {
+    await _service.openAppSettings();
+  }
+
   Future<void> stopSound() async {
     await _service.stopSound();
     notifyListeners();

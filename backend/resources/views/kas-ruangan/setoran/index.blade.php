@@ -1,3 +1,5 @@
+@section('title', 'Setoran Kas Ruangan')
+
 <x-app-layout>
 
     <!-- HEADER & TOOLBAR SEJAJAR -->

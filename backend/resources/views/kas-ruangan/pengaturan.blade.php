@@ -1,3 +1,5 @@
+@section('title', 'PengaturanKas Ruangan')
+
 <x-app-layout>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- HEADER & TOOLBAR SEJAJAR -->
@@ -75,7 +77,8 @@
                     class="m3-glass-card p-5 flex flex-col gap-4 transition-all shadow-2xs hover:border-primary/40 dark:hover:border-primary-dark/40 relative group">
 
                     <!-- Card Header -->
-                    <div class="flex justify-between items-start border-b border-zinc-200/80 dark:border-zinc-800 pb-3.5">
+                    <div
+                        class="flex justify-between items-start border-b border-zinc-200/80 dark:border-zinc-800 pb-3.5">
                         <div>
                             <h3
                                 class="font-black text-base md:text-lg text-zinc-900 dark:text-white tracking-tight leading-tight mb-1">
@@ -132,7 +135,8 @@
             @empty
                 <!-- STATE KOSONG -->
                 <div class="col-span-full">
-                    <x-empty-state icon="bi-door-closed" title="Data Tidak Ditemukan" message="Belum ada data ruangan untuk tahun ajaran yang dipilih." />
+                    <x-empty-state icon="bi-door-closed" title="Data Tidak Ditemukan"
+                        message="Belum ada data ruangan untuk tahun ajaran yang dipilih." />
                 </div>
             @endforelse
 
@@ -171,7 +175,8 @@
                     if (data.success) {
                         showToast('Berhasil Disimpan!');
                         inputElement.classList.add('!border-emerald-500', 'ring-2', 'ring-emerald-500/30');
-                        setTimeout(() => inputElement.classList.remove('!border-emerald-500', 'ring-2', 'ring-emerald-500/30'), 1000);
+                        setTimeout(() => inputElement.classList.remove('!border-emerald-500', 'ring-2',
+                            'ring-emerald-500/30'), 1000);
                     }
                 })
                 .catch(error => {
@@ -203,4 +208,3 @@
         }
     </script>
 </x-app-layout>
-

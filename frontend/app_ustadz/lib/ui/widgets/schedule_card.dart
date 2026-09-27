@@ -6,8 +6,14 @@ import 'glass_card.dart';
 class ScheduleCard extends StatelessWidget {
   final JadwalHariIniItem item;
   final VoidCallback? onAbsenTap;
+  final VoidCallback? onPresensiGuruTap;
 
-  const ScheduleCard({super.key, required this.item, this.onAbsenTap});
+  const ScheduleCard({
+    super.key,
+    required this.item,
+    this.onAbsenTap,
+    this.onPresensiGuruTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -212,22 +218,109 @@ class ScheduleCard extends StatelessWidget {
               ],
             ],
           ),
-          if (!item.sudahAbsen && onAbsenTap != null) ...[
+          if ((!item.sudahAbsen && onAbsenTap != null) ||
+              onPresensiGuruTap != null) ...[
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 38,
-              child: ElevatedButton.icon(
-                onPressed: onAbsenTap,
-                icon: const Icon(Icons.fact_check_rounded, size: 16),
-                label: const Text('Mulai Presensi Kelas'),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+            if (!item.sudahAbsen &&
+                onAbsenTap != null &&
+                onPresensiGuruTap != null)
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 38,
+                      child: OutlinedButton.icon(
+                        onPressed: onPresensiGuruTap,
+                        icon: const Icon(Icons.badge_rounded, size: 16),
+                        label: const Text(
+                          'Check-in Ustadz',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                          side: BorderSide(
+                            color:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.5),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SizedBox(
+                      height: 38,
+                      child: ElevatedButton.icon(
+                        onPressed: onAbsenTap,
+                        icon: const Icon(Icons.fact_check_rounded, size: 16),
+                        label: const Text(
+                          'Presensi Murid',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else if (!item.sudahAbsen && onAbsenTap != null)
+              SizedBox(
+                width: double.infinity,
+                height: 38,
+                child: ElevatedButton.icon(
+                  onPressed: onAbsenTap,
+                  icon: const Icon(Icons.fact_check_rounded, size: 16),
+                  label: const Text('Presensi Murid'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              )
+            else if (onPresensiGuruTap != null)
+              SizedBox(
+                width: double.infinity,
+                height: 38,
+                child: OutlinedButton.icon(
+                  onPressed: onPresensiGuruTap,
+                  icon: const Icon(Icons.badge_rounded, size: 16),
+                  label: const Text('Presensi Ustadz'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: isDark
+                        ? AppColors.primaryDark
+                        : AppColors.primaryLight,
+                    side: BorderSide(
+                      color:
+                          (isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight)
+                              .withValues(alpha: 0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ],
       ),

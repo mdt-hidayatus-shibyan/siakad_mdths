@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
+import '../../../providers/akademik_provider.dart';
 import '../../../providers/bell_provider.dart';
+import '../../../providers/theme_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 
-class PengingatBelScreen extends StatelessWidget {
+class PengingatBelScreen extends StatefulWidget {
   const PengingatBelScreen({super.key});
 
+  @override
+  State<PengingatBelScreen> createState() => _PengingatBelScreenState();
+}
+
+class _PengingatBelScreenState extends State<PengingatBelScreen> {
   static const List<Map<String, dynamic>> _daysConfig = [
     {'day': 1, 'name': 'Senin', 'short': 'Sen'},
     {'day': 2, 'name': 'Selasa', 'short': 'Sel'},
@@ -20,8 +27,23 @@ class PengingatBelScreen extends StatelessWidget {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final akademik = context.read<AkademikProvider>();
+      if (akademik.jadwalData == null && !akademik.isLoadingJadwal) {
+        akademik.fetchJadwalPelajaran();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
+    final primary = isDark
+        ? themeProvider.activePreset.primaryDark
+        : themeProvider.activePreset.primaryLight;
 
     return Scaffold(
       appBar: const CustomAppBar(titleText: 'Pengingat Bel Masuk'),
@@ -40,11 +62,7 @@ class PengingatBelScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: bell.isEnabled
-                        ? [
-                            const Color(0xFF047857),
-                            const Color(0xFF059669),
-                            const Color(0xFF10B981),
-                          ]
+                        ? [primary, primary.withValues(alpha: 0.85)]
                         : [
                             isDark
                                 ? const Color(0xFF1E293B)
@@ -59,11 +77,8 @@ class PengingatBelScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color:
-                          (bell.isEnabled
-                                  ? const Color(0xFF059669)
-                                  : Colors.black)
-                              .withValues(alpha: isDark ? 0.35 : 0.25),
+                      color: (bell.isEnabled ? primary : Colors.black)
+                          .withValues(alpha: isDark ? 0.35 : 0.25),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -123,7 +138,9 @@ class PengingatBelScreen extends StatelessWidget {
                             bell.setEnabled(val);
                           },
                           activeThumbColor: Colors.white,
-                          activeTrackColor: const Color(0xFF34D399),
+                          activeTrackColor: Colors.white.withValues(
+                            alpha: 0.35,
+                          ),
                           inactiveThumbColor: Colors.white70,
                           inactiveTrackColor: Colors.white24,
                         ),
@@ -190,7 +207,7 @@ class PengingatBelScreen extends StatelessWidget {
                 subtitle: 'Bel awal masuk sesi Kegiatan Belajar Mengajar',
                 timeFormatted: bell.jam1Formatted,
                 timeOfDay: bell.jam1Time,
-                badgeColor: const Color(0xFF0284C7),
+                badgeColor: primary,
                 icon: Icons.looks_one_rounded,
                 onTimeChanged: (newTime) => bell.setJam1Time(newTime),
                 onTestPlay: () => bell.testPlay(),
@@ -558,9 +575,9 @@ class PengingatBelScreen extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
 
-                    // Tombol Uji Coba Suara
+                    // Tombol Uji Coba Suara Langsung
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -593,7 +610,7 @@ class PengingatBelScreen extends StatelessWidget {
                         label: Text(
                           bell.isPlaying
                               ? 'Hentikan Suara Bel'
-                              : 'Uji Coba Suara Bel Sekarang',
+                              : 'Uji Suara Bel Sekarang (Speaker)',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -601,13 +618,170 @@ class PengingatBelScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 8),
+
+                    // Tombol Uji Coba Notifikasi Sistem (Background 5 Detik)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                          side: BorderSide(
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                            width: 1.2,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () async {
+                          HapticHelper.confirmSuccess();
+                          await bell.scheduleTestNotification(delaySeconds: 5);
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.alarm_on_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      '🔔 Bel dijadwalkan dalam 5 detik! Silakan kunci layar HP atau keluar aplikasi sekarang untuk menguji.',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              duration: const Duration(seconds: 5),
+                            ),
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.notifications_active_outlined,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Uji Notifikasi Sistem Layar Mati (5 Detik)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ===============================================================
+              // 5. PANDUAN PENGATURAN HP ANDROID (TROUBLESHOOTING)
+              // ===============================================================
+              const Text(
+                'Solusi Jika Bel Tidak Berbunyi di HP',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              GlassCard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.lightbulb_outline_rounded,
+                            color: Colors.amber,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'Penyebab & Solusi Bel Tidak Bersuara:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    _buildGuideItem(
+                      number: '1',
+                      title: 'Izin Notifikasi & Alarm',
+                      desc:
+                          'Pastikan izin Notifikasi dan izin Alarm & Pengingat (Alarms & Reminders) sudah diaktifkan di Pengaturan HP Anda.',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildGuideItem(
+                      number: '2',
+                      title: 'Penghemat Baterai (Xiaomi, Oppo, Vivo, Samsung)',
+                      desc:
+                          'Sistem Android sering mematikan alarm latar belakang jika fitur penghemat baterai aktif. Buka Info Aplikasi MDTHS Ustadz > Penggunaan Baterai > Pilih "Tanpa Pembatasan" (No Restrictions / Don\'t optimize).',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildGuideItem(
+                      number: '3',
+                      title: 'Mulai Otomatis (Autostart)',
+                      desc:
+                          'Pada HP Xiaomi (HyperOS/MIUI) atau Oppo/Realme, aktifkan opsi "Mulai Otomatis" (Autostart) agar alarm tetap berjalan saat HP di-restart.',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildGuideItem(
+                      number: '4',
+                      title: 'Volume Alarm HP',
+                      desc:
+                          'Pastikan volume Nada Dering / Alarm di HP Anda tidak dalam posisi senyap (0%).',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildGuideItem(
+                      number: '5',
+                      title: 'Opsi "Hanya Saat Ada Jadwal Mengajar"',
+                      desc:
+                          'Opsi ini aktif secara default. Bel HANYA berbunyi saat Anda memiliki jadwal mengajar di database. Jika jadwal belum tersinkronisasi atau Anda tidak mengajar hari ini, alarm tidak akan dijadwalkan.',
+                      isDark: isDark,
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
 
               // ===============================================================
-              // 5. TOMBOL RESET PENGATURAN
+              // 6. TOMBOL RESET PENGATURAN
               // ===============================================================
               Center(
                 child: TextButton.icon(
@@ -783,6 +957,63 @@ class PengingatBelScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGuideItem({
+    required String number,
+    required String title,
+    required String desc,
+    required bool isDark,
+  }) {
+    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: primary,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                desc,
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.35,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
