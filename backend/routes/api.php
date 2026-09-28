@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\MuridController;
 use App\Http\Controllers\Api\LaporanController;
 use App\Http\Controllers\Api\TabunganApiController;
 use App\Http\Controllers\Api\CatatanUstadzController;
+use App\Http\Controllers\Api\BadalController;
 use App\Http\Controllers\Api\AppVersionApiController;
 
 /*
@@ -59,7 +60,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/jadwal-pelajaran', [AkademikController::class, 'getJadwalPelajaran']);
     Route::get('/jadwal-ujian', [AkademikController::class, 'getJadwalUjian']);
 
-    // 2.4 Presensi Murid & Ustadz
+    // 2.4 Presensi Murid, Ustadz, & Guru Pengganti (Badal)
     Route::get('/presensi-murid/sesi', [PresensiMuridController::class, 'getSesi']);
     Route::get('/presensi-murid/murid', [PresensiMuridController::class, 'getMurid']);
     Route::post('/presensi-murid/simpan', [PresensiMuridController::class, 'simpan']);
@@ -67,6 +68,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/presensi-ustadz/checkin', [PresensiUstadzController::class, 'checkin']);
     Route::get('/presensi-ustadz/daftar-ustadz', [PresensiUstadzController::class, 'getDaftarUstadz']);
     Route::get('/presensi-ustadz/riwayat', [PresensiUstadzController::class, 'getRiwayat']);
+    Route::get('/badal/ruangan-list', [BadalController::class, 'getRuanganList']);
+    Route::get('/badal/jadwal-ruangan', [BadalController::class, 'getJadwalRuangan']);
 
     // 2.5 Buku Kasus & Pelanggaran Murid
     Route::get('/pelanggaran/referensi', [PelanggaranMuridController::class, 'getReferensi']);

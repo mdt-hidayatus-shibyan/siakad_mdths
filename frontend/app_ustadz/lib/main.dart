@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'providers/akademik_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/app_version_provider.dart';
+import 'providers/badal_provider.dart';
 import 'providers/bantuan_provider.dart';
 import 'providers/bell_provider.dart';
 import 'providers/catatan_ustadz_provider.dart';
@@ -53,6 +54,7 @@ class MDTHidayatusShibyanApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => PresensiProvider()),
+        ChangeNotifierProvider(create: (_) => BadalProvider()),
         ChangeNotifierProvider(create: (_) => PresensiUjianProvider()),
         ChangeNotifierProvider(create: (_) => SyaratUjianProvider()),
         ChangeNotifierProvider(create: (_) => PelanggaranProvider()),

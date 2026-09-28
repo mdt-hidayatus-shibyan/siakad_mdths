@@ -41,8 +41,8 @@ class AppVersionConfig {
   // ---------------------------------------------------------------------------
   static const String appTitle = 'Ustadz - MDTHS';
   static const String appSubtitle = 'MDT Hidayatus Shibyan';
-  static const String version = '1.5.1';
-  static const String buildNumber = '2026.09.09';
+  static const String version = '1.6.2';
+  static const String buildNumber = '2026.09.10';
   static const String releaseDate = 'September 2026';
   static const String statusBadge = 'Versi Rilis';
   static const bool isLatest = true;
@@ -60,6 +60,11 @@ class AppVersionConfig {
       title: 'Presensi Ustadz di Home Screen',
       description:
           'Mengelompokkan Presensi ustadz dan Presensi murid di Home Screen agar lebih mudah diakses dan dikelola.',
+    ),
+    ChangelogEntry(
+      title: 'Presensi Ustadz Pengganti',
+      description:
+          'Setiap ustadz dapat mengelola presensi pengganti (badal) secara langsung dari menu Presensi, sehingga mempermudah proses administrasi dan koordinasi antar ustadz.',
     ),
     ChangelogEntry(
       title: 'Laporan Kenaikan Kelas Murid',

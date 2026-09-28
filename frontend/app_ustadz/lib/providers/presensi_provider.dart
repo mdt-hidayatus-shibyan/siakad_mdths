@@ -73,13 +73,14 @@ class PresensiProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchMurid(int jadwalId) async {
+  Future<void> fetchMurid(int jadwalId, [DateTime? customDate]) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final dateStr = DateHelper.toYmd(_selectedDate);
+      final targetDate = customDate ?? _selectedDate;
+      final dateStr = DateHelper.toYmd(targetDate);
       _muridList = await _repo.getMuridPerJadwal(jadwalId, dateStr);
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -121,16 +122,26 @@ class PresensiProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> simpanPresensi(int jadwalId) async {
+  Future<bool> simpanPresensi(
+    int jadwalId, [
+    DateTime? customDate,
+    bool isBadal = false,
+    String? statusUstadz,
+    String? alasanBadal,
+  ]) async {
     _isSaving = true;
     notifyListeners();
 
     try {
-      final dateStr = DateHelper.toYmd(_selectedDate);
+      final targetDate = customDate ?? _selectedDate;
+      final dateStr = DateHelper.toYmd(targetDate);
       final success = await _repo.simpanPresensiMassal(
         jadwalId,
         dateStr,
         _muridList,
+        isBadal: isBadal,
+        statusUstadz: statusUstadz,
+        alasanBadal: alasanBadal,
       );
       if (success) {
         HapticHelper.confirmSuccess();

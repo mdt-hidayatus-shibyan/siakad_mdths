@@ -16,6 +16,7 @@ import '../kas/kas_ruangan_screen.dart';
 import '../murid/direktori_murid_screen.dart';
 import '../pelanggaran/referensi_pelanggaran_screen.dart';
 import '../presensi/form_presensi_screen.dart';
+import '../presensi/badal_presensi_screen.dart';
 import '../tagihan/tagihan_screen.dart';
 import '../tabungan/tabungan_screen.dart';
 import '../akun/hubungi_admin_screen.dart';
@@ -782,6 +783,51 @@ class _HomeTabState extends State<HomeTab> {
                               );
                             },
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          _buildQuickAction(
+                            icon: Icons.swap_horiz_rounded,
+                            label: 'Ustadz Pengganti',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const BadalPresensiScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildQuickAction(
+                            icon: Icons.notifications_active_rounded,
+                            label: 'Pengingat Bel',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PengingatBelScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildQuickAction(
+                            icon: Icons.headset_mic_rounded,
+                            label: 'Bantuan',
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const HubungiAdminScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const Expanded(child: SizedBox.shrink()),
                         ],
                       ),
                     ],

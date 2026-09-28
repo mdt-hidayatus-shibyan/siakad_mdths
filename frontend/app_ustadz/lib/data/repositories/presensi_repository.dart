@@ -53,16 +53,26 @@ class PresensiRepository {
   Future<bool> simpanPresensiMassal(
     int jadwalId,
     String tanggal,
-    List<MuridPresensiItem> items,
-  ) async {
+    List<MuridPresensiItem> items, {
+    bool isBadal = false,
+    String? statusUstadz,
+    String? alasanBadal,
+  }) async {
     try {
+      final payload = {
+        'jadwal_id': jadwalId,
+        'tanggal': tanggal,
+        'presensi': items.map((e) => e.toJson()).toList(),
+        if (isBadal) 'is_badal': true,
+        if (statusUstadz != null && statusUstadz.isNotEmpty)
+          'status_ustadz': statusUstadz,
+        if (alasanBadal != null && alasanBadal.isNotEmpty)
+          'alasan_badal': alasanBadal,
+      };
+
       final response = await _client.dio.post(
         ApiConstants.presensiSimpan,
-        data: {
-          'jadwal_id': jadwalId,
-          'tanggal': tanggal,
-          'presensi': items.map((e) => e.toJson()).toList(),
-        },
+        data: payload,
       );
       if (response.statusCode == 200 && response.data['success'] == true) {
         return true;

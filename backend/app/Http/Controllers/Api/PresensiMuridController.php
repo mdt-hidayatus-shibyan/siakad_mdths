@@ -7,6 +7,7 @@ use App\Models\BulanHijriyah;
 use App\Models\HariLibur;
 use App\Models\JadwalPelajaran;
 use App\Models\PresensiMurid;
+use App\Models\PresensiUstadz;
 use App\Models\Ruangan;
 use App\Models\Semester;
 use App\Models\TahunPelajaran;
@@ -269,13 +270,7 @@ class PresensiMuridController extends Controller
 
         $isGuruPengajar = $jadwal->daftar_ustadz->contains('id', $ustadzId);
         $isWaliRuangan = in_array($jadwal->ruangan_id, $ruanganWaliIds);
-
-        if (!$isGuruPengajar && !$isWaliRuangan) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki wewenang untuk mengakses presensi murid pada jadwal ini.'
-            ], 403);
-        }
+        $isBadal = !$isGuruPengajar && !$isWaliRuangan;
 
         // Cari Tahun Pelajaran dari Tanggal / Bulan Hijriyah
         $bulan = BulanHijriyah::whereDate('tanggal_mulai_masehi', '<=', $tanggal)
@@ -313,6 +308,7 @@ class PresensiMuridController extends Controller
 
         return response()->json([
             'success' => true,
+            'is_badal' => $isBadal,
             'data' => $data
         ], 200);
     }
@@ -325,6 +321,9 @@ class PresensiMuridController extends Controller
         $validator = Validator::make($request->all(), [
             'jadwal_id' => 'required|exists:jadwal_pelajarans,id',
             'tanggal' => 'required|date',
+            'is_badal' => 'nullable|boolean',
+            'status_ustadz' => 'nullable|in:Hadir,Sakit,Izin,Alpha,Kosong',
+            'alasan_badal' => 'nullable|string|max:255',
             'presensi' => 'required|array',
             'presensi.*.murid_id' => 'required|exists:murids,id',
             'presensi.*.status' => 'nullable|in:Hadir,Sakit,Izin,Alpha,Dispensasi',
@@ -377,7 +376,7 @@ class PresensiMuridController extends Controller
 
         $jadwal = JadwalPelajaran::with(['ustadz', 'ustadzs'])->findOrFail($request->jadwal_id);
 
-        // Validasi Otorisasi: Guru Pengajar (Utama atau Team Teaching) ATAU Wali Ruangan dari kelas terkait
+        // Otorisasi: Pengajar Pribadi, Wali Ruangan, atau Guru Pengganti (Badal)
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $ruanganWaliIds = Ruangan::where('ustadz_id', $ustadzId)
             ->when($tahunAktif, function ($q) use ($tahunAktif) {
@@ -391,13 +390,7 @@ class PresensiMuridController extends Controller
 
         $isGuruPengajar = $jadwal->daftar_ustadz->contains('id', $ustadzId);
         $isWaliRuangan = in_array($jadwal->ruangan_id, $ruanganWaliIds);
-
-        if (!$isGuruPengajar && !$isWaliRuangan) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda tidak memiliki wewenang untuk menyimpan presensi murid pada jadwal ini.'
-            ], 403);
-        }
+        $isBadal = !$isGuruPengajar && !$isWaliRuangan;
 
         // Cari semester berdasarkan tanggal
         $bulan = BulanHijriyah::whereDate('tanggal_mulai_masehi', '<=', $tanggal)
@@ -412,6 +405,46 @@ class PresensiMuridController extends Controller
 
         DB::beginTransaction();
         try {
+            // Jika disimpan oleh Guru Pengganti (Badal), catat otomatis pada presensi ustadz
+            if ($isBadal || $request->boolean('is_badal')) {
+                $primaryUstadzId = $jadwal->ustadz_id ?? $jadwal->daftar_ustadz->first()?->id;
+                if ($primaryUstadzId) {
+                    $presUstadz = PresensiUstadz::where('tanggal', $tanggal)
+                        ->where('jadwal_pelajaran_id', $jadwal->id)
+                        ->where('ustadz_id', $primaryUstadzId)
+                        ->first();
+
+                    $statusUstadz = $request->input('status_ustadz', 'Izin');
+                    if (!in_array($statusUstadz, ['Hadir', 'Sakit', 'Izin', 'Alpha', 'Kosong'])) {
+                        $statusUstadz = 'Izin';
+                    }
+
+                    $alasanBadal = $request->input('alasan_badal') ?? $request->input('keterangan_badal') ?? $request->input('keterangan');
+
+                    if ($presUstadz) {
+                        $presUstadz->ustadz_pengganti_id = $ustadzId;
+                        if ($statusUstadz) {
+                            $presUstadz->status = $statusUstadz;
+                        }
+                        if ($alasanBadal) {
+                            $presUstadz->keterangan = $alasanBadal;
+                        }
+                        $presUstadz->diinput_oleh_id = $user->id;
+                        $presUstadz->save();
+                    } else {
+                        PresensiUstadz::create([
+                            'tanggal' => $tanggal,
+                            'jadwal_pelajaran_id' => $jadwal->id,
+                            'ustadz_id' => $primaryUstadzId,
+                            'status' => $statusUstadz,
+                            'ustadz_pengganti_id' => $ustadzId,
+                            'keterangan' => $alasanBadal ?: ('Digantikan oleh ' . ($ustadz->nama_lengkap ?? 'Guru Pengganti')),
+                            'diinput_oleh_id' => $user->id,
+                        ]);
+                    }
+                }
+            }
+
             foreach ($request->presensi as $item) {
                 if (!empty($item['status'])) {
                     PresensiMurid::updateOrCreate(
@@ -436,9 +469,14 @@ class PresensiMuridController extends Controller
 
             DB::commit();
 
+            $pesan = $isBadal
+                ? 'Presensi murid berhasil disimpan sebagai Guru Pengganti (Badal)!'
+                : 'Presensi murid berhasil disimpan ke sistem!';
+
             return response()->json([
                 'success' => true,
-                'message' => 'Presensi murid berhasil disimpan ke sistem!'
+                'message' => $pesan,
+                'is_badal' => $isBadal,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();

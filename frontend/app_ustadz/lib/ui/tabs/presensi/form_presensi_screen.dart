@@ -12,6 +12,11 @@ class FormPresensiScreen extends StatefulWidget {
   final String mapel;
   final String ruangan;
   final String jam;
+  final DateTime? tanggal;
+  final bool isBadal;
+  final String? guruUtama;
+  final String? statusUstadz;
+  final String? alasanBadal;
 
   const FormPresensiScreen({
     super.key,
@@ -19,6 +24,11 @@ class FormPresensiScreen extends StatefulWidget {
     required this.mapel,
     required this.ruangan,
     required this.jam,
+    this.tanggal,
+    this.isBadal = false,
+    this.guruUtama,
+    this.statusUstadz,
+    this.alasanBadal,
   });
 
   @override
@@ -26,23 +36,259 @@ class FormPresensiScreen extends StatefulWidget {
 }
 
 class _FormPresensiScreenState extends State<FormPresensiScreen> {
+  late String _statusUstadz;
+  late String _alasanBadal;
+
   @override
   void initState() {
     super.initState();
+    _statusUstadz = widget.statusUstadz ?? 'Izin';
+    _alasanBadal = widget.alasanBadal ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PresensiProvider>().fetchMurid(widget.jadwalId);
+      context.read<PresensiProvider>().fetchMurid(
+        widget.jadwalId,
+        widget.tanggal,
+      );
     });
+  }
+
+  void _editAlasanBadalModal(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    String tempStatus = _statusUstadz;
+    final textController = TextEditingController(text: _alasanBadal);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom:
+                  MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom +
+                  20,
+            ),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceContainerDark : Colors.white,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.primaryDark.withValues(alpha: 0.2)
+                              : AppColors.primaryLight.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.edit_note_rounded,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Ubah Alasan Penggantian Guru',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Status Kehadiran Guru Utama:',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: ['Izin', 'Sakit', 'Alpha', 'Kosong'].map((st) {
+                      final isSel = tempStatus == st;
+                      return ChoiceChip(
+                        label: Text(st),
+                        selected: isSel,
+                        onSelected: (val) {
+                          if (val) {
+                            setSheetState(() => tempStatus = st);
+                          }
+                        },
+                        selectedColor: isDark
+                            ? AppColors.primaryContainerDark
+                            : AppColors.primaryContainerLight,
+                        labelStyle: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isSel
+                              ? (isDark
+                                    ? AppColors.onPrimaryContainerDark
+                                    : AppColors.onPrimaryContainerLight)
+                              : (isDark ? Colors.white70 : Colors.black87),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Pilihan Alasan Cepat:',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children:
+                        [
+                          'Sakit / Kurang Sehat',
+                          'Izin Acara Keluarga',
+                          'Tugas Luar / Lembaga',
+                          'Terlambat / Berhalangan',
+                          'Keperluan Mendesak',
+                        ].map((alasan) {
+                          return ActionChip(
+                            label: Text(alasan),
+                            onPressed: () {
+                              setSheetState(() {
+                                textController.text = alasan;
+                              });
+                            },
+                            backgroundColor: isDark
+                                ? AppColors.surfaceContainerHighDark
+                                : const Color(0xFFF1F5F9),
+                            labelStyle: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF334155),
+                            ),
+                          );
+                        }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Catatan / Keterangan Alasan:',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: textController,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText: 'Tuliskan alasan penggantian...',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white38 : Colors.black38,
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.surfaceContainerLowDark
+                          : const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.outlineDark
+                              : AppColors.outlineLight,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.outlineDark
+                              : AppColors.outlineLight,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () {
+                      setState(() {
+                        _statusUstadz = tempStatus;
+                        _alasanBadal = textController.text.trim();
+                      });
+                      Navigator.pop(ctx);
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
+                      foregroundColor: isDark
+                          ? AppColors.onPrimaryDark
+                          : AppColors.onPrimaryLight,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Terapkan Alasan'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _handleSimpan() async {
     final presensi = context.read<PresensiProvider>();
-    final success = await presensi.simpanPresensi(widget.jadwalId);
+    final success = await presensi.simpanPresensi(
+      widget.jadwalId,
+      widget.tanggal,
+      widget.isBadal,
+      widget.isBadal ? _statusUstadz : null,
+      widget.isBadal ? (_alasanBadal.isNotEmpty ? _alasanBadal : null) : null,
+    );
 
     if (!mounted) return;
     if (success) {
+      final msg = widget.isBadal
+          ? 'Presensi kelas ${widget.ruangan} berhasil disimpan sebagai Guru Pengganti (Badal)!'
+          : 'Presensi kelas ${widget.ruangan} berhasil disimpan!';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Absensi kelas ${widget.ruangan} berhasil disimpan!'),
+          content: Text(msg),
           backgroundColor: AppColors.hadirTextLight,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -50,7 +296,7 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
           ),
         ),
       );
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -80,7 +326,7 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark ? const Color(0xFF1A211A) : Colors.white,
+              color: isDark ? AppColors.surfaceContainerHighDark : Colors.white,
               border: Border.all(
                 color: isDark ? AppColors.outlineDark : const Color(0xFFE2E8F0),
                 width: 1,
@@ -175,9 +421,190 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                 16,
                 125 + MediaQuery.of(context).padding.bottom,
               ), // Bottom padding for sticky bar
-              itemCount: presensi.muridList.length,
+              itemCount: presensi.muridList.length + (widget.isBadal ? 1 : 0),
               itemBuilder: (context, index) {
-                final murid = presensi.muridList[index];
+                if (widget.isBadal && index == 0) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.primaryContainerDark.withValues(
+                              alpha: 0.25,
+                            )
+                          : AppColors.primaryContainerLight.withValues(
+                              alpha: 0.6,
+                            ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.primaryDark.withValues(alpha: 0.4)
+                            : AppColors.primaryLight.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.primaryDark.withValues(
+                                        alpha: 0.2,
+                                      )
+                                    : AppColors.primaryLight.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.swap_horiz_rounded,
+                                size: 16,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Mode Guru Pengganti (Badal)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? AppColors.onPrimaryContainerDark
+                                      : AppColors.onPrimaryContainerLight,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () => _editAlasanBadalModal(context),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.surfaceContainerHighDark
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.primaryDark.withValues(
+                                            alpha: 0.4,
+                                          )
+                                        : AppColors.primaryLight.withValues(
+                                            alpha: 0.4,
+                                          ),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.edit_rounded,
+                                      size: 12,
+                                      color: isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Ubah Alasan',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.surfaceContainerLowDark
+                                : Colors.white.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.outlineDark.withValues(alpha: 0.3)
+                                  : AppColors.outlineLight.withValues(
+                                      alpha: 0.7,
+                                    ),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (widget.guruUtama != null) ...[
+                                Text(
+                                  'Menggantikan: ${widget.guruUtama}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : const Color(0xFF334155),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                              ],
+                              Row(
+                                children: [
+                                  Text(
+                                    'Status: $_statusUstadz',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight,
+                                    ),
+                                  ),
+                                  if (_alasanBadal.isNotEmpty) ...[
+                                    Expanded(
+                                      child: Text(
+                                        ' • $_alasanBadal',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isDark
+                                              ? Colors.white70
+                                              : const Color(0xFF475569),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final muridIndex = widget.isBadal ? index - 1 : index;
+                final murid = presensi.muridList[muridIndex];
                 final isFilled =
                     murid.status != null && murid.status!.isNotEmpty;
 
@@ -199,10 +626,10 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                               shape: BoxShape.circle,
                               color: isFilled
                                   ? (isDark
-                                        ? const Color(0xFF142414)
-                                        : const Color(0xFFE8F5E9))
+                                        ? AppColors.primaryContainerDark
+                                        : AppColors.primaryContainerLight)
                                   : (isDark
-                                        ? const Color(0xFF181C18)
+                                        ? AppColors.surfaceContainerHighDark
                                         : const Color(0xFFF1F5F9)),
                               border: Border.all(
                                 color: isFilled
@@ -217,16 +644,16 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              '${index + 1}',
+                              '${muridIndex + 1}',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: isFilled
                                     ? (isDark
-                                          ? AppColors.primaryDark
-                                          : AppColors.primaryLight)
+                                          ? AppColors.onPrimaryContainerDark
+                                          : AppColors.onPrimaryContainerLight)
                                     : (isDark
-                                          ? const Color(0xFF8D9387)
+                                          ? Colors.white60
                                           : const Color(0xFF73796E)),
                               ),
                             ),

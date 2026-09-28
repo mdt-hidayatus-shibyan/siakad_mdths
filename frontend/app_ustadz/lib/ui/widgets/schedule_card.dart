@@ -20,45 +20,44 @@ class ScheduleCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GlassCard(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. Header: Jam Ke & Status Presensi
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Jam Ke Pill Badge
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF101C10)
-                      : const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(10),
+                      ? AppColors.primaryContainerDark.withValues(alpha: 0.3)
+                      : AppColors.primaryContainerLight.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isDark
                         ? AppColors.primaryDark.withValues(alpha: 0.3)
-                        : AppColors.primaryLight.withValues(alpha: 0.2),
+                        : AppColors.primaryLight.withValues(alpha: 0.25),
                   ),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.schedule_rounded,
-                      size: 13,
+                      size: 12,
                       color: isDark
                           ? AppColors.primaryDark
                           : AppColors.primaryLight,
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 4),
                     Text(
                       'Jam Ke-${item.jamKe} • ${item.jam}',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.bold,
                         color: isDark
                             ? AppColors.primaryDark
@@ -71,55 +70,60 @@ class ScheduleCard extends StatelessWidget {
 
               // Status Absen Badge
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: item.sudahAbsen
                       ? (isDark
                             ? AppColors.hadirBgDark
                             : AppColors.hadirBgLight)
-                      : (isDark
-                            ? const Color(0xFF451A03)
-                            : const Color(0xFFFEF3C7)),
-                  borderRadius: BorderRadius.circular(10),
+                      : AppColors.amberAccent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: item.sudahAbsen
+                        ? (isDark
+                                  ? AppColors.hadirTextDark
+                                  : const Color(0xFF86EFAC))
+                              .withValues(alpha: 0.5)
+                        : AppColors.amberAccent.withValues(alpha: 0.4),
+                    width: 0.8,
+                  ),
                 ),
                 child: Text(
                   item.sudahAbsen ? '✓ Sudah Absen' : '● Belum Absen',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.bold,
                     color: item.sudahAbsen
                         ? (isDark
                               ? AppColors.hadirTextDark
                               : AppColors.hadirTextLight)
-                        : (isDark
-                              ? AppColors.sakitTextDark
-                              : AppColors.sakitTextLight),
+                        : AppColors.amberAccent,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+
+          // 2. Mapel & Peran
           Row(
             children: [
               Expanded(
                 child: Text(
                   item.mapel,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14.5,
                     fontWeight: FontWeight.bold,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ),
               if (item.isTeamTeaching || !item.isUtama) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2.5,
+                    horizontal: 6,
+                    vertical: 2,
                   ),
                   decoration: BoxDecoration(
                     color: item.isUtama
@@ -146,15 +150,15 @@ class ScheduleCard extends StatelessWidget {
                       if (item.isUtama) ...[
                         const Icon(
                           Icons.star_rounded,
-                          size: 12,
+                          size: 11,
                           color: AppColors.amberAccent,
                         ),
-                        const SizedBox(width: 3),
+                        const SizedBox(width: 2),
                       ],
                       Text(
                         item.peran,
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 9.5,
                           fontWeight: FontWeight.bold,
                           color: item.isUtama
                               ? (isDark
@@ -171,12 +175,14 @@ class ScheduleCard extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
+
+          // 3. Info Ruang & Guru
           Row(
             children: [
               Icon(
                 Icons.meeting_room_rounded,
-                size: 14,
+                size: 13,
                 color: isDark
                     ? const Color(0xFF8D9387)
                     : const Color(0xFF73796E),
@@ -185,7 +191,7 @@ class ScheduleCard extends StatelessWidget {
               Text(
                 'Ruang: ${item.kelas}',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontWeight: FontWeight.w500,
                   color: isDark
                       ? const Color(0xFF8D9387)
@@ -196,7 +202,7 @@ class ScheduleCard extends StatelessWidget {
                 Text(
                   ' • ',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11.5,
                     color: isDark
                         ? const Color(0xFF8D9387)
                         : const Color(0xFF73796E),
@@ -206,7 +212,7 @@ class ScheduleCard extends StatelessWidget {
                   child: Text(
                     'Guru: ${item.guru}',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w500,
                       color: isDark
                           ? const Color(0xFF8D9387)
@@ -218,24 +224,23 @@ class ScheduleCard extends StatelessWidget {
               ],
             ],
           ),
-          if ((!item.sudahAbsen && onAbsenTap != null) ||
-              onPresensiGuruTap != null) ...[
-            const SizedBox(height: 12),
-            if (!item.sudahAbsen &&
-                onAbsenTap != null &&
-                onPresensiGuruTap != null)
+
+          // 4. Baris Tombol Aksi Compact
+          if (onAbsenTap != null || onPresensiGuruTap != null) ...[
+            const SizedBox(height: 10),
+            if (onAbsenTap != null && onPresensiGuruTap != null)
               Row(
                 children: [
                   Expanded(
                     child: SizedBox(
-                      height: 38,
+                      height: 32,
                       child: OutlinedButton.icon(
                         onPressed: onPresensiGuruTap,
-                        icon: const Icon(Icons.badge_rounded, size: 16),
+                        icon: const Icon(Icons.badge_rounded, size: 14),
                         label: const Text(
                           'Presensi Ustadz',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -243,6 +248,7 @@ class ScheduleCard extends StatelessWidget {
                           foregroundColor: isDark
                               ? AppColors.primaryDark
                               : AppColors.primaryLight,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           side: BorderSide(
                             color:
                                 (isDark
@@ -251,7 +257,7 @@ class ScheduleCard extends StatelessWidget {
                                     .withValues(alpha: 0.5),
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
@@ -260,20 +266,32 @@ class ScheduleCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: SizedBox(
-                      height: 38,
-                      child: ElevatedButton.icon(
+                      height: 32,
+                      child: FilledButton.icon(
                         onPressed: onAbsenTap,
-                        icon: const Icon(Icons.fact_check_rounded, size: 16),
-                        label: const Text(
-                          'Presensi Murid',
-                          style: TextStyle(
-                            fontSize: 12,
+                        icon: Icon(
+                          item.sudahAbsen
+                              ? Icons.edit_note_rounded
+                              : Icons.fact_check_rounded,
+                          size: 15,
+                        ),
+                        label: Text(
+                          item.sudahAbsen ? 'Ubah Presensi' : 'Presensi Murid',
+                          style: const TextStyle(
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                          foregroundColor: isDark
+                              ? AppColors.onPrimaryDark
+                              : AppColors.onPrimaryLight,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
@@ -281,17 +299,35 @@ class ScheduleCard extends StatelessWidget {
                   ),
                 ],
               )
-            else if (!item.sudahAbsen && onAbsenTap != null)
+            else if (onAbsenTap != null)
               SizedBox(
                 width: double.infinity,
-                height: 38,
-                child: ElevatedButton.icon(
+                height: 32,
+                child: FilledButton.icon(
                   onPressed: onAbsenTap,
-                  icon: const Icon(Icons.fact_check_rounded, size: 16),
-                  label: const Text('Presensi Murid'),
-                  style: ElevatedButton.styleFrom(
+                  icon: Icon(
+                    item.sudahAbsen
+                        ? Icons.edit_note_rounded
+                        : Icons.fact_check_rounded,
+                    size: 15,
+                  ),
+                  label: Text(
+                    item.sudahAbsen ? 'Ubah Presensi' : 'Presensi Murid',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: isDark
+                        ? AppColors.primaryDark
+                        : AppColors.primaryLight,
+                    foregroundColor: isDark
+                        ? AppColors.onPrimaryDark
+                        : AppColors.onPrimaryLight,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
@@ -299,15 +335,19 @@ class ScheduleCard extends StatelessWidget {
             else if (onPresensiGuruTap != null)
               SizedBox(
                 width: double.infinity,
-                height: 38,
+                height: 32,
                 child: OutlinedButton.icon(
                   onPressed: onPresensiGuruTap,
-                  icon: const Icon(Icons.badge_rounded, size: 16),
-                  label: const Text('Presensi Ustadz'),
+                  icon: const Icon(Icons.badge_rounded, size: 14),
+                  label: const Text(
+                    'Presensi Ustadz',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: isDark
                         ? AppColors.primaryDark
                         : AppColors.primaryLight,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     side: BorderSide(
                       color:
                           (isDark
@@ -316,7 +356,7 @@ class ScheduleCard extends StatelessWidget {
                               .withValues(alpha: 0.5),
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),

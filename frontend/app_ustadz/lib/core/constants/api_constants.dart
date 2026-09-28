@@ -31,6 +31,8 @@ class ApiConstants {
   static const String presensiUstadzCheckin = '/presensi-ustadz/checkin';
   static const String presensiUstadzDaftar = '/presensi-ustadz/daftar-ustadz';
   static const String presensiUstadzRiwayat = '/presensi-ustadz/riwayat';
+  static const String badalRuanganList = '/badal/ruangan-list';
+  static const String badalJadwalRuangan = '/badal/jadwal-ruangan';
 
   static const String pelanggaranReferensi = '/pelanggaran/referensi';
   static const String pelanggaranRuanganList = '/pelanggaran/ruangan-list';

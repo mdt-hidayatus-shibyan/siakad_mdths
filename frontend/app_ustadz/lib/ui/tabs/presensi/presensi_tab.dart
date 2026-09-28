@@ -11,6 +11,7 @@ import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/shimmer_loading.dart';
 import 'checkin_ustadz_sheet.dart';
 import 'form_presensi_screen.dart';
+import 'badal_presensi_screen.dart';
 
 class PresensiTab extends StatefulWidget {
   final VoidCallback? onNavigateToUjian;
@@ -115,7 +116,7 @@ class _PresensiTabState extends State<PresensiTab>
     final presensi = context.watch<PresensiProvider>();
 
     return Scaffold(
-      appBar: const CustomAppBar(titleText: 'Presensi'),
+      appBar: CustomAppBar(titleText: 'Presensi'),
       body: Column(
         children: [
           // Segmented Navigation Pill (Consistent with Bottom Navigation)
@@ -171,12 +172,12 @@ class _PresensiTabState extends State<PresensiTab>
                         ),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? const Color(0xFF162016)
+                              ? AppColors.surfaceContainerLowDark
                               : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isDark
-                                ? const Color(0xFF263326)
+                                ? AppColors.outlineDark
                                 : const Color(0xFFE2E8F0),
                           ),
                         ),
@@ -219,6 +220,105 @@ class _PresensiTabState extends State<PresensiTab>
                               onPressed: () => _shiftDateMurid(1),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // BANNER GURU PENGGANTI (BADAL)
+                      InkWell(
+                        onTap: () {
+                          HapticHelper.medium();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const BadalPresensiScreen(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.primaryContainerDark.withValues(
+                                    alpha: 0.25,
+                                  )
+                                : AppColors.primaryContainerLight.withValues(
+                                    alpha: 0.5,
+                                  ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.primaryDark.withValues(
+                                      alpha: 0.35,
+                                    )
+                                  : AppColors.primaryLight.withValues(
+                                      alpha: 0.35,
+                                    ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.primaryDark.withValues(
+                                          alpha: 0.25,
+                                        )
+                                      : AppColors.primaryLight.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.swap_horiz_rounded,
+                                  size: 20,
+                                  color: isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Guru Pengganti (Badal)',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? AppColors.onPrimaryContainerDark
+                                            : AppColors.onPrimaryContainerLight,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Gantikan ustadz lain & isi presensi di kelas manapun',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 20,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -292,7 +392,7 @@ class _PresensiTabState extends State<PresensiTab>
                               ),
                               const SizedBox(height: 14),
                               Text(
-                                'Presensi KBM reguler dinonaktifkan pada tanggal pelaksanaan ujian. Silakan gunakan modul Presensi Ujian untuk mencatat kehadiran santri.',
+                                'Presensi KBM reguler dinonaktifkan pada tanggal pelaksanaan ujian. Silakan gunakan modul Presensi Ujian untuk mencatat kehadiran murid.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 12,
@@ -397,7 +497,7 @@ class _PresensiTabState extends State<PresensiTab>
                               ),
                               const SizedBox(height: 14),
                               Text(
-                                'Presensi kehadiran santri tidak dibuka pada hari libur madrasah.',
+                                'Presensi kehadiran murid tidak dibuka pada hari libur madrasah.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 12,
@@ -468,10 +568,19 @@ class _PresensiTabState extends State<PresensiTab>
                                         ),
                                         decoration: BoxDecoration(
                                           color: isDark
-                                              ? const Color(0xFF101710)
-                                              : const Color(0xFFE8F5E9),
+                                              ? AppColors.primaryContainerDark
+                                                    .withValues(alpha: 0.3)
+                                              : AppColors.primaryContainerLight
+                                                    .withValues(alpha: 0.6),
                                           borderRadius: BorderRadius.circular(
                                             8,
+                                          ),
+                                          border: Border.all(
+                                            color: isDark
+                                                ? AppColors.primaryDark
+                                                      .withValues(alpha: 0.3)
+                                                : AppColors.primaryLight
+                                                      .withValues(alpha: 0.25),
                                           ),
                                         ),
                                         child: Text(
@@ -550,9 +659,18 @@ class _PresensiTabState extends State<PresensiTab>
                                       ),
                                       decoration: BoxDecoration(
                                         color: isDark
-                                            ? const Color(0xFF241538)
-                                            : const Color(0xFFF3E8FF),
+                                            ? AppColors.primaryContainerDark
+                                                  .withValues(alpha: 0.3)
+                                            : AppColors.primaryContainerLight
+                                                  .withValues(alpha: 0.6),
                                         borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: isDark
+                                              ? AppColors.primaryDark
+                                                    .withValues(alpha: 0.3)
+                                              : AppColors.primaryLight
+                                                    .withValues(alpha: 0.25),
+                                        ),
                                       ),
                                       child: Text(
                                         'Ruangan Binaan (Akses Wali Ruangan)',
@@ -561,12 +679,7 @@ class _PresensiTabState extends State<PresensiTab>
                                           fontWeight: FontWeight.bold,
                                           color: isDark
                                               ? AppColors.primaryDark
-                                              : const Color.fromARGB(
-                                                  255,
-                                                  35,
-                                                  180,
-                                                  47,
-                                                ),
+                                              : AppColors.primaryLight,
                                         ),
                                       ),
                                     ),
@@ -633,12 +746,12 @@ class _PresensiTabState extends State<PresensiTab>
                         ),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? const Color(0xFF162016)
+                              ? AppColors.surfaceContainerLowDark
                               : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isDark
-                                ? const Color(0xFF263326)
+                                ? AppColors.outlineDark
                                 : const Color(0xFFE2E8F0),
                           ),
                         ),
@@ -681,6 +794,105 @@ class _PresensiTabState extends State<PresensiTab>
                               onPressed: () => _shiftDateUstadz(1),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // BANNER GURU PENGGANTI (BADAL)
+                      InkWell(
+                        onTap: () {
+                          HapticHelper.medium();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const BadalPresensiScreen(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.primaryContainerDark.withValues(
+                                    alpha: 0.25,
+                                  )
+                                : AppColors.primaryContainerLight.withValues(
+                                    alpha: 0.5,
+                                  ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.primaryDark.withValues(
+                                      alpha: 0.35,
+                                    )
+                                  : AppColors.primaryLight.withValues(
+                                      alpha: 0.35,
+                                    ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.primaryDark.withValues(
+                                          alpha: 0.25,
+                                        )
+                                      : AppColors.primaryLight.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.swap_horiz_rounded,
+                                  size: 20,
+                                  color: isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Guru Pengganti (Badal)',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? AppColors.onPrimaryContainerDark
+                                            : AppColors.onPrimaryContainerLight,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Gantikan ustadz lain & isi presensi di kelas manapun',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 20,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -929,10 +1141,19 @@ class _PresensiTabState extends State<PresensiTab>
                                         ),
                                         decoration: BoxDecoration(
                                           color: isDark
-                                              ? const Color(0xFF101710)
-                                              : const Color(0xFFE8F5E9),
+                                              ? AppColors.primaryContainerDark
+                                                    .withValues(alpha: 0.3)
+                                              : AppColors.primaryContainerLight
+                                                    .withValues(alpha: 0.6),
                                           borderRadius: BorderRadius.circular(
                                             8,
+                                          ),
+                                          border: Border.all(
+                                            color: isDark
+                                                ? AppColors.primaryDark
+                                                      .withValues(alpha: 0.3)
+                                                : AppColors.primaryLight
+                                                      .withValues(alpha: 0.25),
                                           ),
                                         ),
                                         child: Text(
@@ -1017,14 +1238,17 @@ class _PresensiTabState extends State<PresensiTab>
                                       ),
                                       decoration: BoxDecoration(
                                         color: isDark
-                                            ? const Color(0xFF241538)
-                                            : const Color(0xFFF3E8FF),
+                                            ? AppColors.primaryContainerDark
+                                                  .withValues(alpha: 0.3)
+                                            : AppColors.primaryContainerLight
+                                                  .withValues(alpha: 0.6),
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
                                           color: isDark
                                               ? AppColors.primaryDark
-                                                    .withValues(alpha: 0.4)
-                                              : const Color(0xFFD8B4FE),
+                                                    .withValues(alpha: 0.3)
+                                              : AppColors.primaryLight
+                                                    .withValues(alpha: 0.25),
                                         ),
                                       ),
                                       child: Text(
@@ -1034,7 +1258,7 @@ class _PresensiTabState extends State<PresensiTab>
                                           fontWeight: FontWeight.bold,
                                           color: isDark
                                               ? AppColors.primaryDark
-                                              : const Color(0xFF6D28D9),
+                                              : AppColors.primaryLight,
                                         ),
                                       ),
                                     ),
