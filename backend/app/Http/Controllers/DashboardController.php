@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JadwalPelajaran;
 use App\Models\KalendarPendidikan;
-use App\Models\KasRuangan\SetoranKasRuangan;
+use App\Models\MataPelajaran;
 use App\Models\Murid;
 use App\Models\PelanggaranMurid;
 use App\Models\Pengumuman;
 use App\Models\PresensiMurid;
 use App\Models\Ruangan;
-use App\Models\TagihanMurid;
 use App\Models\TahunPelajaran;
 use App\Models\Ustadz;
 use App\Models\WaliMurid;
@@ -36,25 +36,19 @@ class DashboardController extends Controller
             $q->where('tahun_pelajaran_id', $selectedTahunId);
         })->count();
 
-        // 2. DISTRIBUSI PER LEVEL
-        // $muridPerLevel = DB::table('murids')
-        //     ->join('levels', 'murids.level_masuk', '=', 'levels.id')
-        //     ->where('murids.status', 'Aktif')
-        //     ->select(
-        //         'levels.nama_level',
-        //         DB::raw('COUNT(*) as total'),
-        //         DB::raw('SUM(CASE WHEN murids.jenis_kelamin = "L" THEN 1 ELSE 0 END) as total_l'),
-        //         DB::raw('SUM(CASE WHEN murids.jenis_kelamin = "P" THEN 1 ELSE 0 END) as total_p')
-        //     )
-        //     ->groupBy('levels.id', 'levels.nama_level')
-        //     ->get();
+        $totalMapel = MataPelajaran::where('is_active', 1)->count();
+        $totalJadwal = JadwalPelajaran::when($selectedTahunId, function ($q) use ($selectedTahunId) {
+            $q->whereHas('ruangan', function ($rq) use ($selectedTahunId) {
+                $rq->where('tahun_pelajaran_id', $selectedTahunId);
+            });
+        })->count();
 
+        // 2. DISTRIBUSI PER LEVEL & RUANGAN
         $muridPerLevel = DB::table('murid_ruangans')
             ->join('murids', 'murid_ruangans.murid_id', '=', 'murids.id')
             ->join('ruangans', 'murid_ruangans.ruangan_id', '=', 'ruangans.id')
             ->join('levels', 'ruangans.level_id', '=', 'levels.id')
             ->join('tahun_pelajarans', 'murid_ruangans.tahun_pelajaran_id', '=', 'tahun_pelajarans.id')
-
             ->where('murids.status', 'Aktif')
             ->where('tahun_pelajarans.id', $selectedTahunId)
             ->select(
@@ -82,32 +76,79 @@ class DashboardController extends Controller
             )
             ->groupBy('ruangans.id', 'ruangans.nama_ruangan')
             ->orderBy('levels.urutan_level', 'asc')
-            ->orderBy('ruangans.id', 'asc') // Opsional: urutkan abjad
+            ->orderBy('ruangans.id', 'asc')
             ->get();
 
-        // 3. STATISTIK KEUANGAN & TAGIHAN
-        $queryTagihan = TagihanMurid::query();
-        if ($selectedTahunId) {
-            $queryTagihan->whereHas('ruangan', function ($q) use ($selectedTahunId) {
-                $q->where('tahun_pelajaran_id', $selectedTahunId);
-            });
-        }
-        $totalNominalTagihan = (clone $queryTagihan)->sum('nominal_tagihan');
-        $totalNominalLunas = (clone $queryTagihan)->where('status_bayar', 'Lunas')->sum('nominal_tagihan');
-        $totalTagihanBelumLunas = (clone $queryTagihan)->where('status_bayar', 'Belum Lunas')->count();
-        $totalTagihanLunasCount = (clone $queryTagihan)->where('status_bayar', 'Lunas')->count();
-        $totalTagihanDonaturBebas = (clone $queryTagihan)->whereIn('status_bayar', ['Bebas/Gratis', 'Ditanggung Donatur'])->count();
+        // 3. STATISTIK AKADEMIK & TATA TERTIB (PELANGGARAN MURID)
+        $totalPelanggaran = PelanggaranMurid::when($selectedTahunId, function ($q) use ($selectedTahunId) {
+            $q->where('tahun_pelajaran_id', $selectedTahunId);
+        })->count();
 
-        $persenLunas = $totalNominalTagihan > 0 ? round(($totalNominalLunas / $totalNominalTagihan) * 100, 1) : 0;
+        $totalPoinPelanggaran = DB::table('pelanggaran_murids')
+            ->join('referensi_pelanggarans', 'pelanggaran_murids.referensi_pelanggaran_id', '=', 'referensi_pelanggarans.id')
+            ->when($selectedTahunId, function ($q) use ($selectedTahunId) {
+                $q->where('pelanggaran_murids.tahun_pelajaran_id', $selectedTahunId);
+            })
+            ->sum('referensi_pelanggarans.poin') ?? 0;
 
-        // 4. STATISTIK KAS RUANGAN
-        $totalSetoranKas = SetoranKasRuangan::when($selectedTahunId, function ($q) use ($selectedTahunId) {
-            $q->whereHas('ruangan', function ($rq) use ($selectedTahunId) {
-                $rq->where('tahun_pelajaran_id', $selectedTahunId);
-            });
-        })->sum('jumlah_setor');
+        // Top Jenis Pelanggaran Terbanyak yang Dilakukan Murid
+        $topPelanggaran = DB::table('pelanggaran_murids')
+            ->join('referensi_pelanggarans', 'pelanggaran_murids.referensi_pelanggaran_id', '=', 'referensi_pelanggarans.id')
+            ->when($selectedTahunId, function ($q) use ($selectedTahunId) {
+                $q->where('pelanggaran_murids.tahun_pelajaran_id', $selectedTahunId);
+            })
+            ->select(
+                'referensi_pelanggarans.id',
+                'referensi_pelanggarans.nama_pelanggaran',
+                'referensi_pelanggarans.kategori',
+                'referensi_pelanggarans.poin',
+                DB::raw('COUNT(pelanggaran_murids.id) as total_kasus'),
+                DB::raw('SUM(referensi_pelanggarans.poin) as total_poin')
+            )
+            ->groupBy('referensi_pelanggarans.id', 'referensi_pelanggarans.nama_pelanggaran', 'referensi_pelanggarans.kategori', 'referensi_pelanggarans.poin')
+            ->orderByDesc('total_kasus')
+            ->take(5)
+            ->get();
 
-        // 5. STATISTIK PRESENSI MURID
+        // Distribusi Pelanggaran Berdasarkan Tingkat Keparahan / Kategori
+        $pelanggaranPerKategoriRaw = DB::table('pelanggaran_murids')
+            ->join('referensi_pelanggarans', 'pelanggaran_murids.referensi_pelanggaran_id', '=', 'referensi_pelanggarans.id')
+            ->when($selectedTahunId, function ($q) use ($selectedTahunId) {
+                $q->where('pelanggaran_murids.tahun_pelajaran_id', $selectedTahunId);
+            })
+            ->select('referensi_pelanggarans.kategori', DB::raw('COUNT(*) as total'))
+            ->groupBy('referensi_pelanggarans.kategori')
+            ->pluck('total', 'kategori')
+            ->toArray();
+
+        $kategoriRingan = $pelanggaranPerKategoriRaw['Ringan'] ?? 0;
+        $kategoriSedang = $pelanggaranPerKategoriRaw['Sedang'] ?? 0;
+        $kategoriBerat = $pelanggaranPerKategoriRaw['Berat'] ?? 0;
+
+        // Murid dengan Akumulasi Pelanggaran Tertinggi (Perlu Pembinaan)
+        $muridPerluPembinaan = DB::table('pelanggaran_murids')
+            ->join('murids', 'pelanggaran_murids.murid_id', '=', 'murids.id')
+            ->join('referensi_pelanggarans', 'pelanggaran_murids.referensi_pelanggaran_id', '=', 'referensi_pelanggarans.id')
+            ->leftJoin('ruangans', 'pelanggaran_murids.ruangan_id', '=', 'ruangans.id')
+            ->when($selectedTahunId, function ($q) use ($selectedTahunId) {
+                $q->where('pelanggaran_murids.tahun_pelajaran_id', $selectedTahunId);
+            })
+            ->select(
+                'murids.id',
+                'murids.nism',
+                'murids.nama_lengkap',
+                'murids.jenis_kelamin',
+                'ruangans.nama_ruangan',
+                DB::raw('COUNT(pelanggaran_murids.id) as total_kasus'),
+                DB::raw('SUM(referensi_pelanggarans.poin) as total_poin')
+            )
+            ->groupBy('murids.id', 'murids.nism', 'murids.nama_lengkap', 'murids.jenis_kelamin', 'ruangans.nama_ruangan')
+            ->orderByDesc('total_poin')
+            ->orderByDesc('total_kasus')
+            ->take(5)
+            ->get();
+
+        // 4. STATISTIK PRESENSI MURID
         $queryPresensi = PresensiMurid::query();
         if ($selectedTahunId) {
             $queryPresensi->whereHas('jadwalPelajaran.ruangan', function ($q) use ($selectedTahunId) {
@@ -118,8 +159,10 @@ class DashboardController extends Controller
         $presensiSakit = (clone $queryPresensi)->where('status', 'Sakit')->count();
         $presensiIzin = (clone $queryPresensi)->where('status', 'Izin')->count();
         $presensiAlpha = (clone $queryPresensi)->where('status', 'Alpha')->count();
+        $totalPresensi = $presensiHadir + $presensiSakit + $presensiIzin + $presensiAlpha;
+        $persenKehadiran = $totalPresensi > 0 ? round(($presensiHadir / $totalPresensi) * 100, 1) : 0;
 
-        // 6. OPERATIONAL FEEDS: PENGUMUMAN, KALENDER, PELANGGARAN
+        // 5. OPERATIONAL FEEDS: PENGUMUMAN, KALENDER, PELANGGARAN TERBARU
         $pengumumans = Pengumuman::whereIn('status', ['Terbit', 'Published'])
             ->orderBy('created_at', 'desc')
             ->take(5)
@@ -162,19 +205,23 @@ class DashboardController extends Controller
             'totalWaliMurid',
             'totalUstadz',
             'totalRombel',
+            'totalMapel',
+            'totalJadwal',
             'muridPerLevel',
             'muridPerRuangan',
-            'totalNominalTagihan',
-            'totalNominalLunas',
-            'totalTagihanBelumLunas',
-            'totalTagihanLunasCount',
-            'totalTagihanDonaturBebas',
-            'persenLunas',
-            'totalSetoranKas',
+            'totalPelanggaran',
+            'totalPoinPelanggaran',
+            'topPelanggaran',
+            'kategoriRingan',
+            'kategoriSedang',
+            'kategoriBerat',
+            'muridPerluPembinaan',
             'presensiHadir',
             'presensiSakit',
             'presensiIzin',
             'presensiAlpha',
+            'totalPresensi',
+            'persenKehadiran',
             'pengumumans',
             'agendaKalender',
             'pelanggaranTerbaru'
