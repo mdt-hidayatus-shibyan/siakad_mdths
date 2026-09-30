@@ -586,12 +586,10 @@ class WaliMuridApiController extends Controller
         $today = date('Y-m-d');
         $hariIni = $mapHari[Carbon::now()->format('l')];
 
-        // Cek Libur Hari Ini
-        $libur = \App\Models\HariLibur::where('tanggal_mulai', '<=', $today)
-            ->where('tanggal_selesai', '>=', $today)
-            ->first();
-        $isLibur = ($libur != null) || ($hariIni === 'Jumat');
-        $keteranganLibur = $libur ? $libur->keterangan : ($hariIni === 'Jumat' ? 'Libur Rutin Mingguan (Hari Jumat)' : null);
+        // Cek Libur / Bebas KBM Seharian Hari Ini
+        $checkLibur = \App\Models\HariLibur::checkBebasKbm($today, null, $ruanganAktif?->id, $ruanganAktif?->level_id);
+        $isLibur = $checkLibur['is_libur'] && $checkLibur['is_seharian'];
+        $keteranganLibur = $isLibur ? $checkLibur['keterangan'] : null;
 
         if (!$ruanganAktif) {
             return response()->json([
@@ -680,15 +678,18 @@ class WaliMuridApiController extends Controller
         } elseif (!$isLibur) {
             $jadwalHariIni = $jadwals->where('hari', $hariIni)->sortBy(function ($j) {
                 return is_numeric($j->jam_ke) ? (int)$j->jam_ke : 10;
-            })->values()->map(function ($j) {
+            })->values()->map(function ($j) use ($today, $ruanganAktif) {
+                $checkSesi = \App\Models\HariLibur::checkBebasKbm($today, $j->jam_ke, $ruanganAktif->id, $ruanganAktif->level_id);
                 return [
-                    'id'       => $j->id,
-                    'hari'     => $j->hari,
-                    'jam_ke'   => $j->jam_ke ? "Jam Ke-{$j->jam_ke}" : 'Pelajaran',
-                    'waktu'    => $j->jam_mulai ? ($j->jam_mulai . ' - ' . $j->jam_selesai . ' WIB') : 'Sesuai Jadwal',
-                    'mapel'    => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
-                    'ustadz'   => $j->ustadz->nama_lengkap ?? 'Ustadz Pengampu',
-                    'is_ujian' => false,
+                    'id'                   => $j->id,
+                    'hari'                 => $j->hari,
+                    'jam_ke'               => $j->jam_ke ? "Jam Ke-{$j->jam_ke}" : 'Pelajaran',
+                    'waktu'                => $j->jam_mulai ? ($j->jam_mulai . ' - ' . $j->jam_selesai . ' WIB') : 'Sesuai Jadwal',
+                    'mapel'                => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
+                    'ustadz'               => $j->ustadz->nama_lengkap ?? 'Ustadz Pengampu',
+                    'is_ujian'             => false,
+                    'is_bebas_kbm'         => $checkSesi['is_libur'],
+                    'keterangan_bebas_kbm' => $checkSesi['keterangan'],
                 ];
             });
         }

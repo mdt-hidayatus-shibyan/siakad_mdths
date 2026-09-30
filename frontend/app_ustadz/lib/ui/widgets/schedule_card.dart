@@ -68,36 +68,44 @@ class ScheduleCard extends StatelessWidget {
                 ),
               ),
 
-              // Status Absen Badge
+              // Status Absen Badge / Bebas KBM Badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: item.sudahAbsen
-                      ? (isDark
-                            ? AppColors.hadirBgDark
-                            : AppColors.hadirBgLight)
-                      : AppColors.amberAccent.withValues(alpha: 0.15),
+                  color: item.isBebasKbm
+                      ? AppColors.amberAccent.withValues(alpha: 0.15)
+                      : (item.sudahAbsen
+                            ? (isDark
+                                  ? AppColors.hadirBgDark
+                                  : AppColors.hadirBgLight)
+                            : AppColors.amberAccent.withValues(alpha: 0.15)),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: item.sudahAbsen
-                        ? (isDark
-                                  ? AppColors.hadirTextDark
-                                  : const Color(0xFF86EFAC))
-                              .withValues(alpha: 0.5)
-                        : AppColors.amberAccent.withValues(alpha: 0.4),
+                    color: item.isBebasKbm
+                        ? AppColors.amberAccent.withValues(alpha: 0.5)
+                        : (item.sudahAbsen
+                              ? (isDark
+                                        ? AppColors.hadirTextDark
+                                        : const Color(0xFF86EFAC))
+                                    .withValues(alpha: 0.5)
+                              : AppColors.amberAccent.withValues(alpha: 0.4)),
                     width: 0.8,
                   ),
                 ),
                 child: Text(
-                  item.sudahAbsen ? '✓ Sudah Absen' : '● Belum Absen',
+                  item.isBebasKbm
+                      ? '⏸ Bebas KBM'
+                      : (item.sudahAbsen ? '✓ Sudah Absen' : '● Belum Absen'),
                   style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.bold,
-                    color: item.sudahAbsen
-                        ? (isDark
-                              ? AppColors.hadirTextDark
-                              : AppColors.hadirTextLight)
-                        : AppColors.amberAccent,
+                    color: item.isBebasKbm
+                        ? AppColors.amberAccent
+                        : (item.sudahAbsen
+                              ? (isDark
+                                    ? AppColors.hadirTextDark
+                                    : AppColors.hadirTextLight)
+                              : AppColors.amberAccent),
                   ),
                 ),
               ),
@@ -225,8 +233,51 @@ class ScheduleCard extends StatelessWidget {
             ],
           ),
 
+          // Bebas KBM Notice Banner
+          if (item.isBebasKbm) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.amberAccent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.amberAccent.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: AppColors.amberAccent,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      item.keteranganBebasKbm != null &&
+                              item.keteranganBebasKbm!.isNotEmpty
+                          ? 'Sesi Bebas KBM: ${item.keteranganBebasKbm}'
+                          : 'Sesi Bebas KBM (Presensi tidak diberlakukan)',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.amberAccent
+                            : const Color(0xFFB45309),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           // 4. Baris Tombol Aksi Compact
-          if (onAbsenTap != null || onPresensiGuruTap != null) ...[
+          if ((onAbsenTap != null || onPresensiGuruTap != null) &&
+              !item.isBebasKbm) ...[
             const SizedBox(height: 10),
             if (onAbsenTap != null && onPresensiGuruTap != null)
               Row(

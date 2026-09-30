@@ -30,6 +30,8 @@ class PresensiTab extends StatefulWidget {
 class _PresensiTabState extends State<PresensiTab>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String _filterSesiMurid = 'Semua';
+  String _filterSesiUstadz = 'Semua';
 
   @override
   void initState() {
@@ -68,12 +70,14 @@ class _PresensiTabState extends State<PresensiTab>
 
   void _shiftDateMurid(int days) {
     HapticHelper.selection();
+    setState(() => _filterSesiMurid = 'Semua');
     final p = context.read<PresensiProvider>();
     p.setSelectedDate(p.selectedDate.add(Duration(days: days)));
   }
 
   void _shiftDateUstadz(int days) {
     HapticHelper.selection();
+    setState(() => _filterSesiUstadz = 'Semua');
     final p = context.read<PresensiProvider>();
     p.setSelectedDateUstadz(p.selectedDateUstadz.add(Duration(days: days)));
   }
@@ -88,6 +92,7 @@ class _PresensiTabState extends State<PresensiTab>
     );
     if (picked != null && picked != provider.selectedDate) {
       HapticHelper.light();
+      setState(() => _filterSesiMurid = 'Semua');
       provider.setSelectedDate(picked);
     }
   }
@@ -102,12 +107,35 @@ class _PresensiTabState extends State<PresensiTab>
     );
     if (picked != null && picked != provider.selectedDateUstadz) {
       HapticHelper.light();
+      setState(() => _filterSesiUstadz = 'Semua');
       provider.setSelectedDateUstadz(picked);
     }
   }
 
   void _showCheckinModal(BuildContext context, SesiPresensiUstadzItem sesi) {
-    CheckinUstadzSheet.show(context, sesi);
+    CheckinUstadzSheet.show(
+      context,
+      sesi,
+      context.read<PresensiProvider>().selectedDateUstadz,
+    );
+  }
+
+  Widget _buildMiniStat(String label, int count, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          '$label: $count',
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
   }
 
   @override
@@ -224,37 +252,123 @@ class _PresensiTabState extends State<PresensiTab>
                       ),
                       const SizedBox(height: 12),
 
-                      // BANNER GURU PENGGANTI (BADAL)
-                      InkWell(
-                        onTap: () {
-                          HapticHelper.medium();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const BadalPresensiScreen(),
+                      // BANNER GURU PENGGANTI (BADAL) - Hanya tampil jika KBM Reguler
+                      if (!presensi.isEvent) ...[
+                        InkWell(
+                          onTap: () {
+                            HapticHelper.medium();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const BadalPresensiScreen(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
                             ),
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.primaryContainerDark.withValues(
+                                      alpha: 0.25,
+                                    )
+                                  : AppColors.primaryContainerLight.withValues(
+                                      alpha: 0.5,
+                                    ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.primaryDark.withValues(
+                                        alpha: 0.35,
+                                      )
+                                    : AppColors.primaryLight.withValues(
+                                        alpha: 0.35,
+                                      ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? AppColors.primaryDark.withValues(
+                                            alpha: 0.25,
+                                          )
+                                        : AppColors.primaryLight.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.swap_horiz_rounded,
+                                    size: 20,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Guru Pengganti (Badal)',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? AppColors.onPrimaryContainerDark
+                                              : AppColors
+                                                    .onPrimaryContainerLight,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Gantikan ustadz lain & isi presensi di kelas manapun',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isDark
+                                              ? AppColors.primaryDark
+                                              : AppColors.primaryLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 20,
+                                  color: isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight,
+                                ),
+                              ],
+                            ),
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                      ] else ...[
+                        // BANNER KEGIATAN / ACARA KHUSUS (HARI EFEKTIF NON-KBM / HAFLAH / LOMBA)
+                        Container(
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: isDark
                                 ? AppColors.primaryContainerDark.withValues(
-                                    alpha: 0.25,
+                                    alpha: 0.3,
                                   )
                                 : AppColors.primaryContainerLight.withValues(
-                                    alpha: 0.5,
+                                    alpha: 0.6,
                                   ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: isDark
-                                  ? AppColors.primaryDark.withValues(
-                                      alpha: 0.35,
-                                    )
+                                  ? AppColors.primaryDark.withValues(alpha: 0.4)
                                   : AppColors.primaryLight.withValues(
                                       alpha: 0.35,
                                     ),
@@ -263,7 +377,7 @@ class _PresensiTabState extends State<PresensiTab>
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: isDark
                                       ? AppColors.primaryDark.withValues(
@@ -275,8 +389,8 @@ class _PresensiTabState extends State<PresensiTab>
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
-                                  Icons.swap_horiz_rounded,
-                                  size: 20,
+                                  Icons.celebration_rounded,
+                                  size: 22,
                                   color: isDark
                                       ? AppColors.primaryDark
                                       : AppColors.primaryLight,
@@ -287,19 +401,55 @@ class _PresensiTabState extends State<PresensiTab>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Guru Pengganti (Badal)',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDark
-                                            ? AppColors.onPrimaryContainerDark
-                                            : AppColors.onPrimaryContainerLight,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            presensi.eventInfo?.namaKegiatan ??
+                                                'Agenda Madrasah',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark
+                                                  ? AppColors
+                                                        .onPrimaryContainerDark
+                                                  : AppColors
+                                                        .onPrimaryContainerLight,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isDark
+                                                ? AppColors.primaryDark
+                                                : AppColors.primaryLight,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            presensi.eventInfo?.tipePresensi ==
+                                                    'multi_sesi'
+                                                ? 'Multi Sesi'
+                                                : 'Presensi Harian',
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 2),
+                                    const SizedBox(height: 3),
                                     Text(
-                                      'Gantikan ustadz lain & isi presensi di kelas manapun',
+                                      'Masa kegiatan madrasah • Presensi kehadiran murid',
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: isDark
@@ -310,18 +460,60 @@ class _PresensiTabState extends State<PresensiTab>
                                   ],
                                 ),
                               ),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                size: 20,
-                                color: isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight,
-                              ),
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 12),
+
+                        // FILTER CHIP JIKA MULTI SESI
+                        if (presensi.eventInfo != null &&
+                            presensi.eventInfo!.tipePresensi == 'multi_sesi' &&
+                            presensi.eventInfo!.sesiList.length > 1) ...[
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: ChoiceChip(
+                                    label: const Text('Semua Sesi'),
+                                    selected: _filterSesiMurid == 'Semua',
+                                    onSelected: (val) {
+                                      if (val) {
+                                        setState(
+                                          () => _filterSesiMurid = 'Semua',
+                                        );
+                                      }
+                                    },
+                                    selectedColor: isDark
+                                        ? AppColors.primaryContainerDark
+                                        : AppColors.primaryContainerLight,
+                                  ),
+                                ),
+                                ...presensi.eventInfo!.sesiList.map((s) {
+                                  final isSel = _filterSesiMurid == s;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: ChoiceChip(
+                                      label: Text('Sesi $s'),
+                                      selected: isSel,
+                                      onSelected: (val) {
+                                        if (val) {
+                                          setState(() => _filterSesiMurid = s);
+                                        }
+                                      },
+                                      selectedColor: isDark
+                                          ? AppColors.primaryContainerDark
+                                          : AppColors.primaryContainerLight,
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
 
                       // 1. Kondisi Khusus: MASA UJIAN MADRASAH (Tampilkan State Khusus & Jangan Tampilkan Presensi KBM)
                       if (presensi.isUjian) ...[
@@ -528,198 +720,437 @@ class _PresensiTabState extends State<PresensiTab>
                           ),
                         ),
                       ] else ...[
-                        // 2. Kondisi Hari Aktif KBM: Tampilkan Daftar Sesi Mengajar
-                        const Text(
-                          'Daftar Sesi Mengajar Murid',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                        // 2. Kondisi Hari Aktif KBM / Acara Khusus: Tampilkan Daftar Sesi
+                        Builder(
+                          builder: (context) {
+                            final displayedMuridSesiList = presensi.sesiList
+                                .where((s) {
+                                  if (!presensi.isEvent) return true;
+                                  if (_filterSesiMurid == 'Semua') return true;
+                                  return (s.sesi ?? '').toLowerCase() ==
+                                      _filterSesiMurid.toLowerCase();
+                                })
+                                .toList();
 
-                        if (presensi.isLoading)
-                          const ShimmerLoadingList(count: 3)
-                        else if (presensi.sesiList.isEmpty)
-                          const GlassCard(
-                            padding: EdgeInsets.all(24),
-                            child: Center(
-                              child: Text(
-                                'Tidak ada jadwal mengajar pada tanggal ini.',
-                              ),
-                            ),
-                          )
-                        else
-                          ...presensi.sesiList.map(
-                            (sesi) => GlassCard(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isDark
-                                              ? AppColors.primaryContainerDark
-                                                    .withValues(alpha: 0.3)
-                                              : AppColors.primaryContainerLight
-                                                    .withValues(alpha: 0.6),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          border: Border.all(
-                                            color: isDark
-                                                ? AppColors.primaryDark
-                                                      .withValues(alpha: 0.3)
-                                                : AppColors.primaryLight
-                                                      .withValues(alpha: 0.25),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          sesi.jam,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDark
-                                                ? AppColors.primaryDark
-                                                : AppColors.primaryLight,
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: sesi.sudahAbsen
-                                              ? (isDark
-                                                    ? AppColors.hadirBgDark
-                                                    : AppColors.hadirBgLight)
-                                              : (isDark
-                                                    ? const Color(0xFF451A03)
-                                                    : const Color(0xFFFEF3C7)),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          sesi.sudahAbsen
-                                              ? '✓ Selesai'
-                                              : '● Belum Absen',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: sesi.sudahAbsen
-                                                ? (isDark
-                                                      ? AppColors.hadirTextDark
-                                                      : AppColors
-                                                            .hadirTextLight)
-                                                : (isDark
-                                                      ? AppColors.sakitTextDark
-                                                      : AppColors
-                                                            .sakitTextLight),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  presensi.isEvent
+                                      ? 'Daftar Presensi Murid (${displayedMuridSesiList.length} Sesi/Ruangan)'
+                                      : 'Daftar Sesi Mengajar Murid',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    sesi.pelajaran,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Ruangan: ${sesi.kelas} • Guru: ${sesi.guru}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark
-                                          ? const Color(0xFF8D9387)
-                                          : const Color(0xFF73796E),
-                                    ),
-                                  ),
-                                  if (sesi.isMilikWali) ...[
-                                    const SizedBox(height: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isDark
-                                            ? AppColors.primaryContainerDark
-                                                  .withValues(alpha: 0.3)
-                                            : AppColors.primaryContainerLight
-                                                  .withValues(alpha: 0.6),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: isDark
-                                              ? AppColors.primaryDark
-                                                    .withValues(alpha: 0.3)
-                                              : AppColors.primaryLight
-                                                    .withValues(alpha: 0.25),
-                                        ),
-                                      ),
+                                ),
+                                const SizedBox(height: 12),
+                                if (presensi.isLoading)
+                                  const ShimmerLoadingList(count: 3)
+                                else if (displayedMuridSesiList.isEmpty)
+                                  GlassCard(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Center(
                                       child: Text(
-                                        'Ruangan Binaan (Akses Wali Ruangan)',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: isDark
-                                              ? AppColors.primaryDark
-                                              : AppColors.primaryLight,
-                                        ),
+                                        presensi.isEvent
+                                            ? 'Tidak ada agenda presensi untuk filter sesi ini.'
+                                            : 'Tidak ada jadwal mengajar pada tanggal ini.',
                                       ),
                                     ),
-                                  ],
-                                  const SizedBox(height: 14),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 40,
-                                    child: ElevatedButton.icon(
-                                      onPressed: () {
-                                        HapticHelper.light();
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => FormPresensiScreen(
-                                              jadwalId: sesi.id,
-                                              mapel: sesi.pelajaran,
-                                              ruangan: sesi.kelas,
-                                              jam: sesi.jam,
+                                  )
+                                else
+                                  ...displayedMuridSesiList.map(
+                                    (sesi) => GlassCard(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: isDark
+                                                      ? AppColors
+                                                            .primaryContainerDark
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            )
+                                                      : AppColors
+                                                            .primaryContainerLight
+                                                            .withValues(
+                                                              alpha: 0.6,
+                                                            ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: isDark
+                                                        ? AppColors.primaryDark
+                                                              .withValues(
+                                                                alpha: 0.3,
+                                                              )
+                                                        : AppColors.primaryLight
+                                                              .withValues(
+                                                                alpha: 0.25,
+                                                              ),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  sesi.isEvent
+                                                      ? 'Sesi ${sesi.sesi ?? sesi.jam}'
+                                                      : sesi.jam,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isDark
+                                                        ? AppColors.primaryDark
+                                                        : AppColors
+                                                              .primaryLight,
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: sesi.isBebasKbm
+                                                      ? AppColors.amberAccent
+                                                            .withValues(
+                                                              alpha: 0.15,
+                                                            )
+                                                      : (sesi.sudahAbsen
+                                                            ? (isDark
+                                                                  ? AppColors
+                                                                        .hadirBgDark
+                                                                  : AppColors
+                                                                        .hadirBgLight)
+                                                            : (isDark
+                                                                  ? const Color(
+                                                                      0xFF451A03,
+                                                                    )
+                                                                  : const Color(
+                                                                      0xFFFEF3C7,
+                                                                    ))),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: sesi.isBebasKbm
+                                                        ? AppColors.amberAccent
+                                                              .withValues(
+                                                                alpha: 0.4,
+                                                              )
+                                                        : (sesi.sudahAbsen
+                                                                  ? (isDark
+                                                                        ? AppColors
+                                                                              .hadirTextDark
+                                                                        : const Color(
+                                                                            0xFF86EFAC,
+                                                                          ))
+                                                                  : (isDark
+                                                                        ? AppColors
+                                                                              .sakitTextDark
+                                                                        : const Color(
+                                                                            0xFFFDE68A,
+                                                                          )))
+                                                              .withValues(
+                                                                alpha: 0.5,
+                                                              ),
+                                                    width: 0.8,
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  sesi.isBebasKbm
+                                                      ? '⏸ Bebas KBM'
+                                                      : (sesi.sudahAbsen
+                                                            ? (sesi.isEvent
+                                                                  ? '✓ Selesai (${sesi.hadirCount}/${sesi.totalMurid})'
+                                                                  : '✓ Selesai')
+                                                            : '● Belum Presensi'),
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: sesi.isBebasKbm
+                                                        ? AppColors.amberAccent
+                                                        : (sesi.sudahAbsen
+                                                              ? (isDark
+                                                                    ? AppColors
+                                                                          .hadirTextDark
+                                                                    : AppColors
+                                                                          .hadirTextLight)
+                                                              : (isDark
+                                                                    ? AppColors
+                                                                          .sakitTextDark
+                                                                    : AppColors
+                                                                          .sakitTextLight)),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            sesi.isEvent
+                                                ? (sesi.namaKegiatan ??
+                                                      sesi.pelajaran)
+                                                : sesi.pelajaran,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        );
-                                      },
-                                      icon: Icon(
-                                        sesi.sudahAbsen
-                                            ? Icons.edit_note_rounded
-                                            : Icons.how_to_reg_rounded,
-                                        size: 18,
-                                      ),
-                                      label: Text(
-                                        sesi.sudahAbsen
-                                            ? 'Edit Presensi'
-                                            : 'Buka Presensi',
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            sesi.isEvent
+                                                ? 'Ruangan: ${sesi.kelas} • Total: ${sesi.totalMurid} Murid'
+                                                : 'Ruangan: ${sesi.kelas} • Guru: ${sesi.guru}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: isDark
+                                                  ? const Color(0xFF8D9387)
+                                                  : const Color(0xFF73796E),
+                                            ),
+                                          ),
+                                          if (sesi.isEvent &&
+                                              sesi.sudahAbsen) ...[
+                                            const SizedBox(height: 10),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 6,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: isDark
+                                                    ? AppColors
+                                                          .surfaceContainerLowDark
+                                                    : const Color(0xFFF8FAFC),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color: isDark
+                                                      ? AppColors.outlineDark
+                                                      : const Color(0xFFE2E8F0),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceAround,
+                                                children: [
+                                                  _buildMiniStat(
+                                                    'Hadir',
+                                                    sesi.hadirCount,
+                                                    AppColors.hadirTextLight,
+                                                  ),
+                                                  _buildMiniStat(
+                                                    'Sakit',
+                                                    sesi.sakitCount,
+                                                    AppColors.sakitTextLight,
+                                                  ),
+                                                  _buildMiniStat(
+                                                    'Izin',
+                                                    sesi.izinCount,
+                                                    AppColors.izinTextLight,
+                                                  ),
+                                                  _buildMiniStat(
+                                                    'Alpha',
+                                                    sesi.alphaCount,
+                                                    AppColors.alphaTextLight,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                          if (sesi.isBebasKbm) ...[
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 6,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.amberAccent
+                                                    .withValues(alpha: 0.12),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color: AppColors.amberAccent
+                                                      .withValues(alpha: 0.25),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.info_outline_rounded,
+                                                    size: 14,
+                                                    color:
+                                                        AppColors.amberAccent,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Expanded(
+                                                    child: Text(
+                                                      sesi.keteranganBebasKbm !=
+                                                                  null &&
+                                                              sesi
+                                                                  .keteranganBebasKbm!
+                                                                  .isNotEmpty
+                                                          ? 'Sesi Bebas KBM: ${sesi.keteranganBebasKbm}'
+                                                          : 'Sesi Bebas KBM (Presensi tidak diberlakukan)',
+                                                      style: TextStyle(
+                                                        fontSize: 10.5,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: isDark
+                                                            ? AppColors
+                                                                  .amberAccent
+                                                            : const Color(
+                                                                0xFFB45309,
+                                                              ),
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                          if (sesi.isMilikWali &&
+                                              !sesi.isEvent) ...[
+                                            const SizedBox(height: 6),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: isDark
+                                                    ? AppColors
+                                                          .primaryContainerDark
+                                                          .withValues(
+                                                            alpha: 0.3,
+                                                          )
+                                                    : AppColors
+                                                          .primaryContainerLight
+                                                          .withValues(
+                                                            alpha: 0.6,
+                                                          ),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color: isDark
+                                                      ? AppColors.primaryDark
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            )
+                                                      : AppColors.primaryLight
+                                                            .withValues(
+                                                              alpha: 0.25,
+                                                            ),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'Ruangan Binaan (Akses Wali Ruangan)',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDark
+                                                      ? AppColors.primaryDark
+                                                      : AppColors.primaryLight,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          if (!sesi.isBebasKbm) ...[
+                                            const SizedBox(height: 14),
+                                            SizedBox(
+                                              width: double.infinity,
+                                              height: 40,
+                                              child: ElevatedButton.icon(
+                                                onPressed: () {
+                                                  HapticHelper.light();
+                                                  if (sesi.isEvent) {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) => FormPresensiScreen(
+                                                          isEvent: true,
+                                                          kalendarId: sesi
+                                                              .kalendarPendidikanId,
+                                                          ruanganId:
+                                                              sesi.ruanganId,
+                                                          sesi: sesi.sesi,
+                                                          mapel:
+                                                              sesi.namaKegiatan ??
+                                                              sesi.pelajaran,
+                                                          ruangan: sesi.kelas,
+                                                          jam:
+                                                              'Sesi ${sesi.sesi ?? ""}',
+                                                          tanggal: presensi
+                                                              .selectedDate,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            FormPresensiScreen(
+                                                              jadwalId: sesi.id,
+                                                              mapel: sesi
+                                                                  .pelajaran,
+                                                              ruangan:
+                                                                  sesi.kelas,
+                                                              jam: sesi.jam,
+                                                              tanggal: presensi
+                                                                  .selectedDate,
+                                                            ),
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                icon: Icon(
+                                                  sesi.sudahAbsen
+                                                      ? Icons.edit_note_rounded
+                                                      : Icons
+                                                            .how_to_reg_rounded,
+                                                  size: 18,
+                                                ),
+                                                label: Text(
+                                                  sesi.isEvent
+                                                      ? (sesi.sudahAbsen
+                                                            ? 'Edit Presensi Sesi ${sesi.sesi ?? ""}'
+                                                            : 'Buka Presensi Sesi ${sesi.sesi ?? ""}')
+                                                      : (sesi.sudahAbsen
+                                                            ? 'Edit Presensi'
+                                                            : 'Buka Presensi'),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
+                              ],
+                            );
+                          },
+                        ),
                       ],
                     ],
                   ),
@@ -798,37 +1229,123 @@ class _PresensiTabState extends State<PresensiTab>
                       ),
                       const SizedBox(height: 12),
 
-                      // BANNER GURU PENGGANTI (BADAL)
-                      InkWell(
-                        onTap: () {
-                          HapticHelper.medium();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const BadalPresensiScreen(),
+                      // BANNER GURU PENGGANTI (BADAL) - Hanya jika KBM Reguler
+                      if (!presensi.isEventUstadz) ...[
+                        InkWell(
+                          onTap: () {
+                            HapticHelper.medium();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const BadalPresensiScreen(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
                             ),
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.primaryContainerDark.withValues(
+                                      alpha: 0.25,
+                                    )
+                                  : AppColors.primaryContainerLight.withValues(
+                                      alpha: 0.5,
+                                    ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.primaryDark.withValues(
+                                        alpha: 0.35,
+                                      )
+                                    : AppColors.primaryLight.withValues(
+                                        alpha: 0.35,
+                                      ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? AppColors.primaryDark.withValues(
+                                            alpha: 0.25,
+                                          )
+                                        : AppColors.primaryLight.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.swap_horiz_rounded,
+                                    size: 20,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Guru Pengganti (Badal)',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? AppColors.onPrimaryContainerDark
+                                              : AppColors
+                                                    .onPrimaryContainerLight,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Gantikan ustadz lain & isi presensi di kelas manapun',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isDark
+                                              ? AppColors.primaryDark
+                                              : AppColors.primaryLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 20,
+                                  color: isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight,
+                                ),
+                              ],
+                            ),
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                      ] else ...[
+                        // BANNER KEGIATAN / ACARA KHUSUS (USTADZ)
+                        Container(
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: isDark
                                 ? AppColors.primaryContainerDark.withValues(
-                                    alpha: 0.25,
+                                    alpha: 0.3,
                                   )
                                 : AppColors.primaryContainerLight.withValues(
-                                    alpha: 0.5,
+                                    alpha: 0.6,
                                   ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: isDark
-                                  ? AppColors.primaryDark.withValues(
-                                      alpha: 0.35,
-                                    )
+                                  ? AppColors.primaryDark.withValues(alpha: 0.4)
                                   : AppColors.primaryLight.withValues(
                                       alpha: 0.35,
                                     ),
@@ -837,7 +1354,7 @@ class _PresensiTabState extends State<PresensiTab>
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: isDark
                                       ? AppColors.primaryDark.withValues(
@@ -849,8 +1366,8 @@ class _PresensiTabState extends State<PresensiTab>
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
-                                  Icons.swap_horiz_rounded,
-                                  size: 20,
+                                  Icons.badge_rounded,
+                                  size: 22,
                                   color: isDark
                                       ? AppColors.primaryDark
                                       : AppColors.primaryLight,
@@ -861,19 +1378,59 @@ class _PresensiTabState extends State<PresensiTab>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Guru Pengganti (Badal)',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDark
-                                            ? AppColors.onPrimaryContainerDark
-                                            : AppColors.onPrimaryContainerLight,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            presensi
+                                                    .eventInfoUstadz
+                                                    ?.namaKegiatan ??
+                                                'Agenda Kegiatan Ustadz',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark
+                                                  ? AppColors
+                                                        .onPrimaryContainerDark
+                                                  : AppColors
+                                                        .onPrimaryContainerLight,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isDark
+                                                ? AppColors.primaryDark
+                                                : AppColors.primaryLight,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            presensi
+                                                        .eventInfoUstadz
+                                                        ?.tipePresensi ==
+                                                    'multi_sesi'
+                                                ? 'Multi Sesi'
+                                                : 'Presensi Harian',
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 2),
+                                    const SizedBox(height: 3),
                                     Text(
-                                      'Gantikan ustadz lain & isi presensi di kelas manapun',
+                                      'Check-in kehadiran ustadz untuk agenda kegiatan madrasah',
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: isDark
@@ -884,18 +1441,61 @@ class _PresensiTabState extends State<PresensiTab>
                                   ],
                                 ),
                               ),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                size: 20,
-                                color: isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight,
-                              ),
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 12),
+
+                        // FILTER CHIP JIKA MULTI SESI
+                        if (presensi.eventInfoUstadz != null &&
+                            presensi.eventInfoUstadz!.tipePresensi ==
+                                'multi_sesi' &&
+                            presensi.eventInfoUstadz!.sesiList.length > 1) ...[
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: ChoiceChip(
+                                    label: const Text('Semua Sesi'),
+                                    selected: _filterSesiUstadz == 'Semua',
+                                    onSelected: (val) {
+                                      if (val) {
+                                        setState(
+                                          () => _filterSesiUstadz = 'Semua',
+                                        );
+                                      }
+                                    },
+                                    selectedColor: isDark
+                                        ? AppColors.primaryContainerDark
+                                        : AppColors.primaryContainerLight,
+                                  ),
+                                ),
+                                ...presensi.eventInfoUstadz!.sesiList.map((s) {
+                                  final isSel = _filterSesiUstadz == s;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: ChoiceChip(
+                                      label: Text('Sesi $s'),
+                                      selected: isSel,
+                                      onSelected: (val) {
+                                        if (val) {
+                                          setState(() => _filterSesiUstadz = s);
+                                        }
+                                      },
+                                      selectedColor: isDark
+                                          ? AppColors.primaryContainerDark
+                                          : AppColors.primaryContainerLight,
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
 
                       // 1. Kondisi Khusus: MASA UJIAN MADRASAH (Tampilkan State Khusus & Jangan Tampilkan Presensi Mengajar KBM)
                       if (presensi.isUjianUstadz) ...[
@@ -1085,301 +1685,497 @@ class _PresensiTabState extends State<PresensiTab>
                         ),
                         const SizedBox(height: 16),
                       ] else ...[
-                        // 2. Sesi Mengajar Ustadz & Tombol Check-In Mandiri
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Jadwal Mengajar & Check-In',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              '${presensi.sesiUstadzList.length} Jadwal',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
+                        // 2. Sesi Mengajar Ustadz & Tombol Check-In Mandiri / Acara
+                        Builder(
+                          builder: (context) {
+                            final displayedUstadzSesiList = presensi
+                                .sesiUstadzList
+                                .where((s) {
+                                  if (!presensi.isEventUstadz) return true;
+                                  if (_filterSesiUstadz == 'Semua') return true;
+                                  return (s.sesi ?? '').toLowerCase() ==
+                                      _filterSesiUstadz.toLowerCase();
+                                })
+                                .toList();
 
-                        if (presensi.isLoadingUstadz)
-                          const ShimmerLoadingList(count: 2)
-                        else if (presensi.sesiUstadzList.isEmpty)
-                          const GlassCard(
-                            padding: EdgeInsets.all(20),
-                            child: Center(
-                              child: Text(
-                                'Anda tidak memiliki jadwal mengajar pada tanggal ini.',
-                                style: TextStyle(fontSize: 13),
-                              ),
-                            ),
-                          )
-                        else
-                          ...presensi.sesiUstadzList.map(
-                            (sesi) => GlassCard(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isDark
-                                              ? AppColors.primaryContainerDark
-                                                    .withValues(alpha: 0.3)
-                                              : AppColors.primaryContainerLight
-                                                    .withValues(alpha: 0.6),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          border: Border.all(
-                                            color: isDark
-                                                ? AppColors.primaryDark
-                                                      .withValues(alpha: 0.3)
-                                                : AppColors.primaryLight
-                                                      .withValues(alpha: 0.25),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          sesi.jam,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDark
-                                                ? AppColors.primaryDark
-                                                : AppColors.primaryLight,
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color:
-                                              sesi.sudahCheckin &&
-                                                  sesi.status == 'Hadir'
-                                              ? (isDark
-                                                    ? AppColors.hadirBgDark
-                                                    : AppColors.hadirBgLight)
-                                              : (isDark
-                                                    ? const Color(0xFF451A03)
-                                                    : const Color(0xFFFEF3C7)),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          sesi.sudahCheckin
-                                              ? (sesi.status == 'Hadir'
-                                                    ? '✓ Hadir'
-                                                    : '● ${sesi.status}')
-                                              : '● Belum Check-In',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                sesi.sudahCheckin &&
-                                                    sesi.status == 'Hadir'
-                                                ? (isDark
-                                                      ? AppColors.hadirTextDark
-                                                      : AppColors
-                                                            .hadirTextLight)
-                                                : (isDark
-                                                      ? AppColors.sakitTextDark
-                                                      : AppColors
-                                                            .sakitTextLight),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    sesi.mapel,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Ruangan / Kelas: ${sesi.ruangan} • Guru: ${sesi.guruPengajar}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark
-                                          ? const Color(0xFF8D9387)
-                                          : const Color(0xFF73796E),
-                                    ),
-                                  ),
-                                  if (sesi.isMilikWali) ...[
-                                    const SizedBox(height: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isDark
-                                            ? AppColors.primaryContainerDark
-                                                  .withValues(alpha: 0.3)
-                                            : AppColors.primaryContainerLight
-                                                  .withValues(alpha: 0.6),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: isDark
-                                              ? AppColors.primaryDark
-                                                    .withValues(alpha: 0.3)
-                                              : AppColors.primaryLight
-                                                    .withValues(alpha: 0.25),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Ruangan Binaan (Tanggung Jawab Wali Ruangan)',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: isDark
-                                              ? AppColors.primaryDark
-                                              : AppColors.primaryLight,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  if (sesi.ustadzPenggantiNama != null) ...[
-                                    const SizedBox(height: 4),
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
                                     Text(
-                                      'Digantikan (Badal): ${sesi.ustadzPenggantiNama}',
+                                      presensi.isEventUstadz
+                                          ? 'Presensi Kehadiran Ustadz'
+                                          : 'Jadwal Mengajar & Check-In',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${displayedUstadzSesiList.length} ${presensi.isEventUstadz ? 'Sesi' : 'Jadwal'}',
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                         color: isDark
-                                            ? AppColors.skyBlueAccent
-                                            : const Color(0xFF0284C7),
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight,
                                       ),
                                     ),
                                   ],
-                                  if (sesi.keterangan != null &&
-                                      sesi.keterangan!.isNotEmpty) ...[
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Catatan: ${sesi.keterangan}',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontStyle: FontStyle.italic,
-                                        color: isDark
-                                            ? const Color(0xFF8D9387)
-                                            : const Color(0xFF73796E),
+                                ),
+                                const SizedBox(height: 10),
+                                if (presensi.isLoadingUstadz)
+                                  const ShimmerLoadingList(count: 2)
+                                else if (displayedUstadzSesiList.isEmpty)
+                                  GlassCard(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Center(
+                                      child: Text(
+                                        presensi.isEventUstadz
+                                            ? 'Tidak ada agenda sesi pada filter ini.'
+                                            : 'Anda tidak memiliki jadwal mengajar pada tanggal ini.',
+                                        style: const TextStyle(fontSize: 13),
                                       ),
                                     ),
-                                  ],
-                                  const SizedBox(height: 14),
-
-                                  // Actions Row
-                                  if (!sesi.sudahCheckin) ...[
-                                    Row(
-                                      children: [
-                                        // 1-Tap Quick Action "Check-In Hadir"
-                                        Expanded(
-                                          flex: 3,
-                                          child: ElevatedButton.icon(
-                                            onPressed: () async {
-                                              HapticHelper.medium();
-                                              final success = await presensi
-                                                  .checkinUstadz(
-                                                    jadwalId: sesi.jadwalId,
-                                                    status: 'Hadir',
-                                                  );
-                                              if (context.mounted && success) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Check-in Hadir untuk ${sesi.guruPengajar} (${sesi.mapel}) berhasil!',
+                                  )
+                                else
+                                  ...displayedUstadzSesiList.map(
+                                    (sesi) => GlassCard(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3,
                                                     ),
-                                                    backgroundColor: AppColors
-                                                        .hadirTextLight,
-                                                    behavior: SnackBarBehavior
-                                                        .floating,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            14,
-                                                          ),
+                                                decoration: BoxDecoration(
+                                                  color: isDark
+                                                      ? AppColors
+                                                            .primaryContainerDark
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            )
+                                                      : AppColors
+                                                            .primaryContainerLight
+                                                            .withValues(
+                                                              alpha: 0.6,
+                                                            ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: isDark
+                                                        ? AppColors.primaryDark
+                                                              .withValues(
+                                                                alpha: 0.3,
+                                                              )
+                                                        : AppColors.primaryLight
+                                                              .withValues(
+                                                                alpha: 0.25,
+                                                              ),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  sesi.isEvent
+                                                      ? 'Sesi ${sesi.sesi ?? ""}'
+                                                      : sesi.jam,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isDark
+                                                        ? AppColors.primaryDark
+                                                        : AppColors
+                                                              .primaryLight,
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      sesi.isBebasKbm &&
+                                                          !sesi.sudahCheckin
+                                                      ? AppColors.amberAccent
+                                                            .withValues(
+                                                              alpha: 0.15,
+                                                            )
+                                                      : (sesi.sudahCheckin &&
+                                                                sesi.status ==
+                                                                    'Hadir'
+                                                            ? (isDark
+                                                                  ? AppColors
+                                                                        .hadirBgDark
+                                                                  : AppColors
+                                                                        .hadirBgLight)
+                                                            : (isDark
+                                                                  ? const Color(
+                                                                      0xFF451A03,
+                                                                    )
+                                                                  : const Color(
+                                                                      0xFFFEF3C7,
+                                                                    ))),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color:
+                                                        sesi.isBebasKbm &&
+                                                            !sesi.sudahCheckin
+                                                        ? AppColors.amberAccent
+                                                              .withValues(
+                                                                alpha: 0.4,
+                                                              )
+                                                        : (sesi.sudahCheckin &&
+                                                                      sesi.status ==
+                                                                          'Hadir'
+                                                                  ? (isDark
+                                                                        ? AppColors
+                                                                              .hadirTextDark
+                                                                        : const Color(
+                                                                            0xFF86EFAC,
+                                                                          ))
+                                                                  : (isDark
+                                                                        ? AppColors
+                                                                              .sakitTextDark
+                                                                        : const Color(
+                                                                            0xFFFDE68A,
+                                                                          )))
+                                                              .withValues(
+                                                                alpha: 0.5,
+                                                              ),
+                                                    width: 0.8,
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  sesi.isBebasKbm &&
+                                                          !sesi.sudahCheckin
+                                                      ? '⏸ Bebas KBM'
+                                                      : (sesi.sudahCheckin
+                                                            ? (sesi.status ==
+                                                                      'Hadir'
+                                                                  ? '✓ Hadir'
+                                                                  : '● ${sesi.status}')
+                                                            : '● Belum Check-In'),
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color:
+                                                        sesi.isBebasKbm &&
+                                                            !sesi.sudahCheckin
+                                                        ? AppColors.amberAccent
+                                                        : (sesi.sudahCheckin &&
+                                                                  sesi.status ==
+                                                                      'Hadir'
+                                                              ? (isDark
+                                                                    ? AppColors
+                                                                          .hadirTextDark
+                                                                    : AppColors
+                                                                          .hadirTextLight)
+                                                              : (isDark
+                                                                    ? AppColors
+                                                                          .sakitTextDark
+                                                                    : AppColors
+                                                                          .sakitTextLight)),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            sesi.isEvent
+                                                ? (sesi.namaKegiatan ??
+                                                      sesi.mapel)
+                                                : sesi.mapel,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            sesi.isEvent
+                                                ? 'Agenda Kegiatan MDT • Sesi ${sesi.sesi ?? ""}'
+                                                : 'Ruangan / Kelas: ${sesi.ruangan} • Guru: ${sesi.guruPengajar}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: isDark
+                                                  ? const Color(0xFF8D9387)
+                                                  : const Color(0xFF73796E),
+                                            ),
+                                          ),
+                                          if (sesi.isBebasKbm) ...[
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 6,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.amberAccent
+                                                    .withValues(alpha: 0.12),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color: AppColors.amberAccent
+                                                      .withValues(alpha: 0.25),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.info_outline_rounded,
+                                                    size: 14,
+                                                    color:
+                                                        AppColors.amberAccent,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Expanded(
+                                                    child: Text(
+                                                      sesi.keteranganBebasKbm !=
+                                                                  null &&
+                                                              sesi
+                                                                  .keteranganBebasKbm!
+                                                                  .isNotEmpty
+                                                          ? 'Sesi Bebas KBM: ${sesi.keteranganBebasKbm}'
+                                                          : 'Sesi Bebas KBM (Presensi tidak diberlakukan)',
+                                                      style: TextStyle(
+                                                        fontSize: 10.5,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: isDark
+                                                            ? AppColors
+                                                                  .amberAccent
+                                                            : const Color(
+                                                                0xFFB45309,
+                                                              ),
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
                                                     ),
                                                   ),
-                                                );
-                                              }
-                                            },
-                                            icon: const Icon(
-                                              Icons.touch_app_rounded,
-                                              size: 18,
+                                                ],
+                                              ),
                                             ),
-                                            label: Text(
-                                              sesi.isMilikWali
-                                                  ? 'Check-In (${sesi.guruPengajar.split(" ").first})'
-                                                  : 'Check-In Hadir',
+                                          ],
+                                          if (sesi.isMilikWali &&
+                                              !sesi.isEvent) ...[
+                                            const SizedBox(height: 6),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: isDark
+                                                    ? AppColors
+                                                          .primaryContainerDark
+                                                          .withValues(
+                                                            alpha: 0.3,
+                                                          )
+                                                    : AppColors
+                                                          .primaryContainerLight
+                                                          .withValues(
+                                                            alpha: 0.6,
+                                                          ),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color: isDark
+                                                      ? AppColors.primaryDark
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            )
+                                                      : AppColors.primaryLight
+                                                            .withValues(
+                                                              alpha: 0.25,
+                                                            ),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'Ruangan Binaan (Tanggung Jawab Wali Ruangan)',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDark
+                                                      ? AppColors.primaryDark
+                                                      : AppColors.primaryLight,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        // Opsi Badal / Izin
-                                        Expanded(
-                                          flex: 2,
-                                          child: OutlinedButton(
-                                            onPressed: () => _showCheckinModal(
-                                              context,
-                                              sesi,
+                                          ],
+                                          if (sesi.ustadzPenggantiNama !=
+                                                  null &&
+                                              !sesi.isEvent) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Digantikan (Badal): ${sesi.ustadzPenggantiNama}',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                color: isDark
+                                                    ? AppColors.skyBlueAccent
+                                                    : const Color(0xFF0284C7),
+                                              ),
                                             ),
-                                            child: const Text(
-                                              'Pengganti',
-                                              style: TextStyle(fontSize: 12),
+                                          ],
+                                          if (sesi.keterangan != null &&
+                                              sesi.keterangan!.isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Catatan: ${sesi.keterangan}',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontStyle: FontStyle.italic,
+                                                color: isDark
+                                                    ? const Color(0xFF8D9387)
+                                                    : const Color(0xFF73796E),
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ] else ...[
-                                    // Sudah Check-In -> Tombol Ubah Status
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 38,
-                                      child: OutlinedButton.icon(
-                                        onPressed: () =>
-                                            _showCheckinModal(context, sesi),
-                                        icon: const Icon(
-                                          Icons.edit_note_rounded,
-                                          size: 18,
-                                        ),
-                                        label: const Text(
-                                          'Ubah Status Presensi Sesi Ini',
-                                        ),
+                                          ],
+                                          const SizedBox(height: 14),
+
+                                          // Actions Row
+                                          if (!sesi.isBebasKbm) ...[
+                                            if (!sesi.sudahCheckin) ...[
+                                              Row(
+                                                children: [
+                                                  // 1-Tap Quick Action "Check-In Hadir"
+                                                  Expanded(
+                                                    flex: 3,
+                                                    child: ElevatedButton.icon(
+                                                      onPressed: () async {
+                                                        HapticHelper.medium();
+                                                        final bool success;
+                                                        if (sesi.isEvent) {
+                                                          success = await presensi
+                                                              .checkinKegiatanUstadz(
+                                                                kalendarId:
+                                                                    sesi.kalendarPendidikanId ??
+                                                                    0,
+                                                                sesi:
+                                                                    sesi.sesi ??
+                                                                    '',
+                                                                status: 'Hadir',
+                                                              );
+                                                        } else {
+                                                          success = await presensi
+                                                              .checkinUstadz(
+                                                                jadwalId: sesi
+                                                                    .jadwalId,
+                                                                status: 'Hadir',
+                                                              );
+                                                        }
+                                                        if (context.mounted &&
+                                                            success) {
+                                                          ScaffoldMessenger.of(
+                                                            context,
+                                                          ).showSnackBar(
+                                                            SnackBar(
+                                                              content: Text(
+                                                                sesi.isEvent
+                                                                    ? 'Check-in Hadir Sesi ${sesi.sesi} berhasil!'
+                                                                    : 'Check-in Hadir untuk ${sesi.guruPengajar} (${sesi.mapel}) berhasil!',
+                                                              ),
+                                                              backgroundColor:
+                                                                  AppColors
+                                                                      .hadirTextLight,
+                                                              behavior:
+                                                                  SnackBarBehavior
+                                                                      .floating,
+                                                              shape: RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      14,
+                                                                    ),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        }
+                                                      },
+                                                      icon: const Icon(
+                                                        Icons.touch_app_rounded,
+                                                        size: 18,
+                                                      ),
+                                                      label: Text(
+                                                        sesi.isEvent
+                                                            ? 'Check-In Hadir'
+                                                            : (sesi.isMilikWali
+                                                                  ? 'Check-In (${sesi.guruPengajar.split(" ").first})'
+                                                                  : 'Check-In Hadir'),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  // Opsi Badal / Izin / Sakit
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: OutlinedButton(
+                                                      onPressed: () =>
+                                                          _showCheckinModal(
+                                                            context,
+                                                            sesi,
+                                                          ),
+                                                      child: Text(
+                                                        sesi.isEvent
+                                                            ? 'Izin / Sakit'
+                                                            : 'Pengganti',
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ] else ...[
+                                              // Sudah Check-In -> Tombol Ubah Status
+                                              SizedBox(
+                                                width: double.infinity,
+                                                height: 38,
+                                                child: OutlinedButton.icon(
+                                                  onPressed: () =>
+                                                      _showCheckinModal(
+                                                        context,
+                                                        sesi,
+                                                      ),
+                                                  icon: const Icon(
+                                                    Icons.edit_note_rounded,
+                                                    size: 18,
+                                                  ),
+                                                  label: const Text(
+                                                    'Ubah Status Presensi Sesi Ini',
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 16),
+                                  ),
+                                const SizedBox(height: 16),
+                              ],
+                            );
+                          },
+                        ),
                       ],
                     ],
                   ),

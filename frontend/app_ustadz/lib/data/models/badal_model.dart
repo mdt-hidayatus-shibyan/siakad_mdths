@@ -1,3 +1,5 @@
+import '../../core/utils/jam_order_helper.dart';
+
 class BadalRuanganItem {
   final int id;
   final String namaRuangan;
@@ -38,6 +40,8 @@ class BadalJadwalItem {
   final String guruPengampu;
   final int? guruUtamaId;
   final bool isPengampuAsli;
+  final bool isBebasKbm;
+  final String? keteranganBebasKbm;
 
   // Status Presensi Ustadz
   final String ustadzStatus;
@@ -64,6 +68,8 @@ class BadalJadwalItem {
     required this.guruPengampu,
     this.guruUtamaId,
     required this.isPengampuAsli,
+    this.isBebasKbm = false,
+    this.keteranganBebasKbm,
     required this.ustadzStatus,
     this.ustadzKeterangan,
     this.ustadzPenggantiId,
@@ -88,6 +94,8 @@ class BadalJadwalItem {
       guruPengampu: json['guru_pengampu'] ?? 'Belum Diatur',
       guruUtamaId: json['guru_utama_id'],
       isPengampuAsli: json['is_pengampu_asli'] ?? false,
+      isBebasKbm: json['is_bebas_kbm'] ?? false,
+      keteranganBebasKbm: json['keterangan_bebas_kbm'],
       ustadzStatus: json['ustadz_status'] ?? 'Belum Absen',
       ustadzKeterangan: json['ustadz_keterangan'],
       ustadzPenggantiId: json['ustadz_pengganti_id'],
@@ -130,6 +138,13 @@ class BadalJadwalResponse {
 
   factory BadalJadwalResponse.fromJson(Map<String, dynamic> json) {
     final rawList = json['data'] as List? ?? [];
+    final list = rawList.map((e) => BadalJadwalItem.fromJson(e)).toList();
+    list.sort((a, b) {
+      final wA = JamOrderHelper.getWeight(a.jam, a.jamKe);
+      final wB = JamOrderHelper.getWeight(b.jam, b.jamKe);
+      if (wA != wB) return wA.compareTo(wB);
+      return a.mapel.toLowerCase().compareTo(b.mapel.toLowerCase());
+    });
     return BadalJadwalResponse(
       ruangan: json['ruangan'] != null
           ? BadalRuanganItem.fromJson(json['ruangan'])
@@ -141,7 +156,7 @@ class BadalJadwalResponse {
       isUjian: json['is_ujian'] ?? false,
       namaUjian: json['nama_ujian'],
       ujianId: json['ujian_id'],
-      data: rawList.map((e) => BadalJadwalItem.fromJson(e)).toList(),
+      data: list,
     );
   }
 }

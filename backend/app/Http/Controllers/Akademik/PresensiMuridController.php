@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Models\BulanHijriyah;
 use App\Models\HariLibur;
 use App\Models\JadwalPelajaran;
+use App\Models\KalendarPendidikan;
 use App\Models\MataPelajaran;
 use App\Models\PengaturanAkademik;
+use App\Models\PresensiKegiatanMurid;
 use App\Models\PresensiMurid;
 use App\Models\Ruangan;
 use App\Models\Semester;
@@ -18,6 +20,7 @@ use App\Repositories\MuridRuanganRepository;
 use App\Services\PresensiMuridService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 
 class PresensiMuridController extends Controller
@@ -39,8 +42,14 @@ class PresensiMuridController extends Controller
         $tanggal = $request->tanggal ?? date('Y-m-d');
         $ruangan_id = $request->ruangan_id;
         $status_filter = $request->status; // 'sudah', 'belum'
+        $sesi_filter = $request->sesi;
 
-        $ruangans = Ruangan::with('level')->berdasarkanHakAkses()->orderBy('level_id')->orderBy('nama_ruangan')->get();
+        $ruangansQuery = Ruangan::with('level')->berdasarkanHakAkses()->orderBy('level_id')->orderBy('nama_ruangan');
+        if ($ruangan_id) {
+            $ruangansQuery->where('id', $ruangan_id);
+        }
+        $ruangans = $ruangansQuery->get();
+        $semuaRuangan = Ruangan::with('level')->berdasarkanHakAkses()->orderBy('level_id')->orderBy('nama_ruangan')->get();
 
         $nama_hari_inggris = Carbon::parse($tanggal)->format('l');
         $mapHari = [
@@ -54,22 +63,17 @@ class PresensiMuridController extends Controller
         ];
         $hari_ini = $mapHari[$nama_hari_inggris] ?? 'Senin';
 
-        // Cek Libur
-        $libur = HariLibur::where('tanggal_mulai', '<=', $tanggal)
-            ->where('tanggal_selesai', '>=', $tanggal)
-            ->first();
+        // 1. Cek Event Khusus dengan Presensi Aktif
+        $eventPresensi = KalendarPendidikan::getActiveEventPresensi($tanggal);
+        $isEvent = ($eventPresensi != null);
+        $eventInfo = $eventPresensi;
 
-        $isLibur = false;
-        $keteranganLibur = null;
-        if ($libur) {
-            $isLibur = true;
-            $keteranganLibur = $libur->keterangan;
-        } elseif ($hari_ini === 'Jumat') {
-            $isLibur = true;
-            $keteranganLibur = 'Libur Rutin (Jumat)';
-        }
+        // 2. Cek Libur / Bebas KBM Seharian
+        $checkLibur = HariLibur::checkBebasKbm($tanggal, null);
+        $isLibur = $checkLibur['is_libur'] && $checkLibur['is_seharian'];
+        $keteranganLibur = $isLibur ? $checkLibur['keterangan'] : null;
 
-        // Cek Ujian
+        // 3. Cek Ujian
         $ujian = Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
             ->whereDate('tanggal_selesai', '>=', $tanggal)
             ->first();
@@ -83,6 +87,121 @@ class PresensiMuridController extends Controller
         $namaUjian = $ujian ? $ujian->nama_ujian : null;
         $ujianId = $ujian ? $ujian->id : null;
 
+        // === JIKA HARI EVENT PRESENSI KHUSUS ===
+        if ($isEvent) {
+            $sesiList = $eventPresensi->tipe_presensi === 'multi_sesi'
+                ? ($eventPresensi->sesi_kegiatan ?? ['Siang', 'Malam'])
+                : ['Harian'];
+
+            $activeSesiList = ($sesi_filter && in_array($sesi_filter, $sesiList)) ? [$sesi_filter] : $sesiList;
+
+            // Ambil Tahun Pelajaran dari Tanggal
+            $bulan = BulanHijriyah::where('tanggal_mulai_masehi', '<=', $tanggal)
+                ->where('tanggal_selesai_masehi', '>=', $tanggal)
+                ->first();
+            $tahun_pelajaran_id = $bulan ? $bulan->tahun_pelajaran_id : (Semester::where('is_active', 1)->first()?->tahun_pelajaran_id);
+
+            // Ambil data presensi kegiatan murid pada tanggal ini
+            $presensiDb = PresensiKegiatanMurid::where('kalendar_pendidikan_id', $eventPresensi->id)
+                ->where('tanggal', $tanggal)
+                ->whereIn('ruangan_id', $ruangans->pluck('id'))
+                ->get()
+                ->groupBy(fn($item) => $item->ruangan_id . '_' . $item->sesi);
+
+            $totalSesi = $ruangans->count() * count($activeSesiList);
+            $totalSudahAbsen = 0;
+            $totalBelumAbsen = 0;
+            $rekapStatus = [
+                'Hadir' => 0,
+                'Sakit' => 0,
+                'Izin' => 0,
+                'Alpha' => 0,
+                'Dispensasi' => 0,
+                'TotalMurid' => 0,
+            ];
+
+            $detailProgres = [];
+
+            foreach ($ruangans as $r) {
+                $totalMuridRuangan = $this->muridRuanganRepo->getMuridByRuanganAndTahun($r->id, $tahun_pelajaran_id, 'Aktif')->count();
+
+                foreach ($activeSesiList as $sesi) {
+                    $key = $r->id . '_' . $sesi;
+                    $records = $presensiDb->get($key, collect());
+                    $isSudah = $records->isNotEmpty();
+
+                    if ($isSudah) {
+                        $totalSudahAbsen++;
+                    } else {
+                        $totalBelumAbsen++;
+                    }
+
+                    $countHadir = $records->where('status', 'Hadir')->count();
+                    $countSakit = $records->where('status', 'Sakit')->count();
+                    $countIzin = $records->where('status', 'Izin')->count();
+                    $countAlpha = $records->where('status', 'Alpha')->count();
+                    $countDispensasi = $records->where('status', 'Dispensasi')->count();
+                    $countTotal = $records->count() ?: $totalMuridRuangan;
+
+                    $rekapStatus['Hadir'] += $countHadir;
+                    $rekapStatus['Sakit'] += $countSakit;
+                    $rekapStatus['Izin'] += $countIzin;
+                    $rekapStatus['Alpha'] += $countAlpha;
+                    $rekapStatus['Dispensasi'] += $countDispensasi;
+                    $rekapStatus['TotalMurid'] += ($records->count() ?: $totalMuridRuangan);
+
+                    $lastUpdated = $records->max('updated_at');
+
+                    if ($status_filter === 'sudah' && !$isSudah) continue;
+                    if ($status_filter === 'belum' && $isSudah) continue;
+
+                    $detailProgres[] = [
+                        'is_event' => true,
+                        'kalendar_id' => $eventPresensi->id,
+                        'nama_event' => $eventPresensi->nama_kegiatan,
+                        'ruangan' => $r,
+                        'sesi' => $sesi,
+                        'is_sudah' => $isSudah,
+                        'is_bebas_kbm' => false,
+                        'keterangan_bebas_kbm' => null,
+                        'hadir' => $countHadir,
+                        'sakit' => $countSakit,
+                        'izin' => $countIzin,
+                        'alpha' => $countAlpha,
+                        'dispensasi' => $countDispensasi,
+                        'total_murid' => $countTotal,
+                        'waktu_update' => $lastUpdated ? Carbon::parse($lastUpdated)->format('H:i') : null,
+                    ];
+                }
+            }
+
+            $persenSelesai = $totalSesi > 0 ? round(($totalSudahAbsen / $totalSesi) * 100, 1) : 0;
+
+            return view('presensi-murid.progres', [
+                'ruangans' => $semuaRuangan,
+                'tanggal' => $tanggal,
+                'ruangan_id' => $ruangan_id,
+                'status_filter' => $status_filter,
+                'sesi_filter' => $sesi_filter,
+                'hari_ini' => $hari_ini,
+                'isLibur' => false,
+                'keteranganLibur' => null,
+                'isUjian' => false,
+                'namaUjian' => null,
+                'ujianId' => null,
+                'isEvent' => true,
+                'eventInfo' => $eventPresensi,
+                'sesiList' => $sesiList,
+                'totalSesi' => $totalSesi,
+                'totalSudahAbsen' => $totalSudahAbsen,
+                'totalBelumAbsen' => $totalBelumAbsen,
+                'persenSelesai' => $persenSelesai,
+                'rekapStatus' => $rekapStatus,
+                'detailProgres' => $detailProgres
+            ]);
+        }
+
+        // === JIKA HARI KBM REGULER ===
         // Ambil Jadwal Hari Ini
         $jadwalQuery = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level', 'ustadz', 'ustadzs'])
             ->where('hari', $hari_ini);
@@ -132,12 +251,16 @@ class PresensiMuridController extends Controller
         $detailProgres = [];
 
         foreach ($jadwals as $j) {
+            $checkSesi = HariLibur::checkBebasKbm($tanggal, $j->jam_ke, $j->ruangan_id, $j->ruangan?->level_id);
+            $isBebasKbm = $checkSesi['is_libur'];
+            $keteranganBebasKbm = $checkSesi['keterangan'];
+
             $records = $presensiDb->get($j->id, collect());
             $isSudah = $records->isNotEmpty();
 
             if ($isSudah) {
                 $totalSudahAbsen++;
-            } else {
+            } elseif (!$isBebasKbm) {
                 $totalBelumAbsen++;
             }
 
@@ -162,7 +285,10 @@ class PresensiMuridController extends Controller
 
             $detailProgres[] = [
                 'jadwal' => $j,
+                'ruangan' => $j->ruangan,
                 'is_sudah' => $isSudah,
+                'is_bebas_kbm' => $isBebasKbm,
+                'keterangan_bebas_kbm' => $keteranganBebasKbm,
                 'hadir' => $countHadir,
                 'sakit' => $countSakit,
                 'izin' => $countIzin,
@@ -205,130 +331,117 @@ class PresensiMuridController extends Controller
         $tanggal = $request->tanggal ?? date('Y-m-d');
         $ruangan_id = $request->ruangan_id;
         $jam_ke = $request->jam_ke;
+        $sesi = $request->sesi;
 
         $jadwal = null;
         $murids = collect();
         $presensiTersimpan = collect();
 
-        // Variabel penanda libur
+        // 1. Cek Event Khusus dengan Presensi Aktif
+        $eventPresensi = KalendarPendidikan::getActiveEventPresensi($tanggal);
+        $isEvent = ($eventPresensi != null);
+        $eventInfo = $eventPresensi;
+
+        // Variabel penanda libur & ujian
         $isLibur = false;
         $keteranganLibur = null;
         $hari_ini = null;
 
-        // Jika Admin sudah memilih Ruangan dan Jam, kita cari data murid & jadwalnya
+        $nama_hari_inggris = \Carbon\Carbon::parse($tanggal)->format('l');
+        $mapHari = [
+            'Sunday'    => 'Ahad',
+            'Monday'    => 'Senin',
+            'Tuesday'   => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday'  => 'Kamis',
+            'Friday'    => 'Jumat',
+            'Saturday'  => 'Sabtu'
+        ];
+        $hari_ini = $mapHari[$nama_hari_inggris] ?? 'Senin';
+
+        $ujian = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
+            ->whereDate('tanggal_selesai', '>=', $tanggal)
+            ->first();
+
+        if (!$ujian) {
+            $jadwalUjianAda = \App\Models\Ujian\JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
+            if ($jadwalUjianAda) {
+                $ujian = $jadwalUjianAda->ujian;
+            }
+        }
+
+        $isUjian = ($ujian != null);
+        $namaUjian = $ujian ? $ujian->nama_ujian : null;
+        $ujianId = $ujian ? $ujian->id : null;
+
+        // Cari Tahun Pelajaran dari Tanggal
+        $bulan = BulanHijriyah::where('tanggal_mulai_masehi', '<=', $tanggal)
+            ->where('tanggal_selesai_masehi', '>=', $tanggal)
+            ->first();
+        $tahun_pelajaran_id = $bulan ? $bulan->tahun_pelajaran_id : (Semester::where('is_active', 1)->first()?->tahun_pelajaran_id);
+
+        // JIKA EVENT PRESENSI KHUSUS
+        if ($isEvent) {
+            $sesiList = $eventPresensi->tipe_presensi === 'multi_sesi'
+                ? ($eventPresensi->sesi_kegiatan ?? ['Siang', 'Malam'])
+                : ['Harian'];
+
+            $sesi_dipilih = $sesi ?? ($sesiList[0] ?? 'Harian');
+
+            if ($ruangan_id) {
+                $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan_id, $tahun_pelajaran_id, 'Aktif');
+                $presensiTersimpan = PresensiKegiatanMurid::where('kalendar_pendidikan_id', $eventPresensi->id)
+                    ->where('ruangan_id', $ruangan_id)
+                    ->where('tanggal', $tanggal)
+                    ->where('sesi', $sesi_dipilih)
+                    ->get()
+                    ->keyBy('murid_id');
+            }
+
+            return view('presensi-murid.harian', compact(
+                'ruangans',
+                'jamList',
+                'tanggal',
+                'ruangan_id',
+                'jam_ke',
+                'hari_ini',
+                'jadwal',
+                'murids',
+                'presensiTersimpan',
+                'isLibur',
+                'keteranganLibur',
+                'isUjian',
+                'namaUjian',
+                'ujianId',
+                'isEvent',
+                'eventInfo',
+                'sesiList',
+                'sesi_dipilih'
+            ));
+        }
+
+        // JIKA KBM REGULER
         if ($ruangan_id && $jam_ke) {
+            $ruanganDipilih = Ruangan::find($ruangan_id);
+            $checkBebas = \App\Models\HariLibur::checkBebasKbm($tanggal, $jam_ke, $ruangan_id, $ruanganDipilih?->level_id);
+            $isLibur = $checkBebas['is_libur'];
+            $keteranganLibur = $checkBebas['keterangan'];
 
-            // ==========================================================
-            // PENERJEMAH HARI: Memastikan "Minggu" atau "Sunday" menjadi "Ahad"
-            // ==========================================================
-            $nama_hari_inggris = \Carbon\Carbon::parse($tanggal)->format('l'); // Menghasilkan: Sunday, Monday, dll
-
-            $mapHari = [
-                'Sunday'    => 'Ahad',
-                'Monday'    => 'Senin',
-                'Tuesday'   => 'Selasa',
-                'Wednesday' => 'Rabu',
-                'Thursday'  => 'Kamis',
-                'Friday'    => 'Jumat',
-                'Saturday'  => 'Sabtu'
-            ];
-
-            // Timpa variabel $hari_ini dengan hasil terjemahan yang benar
-            $hari_ini = $mapHari[$nama_hari_inggris];
-            // ==========================================================
-
-            // ==========================================================
-            // ==========================================================
-            // CEK HARI LIBUR & JUMAT
-            // ==========================================================
-            $libur = \App\Models\HariLibur::where('tanggal_mulai', '<=', $tanggal)
-                ->where('tanggal_selesai', '>=', $tanggal)
-                ->first();
-
-            if ($libur) {
-                // Jika masuk rentang kalender libur madrasah
-                $isLibur = true;
-                $keteranganLibur = $libur->keterangan;
-            } elseif ($hari_ini === 'Jumat') {
-                // Jika hari Jumat (Libur rutin madrasah)
-                $isLibur = true;
-                $keteranganLibur = 'Libur Rutin (Jumat)';
-            }
-            // ==========================================================
-
-            // ==========================================================
-            // CEK TANGGAL UJIAN MADRASAH
-            // ==========================================================
-            $ujian = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
-                ->whereDate('tanggal_selesai', '>=', $tanggal)
-                ->first();
-
-            if (!$ujian) {
-                $jadwalUjianAda = \App\Models\Ujian\JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
-                if ($jadwalUjianAda) {
-                    $ujian = $jadwalUjianAda->ujian;
-                }
-            }
-
-            $isUjian = ($ujian != null);
-            $namaUjian = $ujian ? $ujian->nama_ujian : null;
-            $ujianId = $ujian ? $ujian->id : null;
-            // ==========================================================
-
-            // JIKA TIDAK LIBUR, BARU EKSEKUSI PENCARIAN JADWAL DAN MURID
             if (!$isLibur) {
-                // Cari jadwal spesifik di kelas tersebut, hari tersebut, dan jam tersebut
-                $jadwal = JadwalPelajaran::with(['mataPelajaran', 'ustadz'])
+                $jadwal = JadwalPelajaran::with(['mataPelajaran', 'ustadz', 'ruangan.level'])
                     ->where('ruangan_id', $ruangan_id)
                     ->where('hari', $hari_ini)
                     ->where('jam_ke', $jam_ke)
                     ->first();
 
-                // Jika jadwalnya ada, panggil data murid kelas tersebut
                 if ($jadwal) {
-
-                    // ==========================================================
-                    // KECERDASAN OTOMATIS: Cari Tahun Pelajaran dari Tanggal
-                    // ==========================================================
-                    // PERBAIKAN 1: Hapus ->with('semester')
-                    $bulan = BulanHijriyah::where('tanggal_mulai_masehi', '<=', $tanggal)
-                        ->where('tanggal_selesai_masehi', '>=', $tanggal)
-                        ->first();
-
-                    // PERBAIKAN 2: Langsung ambil tahun_pelajaran_id dari variabel $bulan
-                    if ($bulan) {
-                        $tahun_pelajaran_id = $bulan->tahun_pelajaran_id;
-                    } else {
-                        // Fallback: Jika tanggal di luar rentang, ambil dari semester aktif
-                        $semesterAktif = Semester::where('is_active', 1)->first();
-                        $tahun_pelajaran_id = $semesterAktif ? $semesterAktif->tahun_pelajaran_id : null;
-                    }
-                    // ==========================================================
-
-                    // Panggil murid menggunakan relasi Many-to-Many ke tabel pivot
                     $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan_id, $tahun_pelajaran_id, 'Aktif');
-
-                    // Ambil presensi yang mungkin sudah pernah diinput sebelumnya (agar bisa di-edit)
                     $presensiTersimpan = PresensiMurid::where('tanggal', $tanggal)
                         ->where('jadwal_pelajaran_id', $jadwal->id)
                         ->get()
-                        ->keyBy('murid_id'); // Kunci array pakai ID murid agar mudah dicari di View
+                        ->keyBy('murid_id');
                 }
             }
-        } else {
-            // Cek ujian jika ruangan / jam belum dipilih tapi tanggal sudah ada
-            $ujian = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
-                ->whereDate('tanggal_selesai', '>=', $tanggal)
-                ->first();
-            if (!$ujian) {
-                $jadwalUjianAda = \App\Models\Ujian\JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
-                if ($jadwalUjianAda) {
-                    $ujian = $jadwalUjianAda->ujian;
-                }
-            }
-            $isUjian = ($ujian != null);
-            $namaUjian = $ujian ? $ujian->nama_ujian : null;
-            $ujianId = $ujian ? $ujian->id : null;
         }
 
         return view('presensi-murid.harian', compact(
@@ -341,11 +454,13 @@ class PresensiMuridController extends Controller
             'jadwal',
             'murids',
             'presensiTersimpan',
-            'isLibur', // Tambahan
-            'keteranganLibur', // Tambahan
+            'isLibur',
+            'keteranganLibur',
             'isUjian',
             'namaUjian',
-            'ujianId'
+            'ujianId',
+            'isEvent',
+            'eventInfo'
         ));
     }
 
@@ -356,20 +471,43 @@ class PresensiMuridController extends Controller
     {
         $tanggal = $request->tanggal ?? date('Y-m-d');
         $jadwal_id = $request->jadwal_id;
-
-        $jadwal = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level', 'ustadz', 'ustadzs'])->findOrFail($jadwal_id);
+        $kalendar_id = $request->kalendar_id;
+        $ruangan_id = $request->ruangan_id;
+        $sesi = $request->sesi;
 
         // Cari Tahun Pelajaran dari Tanggal
         $bulan = BulanHijriyah::where('tanggal_mulai_masehi', '<=', $tanggal)
             ->where('tanggal_selesai_masehi', '>=', $tanggal)
             ->first();
+        $tahun_pelajaran_id = $bulan ? $bulan->tahun_pelajaran_id : (Semester::where('is_active', 1)->first()?->tahun_pelajaran_id);
 
-        if ($bulan) {
-            $tahun_pelajaran_id = $bulan->tahun_pelajaran_id;
-        } else {
-            $semesterAktif = Semester::where('is_active', 1)->first();
-            $tahun_pelajaran_id = $semesterAktif ? $semesterAktif->tahun_pelajaran_id : null;
+        // Jika Event Khusus
+        if ($kalendar_id && $ruangan_id) {
+            $event = KalendarPendidikan::findOrFail($kalendar_id);
+            $ruangan = Ruangan::with('level')->findOrFail($ruangan_id);
+            $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahun_pelajaran_id, 'Aktif');
+            $presensiTersimpan = PresensiKegiatanMurid::where('kalendar_pendidikan_id', $event->id)
+                ->where('ruangan_id', $ruangan->id)
+                ->where('tanggal', $tanggal)
+                ->where('sesi', $sesi ?? 'Harian')
+                ->get()
+                ->keyBy('murid_id');
+
+            return view('presensi-murid.modal_input', [
+                'isEvent' => true,
+                'event' => $event,
+                'ruangan' => $ruangan,
+                'sesi' => $sesi ?? 'Harian',
+                'tanggal' => $tanggal,
+                'murids' => $murids,
+                'presensiTersimpan' => $presensiTersimpan,
+                'isBebasKbm' => false,
+                'keteranganBebasKbm' => null,
+            ]);
         }
+
+        // Regular KBM
+        $jadwal = JadwalPelajaran::with(['mataPelajaran', 'ruangan.level', 'ustadz', 'ustadzs'])->findOrFail($jadwal_id);
 
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($jadwal->ruangan_id, $tahun_pelajaran_id, 'Aktif');
 
@@ -378,11 +516,17 @@ class PresensiMuridController extends Controller
             ->get()
             ->keyBy('murid_id');
 
+        $checkBebas = \App\Models\HariLibur::checkBebasKbm($tanggal, $jadwal->jam_ke, $jadwal->ruangan_id, $jadwal->ruangan?->level_id);
+        $isBebasKbm = $checkBebas['is_libur'];
+        $keteranganBebasKbm = $checkBebas['keterangan'];
+
         return view('presensi-murid.modal_input', compact(
             'jadwal',
             'tanggal',
             'murids',
-            'presensiTersimpan'
+            'presensiTersimpan',
+            'isBebasKbm',
+            'keteranganBebasKbm'
         ));
     }
 
@@ -394,6 +538,10 @@ class PresensiMuridController extends Controller
         $jadwal_id = $request->jadwal_pelajaran_id;
         $tanggal = $request->tanggal;
         $dataPresensi = $request->presensi;
+        $isEvent = $request->is_event;
+        $kalendarId = $request->kalendar_pendidikan_id;
+        $ruanganId = $request->ruangan_id;
+        $sesi = $request->sesi;
 
         if (!$dataPresensi) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -405,7 +553,37 @@ class PresensiMuridController extends Controller
             return back()->with('error', 'Tidak ada data presensi yang diproses.');
         }
 
-        // Cari Semester Berdasarkan Tanggal
+        // JIKA EVENT PRESENSI
+        if ($isEvent || $kalendarId) {
+            foreach ($dataPresensi as $murid_id => $status) {
+                if (!empty($status)) {
+                    PresensiKegiatanMurid::updateOrCreate(
+                        [
+                            'kalendar_pendidikan_id' => $kalendarId,
+                            'tanggal'                => $tanggal,
+                            'sesi'                   => $sesi ?? 'Harian',
+                            'ruangan_id'             => $ruanganId,
+                            'murid_id'               => $murid_id,
+                        ],
+                        [
+                            'status'       => $status,
+                            'diinput_oleh' => Auth::id(),
+                        ]
+                    );
+                }
+            }
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status'  => 'success',
+                    'message' => 'Data presensi kegiatan murid berhasil disimpan!'
+                ], 200);
+            }
+
+            return back()->with('success', 'Data presensi kegiatan murid berhasil disimpan!');
+        }
+
+        // Cari Semester Berdasarkan Tanggal (Regular KBM)
         $semester = Semester::where('tanggal_mulai', '<=', $tanggal)
             ->where('tanggal_selesai', '>=', $tanggal)
             ->first();

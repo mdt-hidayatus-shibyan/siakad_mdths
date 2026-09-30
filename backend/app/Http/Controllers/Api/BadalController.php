@@ -116,13 +116,10 @@ class BadalController extends Controller
         ];
         $hari = $mapHari[Carbon::parse($tanggal)->format('l')];
 
-        // 1. Cek Hari Libur
-        $libur = HariLibur::whereDate('tanggal_mulai', '<=', $tanggal)
-            ->whereDate('tanggal_selesai', '>=', $tanggal)
-            ->first();
-
-        $isLibur = ($libur != null) || ($hari === 'Jumat');
-        $keteranganLibur = $libur ? $libur->keterangan : ($hari === 'Jumat' ? 'Libur Rutin Mingguan (Hari Jumat)' : null);
+        // 1. Cek Hari Libur / Bebas KBM Seharian
+        $checkLibur = HariLibur::checkBebasKbm($tanggal, null, $ruangan->id, $ruangan->level_id);
+        $isLibur = $checkLibur['is_libur'] && $checkLibur['is_seharian'];
+        $keteranganLibur = $isLibur ? $checkLibur['keterangan'] : null;
 
         // 2. Cek Masa Ujian Madrasah
         $ujian = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
@@ -151,12 +148,12 @@ class BadalController extends Controller
             ->where('hari', $hari)
             ->get()
             ->sortBy(function ($j) {
-                return match ($j->jam_ke) {
+                return match ((string) $j->jam_ke) {
                     'Nadzoman' => 1,
                     '1' => 2,
                     '2' => 3,
                     'Ekstra' => 4,
-                    default => 5
+                    default => is_numeric($j->jam_ke) ? (int)$j->jam_ke + 10 : 99
                 };
             })
             ->values();
@@ -178,7 +175,11 @@ class BadalController extends Controller
             ->get()
             : collect();
 
-        $data = $jadwals->map(function ($j) use ($presensiUstadzList, $presensiMuridList, $currentUstadzId, $totalMuridRuangan) {
+        $data = $jadwals->map(function ($j) use ($presensiUstadzList, $presensiMuridList, $currentUstadzId, $totalMuridRuangan, $tanggal) {
+            $checkSesi = HariLibur::checkBebasKbm($tanggal, $j->jam_ke, $j->ruangan_id, $j->ruangan?->level_id);
+            $isBebasKbm = $checkSesi['is_libur'];
+            $keteranganBebasKbm = $checkSesi['keterangan'];
+
             $presUstadz = $presensiUstadzList->firstWhere('jadwal_pelajaran_id', $j->id);
             $presMuridJadwal = $presensiMuridList->where('jadwal_pelajaran_id', $j->id);
 
@@ -214,10 +215,12 @@ class BadalController extends Controller
                 'guru_pengampu' => $j->daftar_nama_pengampu,
                 'guru_utama_id' => $j->ustadz_id,
                 'is_pengampu_asli' => $isPengampuAsli,
+                'is_bebas_kbm' => $isBebasKbm,
+                'keterangan_bebas_kbm' => $keteranganBebasKbm,
 
                 // Status Presensi Ustadz
-                'ustadz_status' => $presUstadz ? $presUstadz->status : 'Belum Absen',
-                'ustadz_keterangan' => $presUstadz?->keterangan,
+                'ustadz_status' => $presUstadz ? $presUstadz->status : ($isBebasKbm ? 'Bebas KBM' : 'Belum Absen'),
+                'ustadz_keterangan' => $presUstadz?->keterangan ?? ($isBebasKbm ? $keteranganBebasKbm : null),
                 'ustadz_pengganti_id' => $ustadzPenggantiId,
                 'ustadz_pengganti_nama' => $ustadzPenggantiNama,
                 'is_saya_pengganti' => $isSayaPengganti,

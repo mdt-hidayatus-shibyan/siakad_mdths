@@ -40,15 +40,12 @@ class DashboardController extends Controller
             ? JadwalPelajaran::forUstadz($ustadzId)->count()
             : 0;
 
-        // Cek Libur Hari Ini
-        $libur = HariLibur::where('tanggal_mulai', '<=', $todayDate)
-            ->where('tanggal_selesai', '>=', $todayDate)
-            ->first();
+        // Cek Libur Hari Ini (Seharian Penuh atau Rutin Jumat)
+        $checkLiburSeharian = HariLibur::checkBebasKbm($todayDate, null);
+        $isLiburHariIni = $checkLiburSeharian['is_libur'] && $checkLiburSeharian['is_seharian'];
+        $keteranganLiburHariIni = $isLiburHariIni ? $checkLiburSeharian['keterangan'] : null;
 
-        $isLiburHariIni = ($libur != null) || ($hariIni === 'Jumat');
-        $keteranganLiburHariIni = $libur ? $libur->keterangan : ($hariIni === 'Jumat' ? 'Libur Rutin Mingguan (Hari Jumat)' : null);
-
-        // Jadwal Hari Ini (Hanya jika bukan hari libur)
+        // Jadwal Hari Ini (Hanya jika bukan hari libur seharian penuh)
         $jadwalHariIniList = collect();
         $jadwalHariIniCount = 0;
         $presensiSelesaiCount = 0;
@@ -63,21 +60,21 @@ class DashboardController extends Controller
             }
 
             $jadwalHariIniList = $jadwalHariIniQuery->get()->sortBy([
-                fn($a, $b) => strnatcasecmp($a->ruangan?->nama_ruangan ?? '', $b->ruangan?->nama_ruangan ?? ''),
-                fn($a, $b) => (match ($a->jam_ke) {
+                fn($a, $b) => (match ((string) $a->jam_ke) {
                     'Nadzoman' => 1,
                     '1' => 2,
                     '2' => 3,
                     'Ekstra' => 4,
-                    default => 5
+                    default => is_numeric($a->jam_ke) ? (int)$a->jam_ke + 10 : 99
                 })
-                    <=> (match ($b->jam_ke) {
+                    <=> (match ((string) $b->jam_ke) {
                         'Nadzoman' => 1,
                         '1' => 2,
                         '2' => 3,
                         'Ekstra' => 4,
-                        default => 5
+                        default => is_numeric($b->jam_ke) ? (int)$b->jam_ke + 10 : 99
                     }),
+                fn($a, $b) => strnatcasecmp($a->ruangan?->nama_ruangan ?? '', $b->ruangan?->nama_ruangan ?? ''),
             ])->values();
 
             $jadwalHariIniCount = $jadwalHariIniList->count();
@@ -92,10 +89,14 @@ class DashboardController extends Controller
                 ->toArray()
                 : [];
 
-            $formattedJadwal = $jadwalHariIniList->map(function ($j) use ($sudahAbsenMap, &$presensiSelesaiCount, $ustadzId) {
+            $formattedJadwal = $jadwalHariIniList->map(function ($j) use ($sudahAbsenMap, &$presensiSelesaiCount, $ustadzId, $todayDate) {
+                $checkSesi = HariLibur::checkBebasKbm($todayDate, $j->jam_ke, $j->ruangan_id, $j->ruangan?->level_id);
+                $isBebasKbm = $checkSesi['is_libur'];
+                $keteranganBebasKbm = $checkSesi['keterangan'];
+
                 $sudahAbsen = isset($sudahAbsenMap[$j->id]);
 
-                if ($sudahAbsen) {
+                if ($sudahAbsen || $isBebasKbm) {
                     $presensiSelesaiCount++;
                 }
 
@@ -115,16 +116,18 @@ class DashboardController extends Controller
                 }
 
                 return [
-                    'id'               => $j->id,
-                    'jam_ke'           => $j->jam_ke,
-                    'jam'              => $jamText,
-                    'mapel'            => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
-                    'kelas'            => $j->ruangan->nama_ruangan ?? '-',
-                    'guru'             => $j->daftar_nama_pengampu,
-                    'is_utama'         => $isUtama,
-                    'peran'            => $isUtama ? 'Guru Utama' : 'Guru Pendamping',
-                    'is_team_teaching' => $j->daftar_ustadz->count() > 1,
-                    'sudah_absen'      => $sudahAbsen,
+                    'id'                   => $j->id,
+                    'jam_ke'               => $j->jam_ke,
+                    'jam'                  => $jamText,
+                    'mapel'                => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
+                    'kelas'                => $j->ruangan->nama_ruangan ?? '-',
+                    'guru'                 => $j->daftar_nama_pengampu,
+                    'is_utama'             => $isUtama,
+                    'peran'                => $isUtama ? 'Guru Utama' : 'Guru Pendamping',
+                    'is_team_teaching'     => $j->daftar_ustadz->count() > 1,
+                    'sudah_absen'          => $sudahAbsen,
+                    'is_bebas_kbm'         => $isBebasKbm,
+                    'keterangan_bebas_kbm' => $keteranganBebasKbm,
                 ];
             });
         }

@@ -33,11 +33,21 @@ class AgendaRequest extends FormRequest
         ];
 
         // 2. Validasi Kondisional berdasarkan jenis agenda
-        if ($this->jenis_agenda === 'ujian') {
+        if ($this->jenis_agenda === 'libur') {
+            $rules['tipe_libur'] = 'nullable|in:Seharian,Sebagian Jam';
+            $rules['jam_ke']     = 'nullable|array';
+            $rules['jam_ke.*']   = 'string';
+            $rules['ruangan_id'] = 'nullable|exists:ruangans,id';
+            $rules['level_id']   = 'nullable|exists:levels,id';
+        } elseif ($this->jenis_agenda === 'ujian') {
             $rules['semester_id'] = 'required|exists:semesters,id';
             $rules['tipe_ujian']  = 'required|in:IMDA 1,IMDA 2,IMDA 3,IMNI';
         } elseif ($this->jenis_agenda === 'kegiatan') {
             $rules['kategori_kegiatan_id'] = 'required|exists:kategori_kegiatans,id';
+            $rules['tipe_presensi']        = 'nullable|in:tidak_ada,harian,multi_sesi';
+            $rules['sesi_kegiatan']        = 'nullable|array';
+            $rules['sesi_kegiatan.*']      = 'string';
+            $rules['keterangan']           = 'nullable|string|max:500';
         }
 
         return $rules;

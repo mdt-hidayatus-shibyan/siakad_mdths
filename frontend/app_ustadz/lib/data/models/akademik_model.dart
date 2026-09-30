@@ -1,3 +1,5 @@
+import '../../core/utils/jam_order_helper.dart';
+
 // Model untuk Kalender Pendidikan, Referensi Pelanggaran, Mata Pelajaran, dan Jadwal Pelajaran
 import 'presensi_ujian_model.dart';
 
@@ -369,10 +371,17 @@ class HariJadwalItem {
 
   factory HariJadwalItem.fromJson(Map<String, dynamic> json) {
     final rawSesi = json['sesi'] as List? ?? [];
+    final list = rawSesi.map((e) => SesiJadwalItem.fromJson(e)).toList();
+    list.sort((a, b) {
+      final wA = JamOrderHelper.getWeight(a.jam, a.jamKe);
+      final wB = JamOrderHelper.getWeight(b.jam, b.jamKe);
+      if (wA != wB) return wA.compareTo(wB);
+      return a.ruangan.toLowerCase().compareTo(b.ruangan.toLowerCase());
+    });
     return HariJadwalItem(
       hari: json['hari'] ?? '',
       totalSesi: json['total_sesi'] ?? 0,
-      sesi: rawSesi.map((e) => SesiJadwalItem.fromJson(e)).toList(),
+      sesi: list,
     );
   }
 }

@@ -26,28 +26,56 @@
                     </div>
                 </div>
 
-                <!-- Filter Ruangan -->
-                <div class="w-full sm:w-auto flex-1">
-                    <div class="relative">
-                        <div
-                            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
-                            <i class="bi bi-door-open-fill text-xs"></i>
+                @if (!empty($isEvent))
+                    <!-- Filter Sesi (Event Mode) -->
+                    @if (count($sesiList ?? []) > 1)
+                        <div class="w-full sm:w-auto flex-1">
+                            <div class="relative">
+                                <div
+                                    class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                                    <i class="bi bi-clock-history text-xs"></i>
+                                </div>
+                                <select name="sesi" required
+                                    class="m3-input-glass w-full !pl-9 !pr-8 text-xs font-bold cursor-pointer appearance-none">
+                                    @foreach ($sesiList as $s)
+                                        <option value="{{ $s }}"
+                                            {{ ($sesi_dipilih ?? '') == $s ? 'selected' : '' }}>
+                                            Sesi {{ $s }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
+                                    <i class="bi bi-chevron-down text-[10px] font-black"></i>
+                                </div>
+                            </div>
                         </div>
-                        <select name="ruangan_id" required
-                            class="m3-input-glass w-full !pl-9 !pr-8 text-xs font-bold cursor-pointer appearance-none">
-                            <option value="" class="text-zinc-500">-- Pilih Ruangan --</option>
-                            @foreach ($ruangans as $ruangan)
-                                <option value="{{ $ruangan->id }}" {{ $ruangan_id == $ruangan->id ? 'selected' : '' }}>
-                                    {{ $ruangan->nama_ruangan }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
-                            <i class="bi bi-chevron-down text-[10px] font-black"></i>
+                    @endif
+                @else
+                    <!-- Filter Ruangan (KBM Mode) -->
+                    <div class="w-full sm:w-auto flex-1">
+                        <div class="relative">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                                <i class="bi bi-door-open-fill text-xs"></i>
+                            </div>
+                            <select name="ruangan_id" required
+                                class="m3-input-glass w-full !pl-9 !pr-8 text-xs font-bold cursor-pointer appearance-none">
+                                <option value="" class="text-zinc-500">-- Pilih Ruangan --</option>
+                                @foreach ($ruangans as $ruangan)
+                                    <option value="{{ $ruangan->id }}"
+                                        {{ $ruangan_id == $ruangan->id ? 'selected' : '' }}>
+                                        {{ $ruangan->nama_ruangan }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
+                                <i class="bi bi-chevron-down text-[10px] font-black"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endif
 
                 <!-- Tombol Submit -->
                 <div class="w-full sm:w-auto shrink-0">
@@ -62,7 +90,41 @@
 
     </div>
 
-    @if (!empty($isUjian))
+    @if (!empty($isEvent))
+        <!-- BANNER EVENT AKTIF -->
+        <div
+            class="mb-6 m3-glass-card p-4 md:p-5 border-indigo-500/30 bg-indigo-500/10 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div
+                    class="w-11 h-11 bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-xl shrink-0 border border-indigo-500/30">
+                    <i class="bi bi-calendar-event-fill"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-extrabold text-[10px] uppercase tracking-wider">
+                            {{ $eventInfo->tipe_presensi === 'multi_sesi' ? 'Kegiatan Multi-Sesi' : 'Hari Efektif Non-KBM' }}
+                        </span>
+                        <span class="text-xs font-bold text-zinc-600 dark:text-zinc-300">
+                            Sesi: <strong
+                                class="text-indigo-600 dark:text-indigo-400">{{ $sesi_dipilih ?? ($sesiList[0] ?? 'Harian') }}</strong>
+                        </span>
+                    </div>
+                    <h4 class="text-sm font-black text-zinc-900 dark:text-white mt-0.5">
+                        {{ $eventInfo->nama_kegiatan }}
+                    </h4>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                        Presensi kehadiran Dewan Asatidz untuk agenda kegiatan ini.
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('kalendar-pendidikan.index') }}"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-xs border border-indigo-500/20 transition-all shrink-0">
+                <i class="bi bi-calendar3 text-xs"></i>
+                <span>Lihat Agenda Kalender</span>
+            </a>
+        </div>
+    @elseif (!empty($isUjian))
         <!-- BANNER INFO JADWAL/MASA UJIAN -->
         <div
             class="mb-6 m3-glass-card p-4 md:p-5 border-violet-500/30 bg-violet-500/10 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -94,8 +156,291 @@
         </div>
     @endif
 
+    <!-- ============================================== -->
     <!-- AREA HASIL PENCARIAN -->
-    @if ($ruangan_id)
+    <!-- ============================================== -->
+    @if (!empty($isEvent))
+        {{-- ============================================== --}}
+        {{-- EVENT MODE VIEW (USTADZ) --}}
+        {{-- ============================================== --}}
+        <div id="data-grid-container">
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 md:gap-6 relative z-10">
+
+                <!-- KOLOM KIRI (FORM INPUT EVENT) -->
+                <div class="xl:col-span-8 m3-glass-card overflow-hidden relative flex flex-col shadow-2xs">
+                    <!-- Header Kiri -->
+                    <div
+                        class="px-5 py-3.5 border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-800/40 relative z-10 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm shrink-0">
+                                <i class="bi bi-calendar-event-fill"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">
+                                    Form Presensi Dewan Asatidz
+                                </h3>
+                                <p class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">
+                                    {{ $eventInfo->nama_kegiatan }} • Sesi
+                                    {{ $sesi_dipilih ?? ($sesiList[0] ?? 'Harian') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="setSemuaPresensiUstadz('Hadir')"
+                                class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-black rounded-lg transition-colors flex items-center gap-1">
+                                <i class="bi bi-check-all"></i>
+                                <span>Hadirkan Semua</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <form action="{{ route('presensi-ustadz.storeHarian') }}" method="POST"
+                        class="ajax-post flex-1 flex flex-col relative z-10" data-refresh-target="#data-grid-container">
+                        @csrf
+                        <input type="hidden" name="is_event" value="1">
+                        <input type="hidden" name="kalendar_pendidikan_id" value="{{ $eventInfo->id }}">
+                        <input type="hidden" name="sesi" value="{{ $sesi_dipilih ?? ($sesiList[0] ?? 'Harian') }}">
+                        <input type="hidden" name="tanggal" value="{{ $tanggal }}">
+
+                        <!-- Daftar Ustadz -->
+                        <div class="p-4 sm:p-5 space-y-3.5">
+                            @foreach ($semuaGuru as $u)
+                                @php
+                                    $riwayat = $riwayatPresensi->get($u->id);
+                                    $currentStatus = $riwayat ? $riwayat->status : null;
+                                    $currentKeterangan = $riwayat ? $riwayat->keterangan : '';
+                                @endphp
+
+                                <div
+                                    class="p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/30 transition-all shadow-2xs space-y-2.5">
+                                    <!-- Header Ustadz -->
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <div
+                                                class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xs shrink-0 font-black">
+                                                {{ $loop->iteration }}
+                                            </div>
+                                            <div class="truncate">
+                                                <p class="text-xs font-black text-zinc-900 dark:text-white truncate">
+                                                    {{ $u->nama_lengkap }}
+                                                </p>
+                                                <p class="text-[9px] font-bold text-zinc-400 dark:text-zinc-500">
+                                                    {{ $u->nigm ? 'NIGM: ' . $u->nigm : 'Dewan Asatidz' }}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        @if ($currentStatus)
+                                            <span
+                                                class="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider
+                                                {{ $currentStatus == 'Hadir' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30' : '' }}
+                                                {{ $currentStatus == 'Sakit' ? 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30' : '' }}
+                                                {{ $currentStatus == 'Izin' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30' : '' }}
+                                                {{ $currentStatus == 'Alpha' ? 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30' : '' }}
+                                            ">
+                                                {{ $currentStatus }}
+                                            </span>
+                                        @else
+                                            <span
+                                                class="px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                                                Belum Absen
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    <!-- Form Inputs (Radio Status & Keterangan) -->
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 relative z-10 items-center">
+                                        <!-- Radio Button Status -->
+                                        <div class="md:col-span-7">
+                                            <div class="grid grid-cols-4 gap-1.5">
+                                                <!-- Opsi Hadir -->
+                                                <label class="relative cursor-pointer">
+                                                    <input type="radio"
+                                                        name="presensi_ustadz[{{ $u->id }}][status]"
+                                                        value="Hadir" class="status-radio-event sr-only peer"
+                                                        {{ $currentStatus == 'Hadir' ? 'checked' : '' }}>
+                                                    <div
+                                                        class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
+                                                    bg-white/60 dark:bg-black/40 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400
+                                                    hover:bg-emerald-500/10
+                                                    peer-checked:bg-emerald-500/15 peer-checked:border-emerald-500 peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400">
+                                                        Hadir
+                                                    </div>
+                                                </label>
+
+                                                <!-- Opsi Sakit -->
+                                                <label class="relative cursor-pointer">
+                                                    <input type="radio"
+                                                        name="presensi_ustadz[{{ $u->id }}][status]"
+                                                        value="Sakit" class="status-radio-event sr-only peer"
+                                                        {{ $currentStatus == 'Sakit' ? 'checked' : '' }}>
+                                                    <div
+                                                        class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
+                                                    bg-white/60 dark:bg-black/40 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400
+                                                    hover:bg-blue-500/10
+                                                    peer-checked:bg-blue-500/15 peer-checked:border-blue-500 peer-checked:text-blue-600 dark:peer-checked:text-blue-400">
+                                                        Sakit
+                                                    </div>
+                                                </label>
+
+                                                <!-- Opsi Izin -->
+                                                <label class="relative cursor-pointer">
+                                                    <input type="radio"
+                                                        name="presensi_ustadz[{{ $u->id }}][status]"
+                                                        value="Izin" class="status-radio-event sr-only peer"
+                                                        {{ $currentStatus == 'Izin' ? 'checked' : '' }}>
+                                                    <div
+                                                        class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
+                                                    bg-white/60 dark:bg-black/40 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400
+                                                    hover:bg-amber-500/10
+                                                    peer-checked:bg-amber-500/15 peer-checked:border-amber-500 peer-checked:text-amber-600 dark:peer-checked:text-amber-400">
+                                                        Izin
+                                                    </div>
+                                                </label>
+
+                                                <!-- Opsi Alpha -->
+                                                <label class="relative cursor-pointer">
+                                                    <input type="radio"
+                                                        name="presensi_ustadz[{{ $u->id }}][status]"
+                                                        value="Alpha" class="status-radio-event sr-only peer"
+                                                        {{ $currentStatus == 'Alpha' ? 'checked' : '' }}>
+                                                    <div
+                                                        class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
+                                                    bg-white/60 dark:bg-black/40 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400
+                                                    hover:bg-rose-500/10
+                                                    peer-checked:bg-rose-500/15 peer-checked:border-rose-500 peer-checked:text-rose-600 dark:peer-checked:text-rose-400">
+                                                        Alpha
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Input Keterangan -->
+                                        <div class="md:col-span-5">
+                                            <input type="text"
+                                                name="presensi_ustadz[{{ $u->id }}][keterangan]"
+                                                value="{{ $currentKeterangan }}" placeholder="Keterangan / alasan..."
+                                                class="m3-input-glass w-full text-xs font-medium !py-1.5">
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <!-- Footer Kiri / Submit -->
+                        <div
+                            class="px-5 py-3.5 border-t border-zinc-200/80 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-800/40 flex items-center justify-between mt-auto relative z-10">
+                            <span class="text-xs font-bold text-zinc-400">
+                                Total: {{ $semuaGuru->count() }} Dewan Asatidz
+                            </span>
+                            @can('create presensi-ustadz')
+                                <button type="submit"
+                                    class="m3-btn-primary !bg-indigo-600 hover:!bg-indigo-700 w-full sm:w-auto h-10 px-6 text-xs font-black shadow-2xs flex items-center justify-center gap-1.5">
+                                    <i class="bi bi-save2-fill text-xs"></i> <span>Simpan Presensi Sesi Ini</span>
+                                </button>
+                            @endcan
+                        </div>
+                    </form>
+                </div>
+
+                <!-- KOLOM KANAN (STATUS EVENT SESI INI) -->
+                <div class="xl:col-span-4">
+                    <div class="m3-glass-card overflow-hidden sticky top-6 relative shadow-2xs">
+                        <!-- Header Kanan -->
+                        <div
+                            class="px-5 py-3.5 border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-800/40 relative z-10 flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm shrink-0">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <h3 class="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">
+                                Rekap Sesi {{ $sesi_dipilih ?? ($sesiList[0] ?? 'Harian') }}
+                            </h3>
+                        </div>
+
+                        <div class="p-4 space-y-2.5 relative z-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                            @foreach ($semuaGuru as $u)
+                                @php
+                                    $riwayat = $riwayatPresensi->get($u->id);
+                                    if ($riwayat) {
+                                        $badgeColor = match ($riwayat->status) {
+                                            'Hadir'
+                                                => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+                                            'Sakit'
+                                                => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+                                            'Izin'
+                                                => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+                                            'Alpha'
+                                                => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+                                            default => 'bg-zinc-100 text-zinc-600 border-zinc-200',
+                                        };
+                                    } else {
+                                        $badgeColor =
+                                            'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border-zinc-200 dark:border-zinc-700';
+                                    }
+                                @endphp
+
+                                <div
+                                    class="p-2.5 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/40 dark:bg-zinc-900/30 text-xs flex items-center justify-between gap-2">
+                                    <div class="truncate min-w-0">
+                                        <p class="font-bold text-xs text-zinc-900 dark:text-white truncate">
+                                            {{ $u->nama_lengkap }}
+                                        </p>
+                                        @if ($riwayat && $riwayat->keterangan)
+                                            <p class="text-[10px] text-zinc-400 italic truncate">
+                                                "{{ $riwayat->keterangan }}"
+                                            </p>
+                                        @endif
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        @if ($riwayat)
+                                            <span
+                                                class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border {{ $badgeColor }}">
+                                                {{ $riwayat->status }}
+                                            </span>
+                                            @can('hapus presensi-ustadz')
+                                                <form action="{{ route('presensi-ustadz.destroyHarian', $riwayat->id) }}"
+                                                    method="POST" class="delete-ajax inline-block"
+                                                    data-refresh-target="#data-grid-container">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="w-5 h-5 flex items-center justify-center rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 transition-all outline-none"
+                                                        title="Batal / Hapus Presensi">
+                                                        <i class="bi bi-trash3 text-[9px]"></i>
+                                                    </button>
+                                                </form>
+                                            @endcan
+                                        @else
+                                            <span
+                                                class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border {{ $badgeColor }}">
+                                                Belum
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <script>
+            function setSemuaPresensiUstadz(status) {
+                document.querySelectorAll('input.status-radio-event[value="' + status + '"]').forEach(radio => {
+                    radio.checked = true;
+                });
+            }
+        </script>
+    @elseif ($ruangan_id)
+        {{-- ============================================== --}}
+        {{-- REGULAR KBM MODE VIEW --}}
+        {{-- ============================================== --}}
         @if ($isLibur)
             <!-- STATE HARI LIBUR -->
             <div
@@ -150,7 +495,7 @@
                     message="Tidak ditemukan jadwal pelajaran di ruangan ini pada tanggal yang Anda pilih." />
             </div>
         @else
-            <!-- FORM PENGISIAN PRESENSI (GRID KIRI-KANAN) -->
+            <!-- FORM PENGISIAN PRESENSI REGULER KBM (GRID KIRI-KANAN) -->
             <div id="data-grid-container">
                 <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 md:gap-6 relative z-10">
 
@@ -185,6 +530,14 @@
                                             $daftarPengampu = $jadwal->ustadz ? collect([$jadwal->ustadz]) : collect();
                                         }
                                         $isTeam = $daftarPengampu->count() > 1;
+                                        $checkSesi = \App\Models\HariLibur::checkBebasKbm(
+                                            $tanggal,
+                                            $jadwal->jam_ke,
+                                            $ruangan_id,
+                                            $jadwal->ruangan?->level_id,
+                                        );
+                                        $isBebasKbmJadwal = $checkSesi['is_libur'];
+                                        $keteranganBebasKbmJadwal = $checkSesi['keterangan'];
                                     @endphp
 
                                     <!-- Solid Card Tiap Jadwal Slot -->
@@ -195,11 +548,18 @@
                                         <div
                                             class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-zinc-200/80 dark:border-zinc-800 relative z-10">
                                             <div>
-                                                <div class="flex items-center gap-2 mb-1">
+                                                <div class="flex items-center gap-2 mb-1 flex-wrap">
                                                     <span
                                                         class="inline-block px-2 py-0.5 bg-primary/10 text-primary dark:text-primary-dark border border-primary/20 text-[9px] font-black rounded-lg uppercase tracking-wider">
                                                         Jam Ke-{{ $jadwal->jam_ke }}
                                                     </span>
+                                                    @if ($isBebasKbmJadwal)
+                                                        <span
+                                                            class="inline-block px-2 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[9px] font-black rounded-lg uppercase tracking-wider">
+                                                            <i class="bi bi-pause-circle-fill mr-1"></i> Bebas
+                                                            KBM{{ $keteranganBebasKbmJadwal ? ': ' . $keteranganBebasKbmJadwal : '' }}
+                                                        </span>
+                                                    @endif
                                                     @if ($isTeam)
                                                         <span
                                                             class="inline-block px-2 py-0.5 bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20 text-[9px] font-black rounded-lg uppercase tracking-wider">
@@ -267,140 +627,152 @@
                                                         </div>
                                                     </div>
 
-                                                    <input type="hidden"
-                                                        name="presensi[{{ $jadwal->id }}][{{ $u->id }}][ustadz_id]"
-                                                        value="{{ $u->id }}">
+                                                    @if ($isBebasKbmJadwal)
+                                                        <div
+                                                            class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                                                            <i
+                                                                class="bi bi-info-circle-fill text-amber-600 dark:text-amber-400"></i>
+                                                            <span>Sesi Bebas KBM: Presensi dinonaktifkan pada jam
+                                                                ini.</span>
+                                                        </div>
+                                                    @else
+                                                        <input type="hidden"
+                                                            name="presensi[{{ $jadwal->id }}][{{ $u->id }}][ustadz_id]"
+                                                            value="{{ $u->id }}">
 
-                                                    <!-- Form Inputs (Grid) -->
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 relative z-10">
+                                                        <!-- Form Inputs (Grid) -->
+                                                        <div
+                                                            class="grid grid-cols-1 md:grid-cols-2 gap-2.5 relative z-10">
 
-                                                        <!-- Select Status (Menggunakan Radio Button) -->
-                                                        <div class="col-span-1 md:col-span-2">
-                                                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
-                                                                <!-- Opsi Hadir -->
-                                                                <label class="relative cursor-pointer">
-                                                                    <input type="radio"
-                                                                        name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
-                                                                        value="Hadir"
-                                                                        class="status-radio sr-only peer"
-                                                                        {{ $currentStatus == 'Hadir' ? 'checked' : '' }}>
-                                                                    <div
-                                                                        class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
+                                                            <!-- Select Status (Menggunakan Radio Button) -->
+                                                            <div class="col-span-1 md:col-span-2">
+                                                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                                                                    <!-- Opsi Hadir -->
+                                                                    <label class="relative cursor-pointer">
+                                                                        <input type="radio"
+                                                                            name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
+                                                                            value="Hadir"
+                                                                            class="status-radio sr-only peer"
+                                                                            {{ $currentStatus == 'Hadir' ? 'checked' : '' }}>
+                                                                        <div
+                                                                            class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
                                                                     bg-white/60 dark:bg-black/40 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400
                                                                     hover:bg-emerald-500/10
                                                                     peer-checked:bg-emerald-500/15 peer-checked:border-emerald-500 peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400">
-                                                                        Hadir
-                                                                    </div>
-                                                                </label>
+                                                                            Hadir
+                                                                        </div>
+                                                                    </label>
 
-                                                                <!-- Opsi Sakit -->
-                                                                <label class="relative cursor-pointer">
-                                                                    <input type="radio"
-                                                                        name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
-                                                                        value="Sakit"
-                                                                        class="status-radio sr-only peer"
-                                                                        {{ $currentStatus == 'Sakit' ? 'checked' : '' }}>
-                                                                    <div
-                                                                        class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
+                                                                    <!-- Opsi Sakit -->
+                                                                    <label class="relative cursor-pointer">
+                                                                        <input type="radio"
+                                                                            name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
+                                                                            value="Sakit"
+                                                                            class="status-radio sr-only peer"
+                                                                            {{ $currentStatus == 'Sakit' ? 'checked' : '' }}>
+                                                                        <div
+                                                                            class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
                                                                     bg-white/60 dark:bg-black/40 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400
                                                                     hover:bg-blue-500/10
                                                                     peer-checked:bg-blue-500/15 peer-checked:border-blue-500 peer-checked:text-blue-600 dark:peer-checked:text-blue-400">
-                                                                        Sakit
-                                                                    </div>
-                                                                </label>
+                                                                            Sakit
+                                                                        </div>
+                                                                    </label>
 
-                                                                <!-- Opsi Izin -->
-                                                                <label class="relative cursor-pointer">
-                                                                    <input type="radio"
-                                                                        name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
-                                                                        value="Izin"
-                                                                        class="status-radio sr-only peer"
-                                                                        {{ $currentStatus == 'Izin' ? 'checked' : '' }}>
-                                                                    <div
-                                                                        class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
+                                                                    <!-- Opsi Izin -->
+                                                                    <label class="relative cursor-pointer">
+                                                                        <input type="radio"
+                                                                            name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
+                                                                            value="Izin"
+                                                                            class="status-radio sr-only peer"
+                                                                            {{ $currentStatus == 'Izin' ? 'checked' : '' }}>
+                                                                        <div
+                                                                            class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
                                                                     bg-white/60 dark:bg-black/40 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400
                                                                     hover:bg-amber-500/10
                                                                     peer-checked:bg-amber-500/15 peer-checked:border-amber-500 peer-checked:text-amber-600 dark:peer-checked:text-amber-400">
-                                                                        Izin
-                                                                    </div>
-                                                                </label>
+                                                                            Izin
+                                                                        </div>
+                                                                    </label>
 
-                                                                <!-- Opsi Alpha -->
-                                                                <label class="relative cursor-pointer">
-                                                                    <input type="radio"
-                                                                        name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
-                                                                        value="Alpha"
-                                                                        class="status-radio sr-only peer"
-                                                                        {{ $currentStatus == 'Alpha' ? 'checked' : '' }}>
-                                                                    <div
-                                                                        class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
+                                                                    <!-- Opsi Alpha -->
+                                                                    <label class="relative cursor-pointer">
+                                                                        <input type="radio"
+                                                                            name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
+                                                                            value="Alpha"
+                                                                            class="status-radio sr-only peer"
+                                                                            {{ $currentStatus == 'Alpha' ? 'checked' : '' }}>
+                                                                        <div
+                                                                            class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
                                                                     bg-white/60 dark:bg-black/40 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400
                                                                     hover:bg-rose-500/10
                                                                     peer-checked:bg-rose-500/15 peer-checked:border-rose-500 peer-checked:text-rose-600 dark:peer-checked:text-rose-400">
-                                                                        Alpha
-                                                                    </div>
-                                                                </label>
+                                                                            Alpha
+                                                                        </div>
+                                                                    </label>
 
-                                                                <!-- Opsi Kosong -->
-                                                                <label
-                                                                    class="relative cursor-pointer col-span-2 sm:col-span-1">
-                                                                    <input type="radio"
-                                                                        name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
-                                                                        value="Kosong"
-                                                                        class="status-radio sr-only peer"
-                                                                        {{ $currentStatus == 'Kosong' ? 'checked' : '' }}>
-                                                                    <div
-                                                                        class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
+                                                                    <!-- Opsi Kosong -->
+                                                                    <label
+                                                                        class="relative cursor-pointer col-span-2 sm:col-span-1">
+                                                                        <input type="radio"
+                                                                            name="presensi[{{ $jadwal->id }}][{{ $u->id }}][status]"
+                                                                            value="Kosong"
+                                                                            class="status-radio sr-only peer"
+                                                                            {{ $currentStatus == 'Kosong' ? 'checked' : '' }}>
+                                                                        <div
+                                                                            class="w-full flex items-center justify-center py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all shadow-2xs
                                                                     bg-white/60 dark:bg-black/40 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400
                                                                     hover:bg-zinc-100 dark:hover:bg-zinc-800
                                                                     peer-checked:bg-zinc-500/10 peer-checked:border-zinc-500 peer-checked:text-zinc-800 dark:peer-checked:text-white">
-                                                                        Kosong
-                                                                    </div>
-                                                                </label>
-                                                            </div>
-                                                        </div>
-
-                                                        <!-- Select Guru Pengganti (Toggled via JS) -->
-                                                        <div
-                                                            class="pengganti-wrapper col-span-1 md:col-span-2 {{ in_array($currentStatus, ['Sakit', 'Izin', 'Alpha']) ? 'block' : 'hidden' }}">
-                                                            <label
-                                                                class="block text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-wider mb-1">
-                                                                Digantikan Oleh (Badal)
-                                                            </label>
-                                                            <div class="relative">
-                                                                <select
-                                                                    name="presensi[{{ $jadwal->id }}][{{ $u->id }}][ustadz_pengganti_id]"
-                                                                    class="m3-input-glass w-full !pr-8 text-xs font-bold text-amber-800 dark:text-amber-400 !border-amber-500/30 cursor-pointer appearance-none">
-                                                                    <option value="" class="text-zinc-500">--
-                                                                        Pilih
-                                                                        Guru Pengganti --</option>
-                                                                    @foreach ($semuaGuru as $guru)
-                                                                        @if ($guru->id != $u->id)
-                                                                            <option value="{{ $guru->id }}"
-                                                                                {{ $currentPengganti == $guru->id ? 'selected' : '' }}>
-                                                                                {{ $guru->nama_lengkap }}
-                                                                            </option>
-                                                                        @endif
-                                                                    @endforeach
-                                                                </select>
-                                                                <div
-                                                                    class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-amber-500">
-                                                                    <i
-                                                                        class="bi bi-chevron-down text-[10px] font-black"></i>
+                                                                            Kosong
+                                                                        </div>
+                                                                    </label>
                                                                 </div>
                                                             </div>
-                                                        </div>
 
-                                                        <!-- Input Keterangan -->
-                                                        <div class="col-span-1 md:col-span-2">
-                                                            <input type="text"
-                                                                name="presensi[{{ $jadwal->id }}][{{ $u->id }}][keterangan]"
-                                                                value="{{ $currentKeterangan }}"
-                                                                placeholder="Keterangan materi / alasan izin (Opsional)..."
-                                                                class="m3-input-glass w-full text-xs font-medium">
-                                                        </div>
+                                                            <!-- Select Guru Pengganti (Toggled via JS) -->
+                                                            <div
+                                                                class="pengganti-wrapper col-span-1 md:col-span-2 {{ in_array($currentStatus, ['Sakit', 'Izin', 'Alpha']) ? 'block' : 'hidden' }}">
+                                                                <label
+                                                                    class="block text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-wider mb-1">
+                                                                    Digantikan Oleh (Badal)
+                                                                </label>
+                                                                <div class="relative">
+                                                                    <select
+                                                                        name="presensi[{{ $jadwal->id }}][{{ $u->id }}][ustadz_pengganti_id]"
+                                                                        class="m3-input-glass w-full !pr-8 text-xs font-bold text-amber-800 dark:text-amber-400 !border-amber-500/30 cursor-pointer appearance-none">
+                                                                        <option value="" class="text-zinc-500">
+                                                                            --
+                                                                            Pilih
+                                                                            Guru Pengganti --</option>
+                                                                        @foreach ($semuaGuru as $guru)
+                                                                            @if ($guru->id != $u->id)
+                                                                                <option value="{{ $guru->id }}"
+                                                                                    {{ $currentPengganti == $guru->id ? 'selected' : '' }}>
+                                                                                    {{ $guru->nama_lengkap }}
+                                                                                </option>
+                                                                            @endif
+                                                                        @endforeach
+                                                                    </select>
+                                                                    <div
+                                                                        class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-amber-500">
+                                                                        <i
+                                                                            class="bi bi-chevron-down text-[10px] font-black"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
 
-                                                    </div>
+                                                            <!-- Input Keterangan -->
+                                                            <div class="col-span-1 md:col-span-2">
+                                                                <input type="text"
+                                                                    name="presensi[{{ $jadwal->id }}][{{ $u->id }}][keterangan]"
+                                                                    value="{{ $currentKeterangan }}"
+                                                                    placeholder="Keterangan materi / alasan izin (Opsional)..."
+                                                                    class="m3-input-glass w-full text-xs font-medium">
+                                                            </div>
+
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             @endforeach
                                         </div>
@@ -445,15 +817,31 @@
                                         if ($daftarPengampu->isEmpty()) {
                                             $daftarPengampu = $jadwal->ustadz ? collect([$jadwal->ustadz]) : collect();
                                         }
+                                        $checkSesi = \App\Models\HariLibur::checkBebasKbm(
+                                            $tanggal,
+                                            $jadwal->jam_ke,
+                                            $ruangan_id,
+                                            $jadwal->ruangan?->level_id,
+                                        );
+                                        $isBebasKbmJadwal = $checkSesi['is_libur'];
+                                        $keteranganBebasKbmJadwal = $checkSesi['keterangan'];
                                     @endphp
 
                                     <div
                                         class="p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/30 transition-all shadow-2xs space-y-2">
                                         <div class="flex justify-between items-start">
-                                            <span
-                                                class="text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-                                                <i class="bi bi-clock mr-1"></i> Jam {{ $jadwal->jam_ke }}
-                                            </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span
+                                                    class="text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                                                    <i class="bi bi-clock mr-1"></i> Jam {{ $jadwal->jam_ke }}
+                                                </span>
+                                                @if ($isBebasKbmJadwal)
+                                                    <span
+                                                        class="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                                                        Bebas KBM
+                                                    </span>
+                                                @endif
+                                            </div>
                                             <span
                                                 class="text-[10px] font-black text-zinc-800 dark:text-zinc-200 truncate max-w-[140px]"
                                                 title="{{ $jadwal->mataPelajaran->nama_mapel }}">
@@ -483,8 +871,9 @@
                                                             default => 'bg-zinc-100 text-zinc-600 border-zinc-200',
                                                         };
                                                     } else {
-                                                        $badgeColor =
-                                                            'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200 dark:border-zinc-700';
+                                                        $badgeColor = $isBebasKbmJadwal
+                                                            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                                                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200 dark:border-zinc-700';
                                                     }
                                                 @endphp
 
@@ -523,6 +912,12 @@
                                                                     </form>
                                                                 @endcan
                                                             </div>
+                                                        @elseif ($isBebasKbmJadwal)
+                                                            <span
+                                                                class="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider border {{ $badgeColor }} shrink-0"
+                                                                title="{{ $keteranganBebasKbmJadwal }}">
+                                                                Bebas KBM
+                                                            </span>
                                                         @else
                                                             <span
                                                                 class="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider border {{ $badgeColor }} shrink-0">
@@ -531,13 +926,20 @@
                                                         @endif
                                                     </div>
 
-                                                    @if ($riwayat && $riwayat->guruPengganti)
+                                                    @if ($riwayat && $riwayat->ustadz_pengganti_id)
                                                         <div
-                                                            class="text-[9px] font-bold text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1">
-                                                            <i class="bi bi-arrow-return-right text-[8px]"></i>
+                                                            class="text-[9px] font-bold text-sky-700 dark:text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                            <i class="bi bi-arrow-left-right text-[8px]"></i>
                                                             <span>Badal:
-                                                                {{ $riwayat->guruPengganti->nama_lengkap }}</span>
+                                                                {{ $riwayat->guruPengganti->nama_lengkap ?? '-' }}</span>
                                                         </div>
+                                                    @endif
+
+                                                    @if ($riwayat && $riwayat->keterangan)
+                                                        <p class="text-[9px] text-zinc-400 italic mt-0.5 truncate"
+                                                            title="{{ $riwayat->keterangan }}">
+                                                            "{{ $riwayat->keterangan }}"
+                                                        </p>
                                                     @endif
                                                 </div>
                                             @endforeach
@@ -545,6 +947,7 @@
                                     </div>
                                 @endforeach
                             </div>
+
                         </div>
                     </div>
 
@@ -552,36 +955,10 @@
             </div>
         @endif
     @else
-        <!-- State Awal (Belum Pilih Filter) -->
         <div class="col-span-full">
-            <x-empty-state icon="bi-door-open" title="Pilih Ruangan"
-                message="Silakan tentukan ruangan/kelas pada filter di atas untuk memuat daftar jadwal guru yang mengajar hari ini." />
+            <x-empty-state icon="bi-door-open" title="Pilih Ruangan Terlebih Dahulu"
+                message="Silakan tentukan Tanggal dan Ruangan kelas di atas, kemudian klik Tampilkan." />
         </div>
     @endif
 
-    <script>
-        $(document).on('change', '.status-radio', function() {
-            if (this.checked) {
-                const container = this.closest('.space-y-2\\.5') || this.closest('.p-3\\.5') || this.closest(
-                    '.relative.z-10');
-                if (!container) return;
-
-                const penggantiWrapper = container.querySelector('.pengganti-wrapper');
-                if (!penggantiWrapper) return;
-                const penggantiInput = penggantiWrapper.querySelector('select');
-                const status = this.value;
-
-                if (['Sakit', 'Izin', 'Alpha'].includes(status)) {
-                    penggantiWrapper.classList.remove('hidden');
-                    penggantiWrapper.classList.add('block');
-                } else {
-                    penggantiWrapper.classList.remove('block');
-                    penggantiWrapper.classList.add('hidden');
-                    if (penggantiInput) {
-                        penggantiInput.value = '';
-                    }
-                }
-            }
-        });
-    </script>
 </x-app-layout>

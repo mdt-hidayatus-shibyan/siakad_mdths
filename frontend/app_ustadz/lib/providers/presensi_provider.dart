@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/utils/date_helper.dart';
+import '../core/utils/jam_order_helper.dart';
 import '../core/utils/haptic_helper.dart';
 import '../data/models/presensi_model.dart';
 import '../data/repositories/presensi_repository.dart';
@@ -16,6 +17,8 @@ class PresensiProvider extends ChangeNotifier {
   bool _isUjian = false;
   String? _namaUjian;
   int? _ujianId;
+  bool _isEvent = false;
+  EventPresensiInfo? _eventInfo;
   bool _isLoading = false;
   bool _isSaving = false;
   String? _errorMessage;
@@ -28,6 +31,8 @@ class PresensiProvider extends ChangeNotifier {
   bool get isUjian => _isUjian;
   String? get namaUjian => _namaUjian;
   int? get ujianId => _ujianId;
+  bool get isEvent => _isEvent;
+  EventPresensiInfo? get eventInfo => _eventInfo;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get errorMessage => _errorMessage;
@@ -59,12 +64,14 @@ class PresensiProvider extends ChangeNotifier {
       final dateStr = DateHelper.toYmd(_selectedDate);
       final response = await _repo.getSesiHarian(dateStr);
       _sesiList = response.sesiList;
-      _sortSesiList();
       _isLibur = response.isLibur;
       _keteranganLibur = response.keteranganLibur;
       _isUjian = response.isUjian;
       _namaUjian = response.namaUjian;
       _ujianId = response.ujianId;
+      _isEvent = response.isEvent;
+      _eventInfo = response.eventInfo;
+      _sortSesiList();
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
     } finally {
@@ -90,10 +97,36 @@ class PresensiProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> fetchMuridKegiatan(
+    int kalendarId,
+    int ruanganId,
+    String sesi, [
+    DateTime? customDate,
+  ]) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final targetDate = customDate ?? _selectedDate;
+      final dateStr = DateHelper.toYmd(targetDate);
+      _muridList = await _repo.getMuridKegiatan(
+        kalendarId: kalendarId,
+        ruanganId: ruanganId,
+        tanggal: dateStr,
+        sesi: sesi,
+      );
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   void updateMuridStatus(int muridId, String newStatus) {
     final index = _muridList.indexWhere((m) => m.muridId == muridId);
     if (index != -1) {
-      // Jika status yang diklik sama dengan status saat ini, toggle menjadi null (kosongkan)
       if (_muridList[index].status == newStatus) {
         _muridList[index].status = null;
       } else {
@@ -145,7 +178,7 @@ class PresensiProvider extends ChangeNotifier {
       );
       if (success) {
         HapticHelper.confirmSuccess();
-        await fetchSesi(); // Refresh session badge
+        await fetchSesi();
       }
       return success;
     } catch (e) {
@@ -158,7 +191,41 @@ class PresensiProvider extends ChangeNotifier {
     }
   }
 
-  // === 2. STATE PRESENSI USTADZ (CHECK-IN PER JADWAL) ===
+  Future<bool> simpanPresensiKegiatan({
+    required int kalendarId,
+    required int ruanganId,
+    required String sesi,
+    DateTime? customDate,
+  }) async {
+    _isSaving = true;
+    notifyListeners();
+
+    try {
+      final targetDate = customDate ?? _selectedDate;
+      final dateStr = DateHelper.toYmd(targetDate);
+      final success = await _repo.simpanPresensiKegiatanMassal(
+        kalendarId: kalendarId,
+        ruanganId: ruanganId,
+        tanggal: dateStr,
+        sesi: sesi,
+        items: _muridList,
+      );
+      if (success) {
+        HapticHelper.confirmSuccess();
+        await fetchSesi();
+      }
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      HapticHelper.warning();
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  // === 2. STATE PRESENSI USTADZ (CHECK-IN PER JADWAL & EVENT) ===
   DateTime _selectedDateUstadz = DateTime.now();
   List<SesiPresensiUstadzItem> _sesiUstadzList = [];
   List<UstadzBadalItem> _daftarBadalList = [];
@@ -168,6 +235,8 @@ class PresensiProvider extends ChangeNotifier {
   bool _isUjianUstadz = false;
   String? _namaUjianUstadz;
   int? _ujianIdUstadz;
+  bool _isEventUstadz = false;
+  EventPresensiInfo? _eventInfoUstadz;
   bool _isLoadingUstadz = false;
   bool _isCheckingInUstadz = false;
 
@@ -180,6 +249,8 @@ class PresensiProvider extends ChangeNotifier {
   bool get isUjianUstadz => _isUjianUstadz;
   String? get namaUjianUstadz => _namaUjianUstadz;
   int? get ujianIdUstadz => _ujianIdUstadz;
+  bool get isEventUstadz => _isEventUstadz;
+  EventPresensiInfo? get eventInfoUstadz => _eventInfoUstadz;
   bool get isLoadingUstadz => _isLoadingUstadz;
   bool get isCheckingInUstadz => _isCheckingInUstadz;
 
@@ -197,12 +268,14 @@ class PresensiProvider extends ChangeNotifier {
       final dateStr = DateHelper.toYmd(_selectedDateUstadz);
       final response = await _repo.getSesiUstadzHarian(dateStr);
       _sesiUstadzList = response.sesiList;
-      _sortSesiUstadzList();
       _isLiburUstadz = response.isLibur;
       _keteranganLiburUstadz = response.keteranganLibur;
       _isUjianUstadz = response.isUjian;
       _namaUjianUstadz = response.namaUjian;
       _ujianIdUstadz = response.ujianId;
+      _isEventUstadz = response.isEvent;
+      _eventInfoUstadz = response.eventInfo;
+      _sortSesiUstadzList();
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
     } finally {
@@ -211,58 +284,35 @@ class PresensiProvider extends ChangeNotifier {
     }
   }
 
-  // === SORTING HELPERS (URUT BERDASARKAN RUANGAN & JAM) ===
-  int _getJamWeight(String jamText, [String? jamKe]) {
-    final jk = (jamKe ?? '').trim().toLowerCase();
-    if (jk == 'nadzoman') return 1;
-    if (jk == '1') return 2;
-    if (jk == '2') return 3;
-    if (jk == 'ekstra') return 4;
-
-    final lower = jamText.toLowerCase();
-    if (lower.contains('nadzoman') || lower.startsWith('13:')) {
-      return 1;
-    }
-    if (lower.contains('jam ke-1') ||
-        lower.contains('14:00') ||
-        lower.startsWith('14:')) {
-      return 2;
-    }
-    if (lower.contains('jam ke-2') ||
-        lower.contains('15:30') ||
-        lower.startsWith('15:')) {
-      return 3;
-    }
-    if (lower.contains('ekstra') ||
-        lower.contains('20:00') ||
-        lower.startsWith('20:')) {
-      return 4;
-    }
-
-    return 99;
-  }
-
+  // === SORTING HELPERS (URUT BERDASARKAN URUTAN JAM & RUANGAN) ===
   void _sortSesiList() {
     _sesiList.sort((a, b) {
-      final roomCmp = a.kelas.toLowerCase().compareTo(b.kelas.toLowerCase());
-      if (roomCmp != 0) return roomCmp;
-      final weightA = _getJamWeight(a.jam);
-      final weightB = _getJamWeight(b.jam);
+      if (_isEvent) {
+        final sesiOrder = {'pagi': 1, 'siang': 2, 'malam': 3, 'harian': 4};
+        final sA = sesiOrder[(a.sesi ?? '').toLowerCase()] ?? 9;
+        final sB = sesiOrder[(b.sesi ?? '').toLowerCase()] ?? 9;
+        if (sA != sB) return sA.compareTo(sB);
+        return a.kelas.toLowerCase().compareTo(b.kelas.toLowerCase());
+      }
+      final weightA = JamOrderHelper.getWeight(a.jam, a.jamKe);
+      final weightB = JamOrderHelper.getWeight(b.jam, b.jamKe);
       if (weightA != weightB) return weightA.compareTo(weightB);
-      return a.jam.compareTo(b.jam);
+      return a.kelas.toLowerCase().compareTo(b.kelas.toLowerCase());
     });
   }
 
   void _sortSesiUstadzList() {
     _sesiUstadzList.sort((a, b) {
-      final roomCmp = a.ruangan.toLowerCase().compareTo(
-        b.ruangan.toLowerCase(),
-      );
-      if (roomCmp != 0) return roomCmp;
-      final weightA = _getJamWeight(a.jam, a.jamKe);
-      final weightB = _getJamWeight(b.jam, b.jamKe);
+      if (_isEventUstadz) {
+        final sesiOrder = {'pagi': 1, 'siang': 2, 'malam': 3, 'harian': 4};
+        final sA = sesiOrder[(a.sesi ?? '').toLowerCase()] ?? 9;
+        final sB = sesiOrder[(b.sesi ?? '').toLowerCase()] ?? 9;
+        return sA.compareTo(sB);
+      }
+      final weightA = JamOrderHelper.getWeight(a.jam, a.jamKe);
+      final weightB = JamOrderHelper.getWeight(b.jam, b.jamKe);
       if (weightA != weightB) return weightA.compareTo(weightB);
-      return a.jam.compareTo(b.jam);
+      return a.ruangan.toLowerCase().compareTo(b.ruangan.toLowerCase());
     });
   }
 
@@ -297,7 +347,42 @@ class PresensiProvider extends ChangeNotifier {
       if (success) {
         HapticHelper.confirmSuccess();
         await fetchSesiUstadz();
-        await fetchRiwayatUstadz();
+      }
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      HapticHelper.warning();
+      return false;
+    } finally {
+      _isCheckingInUstadz = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> checkinKegiatanUstadz({
+    required int kalendarId,
+    required String sesi,
+    required String status,
+    String? keterangan,
+    DateTime? customDate,
+  }) async {
+    _isCheckingInUstadz = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final targetDate = customDate ?? _selectedDateUstadz;
+      final dateStr = DateHelper.toYmd(targetDate);
+      final success = await _repo.checkinKegiatanUstadz(
+        kalendarId: kalendarId,
+        tanggal: dateStr,
+        sesi: sesi,
+        status: status,
+        keterangan: keterangan,
+      );
+      if (success) {
+        HapticHelper.confirmSuccess();
+        await fetchSesiUstadz();
       }
       return success;
     } catch (e) {
@@ -326,6 +411,8 @@ class PresensiProvider extends ChangeNotifier {
     _isUjian = false;
     _namaUjian = null;
     _ujianId = null;
+    _isEvent = false;
+    _eventInfo = null;
     _isLoading = false;
     _isSaving = false;
     _errorMessage = null;
@@ -339,6 +426,8 @@ class PresensiProvider extends ChangeNotifier {
     _isUjianUstadz = false;
     _namaUjianUstadz = null;
     _ujianIdUstadz = null;
+    _isEventUstadz = false;
+    _eventInfoUstadz = null;
     _isLoadingUstadz = false;
     _isCheckingInUstadz = false;
     notifyListeners();

@@ -10,6 +10,7 @@ import '../../widgets/app_avatar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/schedule_card.dart';
 import '../../widgets/shimmer_loading.dart';
+import '../../widgets/signal_indicator_widget.dart';
 import '../akademik/jadwal_pelajaran_screen.dart';
 import '../akademik/mata_pelajaran_screen.dart';
 import '../kas/kas_ruangan_screen.dart';
@@ -193,6 +194,8 @@ class _HomeTabState extends State<HomeTab> {
                         ],
                       ),
                     ),
+                    const SignalIndicatorWidget(),
+                    const SizedBox(width: 4),
                     IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(7),

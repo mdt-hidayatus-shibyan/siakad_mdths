@@ -1,3 +1,5 @@
+import '../../core/utils/jam_order_helper.dart';
+
 class DashboardModel {
   final bool isLiburHariIni;
   final String? keteranganLiburHariIni;
@@ -31,9 +33,15 @@ class DashboardModel {
       jadwalHariIni: stats['jadwal_hari_ini'] ?? 0,
       presensiSelesaiHariIni: stats['presensi_selesai_hari_ini'] ?? 0,
       totalMuridWali: stats['total_murid_wali'] ?? 0,
-      jadwalHariIniList: rawJadwal
+      jadwalHariIniList: (rawJadwal
           .map((e) => JadwalHariIniItem.fromJson(e))
-          .toList(),
+          .toList())
+        ..sort((a, b) {
+          final wA = JamOrderHelper.getWeight(a.jam, a.jamKe);
+          final wB = JamOrderHelper.getWeight(b.jam, b.jamKe);
+          if (wA != wB) return wA.compareTo(wB);
+          return a.kelas.toLowerCase().compareTo(b.kelas.toLowerCase());
+        }),
       pengumumanList: rawPengumuman
           .map((e) => PengumumanItem.fromJson(e))
           .toList(),
@@ -52,6 +60,8 @@ class JadwalHariIniItem {
   final String peran;
   final bool isTeamTeaching;
   final bool sudahAbsen;
+  final bool isBebasKbm;
+  final String? keteranganBebasKbm;
 
   JadwalHariIniItem({
     required this.id,
@@ -64,6 +74,8 @@ class JadwalHariIniItem {
     this.peran = 'Guru Utama',
     this.isTeamTeaching = false,
     required this.sudahAbsen,
+    this.isBebasKbm = false,
+    this.keteranganBebasKbm,
   });
 
   factory JadwalHariIniItem.fromJson(Map<String, dynamic> json) {
@@ -80,6 +92,8 @@ class JadwalHariIniItem {
           (json['is_utama'] == false ? 'Guru Pendamping' : 'Guru Utama'),
       isTeamTeaching: json['is_team_teaching'] ?? false,
       sudahAbsen: json['sudah_absen'] ?? false,
+      isBebasKbm: json['is_bebas_kbm'] ?? false,
+      keteranganBebasKbm: json['keterangan_bebas_kbm'],
     );
   }
 }

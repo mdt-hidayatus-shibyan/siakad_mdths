@@ -22,7 +22,8 @@
         <div class="shrink-0">
             <form action="{{ route('kalendar-pendidikan.matriks') }}" method="GET" id="formFilterTp"
                 class="m-0 relative group/select">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none z-10 text-zinc-400 group-focus-within/select:text-primary dark:group-focus-within/select:text-primary-dark transition-colors">
+                <div
+                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none z-10 text-zinc-400 group-focus-within/select:text-primary dark:group-focus-within/select:text-primary-dark transition-colors">
                     <i class="bi bi-calendar-range text-sm"></i>
                 </div>
                 <select name="tahun_id" onchange="document.getElementById('formFilterTp').submit()"
@@ -55,11 +56,13 @@
                     class="bg-zinc-50/90 dark:bg-zinc-950/90 text-zinc-500 dark:text-zinc-400 text-[10px] font-black uppercase tracking-wider border-b border-zinc-200/80 dark:border-zinc-800">
                     <th class="border-r border-zinc-200/80 dark:border-zinc-800 py-3.5 px-3 w-10 text-left">No
                     </th>
-                    <th class="border-r border-zinc-200/80 dark:border-zinc-800 py-3.5 px-3.5 w-60 text-left">Bulan Hijriyah
+                    <th class="border-r border-zinc-200/80 dark:border-zinc-800 py-3.5 px-3.5 w-60 text-left">Bulan
+                        Hijriyah
                     </th>
                     <th class="border-r border-zinc-200/80 dark:border-zinc-800 py-3.5 w-16">Tahun</th>
                     @for ($i = 1; $i <= 30; $i++)
-                        <th class="border-r border-zinc-200/80 dark:border-zinc-800 py-3.5 w-10">{{ sprintf('%02d', $i) }}
+                        <th class="border-r border-zinc-200/80 dark:border-zinc-800 py-3.5 w-10">
+                            {{ sprintf('%02d', $i) }}
                         </th>
                     @endfor
                     <th
@@ -72,7 +75,8 @@
             <tbody id="matriksBody" class="text-xs divide-y divide-zinc-200/80 dark:divide-zinc-800/80">
                 <tr>
                     <td colspan="34" class="py-16 text-center font-bold text-zinc-400">
-                        <i class="bi bi-arrow-repeat animate-spin text-2xl block mb-2 text-primary dark:text-primary-dark"></i>
+                        <i
+                            class="bi bi-arrow-repeat animate-spin text-2xl block mb-2 text-primary dark:text-primary-dark"></i>
                         Membangun Struktur Matriks Falak MABIMS...
                     </td>
                 </tr>
@@ -81,7 +85,8 @@
     </div>
 
     <!-- KETERANGAN / LEGEND M3 -->
-    <div class="mt-5 m3-glass-card p-4 flex flex-wrap gap-x-5 gap-y-3 text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
+    <div
+        class="mt-5 m3-glass-card p-4 flex flex-wrap gap-x-5 gap-y-3 text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
         <div class="flex items-center gap-1.5">
             <span
                 class="w-4 h-4 rounded-md bg-rose-100 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 shadow-2xs"></span>
@@ -90,7 +95,13 @@
         <div class="flex items-center gap-1.5">
             <span
                 class="w-4 h-4 flex items-center justify-center rounded-md bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-black text-[9px] shadow-2xs">X</span>
-            <span>Libur Madrasah</span>
+            <span>Libur Madrasah (Seharian)</span>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+            <span
+                class="w-4 h-4 flex items-center justify-center rounded-md bg-amber-100/90 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 font-black text-[8px] border border-amber-300/60 dark:border-amber-700/60 shadow-2xs">BK</span>
+            <span>Bebas KBM (Sebagian Jam)</span>
         </div>
 
         <div class="flex items-center gap-1.5">
@@ -244,17 +255,17 @@
                                 
                                 ${isTerSet 
                                     ? `
-                                            <button type="button" class="opacity-0 group-hover/row:opacity-100 text-[10px] bg-zinc-200 text-zinc-500 font-bold px-3 py-1 rounded-full cursor-not-allowed">
-                                                <i class="bi bi-check2-all"></i> Ter-set
-                                            </button>
-                                        `
+                                                <button type="button" class="opacity-0 group-hover/row:opacity-100 text-[10px] bg-zinc-200 text-zinc-500 font-bold px-3 py-1 rounded-full cursor-not-allowed">
+                                                    <i class="bi bi-check2-all"></i> Ter-set
+                                                </button>
+                                            `
                                     : `@can('update kalendar-pendidikan')
-                                            <a href="{{ route('kalendar-pendidikan.matriks.set-bulan') }}?nama_bulan=${infoBulan.nama}&urutan=${urutanLogis}&mulai=${tglMulaiMasehi}&selesai=${tglSelesaiMasehi}" 
-                                                class="action-modal opacity-0 group-hover/row:opacity-100 text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 font-bold px-3 py-1 rounded-full transition-colors flex items-center justify-center gap-1 shrink-0"
-                                                title="Edit Form Matriks">
-                                                <i class="bi bi-link-45deg"></i> Set
-                                            </a>  
-                                        @endcan()`
+                                                <a href="{{ route('kalendar-pendidikan.matriks.set-bulan') }}?nama_bulan=${infoBulan.nama}&urutan=${urutanLogis}&mulai=${tglMulaiMasehi}&selesai=${tglSelesaiMasehi}" 
+                                                    class="action-modal opacity-0 group-hover/row:opacity-100 text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 font-bold px-3 py-1 rounded-full transition-colors flex items-center justify-center gap-1 shrink-0"
+                                                    title="Edit Form Matriks">
+                                                    <i class="bi bi-link-45deg"></i> Set
+                                                </a>  
+                                            @endcan()`
                                 }
                             </td>
                             <td class="border-r border-zinc-200 dark:border-zinc-800 p-2 text-xs font-bold text-zinc-500 text-center">${thAktif}</td>
@@ -277,7 +288,7 @@
 
                         // 🔴 PENTING: Terapkan Waktu Mutlak (Timestamp) seperti di Index
                         const cellTime = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate())
-                        .getTime();
+                            .getTime();
 
                         let isLiburDb = (window.dbLiburs || []).find(l => {
                             let s = new Date(l.tanggal_mulai).setHours(0, 0, 0, 0);
@@ -302,20 +313,36 @@
                             "text-zinc-700 dark:text-zinc-300 font-bold text-[11px] flex items-center justify-center";
                         let cellStyle = '';
                         let cellContent = '';
+                        let cellTitle = `Tanggal: ${isoDate}`;
 
                         // LOGIKA PEWARNAAN M3 MATRIKS
                         if (isJumat) {
                             bgClass = "bg-rose-50 dark:bg-rose-900/20";
                             textClass = "text-rose-600 dark:text-rose-400 font-bold flex items-center justify-center";
+                            cellTitle = `Libur Rutin Jumat (${isoDate})`;
                             bulananLibur++;
                             grandTotalLibur++;
                         } else if (isLiburDb) {
-                            bgClass = "bg-rose-100 dark:bg-rose-900/40";
-                            textClass =
-                                "text-rose-700 dark:text-rose-300 font-bold text-[11px] flex items-center justify-center";
-                            cellContent = 'X';
-                            bulananLibur++;
-                            grandTotalLibur++;
+                            const isSebagian = isLiburDb.tipe_libur === 'Sebagian Jam';
+                            if (isSebagian) {
+                                const jams = Array.isArray(isLiburDb.jam_ke) ? isLiburDb.jam_ke.join(', ') : (isLiburDb
+                                    .jam_ke || '');
+                                bgClass = "bg-amber-100/90 dark:bg-amber-900/40";
+                                textClass =
+                                    "text-amber-800 dark:text-amber-300 font-black text-[10px] flex items-center justify-center";
+                                cellContent = 'BK';
+                                cellTitle = `Bebas KBM (${isLiburDb.keterangan}) - Jam: ${jams} [${isoDate}]`;
+                                bulananEfektif++;
+                                grandTotalEfektif++;
+                            } else {
+                                bgClass = "bg-rose-100 dark:bg-rose-900/40";
+                                textClass =
+                                    "text-rose-700 dark:text-rose-300 font-bold text-[11px] flex items-center justify-center";
+                                cellContent = 'X';
+                                cellTitle = `Hari Libur (${isLiburDb.keterangan}) [${isoDate}]`;
+                                bulananLibur++;
+                                grandTotalLibur++;
+                            }
                         } else if (isUjianDb) {
                             const namaUjianLower = isUjianDb.nama_ujian.toLowerCase();
                             let kodeUjian = namaUjianLower.includes('ikhtibar') ? 'IK' : 'IM';
@@ -323,6 +350,7 @@
                             textClass =
                                 "text-amber-700 dark:text-amber-500 font-bold text-[11px] flex items-center justify-center";
                             cellContent = kodeUjian;
+                            cellTitle = `Ujian: ${isUjianDb.nama_ujian} [${isoDate}]`;
                             bulananEfektif++;
                             grandTotalEfektif++;
                         } else if (isKegiatanDb) {
@@ -334,10 +362,12 @@
                             textClass = "font-bold text-[10px] flex items-center justify-center";
                             cellStyle = `background-color: ${hex}26; color: ${hex};`;
                             cellContent = 'EF';
+                            cellTitle = `Kegiatan: ${isKegiatanDb.nama_kegiatan} [${isoDate}]`;
                             bulananEfektif++;
                             grandTotalEfektif++;
                         } else {
                             cellContent = hariEfektifCount++;
+                            cellTitle = `Hari Efektif KBM #${cellContent} [${isoDate}]`;
                             bulananEfektif++;
                             grandTotalEfektif++;
                         }
@@ -347,11 +377,11 @@
                                 @can('update kalendar-pendidikan')
                                     <a href="{{ route('kalendar-pendidikan.matriks.create-agenda') }}?tanggal=${isoDate}" 
                                     class="action-modal w-full h-full p-2 cursor-pointer ${textClass}"
-                                    title="Klik untuk tambah agenda: ${isoDate}">
+                                    title="${cellTitle}">
                                         ${cellContent}
                                     </a>
                                 @else
-                                    <div class="w-full h-full p-2 ${textClass}" title="Tanggal: ${isoDate}">
+                                    <div class="w-full h-full p-2 ${textClass}" title="${cellTitle}">
                                         ${cellContent}
                                     </div>
                                 @endcan

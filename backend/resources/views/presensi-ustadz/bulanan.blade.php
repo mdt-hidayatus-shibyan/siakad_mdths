@@ -88,11 +88,57 @@
                         <p
                             class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center">
                             <i class="bi bi-info-circle-fill mr-1.5 opacity-70"></i> Menampilkan jadwal & presensi
-                            Ustadz
-                            harian.
+                            dewan asatidz harian.
                         </p>
                     </div>
                 </div>
+
+                @php
+                    $eventDatesInMonth = collect($dates)->where('is_event', true);
+                    $examDatesInMonth = collect($dates)->where('is_ujian', true);
+                @endphp
+
+                @if ($eventDatesInMonth->isNotEmpty())
+                    <div
+                        class="m-4 p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 text-indigo-800 dark:text-indigo-300">
+                            <div class="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+                                <i class="bi bi-calendar-event-fill text-sm text-indigo-600 dark:text-indigo-400"></i>
+                            </div>
+                            <div class="text-xs font-bold leading-relaxed">
+                                Terdapat agenda <strong>Hari Efektif Non-KBM / Event Kegiatan</strong> pada bulan ini.
+                                Presensi dewan asatidz tercatat per sesi agenda kegiatan.
+                            </div>
+                        </div>
+                        <a href="{{ route('kalendar-pendidikan.index') }}"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-xs transition-colors shrink-0">
+                            <i class="bi bi-calendar3"></i>
+                            <span>Lihat Agenda Kalender</span>
+                        </a>
+                    </div>
+                @endif
+
+                @if ($examDatesInMonth->isNotEmpty())
+                    <div
+                        class="m-4 p-3.5 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 text-violet-800 dark:text-violet-300">
+                            <div class="w-8 h-8 rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0">
+                                <i class="bi bi-card-checklist text-sm text-violet-600 dark:text-violet-400"></i>
+                            </div>
+                            <div class="text-xs font-bold leading-relaxed">
+                                Terdapat tanggal pelaksanaan ujian madrasah pada bulan ini. Presensi mengajar reguler
+                                dialihkan ke <strong>Presensi Pengawas Ujian</strong>.
+                            </div>
+                        </div>
+                        @can('create presensi-ujian')
+                            <a href="{{ route('presensi-ujian.input') }}"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black text-xs shadow-xs transition-colors shrink-0">
+                                <i class="bi bi-arrow-right-circle"></i>
+                                <span>Buka Presensi Ujian</span>
+                            </a>
+                        @endcan
+                    </div>
+                @endif
 
                 <!-- Tabel Data -->
                 <div class="overflow-x-auto relative z-10 custom-scrollbar p-0">
@@ -167,6 +213,134 @@
                                                 @endcan
                                             </div>
                                         </td>
+                                    @elseif (!empty($info['is_event']))
+                                        <!-- AGENDA EVENT / HARI EFEKTIF NON-KBM -->
+                                        <td colspan="4"
+                                            class="py-3.5 px-5 bg-indigo-500/[0.04] dark:bg-indigo-500/[0.08] align-top">
+                                            <div class="flex flex-col gap-3">
+                                                <!-- Event Header -->
+                                                <div
+                                                    class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-indigo-500/20">
+                                                    <div class="flex items-center gap-2">
+                                                        <div
+                                                            class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-black shrink-0">
+                                                            <i class="bi bi-calendar-event-fill"></i>
+                                                        </div>
+                                                        <span
+                                                            class="font-black text-xs text-indigo-950 dark:text-indigo-200 uppercase tracking-tight">
+                                                            {{ $info['nama_event'] }}
+                                                        </span>
+                                                        <span
+                                                            class="px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-extrabold text-[9px] uppercase">
+                                                            {{ $info['tipe_presensi'] === 'multi_sesi' ? 'Kegiatan Multi-Sesi' : 'Hari Efektif Non-KBM' }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Grid Sesi Kegiatan -->
+                                                @php
+                                                    $eventData = $matrix[$tglMasehi]['event'] ?? null;
+                                                    $sesiData = $eventData['sesi_data'] ?? [];
+                                                @endphp
+
+                                                <div
+                                                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{{ max(1, min(count($sesiData), 3)) }} gap-3">
+                                                    @foreach ($sesiData as $sesiName => $sData)
+                                                        <div
+                                                            class="p-2.5 rounded-xl border border-indigo-500/20 bg-white/60 dark:bg-zinc-900/60 shadow-2xs space-y-2">
+                                                            <div
+                                                                class="flex items-center justify-between gap-1 pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800">
+                                                                <span
+                                                                    class="text-[10px] font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-wider flex items-center gap-1">
+                                                                    <i class="bi bi-clock-fill text-[9px]"></i> Sesi
+                                                                    {{ $sesiName }}
+                                                                </span>
+                                                                <span class="text-[9px] font-bold text-zinc-400">
+                                                                    {{ count(array_filter($sData['daftar_pengampu'], fn($item) => !empty($item['presensi']))) }}
+                                                                    / {{ count($sData['daftar_pengampu']) }} Hadir
+                                                                </span>
+                                                            </div>
+
+                                                            <!-- List Guru di Sesi Ini -->
+                                                            <div
+                                                                class="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                                                                @foreach ($sData['daftar_pengampu'] as $pUstadz)
+                                                                    @php
+                                                                        $p = $pUstadz['presensi'];
+                                                                        $uId = $pUstadz['ustadz_id'];
+                                                                        $uNama = $pUstadz['nama_lengkap'];
+                                                                    @endphp
+                                                                    <div
+                                                                        class="p-1.5 rounded-lg bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 relative group/subcell flex items-center justify-between gap-2">
+                                                                        <div class="truncate min-w-0">
+                                                                            <p class="text-[10px] font-bold text-zinc-800 dark:text-zinc-200 truncate"
+                                                                                title="{{ $uNama }}">
+                                                                                {{ $uNama }}
+                                                                            </p>
+                                                                        </div>
+
+                                                                        <div
+                                                                            class="flex items-center gap-1.5 shrink-0">
+                                                                            @if ($p)
+                                                                                @php
+                                                                                    $badgeColor = match ($p->status) {
+                                                                                        'Hadir'
+                                                                                            => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+                                                                                        'Sakit'
+                                                                                            => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+                                                                                        'Izin'
+                                                                                            => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+                                                                                        'Alpha'
+                                                                                            => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+                                                                                        default
+                                                                                            => 'bg-zinc-100 text-zinc-600 border-zinc-200',
+                                                                                    };
+                                                                                @endphp
+                                                                                <span
+                                                                                    class="px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider border {{ $badgeColor }}">
+                                                                                    {{ $p->status }}
+                                                                                </span>
+                                                                                @can('hapus presensi-ustadz')
+                                                                                    <form
+                                                                                        action="{{ route('presensi-ustadz.destroyHarian', $p->id) }}"
+                                                                                        method="POST"
+                                                                                        class="delete-ajax inline-block"
+                                                                                        data-refresh-target="#data-grid-container">
+                                                                                        @csrf
+                                                                                        @method('DELETE')
+                                                                                        <button type="submit"
+                                                                                            class="w-4 h-4 flex items-center justify-center rounded bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 transition-colors outline-none"
+                                                                                            title="Batal / Hapus">
+                                                                                            <i
+                                                                                                class="bi bi-trash3-fill text-[7px]"></i>
+                                                                                        </button>
+                                                                                    </form>
+                                                                                @endcan
+                                                                            @else
+                                                                                <span
+                                                                                    class="px-1.5 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border border-transparent">
+                                                                                    Belum
+                                                                                </span>
+                                                                            @endif
+
+                                                                            @can('create presensi-ustadz')
+                                                                                <a href="{{ route('presensi-ustadz.modalInput', ['tanggal' => $tglMasehi, 'kalendar_id' => $info['event_info']->id, 'ustadz_id' => $uId, 'sesi' => $sesiName]) }}"
+                                                                                    data-refresh-target="#data-grid-container"
+                                                                                    class="action-modal opacity-0 group-hover/subcell:opacity-100 transition-all duration-200 w-4 h-4 flex items-center justify-center bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 rounded shadow-2xs border border-zinc-200 dark:border-zinc-700 active:scale-95 outline-none"
+                                                                                    title="Isi / Edit Presensi {{ $uNama }}">
+                                                                                    <i
+                                                                                        class="bi bi-pencil-square text-[8px]"></i>
+                                                                                </a>
+                                                                            @endcan
+                                                                        </div>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </td>
                                     @else
                                         @foreach ($jamList as $jam)
                                             <td
@@ -218,12 +392,15 @@
 
                                                                     <!-- Tombol Edit Presensi Ustadz ini -->
                                                                     @can('create presensi-ustadz')
-                                                                        <a href="{{ route('presensi-ustadz.modalInput', ['tanggal' => $tglMasehi, 'jadwal_id' => $selData['jadwal_id'], 'ustadz_id' => $uId]) }}"
-                                                                            data-refresh-target="#data-grid-container"
-                                                                            class="action-modal opacity-0 group-hover/subcell:opacity-100 transition-all duration-200 absolute right-1 top-1 w-5 h-5 flex items-center justify-center bg-white dark:bg-zinc-800 text-primary dark:text-primary-dark rounded shadow-2xs border border-zinc-200 dark:border-zinc-700 active:scale-95 outline-none"
-                                                                            title="Isi / Edit Presensi {{ $uNama }}">
-                                                                            <i class="bi bi-pencil-square text-[9px]"></i>
-                                                                        </a>
+                                                                        @if (empty($pUstadz['is_bebas_kbm']) && empty($selData['is_bebas_kbm']))
+                                                                            <a href="{{ route('presensi-ustadz.modalInput', ['tanggal' => $tglMasehi, 'jadwal_id' => $selData['jadwal_id'], 'ustadz_id' => $uId]) }}"
+                                                                                data-refresh-target="#data-grid-container"
+                                                                                class="action-modal opacity-0 group-hover/subcell:opacity-100 transition-all duration-200 absolute right-1 top-1 w-5 h-5 flex items-center justify-center bg-white dark:bg-zinc-800 text-primary dark:text-primary-dark rounded shadow-2xs border border-zinc-200 dark:border-zinc-700 active:scale-95 outline-none"
+                                                                                title="Isi / Edit Presensi {{ $uNama }}">
+                                                                                <i
+                                                                                    class="bi bi-pencil-square text-[9px]"></i>
+                                                                            </a>
+                                                                        @endif
                                                                     @endcan
 
                                                                     <!-- Status Presensi Ustadz ini -->
@@ -284,6 +461,12 @@
                                                                                     </button>
                                                                                 </form>
                                                                             @endcan
+                                                                        @elseif (!empty($pUstadz['is_bebas_kbm']))
+                                                                            <span
+                                                                                class="px-1.5 py-0.5 inline-block rounded text-[8px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20"
+                                                                                title="{{ $pUstadz['keterangan_bebas_kbm'] ?? 'Bebas KBM' }}">
+                                                                                Bebas KBM
+                                                                            </span>
                                                                         @else
                                                                             <span
                                                                                 class="px-1.5 py-0.5 inline-block rounded text-[8px] font-black uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 border border-transparent">

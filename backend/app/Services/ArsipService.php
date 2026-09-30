@@ -3,10 +3,13 @@
 namespace App\Services;
 
 use App\Models\Arsip\ArsipDokumen;
+use App\Models\BulanHijriyah;
 use App\Models\Kepengurusan\Pengurus;
 use App\Models\Murid;
 use App\Models\PelanggaranMurid;
+use App\Models\PresensiKegiatanMurid;
 use App\Models\PresensiMurid;
+use App\Models\Semester;
 use App\Models\Ujian\NilaiUjian;
 use App\Models\Ujian\RiwayatKenaikan;
 use App\Models\Ujian\Ujian;
@@ -91,10 +94,37 @@ class ArsipService
 
     private function hitungAbsensi($semester_id, $murid_id)
     {
+        $semester = Semester::find($semester_id);
+
+        $kbmSakit = PresensiMurid::where('murid_id', $murid_id)->where('semester_id', $semester_id)->where('status', 'Sakit')->distinct('tanggal')->count('tanggal');
+        $kbmIzin = PresensiMurid::where('murid_id', $murid_id)->where('semester_id', $semester_id)->where('status', 'Izin')->distinct('tanggal')->count('tanggal');
+        $kbmAlpha = PresensiMurid::where('murid_id', $murid_id)->where('semester_id', $semester_id)->where('status', 'Alpha')->distinct('tanggal')->count('tanggal');
+
+        $kegiatanQuery = PresensiKegiatanMurid::where('murid_id', $murid_id);
+        if ($semester && $semester->tanggal_mulai && $semester->tanggal_selesai) {
+            $tglMulai = substr($semester->tanggal_mulai, 0, 10);
+            $tglSelesai = substr($semester->tanggal_selesai, 0, 10);
+            $kegiatanQuery->whereBetween('tanggal', [$tglMulai, $tglSelesai]);
+        } elseif ($semester) {
+            $bulanIds = BulanHijriyah::where('tahun_pelajaran_id', $semester->tahun_pelajaran_id)->get();
+            $isSem1 = str_contains($semester->nama_semester, '1') || str_contains(strtolower($semester->nama_semester), 'ganjil');
+            $filteredBulans = $isSem1 ? $bulanIds->filter(fn($b) => $b->urutan <= 5) : $bulanIds->filter(fn($b) => $b->urutan > 5);
+            $kegiatanQuery->where(function ($q) use ($filteredBulans) {
+                foreach ($filteredBulans as $b) {
+                    $q->orWhereBetween('tanggal', [$b->tanggal_mulai_masehi, $b->tanggal_selesai_masehi]);
+                }
+            });
+        }
+
+        $kegiatanRecords = $kegiatanQuery->get();
+        $eventSakit = $kegiatanRecords->where('status', 'Sakit')->pluck('tanggal')->unique()->count();
+        $eventIzin = $kegiatanRecords->where('status', 'Izin')->pluck('tanggal')->unique()->count();
+        $eventAlpha = $kegiatanRecords->where('status', 'Alpha')->pluck('tanggal')->unique()->count();
+
         return [
-            'sakit' => PresensiMurid::where('murid_id', $murid_id)->where('semester_id', $semester_id)->where('status', 'Sakit')->distinct('tanggal')->count('tanggal'),
-            'izin' => PresensiMurid::where('murid_id', $murid_id)->where('semester_id', $semester_id)->where('status', 'Izin')->distinct('tanggal')->count('tanggal'),
-            'alpha' => PresensiMurid::where('murid_id', $murid_id)->where('semester_id', $semester_id)->where('status', 'Alpha')->distinct('tanggal')->count('tanggal'),
+            'sakit' => $kbmSakit + $eventSakit,
+            'izin' => $kbmIzin + $eventIzin,
+            'alpha' => $kbmAlpha + $eventAlpha,
             'pelanggaran' => PelanggaranMurid::where('murid_id', $murid_id)->where('semester_id', $semester_id)->count()
         ];
     }

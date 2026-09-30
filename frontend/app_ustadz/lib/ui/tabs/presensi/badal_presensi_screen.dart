@@ -703,6 +703,8 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
         return AppColors.sakitTextLight;
       case 'Alpha':
         return AppColors.alphaTextLight;
+      case 'Bebas KBM':
+        return AppColors.amberAccent;
       case 'Kosong':
         return Colors.blueGrey;
       default:
@@ -1341,9 +1343,58 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
                         ),
                       ],
 
+                      // Jika sesi Bebas KBM
+                      if (item.isBebasKbm) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.amberAccent.withValues(
+                              alpha: 0.12,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.amberAccent.withValues(
+                                alpha: 0.25,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.pause_circle_filled_rounded,
+                                size: 14,
+                                color: AppColors.amberAccent,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  item.keteranganBebasKbm != null &&
+                                          item.keteranganBebasKbm!.isNotEmpty
+                                      ? 'Sesi Bebas KBM: ${item.keteranganBebasKbm}'
+                                      : 'Sesi Bebas KBM (Presensi tidak diberlakukan)',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.amberAccent
+                                        : const Color(0xFFB45309),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
                       // Jika ada alasan / keterangan presensi guru tercatat
                       if (item.ustadzKeterangan != null &&
-                          item.ustadzKeterangan!.isNotEmpty) ...[
+                          item.ustadzKeterangan!.isNotEmpty &&
+                          !item.isBebasKbm) ...[
                         const SizedBox(height: 6),
                         Container(
                           width: double.infinity,
@@ -1392,6 +1443,7 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
 
                       const SizedBox(height: 12),
 
+                      if (!item.isBebasKbm) ...[
                       // Status Presensi Murid & Tombol Aksi
                       Row(
                         children: [
@@ -1479,6 +1531,7 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
                         ),
                       ),
                     ],
+                      ],
                   ),
                 );
               }),

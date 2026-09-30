@@ -27,28 +27,56 @@
                         class="m3-input-glass w-full !pl-9 !pr-3 text-xs font-bold cursor-pointer">
                 </div>
 
-                <!-- Filter Ruangan -->
-                <div class="relative w-full sm:w-48 group/select">
-                    <div
-                        class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 group-focus-within/select:text-primary dark:group-focus-within/select:text-primary-dark transition-colors">
-                        <i class="bi bi-door-open text-xs"></i>
-                    </div>
-                    <select name="ruangan_id" onchange="document.getElementById('formFilter').submit()"
-                        class="m3-input-glass w-full !pl-9 !pr-9 text-xs font-bold cursor-pointer appearance-none">
-                        <option value="" class="bg-white dark:bg-zinc-900 text-zinc-500">-- Semua Ruangan --
-                        </option>
-                        @foreach ($ruangans as $r)
-                            <option value="{{ $r->id }}"
-                                class="bg-white dark:bg-zinc-900 text-zinc-800 dark:text-white"
-                                {{ $ruangan_id == $r->id ? 'selected' : '' }}>
-                                {{ $r->nama_ruangan }}
+                @if (!empty($isEvent))
+                    <!-- Filter Sesi (Event Mode) -->
+                    @if (count($sesiList ?? []) > 1)
+                        <div class="relative w-full sm:w-40 group/select">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 group-focus-within/select:text-indigo-600 dark:group-focus-within/select:text-indigo-400 transition-colors">
+                                <i class="bi bi-clock-history text-xs"></i>
+                            </div>
+                            <select name="sesi" onchange="document.getElementById('formFilter').submit()"
+                                class="m3-input-glass w-full !pl-9 !pr-9 text-xs font-bold cursor-pointer appearance-none">
+                                <option value="" {{ empty($sesi_filter) ? 'selected' : '' }}>-- Semua Sesi --
+                                </option>
+                                @foreach ($sesiList as $s)
+                                    <option value="{{ $s }}"
+                                        {{ ($sesi_filter ?? '') == $s ? 'selected' : '' }}>
+                                        Sesi {{ $s }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
+                                <i class="bi bi-chevron-down text-xs font-bold"></i>
+                            </div>
+                        </div>
+                    @endif
+                @else
+                    <!-- Filter Ruangan (KBM Mode) -->
+                    <div class="relative w-full sm:w-48 group/select">
+                        <div
+                            class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 group-focus-within/select:text-primary dark:group-focus-within/select:text-primary-dark transition-colors">
+                            <i class="bi bi-door-open text-xs"></i>
+                        </div>
+                        <select name="ruangan_id" onchange="document.getElementById('formFilter').submit()"
+                            class="m3-input-glass w-full !pl-9 !pr-9 text-xs font-bold cursor-pointer appearance-none">
+                            <option value="" class="bg-white dark:bg-zinc-900 text-zinc-500">-- Semua Ruangan --
                             </option>
-                        @endforeach
-                    </select>
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
-                        <i class="bi bi-chevron-down text-xs font-bold"></i>
+                            @foreach ($ruangans as $r)
+                                <option value="{{ $r->id }}"
+                                    class="bg-white dark:bg-zinc-900 text-zinc-800 dark:text-white"
+                                    {{ $ruangan_id == $r->id ? 'selected' : '' }}>
+                                    {{ $r->nama_ruangan }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
+                            <i class="bi bi-chevron-down text-xs font-bold"></i>
+                        </div>
                     </div>
-                </div>
+                @endif
 
                 <!-- Filter Status -->
                 <div class="relative w-full sm:w-40 group/select">
@@ -63,8 +91,11 @@
                         <option value="Sakit" {{ $status_filter === 'Sakit' ? 'selected' : '' }}>Sakit</option>
                         <option value="Izin" {{ $status_filter === 'Izin' ? 'selected' : '' }}>Izin</option>
                         <option value="Alpha" {{ $status_filter === 'Alpha' ? 'selected' : '' }}>Alpha</option>
-                        <option value="Badal" {{ $status_filter === 'Badal' ? 'selected' : '' }}>Digantikan (Badal)
-                        </option>
+                        @if (empty($isEvent))
+                            <option value="Badal" {{ $status_filter === 'Badal' ? 'selected' : '' }}>Digantikan
+                                (Badal)
+                            </option>
+                        @endif
                         <option value="Belum" {{ $status_filter === 'Belum' ? 'selected' : '' }}>Belum Absen</option>
                     </select>
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
@@ -84,7 +115,43 @@
 
     </div>
 
-    @if (!empty($isUjian))
+    @if (!empty($isEvent))
+        <!-- BANNER EVENT AKTIF -->
+        <div
+            class="mb-6 m3-glass-card p-4 md:p-5 border-indigo-500/30 bg-indigo-500/10 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div
+                    class="w-11 h-11 bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center text-xl shrink-0 border border-indigo-500/30">
+                    <i class="bi bi-calendar-event-fill"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-extrabold text-[10px] uppercase tracking-wider">
+                            {{ $eventInfo->tipe_presensi === 'multi_sesi' ? 'Kegiatan Multi-Sesi' : 'Hari Efektif Non-KBM' }}
+                        </span>
+                        @if ($eventInfo->tipe_presensi === 'multi_sesi' && !empty($sesiList))
+                            <span class="text-xs font-bold text-zinc-600 dark:text-zinc-300">
+                                Sesi: <strong
+                                    class="text-indigo-600 dark:text-indigo-400">{{ implode(', ', $sesiList) }}</strong>
+                            </span>
+                        @endif
+                    </div>
+                    <h4 class="text-sm font-black text-zinc-900 dark:text-white mt-0.5">
+                        {{ $eventInfo->nama_kegiatan }}
+                    </h4>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                        Presensi kehadiran Dewan Asatidz untuk agenda kegiatan ini.
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('kalendar-pendidikan.index') }}"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-xs border border-indigo-500/20 transition-all shrink-0">
+                <i class="bi bi-calendar3 text-xs"></i>
+                <span>Lihat Agenda Kalender</span>
+            </a>
+        </div>
+    @elseif (!empty($isUjian))
         <!-- BANNER INFO JADWAL/MASA UJIAN -->
         <div
             class="mb-6 m3-glass-card p-4 md:p-5 border-violet-500/30 bg-violet-500/10 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -141,9 +208,11 @@
             <!-- Card 1: Total Pengampu -->
             <div class="m3-glass-card p-3.5 flex flex-col justify-center shadow-2xs">
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Total
-                        Jadwal</span>
-                    <i class="bi bi-person-video3 text-zinc-400 text-sm"></i>
+                    <span class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                        {{ !empty($isEvent) ? 'Total Target' : 'Total Jadwal' }}
+                    </span>
+                    <i
+                        class="bi {{ !empty($isEvent) ? 'bi-calendar-event text-indigo-500' : 'bi-person-video3 text-zinc-400' }} text-sm"></i>
                 </div>
                 <h3 class="text-xl font-black text-zinc-900 dark:text-white leading-tight">{{ $totalPengampu }}</h3>
                 <p class="text-[9px] font-bold text-zinc-400 dark:text-zinc-500">Guru / Sesi</p>
@@ -173,25 +242,30 @@
                 </div>
                 <h3 class="text-xl font-black text-amber-600 dark:text-amber-400 leading-tight">
                     {{ $totalIzin + $totalSakit }}</h3>
-                <p class="text-[9px] font-bold text-amber-500/80">{{ $totalSakit }} Sakit • {{ $totalIzin }} Izin
+                <p class="text-[9px] font-bold text-amber-500/80">{{ $totalSakit }} Sakit • {{ $totalIzin }}
+                    Izin
                 </p>
             </div>
 
             <!-- Card 4: Badal / Pengganti -->
             <div class="m3-glass-card p-3.5 flex flex-col justify-center shadow-2xs">
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">Badal
-                        (Piket)</span>
-                    <i class="bi bi-arrow-left-right text-sky-500 text-sm"></i>
+                    <span class="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+                        {{ !empty($isEvent) ? 'Dispen' : 'Badal (Piket)' }}
+                    </span>
+                    <i
+                        class="bi {{ !empty($isEvent) ? 'bi-patch-check-fill text-purple-500' : 'bi-arrow-left-right text-sky-500' }} text-sm"></i>
                 </div>
                 <h3 class="text-xl font-black text-sky-600 dark:text-sky-400 leading-tight">{{ $totalBadal }}</h3>
-                <p class="text-[9px] font-bold text-sky-500/80">Guru Pengganti</p>
+                <p class="text-[9px] font-bold text-sky-500/80">
+                    {{ !empty($isEvent) ? 'Dispensasi' : 'Guru Pengganti' }}</p>
             </div>
 
             <!-- Card 5: Alpha / Kosong -->
             <div class="m3-glass-card p-3.5 flex flex-col justify-center shadow-2xs">
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">Alpha
+                    <span
+                        class="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">Alpha
                         /
                         Kosong</span>
                     <i class="bi bi-exclamation-octagon-fill text-rose-500 text-sm"></i>
@@ -206,7 +280,8 @@
             <!-- Card 6: Belum Absen -->
             <div class="m3-glass-card p-3.5 flex flex-col justify-center shadow-2xs">
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Belum
+                    <span
+                        class="text-[10px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Belum
                         Absen</span>
                     <i class="bi bi-hourglass-split text-zinc-400 text-sm"></i>
                 </div>
@@ -224,21 +299,20 @@
                     <h3
                         class="font-black text-zinc-900 dark:text-white text-base tracking-tight leading-tight uppercase">
                         Monitoring Presensi Ustadz — <span
-                            class="text-primary dark:text-primary-dark">{{ \Carbon\Carbon::parse($tanggal)->translatedFormat('l, d F Y') }}</span>
+                            class="{{ !empty($isEvent) ? 'text-indigo-600 dark:text-indigo-400' : 'text-primary dark:text-primary-dark' }}">{{ \Carbon\Carbon::parse($tanggal)->translatedFormat('l, d F Y') }}</span>
                     </h3>
                     <p
                         class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center mt-0.5">
-                        <i class="bi bi-info-circle-fill mr-1.5 opacity-70"></i> Pantauan status check-in kehadiran
-                        seluruh
-                        dewan asatidz hari ini.
+                        <i class="bi bi-info-circle-fill mr-1.5 opacity-70"></i>
+                        {{ !empty($isEvent) ? 'Pantauan kehadiran dewan asatidz pada kegiatan ' . ($eventInfo->nama_kegiatan ?? 'Event') : 'Pantauan status check-in kehadiran seluruh dewan asatidz hari ini.' }}
                     </p>
                 </div>
             </div>
 
             @if (empty($detailProgres))
                 <div class="p-8">
-                    <x-empty-state icon="bi-calendar-x" title="Tidak Ada Jadwal"
-                        message="Tidak ditemukan jadwal mengajar yang aktif pada hari {{ $hari_ini }} atau parameter filter yang Anda tentukan." />
+                    <x-empty-state icon="bi-calendar-x" title="Tidak Ada Data"
+                        message="Tidak ditemukan data yang aktif pada tanggal {{ $tanggal }} atau parameter filter yang Anda tentukan." />
                 </div>
             @else
                 <div class="overflow-x-auto relative z-10 custom-scrollbar">
@@ -250,19 +324,21 @@
                                 <th
                                     class="py-3 px-4 w-12 text-center border-r border-zinc-200/60 dark:border-zinc-800/60">
                                     No</th>
-                                <th class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">Guru Pengampu
+                                <th class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">Dewan Asatidz
                                 </th>
-                                <th class="py-3 px-4 w-44 border-r border-zinc-200/60 dark:border-zinc-800/60">Ruangan
-                                    &
-                                    Jam</th>
-                                <th class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">Mata
-                                    Pelajaran
-                                </th>
+                                @if (!empty($isEvent))
+                                    <th class="py-3 px-4 w-52 border-r border-zinc-200/60 dark:border-zinc-800/60">
+                                        Agenda & Sesi</th>
+                                @else
+                                    <th class="py-3 px-4 w-44 border-r border-zinc-200/60 dark:border-zinc-800/60">
+                                        Ruangan & Jam</th>
+                                    <th class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">Mata
+                                        Pelajaran</th>
+                                @endif
                                 <th class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">Status
-                                    Kehadiran
-                                </th>
-                                <th class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">Check-In /
-                                    Badal
+                                    Kehadiran</th>
+                                <th class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">
+                                    {{ !empty($isEvent) ? 'Check-In / Keterangan' : 'Check-In / Badal' }}
                                 </th>
                                 <th class="py-3 px-4 w-28 text-center">Aksi</th>
                             </tr>
@@ -271,18 +347,22 @@
                             @php $no = 1; @endphp
                             @foreach ($detailProgres as $item)
                                 @php
-                                    $j = $item['jadwal'];
+                                    $isEventItem = !empty($item['is_event']);
                                     $u = $item['ustadz'];
                                     $p = $item['presensi'];
-                                    $isUtama = $item['is_utama'];
+                                    $isUtama = $item['is_utama'] ?? true;
                                     $status = $item['status'];
-                                    $jamText = match ($j->jam_ke) {
-                                        'Nadzoman' => '13:45 - 14:00',
-                                        '1' => '14:00 - 14:45',
-                                        '2' => '15:30 - 16:15',
-                                        'Ekstra' => '20:00 - 21:00',
-                                        default => 'Jam Ke-' . $j->jam_ke,
-                                    };
+                                    $j = $item['jadwal'] ?? null;
+
+                                    if (!$isEventItem && $j) {
+                                        $jamText = match ($j->jam_ke) {
+                                            'Nadzoman' => '13:45 - 14:00',
+                                            '1' => '14:00 - 14:45',
+                                            '2' => '15:30 - 16:15',
+                                            'Ekstra' => '20:00 - 21:00',
+                                            default => 'Jam Ke-' . $j->jam_ke,
+                                        };
+                                    }
 
                                     $badgeColor = match ($status) {
                                         'Hadir'
@@ -293,41 +373,45 @@
                                         'Alpha' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
                                         'Kosong'
                                             => 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700',
+                                        'Bebas KBM'
+                                            => 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
                                         default
                                             => 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 border-zinc-200/50',
                                     };
                                 @endphp
                                 <tr
-                                    class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors {{ $p ? '' : 'bg-rose-500/[0.02]' }}">
+                                    class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors {{ $p ? '' : (!empty($item['is_bebas_kbm']) ? 'bg-amber-500/[0.02]' : 'bg-rose-500/[0.02]') }}">
                                     <!-- No -->
                                     <td
                                         class="py-3 px-4 text-center font-bold text-zinc-500 border-r border-zinc-200/60 dark:border-zinc-800/60">
                                         {{ $no++ }}
                                     </td>
 
-                                    <!-- Guru Pengampu -->
+                                    <!-- Dewan Asatidz -->
                                     <td class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">
                                         <div class="flex items-center gap-2">
                                             <div
-                                                class="w-8 h-8 rounded-full bg-primary/10 text-primary dark:text-primary-dark font-black text-xs flex items-center justify-center shrink-0 border border-primary/20">
+                                                class="w-8 h-8 rounded-full {{ $isEventItem ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' : 'bg-primary/10 text-primary dark:text-primary-dark border-primary/20' }} font-black text-xs flex items-center justify-center shrink-0 border">
                                                 {{ strtoupper(substr($u->nama_lengkap, 0, 1)) }}
                                             </div>
                                             <div>
                                                 <div
                                                     class="font-black text-zinc-900 dark:text-white text-xs flex items-center gap-1.5">
                                                     <span>{{ $u->nama_lengkap }}</span>
-                                                    @if ($isUtama)
-                                                        <span
-                                                            class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[8px] font-black uppercase"
-                                                            title="Guru Utama">
-                                                            <i class="bi bi-star-fill text-[7px]"></i> Utama
-                                                        </span>
-                                                    @else
-                                                        <span
-                                                            class="px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-[8px] font-black uppercase"
-                                                            title="Guru Pendamping">
-                                                            Pendamping
-                                                        </span>
+                                                    @if (!$isEventItem)
+                                                        @if ($isUtama)
+                                                            <span
+                                                                class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[8px] font-black uppercase"
+                                                                title="Guru Utama">
+                                                                <i class="bi bi-star-fill text-[7px]"></i> Utama
+                                                            </span>
+                                                        @else
+                                                            <span
+                                                                class="px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-[8px] font-black uppercase"
+                                                                title="Guru Pendamping">
+                                                                Pendamping
+                                                            </span>
+                                                        @endif
                                                     @endif
                                                 </div>
                                                 @if ($u->no_hp)
@@ -340,33 +424,49 @@
                                         </div>
                                     </td>
 
-                                    <!-- Ruangan & Jam -->
-                                    <td class="py-3 px-4 border-r border-zinc-200/60 dark:border-zinc-800/60">
-                                        <div class="font-black text-zinc-900 dark:text-white text-xs">
-                                            {{ $j->ruangan->nama_ruangan ?? '-' }}
-                                        </div>
-                                        <div class="flex items-center gap-1.5 mt-1">
-                                            <span
-                                                class="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[9px] font-black text-zinc-600 dark:text-zinc-400 uppercase">
-                                                Jam {{ $j->jam_ke }}
-                                            </span>
-                                            <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold">
-                                                {{ $jamText }}
-                                            </span>
-                                        </div>
-                                    </td>
-
-                                    <!-- Mata Pelajaran -->
-                                    <td class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">
-                                        <div class="font-black text-zinc-900 dark:text-white text-xs">
-                                            {{ $j->mataPelajaran->nama_mapel ?? '-' }}
-                                        </div>
-                                        @if ($j->ruangan?->level)
-                                            <div class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 mt-0.5">
-                                                Level: {{ $j->ruangan->level->nama_level }}
+                                    @if ($isEventItem)
+                                        <!-- Agenda & Sesi -->
+                                        <td class="py-3 px-4 border-r border-zinc-200/60 dark:border-zinc-800/60">
+                                            <div class="font-black text-zinc-900 dark:text-white text-xs">
+                                                {{ $item['nama_event'] }}
                                             </div>
-                                        @endif
-                                    </td>
+                                            <div class="flex items-center gap-1.5 mt-1">
+                                                <span
+                                                    class="px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-black text-indigo-700 dark:text-indigo-300 uppercase">
+                                                    Sesi {{ $item['sesi'] }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    @else
+                                        <!-- Ruangan & Jam -->
+                                        <td class="py-3 px-4 border-r border-zinc-200/60 dark:border-zinc-800/60">
+                                            <div class="font-black text-zinc-900 dark:text-white text-xs">
+                                                {{ $j->ruangan->nama_ruangan ?? '-' }}
+                                            </div>
+                                            <div class="flex items-center gap-1.5 mt-1">
+                                                <span
+                                                    class="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-[9px] font-black text-zinc-600 dark:text-zinc-400 uppercase">
+                                                    Jam {{ $j->jam_ke }}
+                                                </span>
+                                                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold">
+                                                    {{ $jamText ?? '-' }}
+                                                </span>
+                                            </div>
+                                        </td>
+
+                                        <!-- Mata Pelajaran -->
+                                        <td class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">
+                                            <div class="font-black text-zinc-900 dark:text-white text-xs">
+                                                {{ $j->mataPelajaran->nama_mapel ?? '-' }}
+                                            </div>
+                                            @if ($j->ruangan?->level)
+                                                <div
+                                                    class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 mt-0.5">
+                                                    Level: {{ $j->ruangan->level->nama_level }}
+                                                </div>
+                                            @endif
+                                        </td>
+                                    @endif
 
                                     <!-- Status Kehadiran -->
                                     <td class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">
@@ -381,12 +481,17 @@
                                                 title="{{ $p->keterangan }}">
                                                 "{{ $p->keterangan }}"
                                             </div>
+                                        @elseif (!empty($item['is_bebas_kbm']) && !empty($item['keterangan_bebas_kbm']))
+                                            <div class="text-[10px] text-amber-600/80 dark:text-amber-400/80 italic mt-1 truncate max-w-[200px]"
+                                                title="{{ $item['keterangan_bebas_kbm'] }}">
+                                                "{{ $item['keterangan_bebas_kbm'] }}"
+                                            </div>
                                         @endif
                                     </td>
 
                                     <!-- Badal / Info Checkin -->
                                     <td class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60">
-                                        @if ($item['guru_pengganti'])
+                                        @if (!empty($item['guru_pengganti']))
                                             <div
                                                 class="flex items-center gap-1.5 text-xs font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-lg">
                                                 <i class="bi bi-arrow-left-right text-[10px]"></i>
@@ -394,17 +499,22 @@
                                             </div>
                                         @elseif ($p)
                                             <div class="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
-                                                @if ($item['waktu_input'])
+                                                @if (!empty($item['waktu_input']))
                                                     <div><i class="bi bi-clock mr-1"></i> {{ $item['waktu_input'] }}
                                                         WIB
                                                     </div>
                                                 @endif
-                                                @if ($item['diinput_oleh'])
+                                                @if (!empty($item['diinput_oleh']))
                                                     <div class="text-zinc-400 dark:text-zinc-500 text-[9px] mt-0.5">
                                                         Oleh: {{ $item['diinput_oleh'] }}
                                                     </div>
                                                 @endif
                                             </div>
+                                        @elseif (!empty($item['is_bebas_kbm']))
+                                            <span
+                                                class="text-[10px] text-amber-600/80 dark:text-amber-400/80 font-medium">
+                                                {{ $item['keterangan_bebas_kbm'] ?? 'Bebas KBM' }}
+                                            </span>
                                         @else
                                             <span class="text-[10px] text-zinc-400 dark:text-zinc-500 italic">
                                                 Belum ada data
@@ -414,14 +524,32 @@
 
                                     <!-- Aksi -->
                                     <td class="py-3 px-4 text-center">
-                                        @can('create presensi-ustadz')
-                                            <a href="{{ route('presensi-ustadz.modalInput', ['tanggal' => $tanggal, 'jadwal_id' => $j->id, 'ustadz_id' => $u->id]) }}"
-                                                data-refresh-target="#data-grid-container"
-                                                class="action-modal {{ $p ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700' : 'bg-primary hover:bg-primary/90 text-white border-primary shadow-2xs' }} inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black border transition-all active:scale-95">
-                                                <i class="bi {{ $p ? 'bi-pencil-square' : 'bi-check-lg' }} text-xs"></i>
-                                                <span>{{ $p ? 'Edit' : 'Absen' }}</span>
-                                            </a>
-                                        @endcan
+                                        @if (!empty($item['is_bebas_kbm']))
+                                            <span
+                                                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-[10px] font-bold">
+                                                <i class="bi bi-dash-circle"></i> Bebas KBM
+                                            </span>
+                                        @else
+                                            @can('create presensi-ustadz')
+                                                @if ($isEventItem)
+                                                    <a href="{{ route('presensi-ustadz.modalInput', ['tanggal' => $tanggal, 'kalendar_id' => $item['kalendar_id'], 'ustadz_id' => $u->id, 'sesi' => $item['sesi']]) }}"
+                                                        data-refresh-target="#data-grid-container"
+                                                        class="action-modal {{ $p ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700' : 'm3-btn-primary !h-8 !px-3 !text-xs !bg-indigo-600 hover:!bg-indigo-700' }} inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black border transition-all active:scale-95 shadow-2xs">
+                                                        <i
+                                                            class="bi {{ $p ? 'bi-pencil-square' : 'bi-check-lg' }} text-xs"></i>
+                                                        <span>{{ $p ? 'Edit' : 'Absen' }}</span>
+                                                    </a>
+                                                @else
+                                                    <a href="{{ route('presensi-ustadz.modalInput', ['tanggal' => $tanggal, 'jadwal_id' => $j->id, 'ustadz_id' => $u->id]) }}"
+                                                        data-refresh-target="#data-grid-container"
+                                                        class="action-modal {{ $p ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700' : 'bg-primary hover:bg-primary/90 text-white border-primary shadow-2xs' }} inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black border transition-all active:scale-95">
+                                                        <i
+                                                            class="bi {{ $p ? 'bi-pencil-square' : 'bi-check-lg' }} text-xs"></i>
+                                                        <span>{{ $p ? 'Edit' : 'Absen' }}</span>
+                                                    </a>
+                                                @endif
+                                            @endcan
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

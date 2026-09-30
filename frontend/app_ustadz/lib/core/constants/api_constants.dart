@@ -3,9 +3,9 @@ class ApiConstants {
 
   // Backend API URL
   // static const String defaultBaseUrl = 'http://10.187.204.1:8000/api';
-  static const String defaultBaseUrl = 'http://127.0.0.1:8000/api';
-  // static const String defaultBaseUrl =
-  //     'https://mdt-hidayatus-shibyan.sch.id/api';
+  // static const String defaultBaseUrl = 'http://127.0.0.1:8000/api';
+  static const String defaultBaseUrl =
+      'https://mdt-hidayatus-shibyan.sch.id/api';
 
   static const String login = '/login';
   static const String logout = '/logout';
@@ -27,8 +27,13 @@ class ApiConstants {
   static const String presensiSesi = '/presensi-murid/sesi';
   static const String presensiMurid = '/presensi-murid/murid';
   static const String presensiSimpan = '/presensi-murid/simpan';
+  static const String presensiKegiatanMurid = '/presensi-kegiatan/murid';
+  static const String presensiKegiatanSimpanMurid =
+      '/presensi-kegiatan/simpan-murid';
   static const String presensiUstadzSesi = '/presensi-ustadz/sesi';
   static const String presensiUstadzCheckin = '/presensi-ustadz/checkin';
+  static const String presensiKegiatanCheckinUstadz =
+      '/presensi-kegiatan/checkin-ustadz';
   static const String presensiUstadzDaftar = '/presensi-ustadz/daftar-ustadz';
   static const String presensiUstadzRiwayat = '/presensi-ustadz/riwayat';
   static const String badalRuanganList = '/badal/ruangan-list';

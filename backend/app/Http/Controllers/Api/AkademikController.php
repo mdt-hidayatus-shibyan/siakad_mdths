@@ -241,7 +241,23 @@ class AkademikController extends Controller
         $grouped = [];
 
         foreach ($hariOrder as $hari) {
-            $hariJadwals = $jadwals->where('hari', $hari)->sortBy('jam_ke')->values();
+            $hariJadwals = $jadwals->where('hari', $hari)->sortBy([
+                fn($a, $b) => (match ((string) $a->jam_ke) {
+                    'Nadzoman' => 1,
+                    '1' => 2,
+                    '2' => 3,
+                    'Ekstra' => 4,
+                    default => is_numeric($a->jam_ke) ? (int)$a->jam_ke + 10 : 99
+                })
+                    <=> (match ((string) $b->jam_ke) {
+                        'Nadzoman' => 1,
+                        '1' => 2,
+                        '2' => 3,
+                        'Ekstra' => 4,
+                        default => is_numeric($b->jam_ke) ? (int)$b->jam_ke + 10 : 99
+                    }),
+                fn($a, $b) => strnatcasecmp($a->ruangan?->nama_ruangan ?? '', $b->ruangan?->nama_ruangan ?? ''),
+            ])->values();
 
             $grouped[] = [
                 'hari' => $hari,
@@ -309,7 +325,23 @@ class AkademikController extends Controller
                 $totalJadwalRuanganMingguan = $jadwalRuangan->count();
 
                 foreach ($hariOrder as $hari) {
-                    $hariJadwals = $jadwalRuangan->where('hari', $hari)->sortBy('jam_ke')->values();
+                    $hariJadwals = $jadwalRuangan->where('hari', $hari)->sortBy([
+                        fn($a, $b) => (match ((string) $a->jam_ke) {
+                            'Nadzoman' => 1,
+                            '1' => 2,
+                            '2' => 3,
+                            'Ekstra' => 4,
+                            default => is_numeric($a->jam_ke) ? (int)$a->jam_ke + 10 : 99
+                        })
+                            <=> (match ((string) $b->jam_ke) {
+                                'Nadzoman' => 1,
+                                '1' => 2,
+                                '2' => 3,
+                                'Ekstra' => 4,
+                                default => is_numeric($b->jam_ke) ? (int)$b->jam_ke + 10 : 99
+                            }),
+                        fn($a, $b) => strnatcasecmp($a->ruangan?->nama_ruangan ?? '', $b->ruangan?->nama_ruangan ?? ''),
+                    ])->values();
 
                     $jadwalRuanganGrouped[] = [
                         'hari' => $hari,

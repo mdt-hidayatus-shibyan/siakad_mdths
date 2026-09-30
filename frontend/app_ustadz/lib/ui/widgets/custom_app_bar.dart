@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import 'signal_indicator_widget.dart';
 
 /// Reusable Circular Icon Button for AppBars and Actions
 class CircularIconButton extends StatelessWidget {
@@ -84,6 +85,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool centerTitle;
   final PreferredSizeWidget? bottom;
   final Color? backgroundColor;
+  final bool showSignalIndicator;
 
   const CustomAppBar({
     super.key,
@@ -97,6 +99,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.centerTitle = true,
     this.bottom,
     this.backgroundColor,
+    this.showSignalIndicator = true,
   });
 
   @override
@@ -165,6 +168,24 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       );
     }
 
+    List<Widget>? effectiveActions;
+    if (showSignalIndicator || actions != null) {
+      effectiveActions = [
+        if (actions != null)
+          ...actions!.map(
+            (action) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(child: action),
+            ),
+          ),
+        if (showSignalIndicator)
+          const Padding(
+            padding: EdgeInsets.only(right: 14),
+            child: Center(child: SignalIndicatorWidget()),
+          ),
+      ];
+    }
+
     return AppBar(
       backgroundColor: backgroundColor ?? Colors.transparent,
       elevation: 0,
@@ -173,17 +194,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       leadingWidth: 58,
       leading: leadingWidget,
       title: titleWidget,
-      actions: actions != null
-          ? [
-              ...actions!.map(
-                (action) => Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Center(child: action),
-                ),
-              ),
-              const SizedBox(width: 4),
-            ]
-          : null,
+      actions: effectiveActions,
       bottom: bottom,
     );
   }

@@ -9,6 +9,7 @@ use App\Models\Level;
 use App\Models\Murid;
 use App\Models\PelanggaranMurid;
 use App\Models\PengaturanAkademik;
+use App\Models\PresensiKegiatanMurid;
 use App\Models\PresensiMurid;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
@@ -95,6 +96,9 @@ class RiwayatKenaikanController extends Controller
 
                 $muridIds = $ruanganTerpilih->murids->pluck('id');
                 $semuaPresensiKamar = PresensiMurid::whereIn('murid_id', $muridIds)->get();
+                $semuaPresensiKegiatan = PresensiKegiatanMurid::whereIn('murid_id', $muridIds)
+                    ->where('ruangan_id', $ruanganTerpilih->id)
+                    ->get();
 
                 // 2. Ambil nilai & pelanggaran kamar sekaligus di luar perulangan
                 $semuaNilaiKamar = NilaiUjian::whereIn('murid_id', $muridIds)
@@ -112,6 +116,7 @@ class RiwayatKenaikanController extends Controller
                     // Filter pelanggaran milik murid ini saja
                     $pelanggaranMuridIni = $semuaPelanggaranKamar->where('murid_id', $murid->id);
                     $presensiMuridIni = $semuaPresensiKamar->where('murid_id', $murid->id);
+                    $presensiKegiatanMuridIni = $semuaPresensiKegiatan->where('murid_id', $murid->id);
 
                     // =========================================================
                     // KALKULASI SEMESTER 1
@@ -124,9 +129,14 @@ class RiwayatKenaikanController extends Controller
                             || ($bulanSem1->isNotEmpty() && $bulanSem1->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
                     });
 
-                    // Hitung riil jumlah Alpha dan Izin Semester 1
-                    $jumlahAlpha1 = $presensiSem1->where('status', 'Alpha')->count();
-                    $jumlahIzin1 = $presensiSem1->where('status', 'Izin')->count();
+                    $presensiKegiatanSem1 = $presensiKegiatanMuridIni->filter(function ($p) use ($sem1, $bulanSem1) {
+                        return ($sem1 && $sem1->tanggal_mulai && $sem1->tanggal_selesai && $p->tanggal >= substr($sem1->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem1->tanggal_selesai, 0, 10))
+                            || ($bulanSem1->isNotEmpty() && $bulanSem1->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
+                    });
+
+                    // Hitung riil jumlah Alpha dan Izin Semester 1 (KBM Reguler + Event Non-KBM)
+                    $jumlahAlpha1 = $presensiSem1->where('status', 'Alpha')->count() + $presensiKegiatanSem1->where('status', 'Alpha')->count();
+                    $jumlahIzin1 = $presensiSem1->where('status', 'Izin')->count() + $presensiKegiatanSem1->where('status', 'Izin')->count();
 
                     $poinKehadiran1 = ($jumlahAlpha1 * $tarifAlpha) + ($jumlahIzin1 * $tarifIzin);
 
@@ -151,8 +161,14 @@ class RiwayatKenaikanController extends Controller
                             || ($bulanSem2->isNotEmpty() && $bulanSem2->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
                     });
 
-                    $jumlahAlpha2 = $presensiSem2->where('status', 'Alpha')->count();
-                    $jumlahIzin2 = $presensiSem2->where('status', 'Izin')->count();
+                    $presensiKegiatanSem2 = $presensiKegiatanMuridIni->filter(function ($p) use ($sem2, $bulanSem2) {
+                        return ($sem2 && $sem2->tanggal_mulai && $sem2->tanggal_selesai && $p->tanggal >= substr($sem2->tanggal_mulai, 0, 10) && $p->tanggal <= substr($sem2->tanggal_selesai, 0, 10))
+                            || ($bulanSem2->isNotEmpty() && $bulanSem2->contains(fn($b) => $p->tanggal >= $b->tanggal_mulai_masehi && $p->tanggal <= $b->tanggal_selesai_masehi));
+                    });
+
+                    // Hitung riil jumlah Alpha dan Izin Semester 2 (KBM Reguler + Event Non-KBM)
+                    $jumlahAlpha2 = $presensiSem2->where('status', 'Alpha')->count() + $presensiKegiatanSem2->where('status', 'Alpha')->count();
+                    $jumlahIzin2 = $presensiSem2->where('status', 'Izin')->count() + $presensiKegiatanSem2->where('status', 'Izin')->count();
 
                     $poinKehadiran2 = ($jumlahAlpha2 * $tarifAlpha) + ($jumlahIzin2 * $tarifIzin);
 

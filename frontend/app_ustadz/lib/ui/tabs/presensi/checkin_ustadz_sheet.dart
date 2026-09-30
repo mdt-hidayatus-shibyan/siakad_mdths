@@ -7,16 +7,21 @@ import '../../../providers/presensi_provider.dart';
 
 class CheckinUstadzSheet extends StatefulWidget {
   final SesiPresensiUstadzItem sesi;
+  final DateTime? tanggal;
 
-  const CheckinUstadzSheet({super.key, required this.sesi});
+  const CheckinUstadzSheet({super.key, required this.sesi, this.tanggal});
 
-  static Future<void> show(BuildContext context, SesiPresensiUstadzItem sesi) {
+  static Future<void> show(
+    BuildContext context,
+    SesiPresensiUstadzItem sesi, [
+    DateTime? tanggal,
+  ]) {
     HapticHelper.light();
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => CheckinUstadzSheet(sesi: sesi),
+      builder: (_) => CheckinUstadzSheet(sesi: sesi, tanggal: tanggal),
     );
   }
 
@@ -89,9 +94,11 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
             const SizedBox(height: 16),
 
             Text(
-              widget.sesi.isMilikWali
-                  ? 'Presensi Ustadz (Kelas Binaan)'
-                  : 'Check-In Presensi Mengajar',
+              widget.sesi.isEvent
+                  ? 'Presensi Ustadz - Kegiatan'
+                  : (widget.sesi.isMilikWali
+                        ? 'Presensi Ustadz (Kelas Binaan)'
+                        : 'Check-In Presensi Mengajar'),
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
@@ -100,7 +107,9 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Guru: ${widget.sesi.guruPengajar} • ${widget.sesi.mapel} - ${widget.sesi.ruangan} (${widget.sesi.jam})',
+              widget.sesi.isEvent
+                  ? '${widget.sesi.namaKegiatan ?? "Kegiatan"} • Sesi ${widget.sesi.sesi ?? ""}'
+                  : 'Guru: ${widget.sesi.guruPengajar} • ${widget.sesi.mapel} - ${widget.sesi.ruangan} (${widget.sesi.jam})',
               style: TextStyle(
                 fontSize: 12,
                 color: isDark
@@ -108,6 +117,57 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
                     : const Color(0xFF73796E),
               ),
             ),
+            if (widget.sesi.isBebasKbm) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.amberAccent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.amberAccent.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.pause_circle_filled_rounded,
+                      color: AppColors.amberAccent,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Sesi Bebas KBM',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.amberAccent,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.sesi.keteranganBebasKbm != null &&
+                                    widget.sesi.keteranganBebasKbm!.isNotEmpty
+                                ? widget.sesi.keteranganBebasKbm!
+                                : 'Tidak ada keberlakuan presensi mengajar pada jam ini.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF78350F),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
 
             // Pilihan Ustadz jika Team Teaching (Multi-Pengampu)
@@ -211,8 +271,8 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Ustadz Pengganti (Badal) Dropdown
-            if (isBadalNeeded) ...[
+            // Ustadz Pengganti (Badal) Dropdown (Hanya jika KBM Reguler & butuh badal)
+            if (isBadalNeeded && !widget.sesi.isEvent) ...[
               const Text(
                 'Guru Badal / Pengganti (Opsional):',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
@@ -280,21 +340,33 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
                   ? null
                   : () async {
                       Navigator.pop(context);
-                      final success = await provider.checkinUstadz(
-                        jadwalId: widget.sesi.jadwalId,
-                        ustadzId: _selectedUstadzId,
-                        status: _selectedStatus,
-                        ustadzPenggantiId: _selectedBadalId,
-                        keterangan: _ketController.text.trim(),
-                      );
+                      final bool success;
+                      if (widget.sesi.isEvent) {
+                        success = await provider.checkinKegiatanUstadz(
+                          kalendarId: widget.sesi.kalendarPendidikanId ?? 0,
+                          sesi: widget.sesi.sesi ?? '',
+                          status: _selectedStatus,
+                          keterangan: _ketController.text.trim(),
+                          customDate: widget.tanggal,
+                        );
+                      } else {
+                        success = await provider.checkinUstadz(
+                          jadwalId: widget.sesi.jadwalId,
+                          ustadzId: _selectedUstadzId,
+                          status: _selectedStatus,
+                          ustadzPenggantiId: _selectedBadalId,
+                          keterangan: _ketController.text.trim(),
+                        );
+                      }
 
                       if (!context.mounted) return;
                       if (success) {
+                        final msg = widget.sesi.isEvent
+                            ? 'Presensi Ustadz sesi ${widget.sesi.sesi} (${widget.sesi.namaKegiatan ?? "Kegiatan"}) berhasil disimpan!'
+                            : 'Presensi sesi ${widget.sesi.mapel} berhasil disimpan!';
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                              'Presensi sesi ${widget.sesi.mapel} berhasil disimpan!',
-                            ),
+                            content: Text(msg),
                             backgroundColor: AppColors.hadirTextLight,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
@@ -319,7 +391,11 @@ class _CheckinUstadzSheetState extends State<CheckinUstadzSheet> {
                       }
                     },
               icon: const Icon(Icons.check_rounded, size: 18),
-              label: const Text('Simpan Presensi Mengajar'),
+              label: Text(
+                widget.sesi.isEvent
+                    ? 'Simpan Presensi Kegiatan'
+                    : 'Simpan Presensi Mengajar',
+              ),
             ),
           ],
         ),

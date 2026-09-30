@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\BulanHijriyah;
 use App\Models\HariLibur;
 use App\Models\JadwalPelajaran;
+use App\Models\KalendarPendidikan;
+use App\Models\PresensiKegiatanMurid;
 use App\Models\PresensiMurid;
 use App\Models\Semester;
 use App\Repositories\MuridRuanganRepository;
@@ -62,6 +64,17 @@ class PresensiMuridService
             ->whereBetween('tanggal_ujian', [$bulanTerpilih->tanggal_mulai_masehi, $bulanTerpilih->tanggal_selesai_masehi])
             ->get();
 
+        // Ambil Event Kalender Pendidikan dengan Presensi Aktif
+        $events = KalendarPendidikan::where('tipe_presensi', '!=', 'tidak_ada')
+            ->where(function ($q) use ($bulanTerpilih) {
+                $q->whereBetween('tanggal_mulai', [$bulanTerpilih->tanggal_mulai_masehi, $bulanTerpilih->tanggal_selesai_masehi])
+                    ->orWhereBetween('tanggal_selesai', [$bulanTerpilih->tanggal_mulai_masehi, $bulanTerpilih->tanggal_selesai_masehi])
+                    ->orWhere(function ($sub) use ($bulanTerpilih) {
+                        $sub->where('tanggal_mulai', '<=', $bulanTerpilih->tanggal_mulai_masehi)
+                            ->where('tanggal_selesai', '>=', $bulanTerpilih->tanggal_selesai_masehi);
+                    });
+            })->get();
+
         $mapHari = [
             'Sunday'    => 'Ahad',
             'Monday'    => 'Senin',
@@ -90,6 +103,15 @@ class PresensiMuridService
                 $liburSelesaiStr = Carbon::parse($libur->tanggal_selesai)->format('Y-m-d');
 
                 if ($tglMasehi >= $liburMulaiStr && $tglMasehi <= $liburSelesaiStr) {
+                    if ($libur->ruangan_id && $libur->ruangan_id != $ruanganId) {
+                        continue;
+                    }
+                    if ($libur->tipe_libur === 'Sebagian Jam' && is_array($libur->jam_ke)) {
+                        if (!in_array($jamKe, $libur->jam_ke)) {
+                            continue;
+                        }
+                    }
+
                     $isLiburMadrasah = true;
                     $keteranganLibur = $libur->keterangan;
                     break;
@@ -123,48 +145,96 @@ class PresensiMuridService
                 }
             }
 
+            // Cek Event Khusus dengan Presensi Aktif
+            $isEvent = false;
+            $eventInfo = null;
+            if (!$isLiburMadrasah && !$isUjian) {
+                foreach ($events as $ev) {
+                    $evMulai = Carbon::parse($ev->tanggal_mulai)->format('Y-m-d');
+                    $evSelesai = Carbon::parse($ev->tanggal_selesai)->format('Y-m-d');
+                    if ($tglMasehi >= $evMulai && $tglMasehi <= $evSelesai) {
+                        $isEvent = true;
+                        $eventInfo = $ev;
+                        break;
+                    }
+                }
+            }
+
             $dates[$i + 1] = [
                 'masehi'            => $tglMasehi,
                 'hari'              => $hariIndo,
-                'is_jadwal'         => ($isUjian || $isLiburMadrasah || $hariIndo === 'Jumat') ? false : $isAdaJadwal,
-                'jadwal_id'         => ($isUjian || $isLiburMadrasah || $hariIndo === 'Jumat') ? null : ($jadwalHariIni ? $jadwalHariIni->id : null),
-                'mapel'             => $jadwalHariIni ? $jadwalHariIni->mataPelajaran->nama_mapel : null,
+                'is_jadwal'         => ($isUjian || $isLiburMadrasah || $isEvent || $hariIndo === 'Jumat') ? false : $isAdaJadwal,
+                'jadwal_id'         => ($isUjian || $isLiburMadrasah || $isEvent || $hariIndo === 'Jumat') ? null : ($jadwalHariIni ? $jadwalHariIni->id : null),
+                'mapel'             => $isEvent ? $eventInfo->nama_kegiatan : ($jadwalHariIni ? $jadwalHariIni->mataPelajaran->nama_mapel : null),
                 'is_libur_madrasah' => $isLiburMadrasah,
                 'keterangan_libur'  => $keteranganLibur,
                 'is_ujian'          => $isUjian,
                 'nama_ujian'        => $namaUjian,
                 'ujian_id'          => $ujianId,
+                'is_event'          => $isEvent,
+                'event_id'          => $eventInfo?->id,
+                'nama_event'        => $eventInfo?->nama_kegiatan,
+                'tipe_presensi'     => $eventInfo?->tipe_presensi,
+                'sesi_kegiatan'     => $eventInfo?->sesi_kegiatan,
             ];
         }
 
         $matrix = [];
         $jadwalIds = $jadwals->pluck('id')->toArray();
 
-        if (!empty($jadwalIds) && $murids->isNotEmpty()) {
-            $presensiDb = PresensiMurid::whereIn('murid_id', $murids->pluck('id'))
-                ->whereBetween('tanggal', [$bulanTerpilih->tanggal_mulai_masehi, $bulanTerpilih->tanggal_selesai_masehi])
-                ->whereIn('jadwal_pelajaran_id', $jadwalIds)
-                ->get();
+        if ($murids->isNotEmpty()) {
+            // 1. Ambil Presensi KBM Reguler
+            if (!empty($jadwalIds)) {
+                $presensiDb = PresensiMurid::whereIn('murid_id', $murids->pluck('id'))
+                    ->whereBetween('tanggal', [$bulanTerpilih->tanggal_mulai_masehi, $bulanTerpilih->tanggal_selesai_masehi])
+                    ->whereIn('jadwal_pelajaran_id', $jadwalIds)
+                    ->get();
 
-            foreach ($presensiDb as $p) {
-                $char = match ($p->status) {
-                    'Hadir'      => 'H',
-                    'Sakit'      => 'S',
-                    'Izin'       => 'I',
-                    'Alpha'      => 'A',
-                    'Dispensasi' => 'D',
-                    default      => '-'
-                };
+                foreach ($presensiDb as $p) {
+                    $char = match ($p->status) {
+                        'Hadir'      => 'H',
+                        'Sakit'      => 'S',
+                        'Izin'       => 'I',
+                        'Alpha'      => 'A',
+                        'Dispensasi' => 'D',
+                        default      => '-'
+                    };
 
-                $tglStr = is_string($p->tanggal) ? $p->tanggal : Carbon::parse($p->tanggal)->format('Y-m-d');
+                    $tglStr = is_string($p->tanggal) ? $p->tanggal : Carbon::parse($p->tanggal)->format('Y-m-d');
+                    $matrix[$p->murid_id][$tglStr] = $char;
+                }
+            }
 
-                // Simpan dalam format tanggal masehi (YYYY-MM-DD)
-                $matrix[$p->murid_id][$tglStr] = $char;
+            // 2. Ambil Presensi Event Khusus / Kegiatan
+            if ($events->isNotEmpty()) {
+                $presensiEventDb = PresensiKegiatanMurid::whereIn('murid_id', $murids->pluck('id'))
+                    ->where('ruangan_id', $ruanganId)
+                    ->whereBetween('tanggal', [$bulanTerpilih->tanggal_mulai_masehi, $bulanTerpilih->tanggal_selesai_masehi])
+                    ->whereIn('kalendar_pendidikan_id', $events->pluck('id'))
+                    ->get();
 
-                // Simpan juga dalam format nomor hari (1..30) untuk kompatibilitas
-                foreach ($dates as $tglKe => $dInfo) {
-                    if ($dInfo['masehi'] === $tglStr) {
-                        $matrix[$p->murid_id][$tglKe] = $char;
+                foreach ($presensiEventDb as $pe) {
+                    $char = match ($pe->status) {
+                        'Hadir'      => 'H',
+                        'Sakit'      => 'S',
+                        'Izin'       => 'I',
+                        'Alpha'      => 'A',
+                        'Dispensasi' => 'D',
+                        default      => '-'
+                    };
+
+                    $tglStr = is_string($pe->tanggal) ? $pe->tanggal : Carbon::parse($pe->tanggal)->format('Y-m-d');
+                    // Jika belum diset atau prioritas event
+                    $matrix[$pe->murid_id][$tglStr] = $char;
+                }
+            }
+
+            // Simpan juga dalam format nomor hari (1..30) untuk kompatibilitas
+            foreach ($dates as $tglKe => $dInfo) {
+                $tglStr = $dInfo['masehi'];
+                foreach ($murids as $m) {
+                    if (isset($matrix[$m->id][$tglStr])) {
+                        $matrix[$m->id][$tglKe] = $matrix[$m->id][$tglStr];
                     }
                 }
             }
@@ -224,8 +294,6 @@ class PresensiMuridService
                         continue;
                     }
 
-                    if (!$dInfo['is_jadwal'] || !$dInfo['jadwal_id']) continue;
-
                     $statusFull = match ($valClean) {
                         'H' => 'Hadir',
                         'S' => 'Sakit',
@@ -234,6 +302,41 @@ class PresensiMuridService
                         'D' => 'Dispensasi',
                         default => null
                     };
+
+                    // 1. JIKA TANGGAL EVENT KEGIATAN
+                    if (!empty($dInfo['is_event']) && !empty($dInfo['event_id'])) {
+                        $sesiList = $dInfo['sesi_kegiatan'] ?? ['Harian'];
+                        $sesiUtama = is_array($sesiList) && !empty($sesiList) ? $sesiList[0] : 'Harian';
+
+                        if ($statusFull) {
+                            PresensiKegiatanMurid::updateOrCreate(
+                                [
+                                    'kalendar_pendidikan_id' => $dInfo['event_id'],
+                                    'ruangan_id'             => $ruanganId,
+                                    'murid_id'               => $muridId,
+                                    'tanggal'                => $tglMasehi,
+                                    'sesi'                   => $sesiUtama,
+                                ],
+                                [
+                                    'status'       => $statusFull,
+                                    'diinput_oleh' => $userId,
+                                ]
+                            );
+                            $disimpan++;
+                        } else {
+                            if ($valClean === '' || $valClean === '-') {
+                                PresensiKegiatanMurid::where('kalendar_pendidikan_id', $dInfo['event_id'])
+                                    ->where('ruangan_id', $ruanganId)
+                                    ->where('murid_id', $muridId)
+                                    ->where('tanggal', $tglMasehi)
+                                    ->delete();
+                            }
+                        }
+                        continue;
+                    }
+
+                    // 2. JIKA KBM REGULER
+                    if (!$dInfo['is_jadwal'] || !$dInfo['jadwal_id']) continue;
 
                     if ($statusFull) {
                         PresensiMurid::updateOrCreate(

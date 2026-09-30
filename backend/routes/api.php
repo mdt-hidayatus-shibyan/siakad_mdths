@@ -27,6 +27,12 @@ use App\Http\Controllers\Api\AppVersionApiController;
 // =========================================================================
 // 1. PUBLIC ROUTES (Dilindungi Rate Limiter Throttle)
 // =========================================================================
+Route::get('/ping', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => round(microtime(true) * 1000),
+    ]);
+});
 Route::get('/app-version', [AppVersionApiController::class, 'getAppVersion']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/wali/login', [AuthController::class, 'loginWali'])->middleware('throttle:5,1');
@@ -64,8 +70,11 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/presensi-murid/sesi', [PresensiMuridController::class, 'getSesi']);
     Route::get('/presensi-murid/murid', [PresensiMuridController::class, 'getMurid']);
     Route::post('/presensi-murid/simpan', [PresensiMuridController::class, 'simpan']);
+    Route::get('/presensi-kegiatan/murid', [PresensiMuridController::class, 'getMuridKegiatan']);
+    Route::post('/presensi-kegiatan/simpan-murid', [PresensiMuridController::class, 'simpanPresensiKegiatan']);
     Route::get('/presensi-ustadz/sesi', [PresensiUstadzController::class, 'getSesi']);
     Route::post('/presensi-ustadz/checkin', [PresensiUstadzController::class, 'checkin']);
+    Route::post('/presensi-kegiatan/checkin-ustadz', [PresensiUstadzController::class, 'checkinKegiatan']);
     Route::get('/presensi-ustadz/daftar-ustadz', [PresensiUstadzController::class, 'getDaftarUstadz']);
     Route::get('/presensi-ustadz/riwayat', [PresensiUstadzController::class, 'getRiwayat']);
     Route::get('/badal/ruangan-list', [BadalController::class, 'getRuanganList']);

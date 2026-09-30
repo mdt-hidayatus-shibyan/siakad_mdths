@@ -134,17 +134,41 @@
                                 <span class="text-blue-600 dark:text-blue-400 font-black">S</span> (Sakit),
                                 <span class="text-amber-600 dark:text-amber-400 font-black">I</span> (Izin),
                                 <span class="text-rose-600 dark:text-rose-400 font-black">A</span> (Alpha),
-                                <span class="text-purple-600 dark:text-purple-400 font-black">D</span> (Dispensasi),
-                                <span class="text-violet-600 dark:text-violet-400 font-black">U</span> (Masa Ujian -
-                                Dialihkan).
-                                Kosongkan untuk menghapus.
+                                <span class="text-purple-600 dark:text-purple-400 font-black">D</span> (Dispensasi).
+                                Kosongkan untuk menghapus data.
                             </p>
                         </div>
                     </div>
 
                     @php
+                        $eventDatesInMonth = collect($dates)->where('is_event', true);
                         $examDatesInMonth = collect($dates)->where('is_ujian', true);
                     @endphp
+
+                    @if ($eventDatesInMonth->isNotEmpty())
+                        <div
+                            class="m-4 p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 text-indigo-800 dark:text-indigo-300">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+                                    <i
+                                        class="bi bi-calendar-event-fill text-sm text-indigo-600 dark:text-indigo-400"></i>
+                                </div>
+                                <div class="text-xs font-bold leading-relaxed">
+                                    Terdapat agenda <strong>Hari Efektif Non-KBM / Event Kegiatan</strong> pada bulan
+                                    ini. Kolom bertanda <span
+                                        class="text-indigo-600 dark:text-indigo-400 font-black">Event</span> mencatat
+                                    presensi kegiatan madrasah.
+                                </div>
+                            </div>
+                            <a href="{{ route('kalendar-pendidikan.index') }}"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-xs transition-colors shrink-0">
+                                <i class="bi bi-calendar3"></i>
+                                <span>Lihat Agenda Kalender</span>
+                            </a>
+                        </div>
+                    @endif
+
                     @if ($examDatesInMonth->isNotEmpty())
                         <div
                             class="m-4 p-3.5 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -210,6 +234,17 @@
                                                     Ujian
                                                 </div>
                                             </th>
+                                        @elseif (!empty($data['is_event']))
+                                            <th class="p-2 text-center sticky top-0 z-20 border-r border-b border-zinc-200 dark:border-zinc-800 min-w-[48px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                                                title="Event / Non-KBM: {{ $data['nama_event'] }}">
+                                                <div class="text-[9px] uppercase font-bold opacity-75">
+                                                    {{ substr($data['hari'], 0, 3) }}</div>
+                                                <div class="text-xs font-black">{{ $tgl }}</div>
+                                                <div class="text-[8px] font-black text-indigo-600 dark:text-indigo-400 mt-0.5 uppercase tracking-wider truncate max-w-[45px] mx-auto"
+                                                    title="{{ $data['nama_event'] }}">
+                                                    Event
+                                                </div>
+                                            </th>
                                         @else
                                             <th
                                                 class="p-2 text-center sticky top-0 z-20 border-r border-b border-zinc-200 dark:border-zinc-800 min-w-[48px] {{ $data['is_jadwal'] ? 'bg-zinc-100/90 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300' : 'bg-zinc-200/40 dark:bg-zinc-950 text-zinc-400 dark:text-zinc-600' }}">
@@ -273,8 +308,29 @@
                                                             title="Masa Ujian (Dialihkan ke Presensi Ujian)"></i>
                                                     </div>
                                                 </td>
+                                            @elseif (!empty($data['is_event']))
+                                                <!-- Sel Event Khusus / Non-KBM -->
+                                                @php
+                                                    $status =
+                                                        $matrix[$murid->id][$data['masehi']] ??
+                                                        ($matrix[$murid->id][$tgl] ?? '');
+                                                @endphp
+                                                <td class="p-1 text-center border-r border-zinc-100 dark:border-zinc-800/60 align-middle bg-indigo-500/[0.03]"
+                                                    title="Presensi Event: {{ $data['nama_event'] }}">
+                                                    <input type="text"
+                                                        name="presensi[{{ $data['masehi'] }}][{{ $murid->id }}]"
+                                                        value="{{ $status }}" maxlength="1" placeholder="-"
+                                                        oninput="this.value = this.value.toUpperCase()"
+                                                        class="w-8 h-7 p-0 mx-auto text-center rounded-md bg-white dark:bg-zinc-900 border text-[11px] font-black outline-none transition-all uppercase
+                                                        {{ $status == 'H' ? 'text-emerald-600 border-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30' : '' }}
+                                                        {{ $status == 'S' ? 'text-blue-600 border-blue-300 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/30' : '' }}
+                                                        {{ $status == 'I' ? 'text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30' : '' }}
+                                                        {{ $status == 'A' ? 'text-rose-600 border-rose-300 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30' : '' }}
+                                                        {{ $status == 'D' ? 'text-purple-600 border-purple-300 bg-purple-50 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/30' : '' }}
+                                                        {{ $status == '' ? 'text-zinc-700 border-indigo-200 dark:text-zinc-300 dark:border-indigo-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20' : '' }}">
+                                                </td>
                                             @else
-                                                <!-- Sel Input Aktif -->
+                                                <!-- Sel Input KBM Reguler -->
                                                 @php
                                                     $status =
                                                         $matrix[$murid->id][$data['masehi']] ??

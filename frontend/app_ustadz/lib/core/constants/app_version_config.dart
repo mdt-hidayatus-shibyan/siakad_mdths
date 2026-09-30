@@ -41,8 +41,8 @@ class AppVersionConfig {
   // ---------------------------------------------------------------------------
   static const String appTitle = 'Ustadz - MDTHS';
   static const String appSubtitle = 'MDT Hidayatus Shibyan';
-  static const String version = '1.6.2';
-  static const String buildNumber = '2026.09.10';
+  static const String version = '1.8.2';
+  static const String buildNumber = '2026.09.11';
   static const String releaseDate = 'September 2026';
   static const String statusBadge = 'Versi Rilis';
   static const bool isLatest = true;
@@ -57,19 +57,14 @@ class AppVersionConfig {
   /// Ubah / tambahkan fitur baru di sini:
   static const List<ChangelogEntry> newFeatures = [
     ChangelogEntry(
-      title: 'Presensi Ustadz di Home Screen',
+      title: 'Presensi Event',
       description:
-          'Mengelompokkan Presensi ustadz dan Presensi murid di Home Screen agar lebih mudah diakses dan dikelola.',
+          'Menambahkan fitur presensi untuk event khusus, memungkinkan ustadz dan murid untuk melakukan presensi secara digital pada kegiatan tertentu di madrasah.',
     ),
     ChangelogEntry(
-      title: 'Presensi Ustadz Pengganti',
+      title: 'Signal Indikator Koneksi',
       description:
-          'Setiap ustadz dapat mengelola presensi pengganti (badal) secara langsung dari menu Presensi, sehingga mempermudah proses administrasi dan koordinasi antar ustadz.',
-    ),
-    ChangelogEntry(
-      title: 'Laporan Kenaikan Kelas Murid',
-      description:
-          'Wali Ruangan dapat mengakses laporan kenaikan kelas murid secara langsung dari menu Laporan, sehingga mempermudah proses evaluasi dan administrasi.',
+          'Menambahkan indikator sinyal koneksi di App_Bar aplikasi, sehingga pengguna dapat melihat kualitas koneksi internet mereka saat menggunakan aplikasi.',
     ),
   ];
 
@@ -77,19 +72,9 @@ class AppVersionConfig {
   /// Ubah / tambahkan perbaikan bug atau peningkatan sistem di sini:
   static const List<ChangelogEntry> improvements = [
     ChangelogEntry(
-      title: 'Perbaikan izin notifikasi bel masuk',
+      title: 'Perbaikan Bug',
       description:
-          'Notifikasi bel masuk kini dapat diaktifkan tanpa perlu izin akses lokasi, sehingga lebih aman dan nyaman bagi pengguna.',
-    ),
-    ChangelogEntry(
-      title: 'Dukungan Navigasi 3-Tombol Android',
-      description:
-          'Optimalisasi tata letak edge-to-edge agar seluruh tombol aksi dan floating bar presisi tanpa tertimpa navigasi sistem.',
-    ),
-    ChangelogEntry(
-      title: 'Perbaikan versi aplikasi & build number',
-      description:
-          'Keakuratan versi aplikasi dan build number diperbarui agar sesuai dengan rilis terbaru, memastikan konsistensi dan kompatibilitas sistem.',
+          'Perbaikan bug minor dan peningkatan stabilitas aplikasi untuk memastikan pengalaman pengguna yang lebih lancar dan bebas dari gangguan teknis.',
     ),
   ];
 

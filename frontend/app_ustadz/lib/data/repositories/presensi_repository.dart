@@ -40,13 +40,13 @@ class PresensiRepository {
         final list = response.data['data'] as List;
         return list.map((e) => MuridPresensiItem.fromJson(e)).toList();
       } else {
-        throw Exception(response.data['message'] ?? 'Gagal memuat data santri');
+        throw Exception(response.data['message'] ?? 'Gagal memuat data murid');
       }
     } on DioException catch (e) {
       if (e.response?.data != null && e.response?.data['message'] != null) {
         throw Exception(e.response!.data['message']);
       }
-      throw Exception('Gagal memuat data santri: ${e.message}');
+      throw Exception('Gagal memuat data murid: ${e.message}');
     }
   }
 
@@ -84,6 +84,107 @@ class PresensiRepository {
         throw Exception(e.response!.data['message']);
       }
       throw Exception('Gagal menyimpan presensi: ${e.message}');
+    }
+  }
+
+  Future<List<MuridPresensiItem>> getMuridKegiatan({
+    required int kalendarId,
+    required int ruanganId,
+    required String tanggal,
+    required String sesi,
+  }) async {
+    try {
+      final response = await _client.dio.get(
+        ApiConstants.presensiKegiatanMurid,
+        queryParameters: {
+          'kalendar_pendidikan_id': kalendarId,
+          'ruangan_id': ruanganId,
+          'tanggal': tanggal,
+          'sesi': sesi,
+        },
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final list = response.data['data']['murid'] as List;
+        return list.map((e) => MuridPresensiItem.fromJson(e)).toList();
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal memuat data murid kegiatan',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal memuat data murid kegiatan: ${e.message}');
+    }
+  }
+
+  Future<bool> simpanPresensiKegiatanMassal({
+    required int kalendarId,
+    required int ruanganId,
+    required String tanggal,
+    required String sesi,
+    required List<MuridPresensiItem> items,
+  }) async {
+    try {
+      final payload = {
+        'kalendar_pendidikan_id': kalendarId,
+        'ruangan_id': ruanganId,
+        'tanggal': tanggal,
+        'sesi': sesi,
+        'presensi': items.map((e) => e.toJson()).toList(),
+      };
+
+      final response = await _client.dio.post(
+        ApiConstants.presensiKegiatanSimpanMurid,
+        data: payload,
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal menyimpan presensi kegiatan',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal menyimpan presensi kegiatan: ${e.message}');
+    }
+  }
+
+  Future<bool> checkinKegiatanUstadz({
+    required int kalendarId,
+    required String tanggal,
+    required String sesi,
+    required String status,
+    String? keterangan,
+  }) async {
+    try {
+      final response = await _client.dio.post(
+        ApiConstants.presensiKegiatanCheckinUstadz,
+        data: {
+          'kalendar_pendidikan_id': kalendarId,
+          'tanggal': tanggal,
+          'sesi': sesi,
+          'status': status,
+          if (keterangan != null && keterangan.isNotEmpty)
+            'keterangan': keterangan,
+        },
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal check-in kegiatan ustadz',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal check-in kegiatan ustadz: ${e.message}');
     }
   }
 

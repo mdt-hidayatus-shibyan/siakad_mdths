@@ -8,7 +8,7 @@ import '../../widgets/shimmer_loading.dart';
 import '../../widgets/status_presensi_chip.dart';
 
 class FormPresensiScreen extends StatefulWidget {
-  final int jadwalId;
+  final int? jadwalId;
   final String mapel;
   final String ruangan;
   final String jam;
@@ -17,10 +17,14 @@ class FormPresensiScreen extends StatefulWidget {
   final String? guruUtama;
   final String? statusUstadz;
   final String? alasanBadal;
+  final bool isEvent;
+  final int? kalendarId;
+  final int? ruanganId;
+  final String? sesi;
 
   const FormPresensiScreen({
     super.key,
-    required this.jadwalId,
+    this.jadwalId,
     required this.mapel,
     required this.ruangan,
     required this.jam,
@@ -29,6 +33,10 @@ class FormPresensiScreen extends StatefulWidget {
     this.guruUtama,
     this.statusUstadz,
     this.alasanBadal,
+    this.isEvent = false,
+    this.kalendarId,
+    this.ruanganId,
+    this.sesi,
   });
 
   @override
@@ -45,10 +53,22 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
     _statusUstadz = widget.statusUstadz ?? 'Izin';
     _alasanBadal = widget.alasanBadal ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PresensiProvider>().fetchMurid(
-        widget.jadwalId,
-        widget.tanggal,
-      );
+      if (widget.isEvent &&
+          widget.kalendarId != null &&
+          widget.ruanganId != null &&
+          widget.sesi != null) {
+        context.read<PresensiProvider>().fetchMuridKegiatan(
+          widget.kalendarId!,
+          widget.ruanganId!,
+          widget.sesi!,
+          widget.tanggal,
+        );
+      } else {
+        context.read<PresensiProvider>().fetchMurid(
+          widget.jadwalId ?? 0,
+          widget.tanggal,
+        );
+      }
     });
   }
 
@@ -273,19 +293,34 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
 
   Future<void> _handleSimpan() async {
     final presensi = context.read<PresensiProvider>();
-    final success = await presensi.simpanPresensi(
-      widget.jadwalId,
-      widget.tanggal,
-      widget.isBadal,
-      widget.isBadal ? _statusUstadz : null,
-      widget.isBadal ? (_alasanBadal.isNotEmpty ? _alasanBadal : null) : null,
-    );
+    final bool success;
+    if (widget.isEvent &&
+        widget.kalendarId != null &&
+        widget.ruanganId != null &&
+        widget.sesi != null) {
+      success = await presensi.simpanPresensiKegiatan(
+        kalendarId: widget.kalendarId!,
+        ruanganId: widget.ruanganId!,
+        sesi: widget.sesi!,
+        customDate: widget.tanggal,
+      );
+    } else {
+      success = await presensi.simpanPresensi(
+        widget.jadwalId ?? 0,
+        widget.tanggal,
+        widget.isBadal,
+        widget.isBadal ? _statusUstadz : null,
+        widget.isBadal ? (_alasanBadal.isNotEmpty ? _alasanBadal : null) : null,
+      );
+    }
 
     if (!mounted) return;
     if (success) {
-      final msg = widget.isBadal
-          ? 'Presensi kelas ${widget.ruangan} berhasil disimpan sebagai Guru Pengganti (Badal)!'
-          : 'Presensi kelas ${widget.ruangan} berhasil disimpan!';
+      final msg = widget.isEvent
+          ? 'Presensi ${widget.mapel} (${widget.ruangan}) sesi ${widget.sesi} berhasil disimpan!'
+          : (widget.isBadal
+                ? 'Presensi kelas ${widget.ruangan} berhasil disimpan sebagai Guru Pengganti (Badal)!'
+                : 'Presensi kelas ${widget.ruangan} berhasil disimpan!');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(msg),

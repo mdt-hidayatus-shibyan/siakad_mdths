@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ujian;
 use App\Http\Controllers\Controller;
 use App\Models\Murid;
 use App\Models\PelanggaranMurid;
+use App\Models\PresensiKegiatanMurid;
 use App\Models\PresensiMurid;
 use App\Models\TahunPelajaran;
 use App\Models\Ujian\NilaiUjian;
@@ -98,10 +99,22 @@ class BintangMadrasahController extends Controller
                     ->get()
                     ->groupBy('murid_id');
 
-                // 4. Pre-fetch Jumlah Kealpaan
-                $alpaMap = PresensiMurid::whereIn('murid_id', $kandidatArrayIds)
-                    ->where('tahun_pelajaran_id', $tahunPelajaranId)
-                    ->where('status_kehadiran', 'Alpa')
+                // 4. Pre-fetch Jumlah Kealpaan (KBM + Event)
+                $alpaKbmMap = PresensiMurid::whereIn('murid_id', $kandidatArrayIds)
+                    ->where(function ($q) use ($tahunPelajaranId) {
+                        $q->where('tahun_pelajaran_id', $tahunPelajaranId)
+                            ->orWhereHas('jadwalPelajaran.ruangan', fn($r) => $r->where('tahun_pelajaran_id', $tahunPelajaranId));
+                    })
+                    ->where(function ($q) {
+                        $q->where('status', 'Alpha')->orWhere('status_kehadiran', 'Alpa');
+                    })
+                    ->selectRaw('murid_id, count(*) as total')
+                    ->groupBy('murid_id')
+                    ->pluck('total', 'murid_id');
+
+                $alpaKegiatanMap = PresensiKegiatanMurid::whereIn('murid_id', $kandidatArrayIds)
+                    ->where('status', 'Alpha')
+                    ->whereHas('ruangan', fn($r) => $r->where('tahun_pelajaran_id', $tahunPelajaranId))
                     ->selectRaw('murid_id, count(*) as total')
                     ->groupBy('murid_id')
                     ->pluck('total', 'murid_id');
@@ -124,7 +137,7 @@ class BintangMadrasahController extends Controller
                     $nilaiKandidat = $nilaiKandidatMap->get($muridId, collect());
                     $rataRata = $nilaiKandidat->count() > 0 ? round($nilaiKandidat->sum('nilai') / $nilaiKandidat->count(), 2) : 0;
 
-                    $jumlahAlpa = $alpaMap->get($muridId, 0);
+                    $jumlahAlpa = ($alpaKbmMap->get($muridId, 0)) + ($alpaKegiatanMap->get($muridId, 0));
                     $poinPelanggaran = $poinPelanggaranMap->get($muridId, 0);
 
                     $bintangMadrasah->push((object)[

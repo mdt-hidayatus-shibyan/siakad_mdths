@@ -9,6 +9,8 @@ use App\Models\BulanHijriyah;
 use App\Models\HariLibur;
 use App\Models\KalendarPendidikan;
 use App\Models\KategoriKegiatan;
+use App\Models\Level;
+use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
 use App\Models\Ujian\Ujian;
 use Illuminate\Http\Request;
@@ -48,16 +50,26 @@ class KalendarPendidikanController extends Controller
                 ];
             }
 
-            $liburs = HariLibur::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
+            $liburs = HariLibur::with(['ruangan', 'level'])->where('tahun_pelajaran_id', $tahunPelajaranId)->get();
             foreach ($liburs as $libur) {
+                $detailInfo = '';
+                if ($libur->tipe_libur === 'Sebagian Jam' && !empty($libur->jam_ke)) {
+                    $detailInfo .= ' (Jam: ' . implode(', ', $libur->jam_ke) . ')';
+                }
+                if ($libur->ruangan) {
+                    $detailInfo .= ' [' . $libur->ruangan->nama_ruangan . ']';
+                } elseif ($libur->level) {
+                    $detailInfo .= ' [Level ' . $libur->level->nama_level . ']';
+                }
+
                 $events[] = [
                     'id'          => 'libur_' . $libur->id,
-                    'title'       => 'Libur: ' . $libur->keterangan,
+                    'title'       => 'Libur/Bebas KBM: ' . $libur->keterangan . $detailInfo,
                     'start'       => $libur->tanggal_mulai,
                     'end'         => $libur->tanggal_selesai,
-                    'kategori'    => 'Hari Libur',
+                    'kategori'    => $libur->tipe_libur === 'Sebagian Jam' ? 'Bebas KBM Sebagian' : 'Hari Libur / Bebas KBM',
                     'tipe'        => 'libur',
-                    'hex_color'   => '#f43f5e',
+                    'hex_color'   => $libur->tipe_libur === 'Sebagian Jam' ? '#f59e0b' : '#f43f5e',
                 ];
             }
 
@@ -83,13 +95,23 @@ class KalendarPendidikanController extends Controller
 
         return view('kalendar.index', compact('tahun_pelajarans', 'tahunPelajaranId', 'kategoris', 'events'));
     }
+
     public function create(Request $request)
     {
         if ($request->ajax()) {
             $tahun_pelajarans = TahunPelajaran::orderBy('id', 'asc')->get();
             $kategoris = KategoriKegiatan::all();
+            $ruangans = Ruangan::with('level')
+                ->orderBy(
+                    Level::select('urutan_level')
+                        ->whereColumn('levels.id', 'ruangans.level_id')
+                        ->limit(1)
+                )
+                ->orderBy('nama_ruangan')
+                ->get();
+            $levels = \App\Models\Level::orderBy('urutan_level')->get();
 
-            return view('kalendar.form-kalendar', compact('tahun_pelajarans', 'kategoris'));
+            return view('kalendar.form-kalendar', compact('tahun_pelajarans', 'kategoris', 'ruangans', 'levels'));
         }
 
         return redirect()->route('kalendar-pendidikan.index')->with('error', 'Silakan gunakan tombol tambah data melalui antarmuka kalender.');
@@ -104,6 +126,10 @@ class KalendarPendidikanController extends Controller
             HariLibur::create([
                 'tahun_pelajaran_id' => $validated['tahun_pelajaran_id'],
                 'keterangan'         => $validated['nama_agenda'],
+                'tipe_libur'         => $request->tipe_libur ?? 'Seharian',
+                'jam_ke'             => $request->tipe_libur === 'Sebagian Jam' ? ($request->jam_ke ?? []) : null,
+                'ruangan_id'         => $request->ruangan_id ?: null,
+                'level_id'           => $request->level_id ?: null,
                 'tanggal_mulai'      => $validated['tanggal_mulai'],
                 'tanggal_selesai'    => $validated['tanggal_selesai'],
             ]);
@@ -117,10 +143,21 @@ class KalendarPendidikanController extends Controller
                 'tanggal_selesai'    => $validated['tanggal_selesai'],
             ]);
         } else {
+            $tipePresensi = $request->tipe_presensi ?? 'tidak_ada';
+            $sesiKegiatan = null;
+            if ($tipePresensi === 'harian') {
+                $sesiKegiatan = ['Harian'];
+            } elseif ($tipePresensi === 'multi_sesi') {
+                $sesiKegiatan = !empty($request->sesi_kegiatan) ? $request->sesi_kegiatan : ['Siang', 'Malam'];
+            }
+
             KalendarPendidikan::create([
                 'tahun_pelajaran_id'   => $validated['tahun_pelajaran_id'],
                 'nama_kegiatan'        => $validated['nama_agenda'],
                 'kategori_kegiatan_id' => $validated['kategori_kegiatan_id'],
+                'tipe_presensi'        => $tipePresensi,
+                'sesi_kegiatan'        => $sesiKegiatan,
+                'keterangan'           => $request->keterangan ?? null,
                 'tanggal_mulai'        => $validated['tanggal_mulai'],
                 'tanggal_selesai'      => $validated['tanggal_selesai'],
             ]);
@@ -129,12 +166,11 @@ class KalendarPendidikanController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'status' => 'success',
-                'message' => 'Periode bulan berhasil di-plotting!'
+                'message' => 'Agenda berhasil ditambahkan!'
             ]);
         }
-        return redirect()->back()->with('success', 'Periode bulan berhasil di-plotting!');
+        return redirect()->back()->with('success', 'Agenda berhasil ditambahkan!');
     }
-
 
     public function edit(Request $request, $id)
     {
@@ -142,6 +178,15 @@ class KalendarPendidikanController extends Controller
             $tipe = $request->query('tipe', 'kegiatan');
             $tahun_pelajarans = TahunPelajaran::orderBy('id', 'asc')->get();
             $kategoris = KategoriKegiatan::all();
+            $ruangans = Ruangan::with('level')
+                ->orderBy(
+                    Level::select('urutan_level')
+                        ->whereColumn('levels.id', 'ruangans.level_id')
+                        ->limit(1)
+                )
+                ->orderBy('nama_ruangan')
+                ->get();
+            $levels = Level::orderBy('urutan_level')->get();
 
             if ($tipe === 'libur') {
                 $kegiatan = HariLibur::findOrFail($id);
@@ -153,7 +198,7 @@ class KalendarPendidikanController extends Controller
                 $kegiatan = KalendarPendidikan::findOrFail($id);
             }
             $kegiatan->tipe_agenda = $tipe;
-            return view('kalendar.form-kalendar', compact('kegiatan', 'tahun_pelajarans', 'kategoris'));
+            return view('kalendar.form-kalendar', compact('kegiatan', 'tahun_pelajarans', 'kategoris', 'ruangans', 'levels'));
         }
         return redirect()->route('kalendar-pendidikan.index')->with('error', 'Silakan gunakan tombol edit data.');
     }
@@ -167,6 +212,10 @@ class KalendarPendidikanController extends Controller
             HariLibur::findOrFail($id)->update([
                 'tahun_pelajaran_id' => $validated['tahun_pelajaran_id'],
                 'keterangan'         => $validated['nama_agenda'],
+                'tipe_libur'         => $request->tipe_libur ?? 'Seharian',
+                'jam_ke'             => $request->tipe_libur === 'Sebagian Jam' ? ($request->jam_ke ?? []) : null,
+                'ruangan_id'         => $request->ruangan_id ?: null,
+                'level_id'           => $request->level_id ?: null,
                 'tanggal_mulai'      => $validated['tanggal_mulai'],
                 'tanggal_selesai'    => $validated['tanggal_selesai'],
             ]);
@@ -180,10 +229,21 @@ class KalendarPendidikanController extends Controller
                 'tanggal_selesai'    => $validated['tanggal_selesai'],
             ]);
         } else {
+            $tipePresensi = $request->tipe_presensi ?? 'tidak_ada';
+            $sesiKegiatan = null;
+            if ($tipePresensi === 'harian') {
+                $sesiKegiatan = ['Harian'];
+            } elseif ($tipePresensi === 'multi_sesi') {
+                $sesiKegiatan = !empty($request->sesi_kegiatan) ? $request->sesi_kegiatan : ['Siang', 'Malam'];
+            }
+
             KalendarPendidikan::findOrFail($id)->update([
                 'tahun_pelajaran_id'   => $validated['tahun_pelajaran_id'],
                 'nama_kegiatan'        => $validated['nama_agenda'],
                 'kategori_kegiatan_id' => $validated['kategori_kegiatan_id'],
+                'tipe_presensi'        => $tipePresensi,
+                'sesi_kegiatan'        => $sesiKegiatan,
+                'keterangan'           => $request->keterangan ?? null,
                 'tanggal_mulai'        => $validated['tanggal_mulai'],
                 'tanggal_selesai'      => $validated['tanggal_selesai'],
             ]);
@@ -222,7 +282,7 @@ class KalendarPendidikanController extends Controller
         $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id');
         $tp = TahunPelajaran::findOrFail($tahunPelajaranId);
 
-        $liburs = HariLibur::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
+        $liburs = HariLibur::with(['ruangan', 'level'])->where('tahun_pelajaran_id', $tahunPelajaranId)->get();
         $ujians = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
 
         $kegiatans = KalendarPendidikan::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
@@ -257,12 +317,24 @@ class KalendarPendidikanController extends Controller
         $tp = TahunPelajaran::tahunAktif()->first();
         $tahun_pelajarans = TahunPelajaran::orderBy('id', 'desc')->get();
         $kategoris = KategoriKegiatan::all();
+        $ruangans = Ruangan::with('level')
+            ->orderBy(
+                Level::select('urutan_level')
+                    ->whereColumn('levels.id', 'ruangans.level_id')
+                    ->limit(1)
+            )
+            ->orderBy('nama_ruangan')
+            ->get();
+        $levels = Level::orderBy('urutan_level')->get();
+
         if ($request->ajax()) {
             return view('kalendar.form-matriks-agenda', compact(
                 'tanggal',
                 'tp',
                 'tahun_pelajarans',
-                'kategoris'
+                'kategoris',
+                'ruangans',
+                'levels'
             ));
         }
 
