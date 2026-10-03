@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\TabunganApiController;
 use App\Http\Controllers\Api\CatatanUstadzController;
 use App\Http\Controllers\Api\BadalController;
 use App\Http\Controllers\Api\AppVersionApiController;
+use App\Http\Controllers\Api\PanitiaImniApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -160,6 +161,31 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/catatan-ustadz', [CatatanUstadzController::class, 'store']);
     Route::post('/catatan-ustadz/{id}', [CatatanUstadzController::class, 'update']);
     Route::delete('/catatan-ustadz/{id}', [CatatanUstadzController::class, 'destroy']);
+
+    // 2.14 Kepanitiaan IMNI (Fitur Khusus Ustadz Panitia IMNI)
+    Route::prefix('panitia-imni')->group(function () {
+        // Pembayaran & Penerimaan Kas IMNI
+        Route::get('/pembayaran/ringkasan', [PanitiaImniApiController::class, 'getPembayaranRingkasan']);
+        Route::get('/pembayaran/peserta-list', [PanitiaImniApiController::class, 'getPembayaranPesertaList']);
+        Route::post('/pembayaran/simpan-bayar', [PanitiaImniApiController::class, 'simpanPembayaran']);
+        Route::post('/pembayaran/batal-bayar/{id}', [PanitiaImniApiController::class, 'batalPembayaran']);
+
+        // Pengeluaran & Anggaran Kas IMNI
+        Route::get('/pengeluaran/ringkasan', [PanitiaImniApiController::class, 'getPengeluaranRingkasan']);
+        Route::get('/pengeluaran/list', [PanitiaImniApiController::class, 'getPengeluaranList']);
+        Route::post('/pengeluaran/simpan', [PanitiaImniApiController::class, 'simpanPengeluaran']);
+        Route::post('/pengeluaran/update/{id}', [PanitiaImniApiController::class, 'updatePengeluaran']);
+        Route::delete('/pengeluaran/{id}', [PanitiaImniApiController::class, 'hapusPengeluaran']);
+
+        // Presensi Ujian IMNI
+        Route::get('/presensi/data', [PanitiaImniApiController::class, 'getPresensiData']);
+        Route::post('/presensi/simpan', [PanitiaImniApiController::class, 'simpanPresensi']);
+
+        // Penilaian & Leger IMNI
+        Route::get('/nilai/data', [PanitiaImniApiController::class, 'getNilaiData']);
+        Route::post('/nilai/simpan', [PanitiaImniApiController::class, 'simpanNilai']);
+        Route::get('/nilai/leger', [PanitiaImniApiController::class, 'getLegerNilai']);
+    });
 
     // =========================================================================
     // 3. APLIKASI MURID & WALI MURID (app_murid)

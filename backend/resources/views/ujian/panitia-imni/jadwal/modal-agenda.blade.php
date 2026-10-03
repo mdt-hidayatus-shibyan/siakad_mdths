@@ -15,7 +15,7 @@
                     Master Jadwal
                 </span>
                 <h3 class="text-base font-black text-zinc-900 dark:text-white tracking-tight mt-0.5">
-                    Pengaturan Master Agenda IMNI
+                    Pengaturan Agenda IMNI {{ $ujianImni->tingkat ? '('.$ujianImni->tingkat->nama_tingkat.')' : '' }}
                 </h3>
             </div>
         </div>
@@ -27,13 +27,44 @@
 
     <!-- Modal Body -->
     <div class="p-5 md:p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
-        <!-- Info Tahun Pelajaran -->
-        <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-700/60 flex items-center justify-between">
+        <!-- Info Tahun Pelajaran & Tingkat -->
+        <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-700/60 flex items-center justify-between flex-wrap gap-2">
             <span class="text-xs font-bold text-zinc-500">Tahun Pelajaran:</span>
             <span class="text-xs font-black text-zinc-900 dark:text-white font-mono">
                 TP. {{ $selectedTahun->nama_hijriyah }} H ({{ $selectedTahun->nama_masehi }} M)
             </span>
         </div>
+
+        @if(isset($imniUjians) && $imniUjians->count() > 1 && !isset($level))
+        <!-- Pilihan Agenda IMNI per Tingkat -->
+        <div class="space-y-1.5">
+            <label class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">
+                Pilih Agenda IMNI Tingkat <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative group/select">
+                <select name="select_ujian_id" onchange="const url = new URL('{{ route('jadwal-imni.modal-agenda') }}', window.location.origin); url.searchParams.set('tahun_id', '{{ $tahunId }}'); url.searchParams.set('ujian_id', this.value); fetch(url.toString(), { headers: {'X-Requested-With': 'XMLHttpRequest'} }).then(r => r.text()).then(html => { const m = document.querySelector('#modal-container, #global-modal-content, dialog, .modal-content'); if(m) m.innerHTML = html; });" class="m3-input-glass w-full appearance-none cursor-pointer !pr-9 text-xs font-bold">
+                    @foreach ($imniUjians as $uItem)
+                        <option value="{{ $uItem->id }}" {{ $ujianImni->id == $uItem->id ? 'selected' : '' }}>
+                            {{ $uItem->nama_ujian }} ({{ $uItem->tingkat?->nama_tingkat ?? 'Semua Tingkat' }})
+                        </option>
+                    @endforeach
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
+                    <i class="bi bi-chevron-down text-xs font-bold"></i>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if(isset($level))
+        <!-- Target Level/Kelas Info -->
+        <div class="p-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between">
+            <span class="text-xs font-bold text-primary dark:text-primary-dark">Target Kelas:</span>
+            <span class="text-xs font-black text-primary dark:text-primary-dark">
+                Kelas {{ $level->nama_level }} ({{ $level->tingkat?->nama_tingkat }})
+            </span>
+        </div>
+        @endif
 
         <!-- Nama Ujian -->
         <div class="space-y-1.5">

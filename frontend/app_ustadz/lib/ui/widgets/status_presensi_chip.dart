@@ -5,14 +5,14 @@ class StatusPresensiChip extends StatelessWidget {
   final String status; // 'H', 'I', 'S', 'A', 'D'
   final String? label; // e.g. 'Hadir', 'Sakit', 'Izin', 'Alpha', 'Dispen'
   final bool isSelected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const StatusPresensiChip({
     super.key,
     required this.status,
     this.label,
     required this.isSelected,
-    required this.onTap,
+    this.onTap,
   });
 
   @override

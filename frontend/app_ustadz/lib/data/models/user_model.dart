@@ -12,6 +12,9 @@ class UserModel {
   final bool isWaliRuangan;
   final String? ruanganWali;
   final int? ruanganWaliId;
+  final bool isPanitiaImni;
+  final String? jabatanPanitiaImni;
+  final String? noSkPanitiaImni;
   final String? kodeUstadz;
   final String? nigm;
   final String? nik;
@@ -35,6 +38,9 @@ class UserModel {
     required this.isWaliRuangan,
     this.ruanganWali,
     this.ruanganWaliId,
+    this.isPanitiaImni = false,
+    this.jabatanPanitiaImni,
+    this.noSkPanitiaImni,
     this.kodeUstadz,
     this.nigm,
     this.nik,
@@ -60,6 +66,9 @@ class UserModel {
       isWaliRuangan: json['is_wali_ruangan'] ?? json['is_wali'] ?? false,
       ruanganWali: json['ruangan_wali'],
       ruanganWaliId: json['ruangan_wali_id'],
+      isPanitiaImni: json['is_panitia_imni'] ?? (json['panitia_imni']?['is_panitia'] ?? false),
+      jabatanPanitiaImni: json['jabatan_panitia_imni'] ?? json['panitia_imni']?['jabatan'],
+      noSkPanitiaImni: json['no_sk_panitia_imni'] ?? json['panitia_imni']?['no_sk'],
       kodeUstadz: json['kode_ustadz'] ?? json['kode'],
       nigm: json['nigm'],
       nik: json['nik'],
@@ -88,6 +97,9 @@ class UserModel {
       'is_wali_ruangan': isWaliRuangan,
       'ruangan_wali': ruanganWali,
       'ruangan_wali_id': ruanganWaliId,
+      'is_panitia_imni': isPanitiaImni,
+      'jabatan_panitia_imni': jabatanPanitiaImni,
+      'no_sk_panitia_imni': noSkPanitiaImni,
       'kode_ustadz': kodeUstadz,
       'nigm': nigm,
       'nik': nik,
@@ -107,6 +119,9 @@ class UserModel {
     String? username,
     String? photo,
     bool setPhotoNull = false,
+    bool? isPanitiaImni,
+    String? jabatanPanitiaImni,
+    String? noSkPanitiaImni,
     String? nigm,
     String? nik,
     String? jenisKelamin,
@@ -129,6 +144,9 @@ class UserModel {
       isWaliRuangan: isWaliRuangan,
       ruanganWali: ruanganWali,
       ruanganWaliId: ruanganWaliId,
+      isPanitiaImni: isPanitiaImni ?? this.isPanitiaImni,
+      jabatanPanitiaImni: jabatanPanitiaImni ?? this.jabatanPanitiaImni,
+      noSkPanitiaImni: noSkPanitiaImni ?? this.noSkPanitiaImni,
       kodeUstadz: kodeUstadz,
       nigm: nigm ?? this.nigm,
       nik: nik ?? this.nik,

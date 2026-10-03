@@ -138,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Aplikasi Khusus Ustadz & Wali Ruangan',
+                  'Sistem Informasi Akademik Khusus Ustadz & Wali Ruangan',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,

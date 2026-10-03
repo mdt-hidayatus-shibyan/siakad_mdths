@@ -3,9 +3,9 @@ class ApiConstants {
 
   // Backend API URL
   // static const String defaultBaseUrl = 'http://10.187.204.1:8000/api';
-  static const String defaultBaseUrl = 'http://127.0.0.1:8000/api';
-  // static const String defaultBaseUrl =
-  //     'https://mdt-hidayatus-shibyan.sch.id/api';
+  // static const String defaultBaseUrl = 'http://127.0.0.1:8000/api';
+  static const String defaultBaseUrl =
+      'https://mdt-hidayatus-shibyan.sch.id/api';
 
   static const String login = '/login';
   static const String logout = '/logout';
@@ -112,6 +112,31 @@ class ApiConstants {
   // Catatan & Keluhan Ustadz
   static const String catatanUstadz = '/catatan-ustadz';
   static const String catatanUstadzOptions = '/catatan-ustadz/options';
+
+  // Kepanitiaan IMNI
+  static const String panitiaImniPembayaranRingkasan =
+      '/panitia-imni/pembayaran/ringkasan';
+  static const String panitiaImniPembayaranPesertaList =
+      '/panitia-imni/pembayaran/peserta-list';
+  static const String panitiaImniPembayaranSimpanBayar =
+      '/panitia-imni/pembayaran/simpan-bayar';
+  static const String panitiaImniPembayaranBatalBayar =
+      '/panitia-imni/pembayaran/batal-bayar';
+  static const String panitiaImniPengeluaranRingkasan =
+      '/panitia-imni/pengeluaran/ringkasan';
+  static const String panitiaImniPengeluaranList =
+      '/panitia-imni/pengeluaran/list';
+  static const String panitiaImniPengeluaranSimpan =
+      '/panitia-imni/pengeluaran/simpan';
+  static const String panitiaImniPengeluaranUpdate =
+      '/panitia-imni/pengeluaran/update';
+  static const String panitiaImniPengeluaranHapus = '/panitia-imni/pengeluaran';
+  static const String panitiaImniPresensiData = '/panitia-imni/presensi/data';
+  static const String panitiaImniPresensiSimpan =
+      '/panitia-imni/presensi/simpan';
+  static const String panitiaImniNilaiData = '/panitia-imni/nilai/data';
+  static const String panitiaImniNilaiSimpan = '/panitia-imni/nilai/simpan';
+  static const String panitiaImniNilaiLeger = '/panitia-imni/nilai/leger';
 
   /// Format URL foto/gambar dari backend agar cocok dengan host yang aktif.
   /// Menghindari kegagalan koneksi ketika backend mengembalikan host 'localhost' / '127.0.0.1'

@@ -390,6 +390,21 @@ class PresensiUjianController extends Controller
             ], 422);
         }
 
+        $user = $request->user();
+        $ujian = Ujian::findOrFail($request->ujian_id);
+        $isAdminOrStaff = false;
+        if (method_exists($user, 'hasAnyRole')) {
+            $isAdminOrStaff = $user->hasAnyRole(['administrator', 'staff', 'admin']);
+        }
+
+        $isImni = ($ujian->tipe_ujian === 'IMNI' || $ujian->jenis_ujian === 'IMNI' || str_contains(strtoupper($ujian->nama_ujian ?? ''), 'IMNI'));
+        if ($isImni && !$isAdminOrStaff) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Presensi ujian IMNI dikelola khusus oleh Panitia IMNI melalui menu Kepanitiaan IMNI.',
+            ], 403);
+        }
+
         try {
             $pengawasData = $request->input('pengawas', []);
 

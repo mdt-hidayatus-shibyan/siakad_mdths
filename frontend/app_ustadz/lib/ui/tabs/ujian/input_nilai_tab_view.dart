@@ -309,8 +309,8 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
             // ===================================================================
             // 4. DAFTAR MATA PELAJARAN SESUAI JADWAL UJIAN
             // ===================================================================
-            if (provider.isWaliRuangan &&
-                provider.currentUjian?.tipeUjian == 'IMNI') ...[
+            if (provider.currentUjian?.tipeUjian == 'IMNI' ||
+                provider.currentUjian?.namaUjian.toUpperCase().contains('IMNI') == true) ...[
               Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.symmetric(
@@ -334,7 +334,7 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Mode Pantau Nilai: Pada ujian IMNI, Wali Ruangan hanya memiliki akses membaca nilai.',
+                        'Mode Pantau Nilai: Pada ujian IMNI, penilaian dan penginputan nilai dikelola khusus oleh Panitia IMNI.',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

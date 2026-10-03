@@ -292,10 +292,12 @@ class NilaiUjianController extends Controller
         $isReadOnly = false;
         $readOnlyReason = null;
 
-        if (($ujian->tipe_ujian === 'IMNI' || $ujian->jenis_ujian === 'IMNI') && $isWaliRuangan && !$isAdminOrStaff) {
+        $isImni = ($ujian->tipe_ujian === 'IMNI' || $ujian->jenis_ujian === 'IMNI' || str_contains(strtoupper($ujian->nama_ujian ?? ''), 'IMNI'));
+
+        if ($isImni && !$isAdminOrStaff) {
             $canEdit = false;
             $isReadOnly = true;
-            $readOnlyReason = 'Pada ujian IMNI, Wali Ruangan hanya memiliki akses membaca nilai.';
+            $readOnlyReason = 'Pada ujian IMNI, penilaian dikelola khusus oleh Panitia IMNI.';
         }
 
         return response()->json([
@@ -365,10 +367,11 @@ class NilaiUjianController extends Controller
             $isAdminOrStaff = $user->hasAnyRole(['administrator', 'staff', 'admin']);
         }
 
-        if (($ujian->tipe_ujian === 'IMNI' || $ujian->jenis_ujian === 'IMNI') && $isWaliRuangan && !$isAdminOrStaff) {
+        $isImni = ($ujian->tipe_ujian === 'IMNI' || $ujian->jenis_ujian === 'IMNI' || str_contains(strtoupper($ujian->nama_ujian ?? ''), 'IMNI'));
+        if ($isImni && !$isAdminOrStaff) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pada ujian IMNI, Wali Ruangan hanya memiliki akses membaca nilai.'
+                'message' => 'Pada ujian IMNI, penilaian dikelola khusus oleh Panitia IMNI.'
             ], 403);
         }
         $tahunId = $ujian->tahun_pelajaran_id ?? $ruangan->tahun_pelajaran_id;
@@ -568,6 +571,19 @@ class NilaiUjianController extends Controller
 
         $user = $request->user();
         $ujian = Ujian::findOrFail($request->ujian_id);
+        $isAdminOrStaff = false;
+        if (method_exists($user, 'hasAnyRole')) {
+            $isAdminOrStaff = $user->hasAnyRole(['administrator', 'staff', 'admin']);
+        }
+
+        $isImni = ($ujian->tipe_ujian === 'IMNI' || $ujian->jenis_ujian === 'IMNI' || str_contains(strtoupper($ujian->nama_ujian ?? ''), 'IMNI'));
+        if ($isImni && !$isAdminOrStaff) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dispensasi pada ujian IMNI dikelola khusus oleh Panitia IMNI melalui menu Kepanitiaan IMNI.',
+            ], 403);
+        }
+
         $tahunId = $ujian->tahun_pelajaran_id ?? TahunPelajaran::where('is_active', true)->value('id');
 
         // Pastikan hanya Wali Ruangan dari kelas murid ini yang berwenang memberi dispensasi (atau Admin)
@@ -625,6 +641,19 @@ class NilaiUjianController extends Controller
 
         $user = $request->user();
         $ujian = Ujian::findOrFail($request->ujian_id);
+        $isAdminOrStaff = false;
+        if (method_exists($user, 'hasAnyRole')) {
+            $isAdminOrStaff = $user->hasAnyRole(['administrator', 'staff', 'admin']);
+        }
+
+        $isImni = ($ujian->tipe_ujian === 'IMNI' || $ujian->jenis_ujian === 'IMNI' || str_contains(strtoupper($ujian->nama_ujian ?? ''), 'IMNI'));
+        if ($isImni && !$isAdminOrStaff) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dispensasi pada ujian IMNI dikelola khusus oleh Panitia IMNI melalui menu Kepanitiaan IMNI.',
+            ], 403);
+        }
+
         $tahunId = $ujian->tahun_pelajaran_id ?? TahunPelajaran::where('is_active', true)->value('id');
 
         // Pastikan hanya Wali Ruangan dari kelas murid ini yang berwenang membatalkan dispensasi (atau Admin)

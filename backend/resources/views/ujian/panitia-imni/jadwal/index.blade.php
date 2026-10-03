@@ -13,7 +13,19 @@
                 <p class="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400">
                     Distribusi jadwal pelaksanaan Imtihan Niha'i kelas akhir (3 TPQ, 6 IBT, 3 TSA).
                 </p>
-                @if ($ujianImni && $ujianImni->tanggal_mulai && $ujianImni->tanggal_selesai)
+                @if (isset($imniUjians) && $imniUjians->isNotEmpty())
+                    @foreach ($imniUjians as $uItem)
+                        @if ($uItem->tanggal_mulai && $uItem->tanggal_selesai)
+                            <span
+                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-primary/10 text-primary dark:text-primary-dark border border-primary/20">
+                                <i class="bi bi-calendar-check"></i>
+                                {{ $uItem->tingkat?->nama_tingkat ?? $uItem->nama_ujian }}:
+                                {{ \Carbon\Carbon::parse($uItem->tanggal_mulai)->translatedFormat('d M Y') }} -
+                                {{ \Carbon\Carbon::parse($uItem->tanggal_selesai)->translatedFormat('d M Y') }}
+                            </span>
+                        @endif
+                    @endforeach
+                @elseif ($ujianImni && $ujianImni->tanggal_mulai && $ujianImni->tanggal_selesai)
                     <span
                         class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-primary/10 text-primary dark:text-primary-dark border border-primary/20">
                         <i class="bi bi-calendar-check"></i>

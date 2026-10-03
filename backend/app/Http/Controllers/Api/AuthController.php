@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\SendOtpResetPasswordMail;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
+use App\Models\Ujian\PanitiaImni;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use Carbon\Carbon;
@@ -82,6 +83,7 @@ class AuthController extends Controller
             $namaRuangan = null;
             $ruanganId = null;
 
+            $panitiaImni = null;
             if ($tahunAktif && $user->ustadz) {
                 $ruangan = Ruangan::where('tahun_pelajaran_id', $tahunAktif->id)
                     ->where('ustadz_id', $user->ustadz->id)
@@ -92,6 +94,11 @@ class AuthController extends Controller
                     $namaRuangan = $ruangan->nama_ruangan;
                     $ruanganId = $ruangan->id;
                 }
+
+                $panitiaImni = PanitiaImni::where('ustadz_id', $user->ustadz->id)
+                    ->where('tahun_pelajaran_id', $tahunAktif->id)
+                    ->where('is_active', true)
+                    ->first();
             }
 
             $roleName = $user->roles->first()->name ?? 'ustadz';
@@ -140,6 +147,17 @@ class AuthController extends Controller
                     'is_wali_ruangan' => $isWaliRuangan,
                     'ruangan_wali' => $namaRuangan,
                     'ruangan_wali_id' => $ruanganId,
+
+                    // --- DATA KEPANITIAAN IMNI ---
+                    'is_panitia_imni' => ($panitiaImni !== null),
+                    'jabatan_panitia_imni' => $panitiaImni?->jabatan,
+                    'no_sk_panitia_imni' => $panitiaImni?->no_sk,
+                    'panitia_imni' => $panitiaImni ? [
+                        'is_panitia' => true,
+                        'jabatan' => $panitiaImni->jabatan,
+                        'no_sk' => $panitiaImni->no_sk,
+                        'keterangan' => $panitiaImni->keterangan,
+                    ] : null,
                 ]
             ], 200);
         }
@@ -832,6 +850,7 @@ class AuthController extends Controller
         $namaRuangan = null;
         $ruanganId = null;
 
+        $panitiaImni = null;
         if ($tahunAktif && $user->ustadz) {
             $ruangan = Ruangan::where('tahun_pelajaran_id', $tahunAktif->id)
                 ->where('ustadz_id', $user->ustadz->id)
@@ -842,6 +861,11 @@ class AuthController extends Controller
                 $namaRuangan = $ruangan->nama_ruangan;
                 $ruanganId = $ruangan->id;
             }
+
+            $panitiaImni = PanitiaImni::where('ustadz_id', $user->ustadz->id)
+                ->where('tahun_pelajaran_id', $tahunAktif->id)
+                ->where('is_active', true)
+                ->first();
         }
 
         return response()->json([
@@ -868,6 +892,17 @@ class AuthController extends Controller
                 'is_wali_ruangan' => $isWaliRuangan,
                 'ruangan_wali' => $namaRuangan,
                 'ruangan_wali_id' => $ruanganId,
+
+                // --- DATA KEPANITIAAN IMNI ---
+                'is_panitia_imni' => ($panitiaImni !== null),
+                'jabatan_panitia_imni' => $panitiaImni?->jabatan,
+                'no_sk_panitia_imni' => $panitiaImni?->no_sk,
+                'panitia_imni' => $panitiaImni ? [
+                    'is_panitia' => true,
+                    'jabatan' => $panitiaImni->jabatan,
+                    'no_sk' => $panitiaImni->no_sk,
+                    'keterangan' => $panitiaImni->keterangan,
+                ] : null,
             ]
         ], 200);
     }

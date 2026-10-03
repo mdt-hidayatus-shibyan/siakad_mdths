@@ -587,7 +587,7 @@
                                         <th class="py-3 px-4 text-center w-14">Meja</th>
                                         <th class="py-3 px-4 w-28">NISM</th>
                                         <th class="py-3 px-4">Nama Lengkap Santri</th>
-                                        <th class="py-3 px-4 text-center w-24">Tingkat</th>
+                                        <th class="py-3 px-4 text-center w-24">Ruangan Asal</th>
                                         <th class="py-3 px-4 text-center w-72">Status Kehadiran</th>
                                         <th class="py-3 px-4 w-48">Catatan Khusus</th>
                                     </tr>
@@ -599,13 +599,16 @@
                                             $curStatus = $presensiExisting->get($muridId)?->status;
                                             $curCatatan = $presensiExisting->get($muridId)?->catatan ?? '';
                                             $tingkatId = $p->pesertaImni?->tingkat_id ?? 2;
+                                            $ruangAsal = $p->pesertaImni?->ruanganAsal?->nama_ruangan ?? $p->pesertaImni?->level?->nama_level ?? ($tingkatId == 3 ? '3 TSA' : ($tingkatId == 2 ? '6 IBT' : '-'));
+                                            $isTsa = (str_contains(strtoupper($ruangAsal), 'TSA') || $tingkatId == 3);
+                                            $isIbt = (str_contains(strtoupper($ruangAsal), '6') || $tingkatId == 2);
                                         @endphp
                                         <tr class="hover:bg-zinc-50/60 dark:hover:bg-zinc-900/40 transition-colors">
                                             <td
                                                 class="py-3 px-4 text-center font-mono font-black text-indigo-600 dark:text-indigo-400 text-xs">
                                                 <span
                                                     class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-                                                    {{ $p->nomor_meja ?? '-' }}
+                                                    {{ $loop->iteration }}
                                                 </span>
                                             </td>
                                             <td
@@ -623,20 +626,20 @@
                                             <td class="py-3 px-4 text-center">
                                                 <input type="hidden" name="presensi[{{ $muridId }}][tingkat_id]"
                                                     value="{{ $tingkatId }}">
-                                                @if ($tingkatId == 2)
-                                                    <span
-                                                        class="inline-block px-2 py-0.5 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 font-black text-[10px] border border-orange-500/20">
-                                                        6 IBT
-                                                    </span>
-                                                @elseif ($tingkatId == 3)
+                                                @if ($isTsa)
                                                     <span
                                                         class="inline-block px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black text-[10px] border border-blue-500/20">
-                                                        3 TSA
+                                                        {{ $ruangAsal }}
+                                                    </span>
+                                                @elseif ($isIbt)
+                                                    <span
+                                                        class="inline-block px-2 py-0.5 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 font-black text-[10px] border border-orange-500/20">
+                                                        {{ $ruangAsal }}
                                                     </span>
                                                 @else
                                                     <span
-                                                        class="inline-block px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 font-black text-[10px]">
-                                                        TPQ
+                                                        class="inline-block px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 font-black text-[10px] border border-emerald-500/20">
+                                                        {{ $ruangAsal }}
                                                     </span>
                                                 @endif
                                             </td>

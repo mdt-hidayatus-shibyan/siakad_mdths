@@ -9,6 +9,7 @@ class DashboardModel {
   final int totalMuridWali;
   final List<JadwalHariIniItem> jadwalHariIniList;
   final List<PengumumanItem> pengumumanList;
+  final PanitiaImniInfo? panitiaImni;
 
   DashboardModel({
     this.isLiburHariIni = false,
@@ -19,12 +20,14 @@ class DashboardModel {
     required this.totalMuridWali,
     required this.jadwalHariIniList,
     required this.pengumumanList,
+    this.panitiaImni,
   });
 
   factory DashboardModel.fromJson(Map<String, dynamic> json) {
     final stats = json['statistik'] ?? {};
     final rawJadwal = json['jadwal_hari_ini'] as List? ?? [];
     final rawPengumuman = json['pengumuman'] as List? ?? [];
+    final rawPanitia = json['panitia_imni'];
 
     return DashboardModel(
       isLiburHariIni: json['is_libur_hari_ini'] ?? false,
@@ -45,6 +48,33 @@ class DashboardModel {
       pengumumanList: rawPengumuman
           .map((e) => PengumumanItem.fromJson(e))
           .toList(),
+      panitiaImni: rawPanitia != null ? PanitiaImniInfo.fromJson(rawPanitia) : null,
+    );
+  }
+}
+
+class PanitiaImniInfo {
+  final bool isPanitia;
+  final String? jabatan;
+  final String? noSk;
+  final String? keterangan;
+  final String? tahunPelajaran;
+
+  PanitiaImniInfo({
+    required this.isPanitia,
+    this.jabatan,
+    this.noSk,
+    this.keterangan,
+    this.tahunPelajaran,
+  });
+
+  factory PanitiaImniInfo.fromJson(Map<String, dynamic> json) {
+    return PanitiaImniInfo(
+      isPanitia: json['is_panitia'] ?? false,
+      jabatan: json['jabatan'],
+      noSk: json['no_sk'],
+      keterangan: json['keterangan'],
+      tahunPelajaran: json['tahun_pelajaran'],
     );
   }
 }

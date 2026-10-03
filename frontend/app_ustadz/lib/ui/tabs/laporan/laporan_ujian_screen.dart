@@ -23,6 +23,7 @@ class LaporanUjianScreen extends StatefulWidget {
 }
 
 class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
+  int? _selectedRuanganId;
   int? _selectedUjianId;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -30,6 +31,7 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedRuanganId = widget.initialRuanganId;
     _selectedUjianId = widget.initialUjianId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -51,7 +53,7 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
 
   void _loadData() {
     context.read<LaporanProvider>().fetchLaporanUjian(
-      ruanganId: widget.initialRuanganId,
+      ruanganId: _selectedRuanganId,
       ujianId: _selectedUjianId,
     );
   }
@@ -66,9 +68,15 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
     final isLoading = provider.isLoadingLaporanUjian;
     final error = provider.errorLaporanUjian;
 
-    // Sync selected ujian id if not yet set
-    if (_selectedUjianId == null && data?.ujian != null) {
-      _selectedUjianId = data!.ujian!.id;
+    // Sync selected ruangan & ujian id
+    if (_selectedRuanganId == null && data?.ruanganId != null) {
+      _selectedRuanganId = data!.ruanganId;
+    }
+    if (data != null && data.daftarUjian.isNotEmpty) {
+      final exists = data.daftarUjian.any((u) => u.id == _selectedUjianId);
+      if (!exists) {
+        _selectedUjianId = data.ujian?.id ?? data.daftarUjian.first.id;
+      }
     }
 
     final allSantri = data?.rekapMurid ?? [];
@@ -96,7 +104,7 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
         child: ListView(
           padding: EdgeInsets.fromLTRB(16, 12, 16, 40 + bottomInset),
           children: [
-            // 1. FILTER AGENDA UJIAN (HANYA FILTER UJIAN)
+            // 1. FILTER AGENDA UJIAN & RUANGAN
             if (data != null && data.daftarUjian.isNotEmpty) ...[
               _buildUjianFilterCard(context, isDark, primary, data),
               const SizedBox(height: 14),
@@ -188,7 +196,7 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
   }
 
   // =========================================================================
-  // 1. FILTER AGENDA UJIAN
+  // 1. FILTER AGENDA UJIAN & RUANGAN
   // =========================================================================
   Widget _buildUjianFilterCard(
     BuildContext context,
@@ -196,25 +204,96 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
     Color primary,
     LaporanUjianData data,
   ) {
+    final ruanganList = data.ruanganList;
+    final hasMultipleRuangan = ruanganList.length > 1;
+
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.tune_rounded, size: 18, color: primary),
-              const SizedBox(width: 8),
-              const Text(
-                'Pilih Agenda Ujian',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+              Row(
+                children: [
+                  Icon(Icons.tune_rounded, size: 18, color: primary),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Filter Laporan Ujian',
+                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
+              if (data.isKelasAkhir)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'Kelas Akhir',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      color: primary,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),
+
+          // Pilihan Ruangan jika ustadz mengampu / memiliki akses ke lebih dari 1 ruangan
+          if (hasMultipleRuangan) ...[
+            DropdownButtonFormField<int>(
+              key: ValueKey('ruangan_$_selectedRuanganId'),
+              initialValue: ruanganList.any((r) => r.id == _selectedRuanganId)
+                  ? _selectedRuanganId
+                  : ruanganList.first.id,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'Ruangan / Kelas',
+                prefixIcon: const Icon(Icons.meeting_room_rounded, size: 18),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 11,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              items: ruanganList.map((r) {
+                return DropdownMenuItem<int>(
+                  value: r.id,
+                  child: Text(
+                    '${r.namaRuangan} (${r.levelNama})',
+                    style: const TextStyle(fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null && val != _selectedRuanganId) {
+                  HapticHelper.light();
+                  setState(() {
+                    _selectedRuanganId = val;
+                    _selectedUjianId = null; // Reset agar otomatis memilih ujian valid untuk ruangan baru
+                  });
+                  _loadData();
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          // Pilihan Agenda Ujian
           DropdownButtonFormField<int>(
-            key: ValueKey('ujian_$_selectedUjianId'),
-            initialValue: _selectedUjianId,
+            key: ValueKey('ujian_${_selectedUjianId}_${data.ruanganId}'),
+            initialValue: data.daftarUjian.any((uj) => uj.id == _selectedUjianId)
+                ? _selectedUjianId
+                : (data.daftarUjian.isNotEmpty ? data.daftarUjian.first.id : null),
             isExpanded: true,
             decoration: InputDecoration(
               labelText: 'Agenda Ujian',
@@ -432,7 +511,7 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
                 ),
               ),
               Text(
-                'KKM: \u2265 60.0',
+                'KKM: \u2265 55.0',
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: FontWeight.bold,

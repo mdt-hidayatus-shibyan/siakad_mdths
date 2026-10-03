@@ -348,7 +348,10 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final nilai = context.watch<NilaiProvider>();
-    final isReadOnly = !nilai.canEdit || (nilai.currentUjian?.tipeUjian == 'IMNI' && nilai.isWaliRuangan);
+    final isImni = nilai.currentUjian?.tipeUjian.toUpperCase() == 'IMNI' ||
+        nilai.currentUjian?.namaUjian.toUpperCase().contains('IMNI') == true ||
+        (widget.ujianName != null && widget.ujianName!.toUpperCase().contains('IMNI'));
+    final isReadOnly = !nilai.canEdit || isImni;
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -394,8 +397,10 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            nilai.readOnlyReason ??
-                                'Ujian IMNI: Wali Ruangan hanya memiliki akses membaca nilai.',
+                            isImni
+                                ? 'Mode Pantau Nilai: Pada ujian IMNI, penilaian dan penginputan nilai dikelola khusus oleh Panitia IMNI.'
+                                : (nilai.readOnlyReason ??
+                                    'Mode Pantau: Anda hanya memiliki akses membaca nilai.'),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,

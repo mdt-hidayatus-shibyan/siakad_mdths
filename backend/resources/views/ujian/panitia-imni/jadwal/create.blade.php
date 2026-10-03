@@ -22,7 +22,7 @@
         </div>
 
         <div>
-            <a href="{{ route('jadwal-imni.modal-agenda', ['tahun_id' => $tahun_pelajaran_id]) }}"
+            <a href="{{ route('jadwal-imni.modal-agenda', ['tahun_id' => $tahun_pelajaran_id, 'level_id' => $level_id]) }}"
                 class="action-modal h-10 inline-flex items-center justify-center px-4 rounded-xl bg-zinc-100/80 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-800 text-xs font-black transition-all hover:scale-[1.02] active:scale-95 outline-none border border-zinc-200/80 dark:border-zinc-800 shadow-2xs gap-1.5 cursor-pointer">
                 <i class="bi bi-calendar2-range text-sm text-primary"></i>
                 <span>Pengaturan Tanggal Ujian</span>

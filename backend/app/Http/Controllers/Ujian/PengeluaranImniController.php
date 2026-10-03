@@ -21,7 +21,7 @@ class PengeluaranImniController extends Controller
     public const KATEGORI_LIST = [
         'Pra IMNI',
         'Saat IMNI',
-        'Pasca IMNI',
+        'Pasca IMNI (Wisuda)',
     ];
 
     /**

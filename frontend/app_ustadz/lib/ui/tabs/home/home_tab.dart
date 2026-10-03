@@ -29,6 +29,10 @@ import 'detail_pengumuman_screen.dart';
 import '../catatan/catatan_ustadz_screen.dart';
 import '../../../providers/presensi_provider.dart';
 import '../presensi/checkin_ustadz_sheet.dart';
+import '../panitia_imni/pembayaran_imni_screen.dart';
+import '../panitia_imni/pengeluaran_imni_screen.dart';
+import '../panitia_imni/presensi_imni_screen.dart';
+import '../panitia_imni/nilai_imni_screen.dart';
 
 class HomeTab extends StatefulWidget {
   final VoidCallback? onNavigateToPresensiGuru;
@@ -212,10 +216,11 @@ class _HomeTabState extends State<HomeTab> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: (isDark
-                                          ? AppColors.primaryDark
-                                          : AppColors.primaryLight)
-                                      .withValues(alpha: 0.12),
+                                  color:
+                                      (isDark
+                                              ? AppColors.primaryDark
+                                              : AppColors.primaryLight)
+                                          .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -865,6 +870,116 @@ class _HomeTabState extends State<HomeTab> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const LaporanRuanganScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                // Menu Tambahan Khusus Kepanitiaan IMNI
+                if (user?.isPanitiaImni ?? false) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.stars_rounded,
+                            size: 19,
+                            color: AppColors.amberAccent,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Kepanitiaan IMNI (${user?.jabatanPanitiaImni ?? "Panitia"})',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF382305)
+                              : const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Panitia IMNI',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.amberAccent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  GlassCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 14,
+                    ),
+                    child: Row(
+                      children: [
+                        _buildQuickAction(
+                          icon: Icons.payments_rounded,
+                          label: 'Tagihan IMNI',
+                          isDark: isDark,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PembayaranImniScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildQuickAction(
+                          icon: Icons.shopping_cart_checkout_rounded,
+                          label: 'Pengeluaran',
+                          isDark: isDark,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PengeluaranImniScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildQuickAction(
+                          icon: Icons.fact_check_rounded,
+                          label: 'Presensi IMNI',
+                          isDark: isDark,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PresensiImniScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildQuickAction(
+                          icon: Icons.grade_rounded,
+                          label: 'Nilai & Leger',
+                          isDark: isDark,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const NilaiImniScreen(),
                               ),
                             );
                           },

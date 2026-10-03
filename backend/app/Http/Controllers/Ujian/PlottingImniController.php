@@ -182,11 +182,47 @@ class PlottingImniController extends Controller
             ->keyBy('ruangan_imni_id');
 
         // Plotting Peserta pada Tanggal Ini
-        $pesertaPlotted = PesertaRuanganImni::with(['pesertaImni.murid.waliMurid.kampung', 'pesertaImni.tingkat', 'pesertaImni.level'])
+        $pesertaPlotted = PesertaRuanganImni::with([
+            'pesertaImni.murid.waliMurid.kampung',
+            'pesertaImni.tingkat',
+            'pesertaImni.level',
+            'pesertaImni.ruanganAsal',
+            'murid',
+        ])
             ->where('tahun_pelajaran_id', $selectedTahunId)
             ->where('tanggal_ujian', $tanggal)
-            ->orderBy('nomor_meja', 'asc')
             ->get();
+
+        $getRank = function ($ruang, $tingkatId) {
+            if (str_contains($ruang, 'TSA') || $tingkatId == 3) return 1;
+            if (str_contains($ruang, '6-A') || str_contains($ruang, '6A') || str_contains($ruang, '6 A')) return 2;
+            if (str_contains($ruang, '6-B') || str_contains($ruang, '6B') || str_contains($ruang, '6 B')) return 3;
+            if (str_contains($ruang, '6-C') || str_contains($ruang, '6C') || str_contains($ruang, '6 C')) return 4;
+            return 5;
+        };
+
+        $pesertaPlotted = $pesertaPlotted->sort(function ($a, $b) use ($getRank) {
+            $pesertaA = $a->pesertaImni;
+            $pesertaB = $b->pesertaImni;
+            $muridA = $a->murid ?? $pesertaA?->murid;
+            $muridB = $b->murid ?? $pesertaB?->murid;
+
+            $ruangA = strtoupper(trim($pesertaA?->ruanganAsal?->nama_ruangan ?? $pesertaA?->level?->nama_level ?? ''));
+            $ruangB = strtoupper(trim($pesertaB?->ruanganAsal?->nama_ruangan ?? $pesertaB?->level?->nama_level ?? ''));
+
+            $rankA = $getRank($ruangA, $pesertaA?->tingkat_id);
+            $rankB = $getRank($ruangB, $pesertaB?->tingkat_id);
+            if ($rankA !== $rankB) return $rankA <=> $rankB;
+
+            $cmpRuang = strcasecmp($ruangA, $ruangB);
+            if ($cmpRuang !== 0) return $cmpRuang;
+
+            $jkA = ($muridA?->jenis_kelamin === 'L') ? 0 : 1;
+            $jkB = ($muridB?->jenis_kelamin === 'L') ? 0 : 1;
+            if ($jkA !== $jkB) return $jkA <=> $jkB;
+
+            return strcasecmp($muridA?->nama_lengkap ?? '', $muridB?->nama_lengkap ?? '');
+        })->values();
 
         // Data Ustadz untuk Opsi Pengawas
         $daftarUstadz = Ustadz::where('is_active', true)->orderBy('nama_lengkap', 'asc')->get();
@@ -493,11 +529,47 @@ class PlottingImniController extends Controller
             ->keyBy('ruangan_imni_id');
 
         // Peserta Plotted
-        $pesertaPlotted = PesertaRuanganImni::with(['pesertaImni.murid.waliMurid.kampung', 'pesertaImni.tingkat', 'pesertaImni.level'])
+        $pesertaPlotted = PesertaRuanganImni::with([
+            'pesertaImni.murid.waliMurid.kampung',
+            'pesertaImni.tingkat',
+            'pesertaImni.level',
+            'pesertaImni.ruanganAsal',
+            'murid',
+        ])
             ->where('tahun_pelajaran_id', $selectedTahunId)
             ->where('tanggal_ujian', $tanggal)
-            ->orderBy('nomor_meja', 'asc')
             ->get();
+
+        $getRank = function ($ruang, $tingkatId) {
+            if (str_contains($ruang, 'TSA') || $tingkatId == 3) return 1;
+            if (str_contains($ruang, '6-A') || str_contains($ruang, '6A') || str_contains($ruang, '6 A')) return 2;
+            if (str_contains($ruang, '6-B') || str_contains($ruang, '6B') || str_contains($ruang, '6 B')) return 3;
+            if (str_contains($ruang, '6-C') || str_contains($ruang, '6C') || str_contains($ruang, '6 C')) return 4;
+            return 5;
+        };
+
+        $pesertaPlotted = $pesertaPlotted->sort(function ($a, $b) use ($getRank) {
+            $pesertaA = $a->pesertaImni;
+            $pesertaB = $b->pesertaImni;
+            $muridA = $a->murid ?? $pesertaA?->murid;
+            $muridB = $b->murid ?? $pesertaB?->murid;
+
+            $ruangA = strtoupper(trim($pesertaA?->ruanganAsal?->nama_ruangan ?? $pesertaA?->level?->nama_level ?? ''));
+            $ruangB = strtoupper(trim($pesertaB?->ruanganAsal?->nama_ruangan ?? $pesertaB?->level?->nama_level ?? ''));
+
+            $rankA = $getRank($ruangA, $pesertaA?->tingkat_id);
+            $rankB = $getRank($ruangB, $pesertaB?->tingkat_id);
+            if ($rankA !== $rankB) return $rankA <=> $rankB;
+
+            $cmpRuang = strcasecmp($ruangA, $ruangB);
+            if ($cmpRuang !== 0) return $cmpRuang;
+
+            $jkA = ($muridA?->jenis_kelamin === 'L') ? 0 : 1;
+            $jkB = ($muridB?->jenis_kelamin === 'L') ? 0 : 1;
+            if ($jkA !== $jkB) return $jkA <=> $jkB;
+
+            return strcasecmp($muridA?->nama_lengkap ?? '', $muridB?->nama_lengkap ?? '');
+        })->values();
 
         $pesertaPerRuangan = $pesertaPlotted->groupBy('ruangan_imni_id');
 

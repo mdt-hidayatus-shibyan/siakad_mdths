@@ -146,6 +146,9 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
       );
     }
 
+    final isImni = provider.currentUjian?.tipeUjian.toUpperCase() == 'IMNI' ||
+        provider.currentUjian?.namaUjian.toUpperCase().contains('IMNI') == true;
+
     return RefreshIndicator(
       onRefresh: () => provider.fetchData(),
       child: ListView(
@@ -301,6 +304,46 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
           ),
           const SizedBox(height: 14),
 
+          // Banner Mode Pantau Khusus IMNI
+          if (isImni) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.amberAccent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.amberAccent.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.visibility_rounded,
+                    size: 20,
+                    color: AppColors.amberAccent,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Mode Pantau Presensi: Presensi Ujian IMNI dikelola khusus oleh Panitia IMNI melalui menu Kepanitiaan IMNI.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? const Color(0xFFFFD54F)
+                            : const Color(0xFFB78103),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           // ===================================================================
           // 1.5. CARD KETERANGAN RUANGAN & STATUS HAK AKSES USTADZ
           // ===================================================================
@@ -374,9 +417,11 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                provider.isWaliRuangan
-                                    ? '⭐ Wali Ruangan'
-                                    : '📘 Pengajar / Pengawas',
+                                isImni
+                                    ? '👁️ Mode Pantau'
+                                    : (provider.isWaliRuangan
+                                        ? '⭐ Wali Ruangan'
+                                        : '📘 Pengajar / Pengawas'),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -390,9 +435,11 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          provider.isWaliRuangan
-                              ? 'Anda adalah Wali Ruangan kelas ${provider.selectedRuanganNama}. Menampilkan seluruh mata pelajaran ujian (${provider.jadwalList.length} mapel).'
-                              : 'Wali Ruangan: ${provider.waliRuanganNama}. Menampilkan ${provider.jadwalList.length} mata pelajaran yang Anda ampu / awasi di kelas ini.',
+                          isImni
+                              ? 'Ujian IMNI: Pengisian presensi santri dan pengawas dikelola khusus oleh Panitia IMNI.'
+                              : (provider.isWaliRuangan
+                                  ? 'Anda adalah Wali Ruangan kelas ${provider.selectedRuanganNama}. Menampilkan seluruh mata pelajaran ujian (${provider.jadwalList.length} mapel).'
+                                  : 'Wali Ruangan: ${provider.waliRuanganNama}. Menampilkan ${provider.jadwalList.length} mata pelajaran yang Anda ampu / awasi di kelas ini.'),
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark
@@ -582,10 +629,12 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                             status: 'H',
                             label: 'Hadir',
                             isSelected: provider.pengawas!.status == 'Hadir',
-                            onTap: () {
-                              HapticHelper.light();
-                              provider.updatePengawasStatus('Hadir');
-                            },
+                            onTap: isImni
+                                ? null
+                                : () {
+                                    HapticHelper.light();
+                                    provider.updatePengawasStatus('Hadir');
+                                  },
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -594,10 +643,12 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                             status: 'I',
                             label: 'Izin',
                             isSelected: provider.pengawas!.status == 'Izin',
-                            onTap: () {
-                              HapticHelper.light();
-                              provider.updatePengawasStatus('Izin');
-                            },
+                            onTap: isImni
+                                ? null
+                                : () {
+                                    HapticHelper.light();
+                                    provider.updatePengawasStatus('Izin');
+                                  },
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -606,10 +657,12 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                             status: 'S',
                             label: 'Sakit',
                             isSelected: provider.pengawas!.status == 'Sakit',
-                            onTap: () {
-                              HapticHelper.light();
-                              provider.updatePengawasStatus('Sakit');
-                            },
+                            onTap: isImni
+                                ? null
+                                : () {
+                                    HapticHelper.light();
+                                    provider.updatePengawasStatus('Sakit');
+                                  },
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -618,10 +671,12 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                             status: 'B',
                             label: 'Badal',
                             isSelected: provider.pengawas!.status == 'Badal',
-                            onTap: () {
-                              HapticHelper.light();
-                              provider.updatePengawasStatus('Badal');
-                            },
+                            onTap: isImni
+                                ? null
+                                : () {
+                                    HapticHelper.light();
+                                    provider.updatePengawasStatus('Badal');
+                                  },
                           ),
                         ),
                       ],
@@ -650,17 +705,19 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                             ),
                           );
                         }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            final selected = provider.daftarBadal.firstWhere(
-                              (b) => b.id == val,
-                            );
-                            provider.updatePengawasPengganti(
-                              val,
-                              selected.nama,
-                            );
-                          }
-                        },
+                        onChanged: isImni
+                            ? null
+                            : (val) {
+                                if (val != null) {
+                                  final selected = provider.daftarBadal.firstWhere(
+                                    (b) => b.id == val,
+                                  );
+                                  provider.updatePengawasPengganti(
+                                    val,
+                                    selected.nama,
+                                  );
+                                }
+                              },
                       ),
                     ],
 
@@ -668,20 +725,24 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                     // Input Catatan / Berita Acara Ujian
                     TextField(
                       controller: _beritaAcaraController,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'Catatan Berita Acara (misal: Ujian tertib, tidak ada kendala)',
+                      readOnly: isImni,
+                      decoration: InputDecoration(
+                        hintText: isImni
+                            ? 'Berita acara dikelola oleh Panitia IMNI'
+                            : 'Catatan Berita Acara (misal: Ujian tertib, tidak ada kendala)',
                         labelText: 'Berita Acara Singkat',
-                        prefixIcon: Icon(Icons.notes_rounded, size: 16),
-                        contentPadding: EdgeInsets.symmetric(
+                        prefixIcon: const Icon(Icons.notes_rounded, size: 16),
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 8,
                         ),
                       ),
                       style: const TextStyle(fontSize: 12),
-                      onChanged: (val) => provider.updateBeritaAcara(
-                        val.trim().isEmpty ? null : val.trim(),
-                      ),
+                      onChanged: isImni
+                          ? null
+                          : (val) => provider.updateBeritaAcara(
+                              val.trim().isEmpty ? null : val.trim(),
+                            ),
                     ),
                   ],
                 ),
@@ -759,53 +820,54 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                         ],
                       ),
                     ),
-                    PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert_rounded, size: 20),
-                      tooltip: 'Aksi Cepat',
-                      onSelected: (val) {
-                        if (val == 'hadir') {
-                          provider.setAllMuridStatus('Hadir');
-                        } else if (val == 'kosong') {
-                          provider.setSemuaKosong();
-                        }
-                      },
-                      itemBuilder: (ctx) => [
-                        PopupMenuItem(
-                          value: 'hadir',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.done_all_rounded,
-                                size: 18,
-                                color: AppColors.primaryLight,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Hadirkan Semua',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ],
+                    if (!isImni)
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert_rounded, size: 20),
+                        tooltip: 'Aksi Cepat',
+                        onSelected: (val) {
+                          if (val == 'hadir') {
+                            provider.setAllMuridStatus('Hadir');
+                          } else if (val == 'kosong') {
+                            provider.setSemuaKosong();
+                          }
+                        },
+                        itemBuilder: (ctx) => [
+                          PopupMenuItem(
+                            value: 'hadir',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.done_all_rounded,
+                                  size: 18,
+                                  color: AppColors.primaryLight,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Hadirkan Semua',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'kosong',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.refresh_rounded,
-                                size: 18,
-                                color: AppColors.amberAccent,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Kosongkan Semua',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ],
+                          const PopupMenuItem(
+                            value: 'kosong',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.refresh_rounded,
+                                  size: 18,
+                                  color: AppColors.amberAccent,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Kosongkan Semua',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ),
               ),
@@ -954,7 +1016,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                                 ],
                               ),
                             ),
-                          if (!isTidakIkut)
+                          if (!isTidakIkut && !isImni)
                             IconButton(
                               icon: Icon(
                                 m.catatan != null && m.catatan!.isNotEmpty
@@ -1048,13 +1110,15 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                                 status: 'H',
                                 label: 'Hadir',
                                 isSelected: m.status == 'Hadir',
-                                onTap: () {
-                                  HapticHelper.light();
-                                  provider.updateMuridStatus(
-                                    m.muridId,
-                                    'Hadir',
-                                  );
-                                },
+                                onTap: isImni
+                                    ? null
+                                    : () {
+                                        HapticHelper.light();
+                                        provider.updateMuridStatus(
+                                          m.muridId,
+                                          'Hadir',
+                                        );
+                                      },
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -1063,10 +1127,12 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                                 status: 'I',
                                 label: 'Izin',
                                 isSelected: m.status == 'Izin',
-                                onTap: () {
-                                  HapticHelper.light();
-                                  provider.updateMuridStatus(m.muridId, 'Izin');
-                                },
+                                onTap: isImni
+                                    ? null
+                                    : () {
+                                        HapticHelper.light();
+                                        provider.updateMuridStatus(m.muridId, 'Izin');
+                                      },
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -1075,13 +1141,15 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                                 status: 'S',
                                 label: 'Sakit',
                                 isSelected: m.status == 'Sakit',
-                                onTap: () {
-                                  HapticHelper.light();
-                                  provider.updateMuridStatus(
-                                    m.muridId,
-                                    'Sakit',
-                                  );
-                                },
+                                onTap: isImni
+                                    ? null
+                                    : () {
+                                        HapticHelper.light();
+                                        provider.updateMuridStatus(
+                                          m.muridId,
+                                          'Sakit',
+                                        );
+                                      },
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -1090,13 +1158,15 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                                 status: 'A',
                                 label: 'Alpha',
                                 isSelected: m.status == 'Alpha',
-                                onTap: () {
-                                  HapticHelper.light();
-                                  provider.updateMuridStatus(
-                                    m.muridId,
-                                    'Alpha',
-                                  );
-                                },
+                                onTap: isImni
+                                    ? null
+                                    : () {
+                                        HapticHelper.light();
+                                        provider.updateMuridStatus(
+                                          m.muridId,
+                                          'Alpha',
+                                        );
+                                      },
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -1105,13 +1175,15 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                                 status: 'D',
                                 label: 'Dispen',
                                 isSelected: m.status == 'Dispensasi',
-                                onTap: () {
-                                  HapticHelper.light();
-                                  provider.updateMuridStatus(
-                                    m.muridId,
-                                    'Dispensasi',
-                                  );
-                                },
+                                onTap: isImni
+                                    ? null
+                                    : () {
+                                        HapticHelper.light();
+                                        provider.updateMuridStatus(
+                                          m.muridId,
+                                          'Dispensasi',
+                                        );
+                                      },
                               ),
                             ),
                           ],
@@ -1139,7 +1211,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
             // ===================================================================
             // 7. TOMBOL SIMPAN PRESENSI UJIAN
             // ===================================================================
-            if (provider.muridList.isNotEmpty)
+            if (provider.muridList.isNotEmpty && !isImni)
               ElevatedButton.icon(
                 onPressed: provider.isSaving
                     ? null

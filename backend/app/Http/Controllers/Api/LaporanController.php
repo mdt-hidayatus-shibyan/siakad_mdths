@@ -907,12 +907,32 @@ class LaporanController extends Controller
         $isWaliOfThisRoom = ($ruangan->ustadz_id == $ustadzId);
         $levelNama = $ruangan->level->nama_level ?? '';
         $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-        $allowedTipe = $isKelasAkhir ? ['IMDA 1', 'IMNI'] : ['IMDA 1', 'IMDA 2'];
 
-        $daftarUjian = Ujian::with('semester')
-            ->where('tahun_pelajaran_id', $tahunId)
-            ->orderBy('id', 'asc')
-            ->get();
+        $queryUjian = Ujian::with('semester')->where('tahun_pelajaran_id', $tahunId);
+
+        if ($ruangan && $ruangan->level) {
+            if ($isKelasAkhir) {
+                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+            } else {
+                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
+            }
+
+            if ($ruangan->level->tingkat_id) {
+                $queryUjian->where(function ($q) use ($ruangan) {
+                    $q->whereNull('tingkat_id')
+                        ->orWhere('tingkat_id', $ruangan->level->tingkat_id);
+                });
+            }
+        }
+
+        $daftarUjian = $queryUjian->orderBy('id', 'asc')->get();
+
+        if ($daftarUjian->isEmpty()) {
+            $daftarUjian = Ujian::with('semester')
+                ->where('tahun_pelajaran_id', $tahunId)
+                ->orderBy('id', 'asc')
+                ->get();
+        }
 
         if ($daftarUjian->isEmpty()) {
             $daftarUjian = Ujian::with('semester')

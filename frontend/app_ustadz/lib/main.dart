@@ -15,6 +15,7 @@ import 'providers/kas_provider.dart';
 import 'providers/laporan_provider.dart';
 import 'providers/murid_provider.dart';
 import 'providers/nilai_provider.dart';
+import 'providers/panitia_imni_provider.dart';
 import 'providers/pelanggaran_provider.dart';
 import 'providers/presensi_provider.dart';
 import 'providers/presensi_ujian_provider.dart';
@@ -70,6 +71,7 @@ class MDTHidayatusShibyanApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BellProvider()),
         ChangeNotifierProvider(create: (_) => CatatanUstadzProvider()),
         ChangeNotifierProvider(create: (_) => LaporanProvider()),
+        ChangeNotifierProvider(create: (_) => PanitiaImniProvider()),
         ChangeNotifierProvider(create: (_) => SignalProvider()),
       ],
       child: Consumer<ThemeProvider>(

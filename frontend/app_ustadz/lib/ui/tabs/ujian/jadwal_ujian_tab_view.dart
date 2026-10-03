@@ -37,6 +37,12 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
     final onlyMyJadwal = akademik.onlyMyJadwalUjian;
     final isWali = ujianData?.isWaliRuangan ?? false;
     final isAllTasks = (ujianData?.selectedRuanganId == 0);
+    final selectedUjian = (ujianData?.daftarUjian ?? [])
+        .where((u) => u.id == ujianData?.selectedUjianId)
+        .firstOrNull ??
+        (ujianData?.daftarUjian ?? []).firstOrNull;
+    final isImni = selectedUjian?.tipeUjian.toUpperCase() == 'IMNI' ||
+        selectedUjian?.namaUjian.toUpperCase().contains('IMNI') == true;
 
     if (akademik.isLoadingJadwalUjian && ujianData == null) {
       return const Padding(
@@ -405,6 +411,46 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
             ),
           ),
           const SizedBox(height: 12),
+
+          // Banner Edukatif / Info Khusus IMNI
+          if (isImni) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.amberAccent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.amberAccent.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 20,
+                    color: AppColors.amberAccent,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Informasi IMNI: Jadwal pelaksanaan, pengawasan, dan administrasi IMNI dikoordinasikan terpusat oleh Panitia IMNI.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? const Color(0xFFFFD54F)
+                            : const Color(0xFFB78103),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           // ===================================================================
           // 2. KETERANGAN STATUS RUANGAN & QUICK SWITCH

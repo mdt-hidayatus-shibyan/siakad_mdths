@@ -393,6 +393,12 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
     }
 
     final muridList = provider.filteredMuridList;
+    final selectedUjian = provider.daftarUjian
+        .where((u) => u.id == provider.selectedUjianId)
+        .firstOrNull ??
+        provider.daftarUjian.firstOrNull;
+    final isImni = selectedUjian?.tipeUjian.toUpperCase() == 'IMNI' ||
+        selectedUjian?.namaUjian.toUpperCase().contains('IMNI') == true;
 
     return RefreshIndicator(
       onRefresh: () => provider.fetchData(),
@@ -509,6 +515,46 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
           if (provider.daftarUjian.isEmpty)
             _buildBelumAdaUjianEmptyState(context, isDark, provider)
           else ...[
+            // Banner Mode Pantau Khusus IMNI
+            if (isImni) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.amberAccent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.amberAccent.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.visibility_rounded,
+                      size: 20,
+                      color: AppColors.amberAccent,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Mode Pantau Persyaratan: Pada ujian IMNI, pengelolaan dispensasi dan kelayakan peserta dikelola khusus oleh Panitia IMNI.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? const Color(0xFFFFD54F)
+                              : const Color(0xFFB78103),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             // ===================================================================
             // 2. KETERANGAN STATUS RUANGAN & HAK AKSES USTADZ
             // ===================================================================
@@ -578,9 +624,11 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                provider.isWaliRuangan
-                                    ? '⭐ Wali Ruangan'
-                                    : '📘 Pengajar',
+                                isImni
+                                    ? '👁️ Mode Pantau'
+                                    : (provider.isWaliRuangan
+                                        ? '⭐ Wali Ruangan'
+                                        : '📘 Pengajar'),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -594,9 +642,11 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          provider.isWaliRuangan
-                              ? 'Anda adalah Wali Ruangan kelas ini. Anda memiliki hak penuh untuk memberikan atau membatalkan dispensasi ujian bagi murid.'
-                              : 'Wali Ruangan: ${provider.waliRuanganNama}. Pemberian izin/dispensasi ujian murid dikelola oleh Wali Ruangan.',
+                          isImni
+                              ? 'Ujian IMNI: Hak akses dispensasi dan kelayakan peserta dikelola khusus oleh Panitia IMNI melalui menu Kepanitiaan IMNI.'
+                              : (provider.isWaliRuangan
+                                  ? 'Anda adalah Wali Ruangan kelas ini. Anda memiliki hak penuh untuk memberikan atau membatalkan dispensasi ujian bagi murid.'
+                                  : 'Wali Ruangan: ${provider.waliRuanganNama}. Pemberian izin/dispensasi ujian murid dikelola oleh Wali Ruangan.'),
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark
@@ -919,8 +969,22 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                       ),
                     ),
 
-                    // Tombol Aksi Dispensasi (Khusus Wali Ruangan)
-                    if (provider.isWaliRuangan) ...[
+                    // Tombol Aksi Dispensasi (Khusus Wali Ruangan non-IMNI)
+                    if (isImni) ...[
+                      if (m.isLocked) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Dispensasi dan kelayakan peserta IMNI dikelola khusus oleh Panitia IMNI.',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontStyle: FontStyle.italic,
+                            color: isDark
+                                ? const Color(0xFF8D9387)
+                                : const Color(0xFF73796E),
+                          ),
+                        ),
+                      ],
+                    ] else if (provider.isWaliRuangan) ...[
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,

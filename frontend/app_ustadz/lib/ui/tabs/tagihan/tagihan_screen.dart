@@ -1472,7 +1472,12 @@ class _TagihanScreenState extends State<TagihanScreen>
         ? AppColors.onPrimaryDark
         : AppColors.onPrimaryLight;
     final ringkasan = tagihan.nonSppRingkasan;
-    final masterList = ringkasan?.masterTagihanList ?? [];
+    final masterList = (ringkasan?.masterTagihanList ?? [])
+        .where((m) =>
+            m.tipe.toUpperCase() != 'IMNI' &&
+            !m.namaTagihan.toUpperCase().contains('IMNI') &&
+            !m.kodeTagihan.toUpperCase().contains('IMNI'))
+        .toList();
     final roomList =
         ringkasan?.ruanganList ?? tagihan.ringkasan?.ruanganList ?? [];
     final muridList = tagihan.nonSppMuridList;

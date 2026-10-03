@@ -506,6 +506,9 @@ class TagihanController extends Controller
 
         $mastersQuery = PengaturanTagihan::where('tahun_pelajaran_id', $tahunId)
             ->where('tipe', '!=', 'bulanan')
+            ->where('tipe', '!=', 'imni')
+            ->where('kode_tagihan', '!=', 'IMNI')
+            ->where('nama_tagihan', 'NOT LIKE', '%IMNI%')
             ->where(function ($q) {
                 $q->whereNull('sasaran')->orWhere('sasaran', 'murid');
             });
@@ -593,7 +596,7 @@ class TagihanController extends Controller
             ], 404);
         }
 
-        // 2. Filter Master Tagihan Non-SPP KHUSUS untuk Ruangan & Level ini saja
+        // 2. Filter Master Tagihan Non-SPP KHUSUS untuk Ruangan & Level ini saja (Kecuali IMNI)
         $publishedMasterIds = TagihanMurid::where('ruangan_id', $ruangan->id)
             ->whereNotNull('pengaturan_tagihan_id')
             ->pluck('pengaturan_tagihan_id')
@@ -603,6 +606,9 @@ class TagihanController extends Controller
 
         $masters = PengaturanTagihan::where('tahun_pelajaran_id', $tahunId)
             ->where('tipe', '!=', 'bulanan')
+            ->where('tipe', '!=', 'imni')
+            ->where('kode_tagihan', '!=', 'IMNI')
+            ->where('nama_tagihan', 'NOT LIKE', '%IMNI%')
             ->where(function ($q) {
                 $q->whereNull('sasaran')->orWhere('sasaran', 'murid');
             })
@@ -823,6 +829,21 @@ class TagihanController extends Controller
                 throw new \Exception('Tidak ada tagihan yang valid.');
             }
 
+            $user = $request->user();
+            $isAdminOrStaff = false;
+            if (method_exists($user, 'hasAnyRole')) {
+                $isAdminOrStaff = $user->hasAnyRole(['administrator', 'staff', 'admin']);
+            }
+
+            $hasImniTagihan = $tagihans->contains(function ($t) {
+                $m = $t->pengaturanTagihan;
+                return $m && ($m->tipe === 'imni' || str_contains(strtoupper($m->nama_tagihan ?? ''), 'IMNI') || str_contains(strtoupper($m->kode_tagihan ?? ''), 'IMNI'));
+            });
+
+            if ($hasImniTagihan && !$isAdminOrStaff) {
+                throw new \Exception('Pembayaran tagihan IMNI dikelola khusus oleh Panitia IMNI melalui menu Kepanitiaan IMNI.');
+            }
+
             $totalNominal = $tagihans->sum('nominal_tagihan');
             $firstMurid = $tagihans->first()->murid;
             $firstMaster = $tagihans->first()->pengaturanTagihan;
@@ -891,7 +912,22 @@ class TagihanController extends Controller
     {
         DB::beginTransaction();
         try {
-            $tagihan = TagihanMurid::findOrFail($tagihanId);
+            $tagihan = TagihanMurid::with('pengaturanTagihan')->findOrFail($tagihanId);
+
+            $user = $request->user();
+            $isAdminOrStaff = false;
+            if (method_exists($user, 'hasAnyRole')) {
+                $isAdminOrStaff = $user->hasAnyRole(['administrator', 'staff', 'admin']);
+            }
+            $m = $tagihan->pengaturanTagihan;
+            $isImni = $m && ($m->tipe === 'imni' || str_contains(strtoupper($m->nama_tagihan ?? ''), 'IMNI') || str_contains(strtoupper($m->kode_tagihan ?? ''), 'IMNI'));
+            if ($isImni && !$isAdminOrStaff) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pembatalan transaksi tagihan IMNI dikelola khusus oleh Panitia IMNI melalui menu Kepanitiaan IMNI.'
+                ], 403);
+            }
+
             $pembayaranId = $tagihan->pembayaran_tagihan_id;
 
             if ($pembayaranId) {

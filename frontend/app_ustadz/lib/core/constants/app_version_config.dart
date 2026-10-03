@@ -41,17 +41,17 @@ class AppVersionConfig {
   // ---------------------------------------------------------------------------
   static const String appTitle = 'Ustadz - MDTHS';
   static const String appSubtitle = 'MDT Hidayatus Shibyan';
-  static const String version = '1.8.2';
-  static const String buildNumber = '2026.09.11';
-  static const String releaseDate = 'September 2026';
-  static const String statusBadge = 'Versi Rilis';
+  static const String version = '2.0.0';
+  static const String buildNumber = '2026.10.01';
+  static const String releaseDate = 'Oktober 2026';
+  static const String statusBadge = 'Versi Beta';
   static const bool isLatest = true;
 
   // ---------------------------------------------------------------------------
   // 2. CATATAN RILIS (CHANGELOG)
   // ---------------------------------------------------------------------------
-  static const String releaseSubtitle = 'Stable Release - September 2026';
-  static const String releaseBadge = 'Versi Aktif';
+  static const String releaseSubtitle = 'Preview Release - Oktober 2026';
+  static const String releaseBadge = 'Beta Version';
 
   /// 🌟 DAFTAR PENAMBAHAN FITUR BARU
   /// Ubah / tambahkan fitur baru di sini:
@@ -65,6 +65,11 @@ class AppVersionConfig {
       title: 'Signal Indikator Koneksi',
       description:
           'Menambahkan indikator sinyal koneksi di App_Bar aplikasi, sehingga pengguna dapat melihat kualitas koneksi internet mereka saat menggunakan aplikasi.',
+    ),
+    ChangelogEntry(
+      title: 'Panitia IMNI',
+      description:
+          'Menambahkan fitur untuk mengelola panitia dalam kegiatan IMNI, memungkinkan koordinasi yang lebih efektif dan transparansi dalam pengelolaan acara.',
     ),
   ];
 

@@ -29,8 +29,18 @@ class JadwalImniController extends Controller
         $tahunPelajaranId = $request->input('tahun_id', $tahunAktif?->id);
         $selectedTahun = $daftarTahun->firstWhere('id', $tahunPelajaranId) ?? $tahunAktif;
 
-        // 2. Dapatkan Ujian IMNI
-        $ujianImni = $this->getOrCreateUjianImni($tahunPelajaranId);
+        // 2. Dapatkan Semua Agenda Ujian IMNI untuk tahun ini
+        $imniUjians = Ujian::with('tingkat')
+            ->where('tahun_pelajaran_id', $tahunPelajaranId)
+            ->where('tipe_ujian', 'IMNI')
+            ->get();
+
+        if ($imniUjians->isEmpty()) {
+            $imniUjians = collect([$this->getOrCreateUjianImni($tahunPelajaranId)]);
+        }
+
+        $imniUjianIds = $imniUjians->pluck('id')->toArray();
+        $ujianImni = $imniUjians->first();
 
         // 3. Ambil Level Kelas Akhir (3 TPQ, 6 IBT, 3 TSA) dengan relasi Tingkat
         $levels = Level::with(['tingkat'])
@@ -46,9 +56,9 @@ class JadwalImniController extends Controller
 
         $levelIds = $levels->pluck('id')->toArray();
 
-        // 4. Ambil Data Jadwal Ujian IMNI
-        $jadwalRaw = JadwalUjian::with(['mataPelajaran', 'pengawas', 'level', 'ujian.tahunPelajaran'])
-            ->where('ujian_id', $ujianImni->id)
+        // 4. Ambil Data Jadwal Ujian IMNI (Semua Ujian IMNI tahun ini)
+        $jadwalRaw = JadwalUjian::with(['mataPelajaran', 'pengawas', 'level.tingkat', 'ujian.tahunPelajaran'])
+            ->whereIn('ujian_id', $imniUjianIds)
             ->whereIn('level_id', $levelIds)
             ->orderBy('tanggal_ujian', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -92,6 +102,7 @@ class JadwalImniController extends Controller
             'daftarTahun',
             'tahunPelajaranId',
             'ujianImni',
+            'imniUjians',
             'selectedTahun'
         ));
     }
@@ -105,7 +116,28 @@ class JadwalImniController extends Controller
         $daftarTahun = TahunPelajaran::orderBy('id', 'desc')->get();
         $selectedTahun = $daftarTahun->firstWhere('id', $tahunId) ?? $daftarTahun->first();
 
-        $ujianImni = $this->getOrCreateUjianImni($tahunId);
+        $imniUjians = Ujian::with('tingkat')
+            ->where('tahun_pelajaran_id', $tahunId)
+            ->where('tipe_ujian', 'IMNI')
+            ->get();
+
+        $levelId = $request->input('level_id');
+        $level = $levelId ? Level::with('tingkat')->find($levelId) : null;
+        $ujianId = $request->input('ujian_id');
+
+        if ($ujianId) {
+            $ujianImni = $imniUjians->firstWhere('id', $ujianId) ?? Ujian::find($ujianId);
+        } elseif ($level && $level->tingkat_id) {
+            $ujianImni = $imniUjians->firstWhere('tingkat_id', $level->tingkat_id) ?? $imniUjians->first();
+        } else {
+            $ujianImni = $imniUjians->first();
+        }
+
+        if (!$ujianImni) {
+            $ujianImni = $this->getOrCreateUjianImni($tahunId, $level?->tingkat_id);
+            $imniUjians = collect([$ujianImni]);
+        }
+
         $semesters = Semester::where('tahun_pelajaran_id', $tahunId)->get();
         if ($semesters->isEmpty()) {
             $semesters = Semester::all();
@@ -116,6 +148,8 @@ class JadwalImniController extends Controller
                 'tahunId',
                 'selectedTahun',
                 'ujianImni',
+                'imniUjians',
+                'level',
                 'semesters'
             ));
         }
@@ -147,7 +181,7 @@ class JadwalImniController extends Controller
             'keterangan'      => $request->keterangan,
         ]);
 
-        $msg = "Master Agenda Ujian IMNI berhasil diperbarui. Rentang tanggal ujian telah disesuaikan.";
+        $msg = "Master Agenda Ujian IMNI ({$ujian->nama_ujian}) berhasil diperbarui. Rentang tanggal pelaksanaan telah disesuaikan.";
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -177,7 +211,7 @@ class JadwalImniController extends Controller
         $tahunPelajarans = TahunPelajaran::orderBy('id', 'desc')->get();
 
         // Level Kelas Akhir (3 TPQ, 6 IBT, 3 TSA)
-        $levels = Level::where('is_active', true)
+        $levels = Level::with(['tingkat'])->where('is_active', true)
             ->where(function ($q) {
                 $q->where('nama_level', 'LIKE', '%3%TPQ%')
                     ->orWhere('nama_level', 'LIKE', '%6%IBT%')
@@ -193,21 +227,32 @@ class JadwalImniController extends Controller
         $mapels = collect();
 
         if ($tahun_pelajaran_id) {
-            $ujianImni = $this->getOrCreateUjianImni($tahun_pelajaran_id);
+            $imniUjians = Ujian::where('tahun_pelajaran_id', $tahun_pelajaran_id)
+                ->where('tipe_ujian', 'IMNI')
+                ->get();
+            $imniUjianIds = $imniUjians->pluck('id')->toArray();
 
             if ($level_id) {
+                $level = Level::with('tingkat')->find($level_id);
+
+                // Cari Ujian IMNI yang sesuai dengan tingkat level ini
+                $ujianImni = $imniUjians->firstWhere('tingkat_id', $level?->tingkat_id);
+                if (!$ujianImni) {
+                    $ujianImni = $imniUjians->first() ?? $this->getOrCreateUjianImni($tahun_pelajaran_id, $level?->tingkat_id);
+                }
+
                 if ($ujianImni && $ujianImni->tanggal_mulai && $ujianImni->tanggal_selesai) {
                     $start = Carbon::parse($ujianImni->tanggal_mulai);
                     $end = Carbon::parse($ujianImni->tanggal_selesai);
 
-                    for ($d = $start; $d->lte($end); $d->addDay()) {
+                    for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
                         if ($d->isFriday()) continue; // Skip Jum'at
                         $dates[] = $d->format('Y-m-d');
                     }
                 }
 
-                // Tarik jadwal yang sudah ada berdasarkan LEVEL
-                $existingJadwal = JadwalUjian::where('ujian_id', $ujianImni->id)
+                // Tarik jadwal yang sudah ada berdasarkan LEVEL (mencakup semua IMNI ujian id tahun ini)
+                $existingJadwal = JadwalUjian::whereIn('ujian_id', $imniUjianIds ?: [$ujianImni->id])
                     ->where('level_id', $level_id)
                     ->orderBy('waktu_mulai', 'asc')
                     ->get()
@@ -248,12 +293,21 @@ class JadwalImniController extends Controller
             'jadwal'             => 'required|array'
         ]);
 
-        $ujianImni = $this->getOrCreateUjianImni($request->tahun_pelajaran_id);
-        $level = Level::findOrFail($request->level_id);
+        $level = Level::with('tingkat')->findOrFail($request->level_id);
 
-        DB::transaction(function () use ($request, $ujianImni) {
-            // Hapus jadwal lama untuk ujian & LEVEL ini
-            JadwalUjian::where('ujian_id', $ujianImni->id)
+        $imniUjians = Ujian::where('tahun_pelajaran_id', $request->tahun_pelajaran_id)
+            ->where('tipe_ujian', 'IMNI')
+            ->get();
+        $imniUjianIds = $imniUjians->pluck('id')->toArray();
+
+        $ujianImni = $imniUjians->firstWhere('tingkat_id', $level->tingkat_id);
+        if (!$ujianImni) {
+            $ujianImni = $imniUjians->first() ?? $this->getOrCreateUjianImni($request->tahun_pelajaran_id, $level->tingkat_id);
+        }
+
+        DB::transaction(function () use ($request, $ujianImni, $imniUjianIds) {
+            // Hapus jadwal lama untuk level ini di semua ujian IMNI tahun ini
+            JadwalUjian::whereIn('ujian_id', $imniUjianIds ?: [$ujianImni->id])
                 ->where('level_id', $request->level_id)
                 ->delete();
 
@@ -289,7 +343,9 @@ class JadwalImniController extends Controller
         $selectedTahunId = $tahunId ?? $tahunAktif?->id;
         $selectedTahun = $daftarTahun->firstWhere('id', $selectedTahunId) ?? $tahunAktif;
 
-        $ujianImni = $this->getOrCreateUjianImni($selectedTahunId);
+        $imniUjians = Ujian::where('tahun_pelajaran_id', $selectedTahunId)->where('tipe_ujian', 'IMNI')->get();
+        $imniUjianIds = $imniUjians->pluck('id')->toArray();
+        $ujianImni = $imniUjians->first() ?? $this->getOrCreateUjianImni($selectedTahunId);
 
         $levels = Level::with('tingkat')
             ->where('is_active', true)
@@ -309,7 +365,7 @@ class JadwalImniController extends Controller
         $levelIds = $levels->pluck('id')->toArray();
 
         $jadwals = JadwalUjian::with(['mataPelajaran', 'pengawas', 'level.tingkat'])
-            ->where('ujian_id', $ujianImni->id)
+            ->whereIn('ujian_id', $imniUjianIds ?: [$ujianImni->id])
             ->whereIn('level_id', $levelIds)
             ->orderBy('tanggal_ujian', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -334,6 +390,7 @@ class JadwalImniController extends Controller
         return view('ujian.panitia-imni.jadwal.cetak-jadwal', compact(
             'selectedTahun',
             'ujianImni',
+            'imniUjians',
             'levels',
             'jadwals',
             'matrix',
@@ -346,19 +403,27 @@ class JadwalImniController extends Controller
     /**
      * Helper: Dapatkan atau buat agenda Ujian bertipe IMNI untuk tahun ajaran terpilih
      */
-    private function getOrCreateUjianImni($tahunPelajaranId)
+    private function getOrCreateUjianImni($tahunPelajaranId, $tingkatId = null)
     {
         $tp = TahunPelajaran::find($tahunPelajaranId) ?? TahunPelajaran::where('is_active', true)->first();
         $semesters = Semester::where('tahun_pelajaran_id', $tp?->id)->get();
         $sem2 = $semesters->first(fn($s) => str_contains($s->nama_semester, '2') || str_contains(strtolower($s->nama_semester), 'genap')) ?? $semesters->last();
 
+        $tingkat = $tingkatId ? Tingkat::find($tingkatId) : null;
+        $namaUjian = $tingkat ? "Imtihan Niha'i ({$tingkat->nama_tingkat}) TP. {$tp->nama_hijriyah}" : "Imtihan Niha'i (IMNI) TP. {$tp->nama_hijriyah}";
+
+        $criteria = [
+            'tahun_pelajaran_id' => $tp->id,
+            'tipe_ujian'         => 'IMNI',
+        ];
+        if ($tingkatId) {
+            $criteria['tingkat_id'] = $tingkatId;
+        }
+
         return Ujian::firstOrCreate(
+            $criteria,
             [
-                'tahun_pelajaran_id' => $tp->id,
-                'tipe_ujian'         => 'IMNI',
-            ],
-            [
-                'nama_ujian'         => "Imtihan Niha'i (IMNI) TP. {$tp->nama_hijriyah}",
+                'nama_ujian'         => $namaUjian,
                 'semester_id'        => $sem2?->id ?? 2,
                 'tanggal_mulai'      => now()->format('Y-m-d'),
                 'tanggal_selesai'    => now()->addDays(6)->format('Y-m-d'),
