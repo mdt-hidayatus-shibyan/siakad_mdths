@@ -49,6 +49,18 @@ use App\Http\Controllers\Ujian\BintangMadrasahController;
 use App\Http\Controllers\Ujian\RiwayatKenaikanController;
 use App\Http\Controllers\Ujian\RaporController;
 use App\Http\Controllers\Ujian\PembayaranUjianController;
+use App\Http\Controllers\Ujian\PanitiaImniController;
+use App\Http\Controllers\Ujian\ImniDashboardController;
+use App\Http\Controllers\Ujian\PesertaImniController;
+use App\Http\Controllers\Ujian\RuanganImniController;
+use App\Http\Controllers\Ujian\PlottingImniController;
+use App\Http\Controllers\Ujian\PembayaranImniController;
+use App\Http\Controllers\Ujian\PengeluaranImniController;
+use App\Http\Controllers\Ujian\PresensiImniController;
+use App\Http\Controllers\Ujian\NilaiImniController;
+use App\Http\Controllers\Ujian\JadwalImniController;
+use App\Http\Controllers\Ujian\MasterImniController;
+use App\Http\Controllers\Ujian\KelulusanImniController;
 use App\Http\Controllers\UjianAlquran\PengaturanUjianAlquranController;
 use App\Http\Controllers\UjianAlquran\PesertaUjianController;
 use App\Http\Controllers\UjianAlquran\JuriAlquranController;
@@ -440,6 +452,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // -- Catatan Pelanggaran Murid --
     Route::prefix('pelanggaran-murid')->name('pelanggaran-murid.')->group(function () {
         Route::get('/', [PelanggaranMuridController::class, 'index'])->name('index');
+        Route::get('/riwayat-harian', [PelanggaranMuridController::class, 'riwayatHarian'])->name('riwayatHarian');
+        Route::get('/riwayat-harian/export', [PelanggaranMuridController::class, 'exportRiwayatHarian'])->name('exportRiwayatHarian');
         Route::post('/harian/store', [PelanggaranMuridController::class, 'storeHarian'])->name('storeHarian');
         Route::delete('/harian/{id}/destroy', [PelanggaranMuridController::class, 'destroyHarian'])->name('destroyHarian');
         Route::get('/massal', [PelanggaranMuridController::class, 'massal'])->name('massal');
@@ -550,6 +564,153 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cetak-rekap-spp/{murid_id}/{tahun_id}', 'cetakRekapSpp')->name('cetak-rekap-spp');
         Route::get('/cetak/{id}', 'cetakKwitansi')->name('cetak');
         Route::get('/laporan', 'laporan')->name('laporan');
+    });
+
+    // -- Kepanitiaan IMNI (Modular Routes) --
+    
+    // 1. Dashboard Terpadu Kepanitiaan IMNI
+    Route::prefix('dashboard-imni')->name('dashboard-imni.')->group(function () {
+        Route::get('/', [ImniDashboardController::class, 'index'])->name('index');
+        Route::get('/dashboard', [ImniDashboardController::class, 'index'])->name('dashboard');
+    });
+
+    // 1.1 Master Agenda Ujian IMNI
+    Route::resource('master-imni', MasterImniController::class)->names('master-imni');
+
+    // 2. Susunan SK Kepanitiaan IMNI
+    Route::prefix('panitia-imni')->name('panitia-imni.')->group(function () {
+        Route::get('/', [PanitiaImniController::class, 'index'])->name('index');
+        Route::get('/create', [PanitiaImniController::class, 'create'])->name('create');
+        Route::post('/store', [PanitiaImniController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [PanitiaImniController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PanitiaImniController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PanitiaImniController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/toggle-status', [PanitiaImniController::class, 'toggleStatus'])->name('toggle-status');
+    });
+
+    // 3. Peserta IMNI
+    Route::prefix('peserta-imni')->name('peserta-imni.')->group(function () {
+        Route::get('/', [PesertaImniController::class, 'index'])->name('index');
+        Route::get('/modal-tarik', [PesertaImniController::class, 'modalTarik'])->name('modal-tarik');
+        Route::get('/modal-auto-plotting', [PesertaImniController::class, 'modalAutoPlotting'])->name('modal-auto-plotting');
+        Route::get('/kandidat', [PesertaImniController::class, 'getKandidat'])->name('kandidat');
+        Route::post('/tarik', [PesertaImniController::class, 'tarikPeserta'])->name('tarik');
+        Route::get('/{id}/edit', [PesertaImniController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PesertaImniController::class, 'update'])->name('update');
+        Route::post('/auto-plotting', [PesertaImniController::class, 'autoPlottingRuangan'])->name('auto-plotting');
+        Route::post('/bulk-plotting', [PesertaImniController::class, 'bulkUpdatePlotting'])->name('bulk-plotting');
+        Route::post('/regenerate-nomor', [PesertaImniController::class, 'regenerateNomorPeserta'])->name('regenerate-nomor');
+        Route::post('/{id}/toggle-kelayakan', [PesertaImniController::class, 'toggleKelayakan'])->name('toggle-kelayakan');
+        Route::get('/{id}/modal-dispensasi', [PesertaImniController::class, 'modalDispensasi'])->name('modal-dispensasi');
+        Route::post('/{id}/dispensasi', [PesertaImniController::class, 'beriDispensasi'])->name('beri-dispensasi');
+        Route::post('/{id}/cabut-dispensasi', [PesertaImniController::class, 'cabutDispensasi'])->name('cabut-dispensasi');
+        Route::delete('/{id}', [PesertaImniController::class, 'destroy'])->name('destroy');
+        Route::post('/destroy-bulk', [PesertaImniController::class, 'destroyBulk'])->name('destroy-bulk');
+        
+        // Format Cetak Peserta
+        Route::get('/cetak-kartu', [PesertaImniController::class, 'cetakKartu'])->name('cetak-kartu');
+        Route::get('/cetak-daftar', [PesertaImniController::class, 'cetakDaftar'])->name('cetak-daftar');
+        Route::get('/cetak-denah', [PesertaImniController::class, 'cetakDenah'])->name('cetak-denah');
+        Route::get('/cetak-label-meja', [PesertaImniController::class, 'cetakLabelMeja'])->name('cetak-label-meja');
+    });
+
+    // 3.1 Jadwal Ujian IMNI
+    Route::prefix('jadwal-imni')->name('jadwal-imni.')->group(function () {
+        Route::get('/', [JadwalImniController::class, 'index'])->name('index');
+        Route::get('/modal-agenda', [JadwalImniController::class, 'modalAgenda'])->name('modal-agenda');
+        Route::post('/update-agenda', [JadwalImniController::class, 'updateAgenda'])->name('update-agenda');
+        Route::get('/create', [JadwalImniController::class, 'create'])->name('create');
+        Route::post('/store', [JadwalImniController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [JadwalImniController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [JadwalImniController::class, 'update'])->name('update');
+        Route::delete('/{id}', [JadwalImniController::class, 'destroy'])->name('destroy');
+        Route::get('/cetak', [JadwalImniController::class, 'cetak'])->name('cetak');
+    });
+
+    // 4. Pengaturan & Plotting Ruangan IMNI (Per Hari / Default)
+    Route::prefix('ruangan-imni')->name('ruangan-imni.')->group(function () {
+        Route::get('/', [RuanganImniController::class, 'index'])->name('index');
+        
+        // Master Ruangan IMNI Management (R1, R2, dst)
+        Route::get('/modal-kelola-ruangan', [RuanganImniController::class, 'modalKelolaRuangan'])->name('modal-kelola-ruangan');
+        Route::get('/modal-tambah-ruangan', [RuanganImniController::class, 'modalTambahRuangan'])->name('modal-tambah-ruangan');
+        Route::get('/{id}/modal-edit-ruangan', [RuanganImniController::class, 'modalEditRuangan'])->name('modal-edit-ruangan');
+        Route::post('/store-ruangan', [RuanganImniController::class, 'storeRuangan'])->name('store-ruangan');
+        Route::post('/generate-ruangan', [RuanganImniController::class, 'generateRuangan'])->name('generate-ruangan');
+        Route::put('/{id}/update-ruangan', [RuanganImniController::class, 'updateRuangan'])->name('update-ruangan');
+        Route::delete('/{id}/destroy-ruangan', [RuanganImniController::class, 'destroyRuangan'])->name('destroy-ruangan');
+        Route::post('/reset-ruangan', [RuanganImniController::class, 'resetRuangan'])->name('reset-ruangan');
+
+        // Auto-Plotting & Pindah Ruangan
+        Route::get('/modal-auto-plotting', [RuanganImniController::class, 'modalAutoPlotting'])->name('modal-auto-plotting');
+        Route::post('/auto-plotting', [RuanganImniController::class, 'autoPlotting'])->name('auto-plotting');
+        Route::get('/{id}/modal-pindah', [RuanganImniController::class, 'modalPindah'])->name('modal-pindah');
+        Route::put('/{id}/pindah-ruangan', [RuanganImniController::class, 'updatePindahRuangan'])->name('pindah-ruangan');
+        Route::post('/bulk-pindah', [RuanganImniController::class, 'bulkPindah'])->name('bulk-pindah');
+        
+        // Format Cetak Ruangan
+        Route::get('/cetak-denah', [RuanganImniController::class, 'cetakDenah'])->name('cetak-denah');
+        Route::get('/cetak-label-meja', [RuanganImniController::class, 'cetakLabelMeja'])->name('cetak-label-meja');
+    });
+
+    // 5. Plotting Peserta & Pengawas IMNI
+    Route::prefix('plotting-imni')->name('plotting-imni.')->group(function () {
+        Route::get('/', [PlottingImniController::class, 'index'])->name('index');
+        Route::get('/harian/{tanggal}', [PlottingImniController::class, 'harian'])->name('harian');
+        Route::post('/random', [PlottingImniController::class, 'random'])->name('random');
+        Route::post('/simpan-pengawas', [PlottingImniController::class, 'simpanPengawas'])->name('simpan-pengawas');
+        Route::post('/pindah-ruangan', [PlottingImniController::class, 'pindahRuangan'])->name('pindah-ruangan');
+        Route::get('/cetak-mading/{tanggal}', [PlottingImniController::class, 'cetakMading'])->name('cetak-mading');
+    });
+
+    // 5. Pembayaran IMNI
+    Route::prefix('pembayaran-imni')->name('pembayaran-imni.')->group(function () {
+        Route::get('/', [PembayaranImniController::class, 'index'])->name('index');
+        Route::get('/modal-tarif-massal', [PembayaranImniController::class, 'modalTarifMassal'])->name('modal-tarif-massal');
+        Route::get('/modal-bayar/{pesertaId}', [PembayaranImniController::class, 'modalBayar'])->name('modal-bayar');
+        Route::get('/modal-edit-tagihan/{pesertaId}', [PembayaranImniController::class, 'modalEditTagihan'])->name('modal-edit-tagihan');
+        Route::post('/terapkan-pengaturan', [PembayaranImniController::class, 'terapkanDariPengaturanTagihan'])->name('terapkan-pengaturan');
+        Route::post('/tarif-massal', [PembayaranImniController::class, 'setTarifMassal'])->name('tarif-massal');
+        Route::post('/tarif-individual/{pesertaId}', [PembayaranImniController::class, 'setTarifIndividual'])->name('tarif-individual');
+        Route::post('/bayar', [PembayaranImniController::class, 'bayar'])->name('bayar');
+        Route::post('/batal/{id}', [PembayaranImniController::class, 'batal'])->name('batal');
+        Route::get('/cetak-kwitansi/{id}', [PembayaranImniController::class, 'cetakKwitansi'])->name('cetak-kwitansi');
+        Route::get('/cetak-rekap', [PembayaranImniController::class, 'cetakRekap'])->name('cetak-rekap');
+    });
+
+    // 5. Pengeluaran IMNI
+    Route::prefix('pengeluaran-imni')->name('pengeluaran-imni.')->group(function () {
+        Route::get('/', [PengeluaranImniController::class, 'index'])->name('index');
+        Route::get('/create', [PengeluaranImniController::class, 'create'])->name('create');
+        Route::post('/store', [PengeluaranImniController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [PengeluaranImniController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PengeluaranImniController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PengeluaranImniController::class, 'destroy'])->name('destroy');
+        Route::get('/cetak-lpj', [PengeluaranImniController::class, 'cetakLpj'])->name('cetak-lpj');
+    });
+
+    // 6. Presensi IMNI
+    Route::prefix('presensi-imni')->name('presensi-imni.')->group(function () {
+        Route::get('/', [PresensiImniController::class, 'index'])->name('index');
+        Route::post('/store', [PresensiImniController::class, 'store'])->name('store');
+    });
+
+    // 7. Input Nilai Mapel IMNI
+    Route::prefix('nilai-imni')->name('nilai-imni.')->group(function () {
+        Route::get('/', [NilaiImniController::class, 'index'])->name('index');
+        Route::post('/store', [NilaiImniController::class, 'store'])->name('store');
+        Route::get('/cetak-leger', [NilaiImniController::class, 'cetakLeger'])->name('cetak-leger');
+    });
+
+    // 8. Putusan Kelulusan IMNI
+    Route::prefix('putusan-imni')->name('putusan-imni.')->group(function () {
+        Route::get('/', [KelulusanImniController::class, 'index'])->name('index');
+        Route::post('/simpan', [KelulusanImniController::class, 'simpan'])->name('simpan');
+        Route::get('/cetak-sk/{tahun_id}/{ruangan_id}/{murid_id}', [KelulusanImniController::class, 'cetak_sk'])->name('cetak-sk');
+        Route::get('/cetak-ijazah/{tahun_id}/{ruangan_id}/{murid_id}', [KelulusanImniController::class, 'cetak_ijazah'])->name('cetak-ijazah');
+        Route::get('/cetak-sk-panitia', [KelulusanImniController::class, 'cetakSkPanitia'])->name('cetak-sk-panitia');
+        Route::get('/cetak-transkrip/{pesertaId?}', [KelulusanImniController::class, 'cetakTranskrip'])->name('cetak-transkrip');
+        Route::get('/cetak-leger', [KelulusanImniController::class, 'cetakLeger'])->name('cetak-leger');
     });
 
     // -- Ujian Al-Qur'an (Syarat Kelulusan Ibtidaiyah) --

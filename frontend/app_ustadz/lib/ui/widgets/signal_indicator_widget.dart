@@ -4,7 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/utils/haptic_helper.dart';
 import '../../providers/signal_provider.dart';
 
-/// Minimalist Glowing Status Indicator Widget for AppBars
+/// Minimalist High-Precision Signal Bar Status Indicator Widget for AppBars
 class SignalIndicatorWidget extends StatelessWidget {
   final bool showText;
   final double size;
@@ -12,7 +12,7 @@ class SignalIndicatorWidget extends StatelessWidget {
   const SignalIndicatorWidget({
     super.key,
     this.showText = false,
-    this.size = 40,
+    this.size = 34,
   });
 
   @override
@@ -27,37 +27,32 @@ class SignalIndicatorWidget extends StatelessWidget {
         if (showText) {
           content = Container(
             height: size,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A211A) : Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              color: color.withValues(alpha: isDark ? 0.18 : 0.10),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: color.withValues(alpha: isDark ? 0.35 : 0.25),
-                width: 1.2,
+                width: 1.0,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-                BoxShadow(
-                  color: color.withValues(alpha: isDark ? 0.15 : 0.08),
-                  blurRadius: 6,
-                ),
-              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _buildGlowingDot(color, isDark),
-                const SizedBox(width: 8),
+                PrecisionSignalBars(
+                  quality: signal.quality,
+                  color: color,
+                  isDark: isDark,
+                  height: 13,
+                ),
+                const SizedBox(width: 6),
                 Text(
                   signal.latencyMs != null
                       ? '${signal.latencyMs}ms'
                       : signal.label,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : const Color(0xFF1E293B),
                   ),
@@ -71,24 +66,20 @@ class SignalIndicatorWidget extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark ? const Color(0xFF1A211A) : Colors.white,
+              color: color.withValues(alpha: isDark ? 0.18 : 0.12),
               border: Border.all(
-                color: color.withValues(alpha: isDark ? 0.35 : 0.25),
-                width: 1.2,
+                color: color.withValues(alpha: isDark ? 0.35 : 0.22),
+                width: 1.0,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-                BoxShadow(
-                  color: color.withValues(alpha: isDark ? 0.18 : 0.10),
-                  blurRadius: 8,
-                ),
-              ],
             ),
-            child: Center(child: _buildGlowingDot(color, isDark)),
+            child: Center(
+              child: PrecisionSignalBars(
+                quality: signal.quality,
+                color: color,
+                isDark: isDark,
+                height: 13.5,
+              ),
+            ),
           );
         }
 
@@ -117,42 +108,102 @@ class SignalIndicatorWidget extends StatelessWidget {
       },
     );
   }
+}
 
-  /// Minimalist concentric glowing dot indicator
-  Widget _buildGlowingDot(Color color, bool isDark) {
-    return Container(
-      width: 22,
-      height: 22,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.18 : 0.12),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: isDark ? 0.38 : 0.28),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.8),
-                    blurRadius: 5,
-                    spreadRadius: 1,
+/// Precision 4-Bar Cellular Signal Indicator
+class PrecisionSignalBars extends StatelessWidget {
+  final SignalQuality quality;
+  final Color color;
+  final bool isDark;
+  final double height;
+  final double barWidth;
+  final double spacing;
+
+  const PrecisionSignalBars({
+    super.key,
+    required this.quality,
+    required this.color,
+    required this.isDark,
+    this.height = 14,
+    this.barWidth = 2.8,
+    this.spacing = 1.6,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    int activeBars;
+    switch (quality) {
+      case SignalQuality.strong:
+        activeBars = 4;
+        break;
+      case SignalQuality.moderate:
+        activeBars = 3;
+        break;
+      case SignalQuality.weak:
+        activeBars = 2;
+        break;
+      case SignalQuality.offline:
+        activeBars = 0;
+        break;
+      case SignalQuality.checking:
+        activeBars = 1;
+        break;
+    }
+
+    final inactiveColor = isDark
+        ? Colors.white.withValues(alpha: 0.16)
+        : Colors.black.withValues(alpha: 0.12);
+
+    final barHeights = [0.32, 0.54, 0.76, 1.0];
+
+    if (quality == SignalQuality.offline) {
+      return SizedBox(
+        height: height,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(4, (i) {
+                return Container(
+                  margin: EdgeInsets.only(right: i < 3 ? spacing : 0),
+                  width: barWidth,
+                  height: height * barHeights[i],
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(barWidth / 2),
                   ),
-                ],
-              ),
+                );
+              }),
             ),
-          ),
+            const Icon(
+              Icons.close_rounded,
+              size: 13,
+              color: Color(0xFFEF4444),
+            ),
+          ],
         ),
+      );
+    }
+
+    return SizedBox(
+      height: height,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: List.generate(4, (i) {
+          final isActive = i < activeBars;
+          return Container(
+            margin: EdgeInsets.only(right: i < 3 ? spacing : 0),
+            width: barWidth,
+            height: height * barHeights[i],
+            decoration: BoxDecoration(
+              color: isActive ? color : inactiveColor,
+              borderRadius: BorderRadius.circular(barWidth / 2),
+            ),
+          );
+        }),
       ),
     );
   }
@@ -233,8 +284,8 @@ class SignalDetailSheet extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        width: 38,
-                        height: 38,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: isDark ? 0.20 : 0.12),
                           shape: BoxShape.circle,
@@ -244,32 +295,13 @@ class SignalDetailSheet extends StatelessWidget {
                           ),
                         ),
                         child: Center(
-                          child: Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              color: color.withValues(
-                                alpha: isDark ? 0.40 : 0.28,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: color.withValues(alpha: 0.85),
-                                      blurRadius: 6,
-                                      spreadRadius: 1,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          child: PrecisionSignalBars(
+                            quality: signal.quality,
+                            color: color,
+                            isDark: isDark,
+                            height: 16,
+                            barWidth: 3.2,
+                            spacing: 1.8,
                           ),
                         ),
                       ),

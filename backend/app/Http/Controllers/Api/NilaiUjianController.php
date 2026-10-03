@@ -64,13 +64,7 @@ class NilaiUjianController extends Controller
         if ($request->ruangan_id) {
             $ruangan = Ruangan::with('level')->find($request->ruangan_id);
             if ($ruangan && $ruangan->level) {
-                $levelNama = $ruangan->level->nama_level ?? '';
-                $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-                if ($isKelasAkhir) {
-                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
-                } else {
-                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
-                }
+                $queryUjian->berlakuUntukLevel($ruangan->level);
             }
         }
 
@@ -125,14 +119,7 @@ class NilaiUjianController extends Controller
         $queryUjian = Ujian::with('semester')->where('tahun_pelajaran_id', $tahunPelajaranId);
 
         if ($ruangan && $ruangan->level) {
-            $levelNama = $ruangan->level->nama_level ?? '';
-            $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-
-            if ($isKelasAkhir) {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
-            } else {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
-            }
+            $queryUjian->berlakuUntukLevel($ruangan->level);
         }
 
         $daftarUjian = $queryUjian->orderBy('id', 'asc')
@@ -294,9 +281,30 @@ class NilaiUjianController extends Controller
             ];
         });
 
+        $user = $request->user();
+        $isWaliRuangan = ($user->ustadz && $ruangan->ustadz_id == $user->ustadz->id);
+        $isAdminOrStaff = false;
+        if (method_exists($user, 'hasAnyRole')) {
+            $isAdminOrStaff = $user->hasAnyRole(['administrator', 'staff', 'admin']);
+        }
+
+        $canEdit = true;
+        $isReadOnly = false;
+        $readOnlyReason = null;
+
+        if (($ujian->tipe_ujian === 'IMNI' || $ujian->jenis_ujian === 'IMNI') && $isWaliRuangan && !$isAdminOrStaff) {
+            $canEdit = false;
+            $isReadOnly = true;
+            $readOnlyReason = 'Pada ujian IMNI, Wali Ruangan hanya memiliki akses membaca nilai.';
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
+                'can_edit' => $canEdit,
+                'is_read_only' => $isReadOnly,
+                'read_only_reason' => $readOnlyReason,
+                'is_wali_ruangan' => $isWaliRuangan,
                 'ujian' => [
                     'id' => $ujian->id,
                     'nama_ujian' => $ujian->nama_ujian,
@@ -345,10 +353,24 @@ class NilaiUjianController extends Controller
         $ruanganId = $request->ruangan_id;
         $jadwalUjianId = $request->jadwal_ujian_id;
         $isPublished = ($request->action === 'publish');
-        $userId = $request->user()->id;
+        $user = $request->user();
+        $userId = $user->id;
 
         $ujian = Ujian::findOrFail($ujianId);
         $ruangan = Ruangan::findOrFail($ruanganId);
+
+        $isWaliRuangan = ($user->ustadz && $ruangan->ustadz_id == $user->ustadz->id);
+        $isAdminOrStaff = false;
+        if (method_exists($user, 'hasAnyRole')) {
+            $isAdminOrStaff = $user->hasAnyRole(['administrator', 'staff', 'admin']);
+        }
+
+        if (($ujian->tipe_ujian === 'IMNI' || $ujian->jenis_ujian === 'IMNI') && $isWaliRuangan && !$isAdminOrStaff) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pada ujian IMNI, Wali Ruangan hanya memiliki akses membaca nilai.'
+            ], 403);
+        }
         $tahunId = $ujian->tahun_pelajaran_id ?? $ruangan->tahun_pelajaran_id;
         $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunId, 'Aktif');
         $muridsEvaluated = $this->nilaiUjianService->evaluasiSyaratAdmin($ujian, $ruangan, $murids)->keyBy('id');
@@ -672,14 +694,7 @@ class NilaiUjianController extends Controller
         $queryUjian = Ujian::with('semester')->where('tahun_pelajaran_id', $tahunPelajaranId);
 
         if ($ruangan && $ruangan->level) {
-            $levelNama = $ruangan->level->nama_level ?? '';
-            $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-
-            if ($isKelasAkhir) {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
-            } else {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
-            }
+            $queryUjian->berlakuUntukLevel($ruangan->level);
         }
 
         $daftarUjian = $queryUjian->orderBy('id', 'asc')

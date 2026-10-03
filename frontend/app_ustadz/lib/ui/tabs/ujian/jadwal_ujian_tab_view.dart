@@ -79,6 +79,30 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
       );
     }
 
+    if (ujianData != null && ujianData.daftarRuangan.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () => akademik.fetchJadwalUjian(),
+        color: primaryColor,
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            24,
+            16,
+            120 + MediaQuery.of(context).padding.bottom,
+          ),
+          children: [
+            _buildBelumAdaRuanganEmptyState(
+              context,
+              isDark,
+              primaryColor,
+              onPrimaryColor,
+              akademik,
+            ),
+          ],
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: () => akademik.fetchJadwalUjian(
         ruanganId: akademik.selectedRuanganUjianId,
@@ -345,7 +369,13 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
                   key: ValueKey(
                     'ujian_${ujianData?.selectedRuanganId}_${ujianData?.selectedUjianId}',
                   ),
-                  initialValue: ujianData?.selectedUjianId,
+                  initialValue: (ujianData?.daftarUjian ?? []).any(
+                    (u) => u.id == ujianData?.selectedUjianId,
+                  )
+                      ? ujianData?.selectedUjianId
+                      : ((ujianData?.daftarUjian ?? []).isNotEmpty
+                          ? ujianData!.daftarUjian.first.id
+                          : null),
                   decoration: const InputDecoration(
                     labelText: 'Agenda Ujian',
                     prefixIcon: Icon(Icons.auto_stories_rounded, size: 18),
@@ -579,6 +609,8 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
           // 4. Daftar Jadwal Ujian (Grouped by Tanggal)
           if (akademik.isLoadingJadwalUjian)
             const ShimmerLoadingList(count: 3)
+          else if (ujianData != null && ujianData.daftarUjian.isEmpty)
+            _buildBelumAdaUjianEmptyState(context, isDark, ujianData)
           else if (ujianData == null || ujianData.jadwalPerTanggal.isEmpty)
             GlassCard(
               padding: const EdgeInsets.all(32),
@@ -999,6 +1031,129 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
               );
             }),
         ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // EMPTY STATES
+  // =========================================================================
+  Widget _buildBelumAdaRuanganEmptyState(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+    Color onPrimaryColor,
+    AkademikProvider akademik,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+      child: GlassCard(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.meeting_room_outlined,
+                size: 48,
+                color: primaryColor,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Belum Ada Ruangan Kelas',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Anda belum memiliki ruangan kelas binaan atau jadwal tugas menguji/mengawas yang aktif.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: isDark
+                    ? const Color(0xFF8D9387)
+                    : const Color(0xFF73796E),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () => akademik.fetchJadwalUjian(),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Muat Ulang Data'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: onPrimaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBelumAdaUjianEmptyState(
+    BuildContext context,
+    bool isDark,
+    dynamic ujianData,
+  ) {
+    final ruanganName = ujianData?.selectedRuanganNama?.isNotEmpty == true
+        ? ujianData.selectedRuanganNama
+        : 'Ruangan ini';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+      child: GlassCard(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.primaryDark : AppColors.primaryLight)
+                    .withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.pending_actions_rounded,
+                size: 48,
+                color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Agenda Ujian Belum Dibuat',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Agenda ujian untuk $ruanganName belum dibuat oleh Administrator.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: isDark
+                    ? const Color(0xFF8D9387)
+                    : const Color(0xFF73796E),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

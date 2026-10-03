@@ -15,10 +15,16 @@ class PresensiUjian extends Model
         'ujian_id',
         'jadwal_ujian_id',
         'ruangan_id',
+        'ruangan_imni_id',
+        'tanggal_ujian',
         'murid_id',
         'status',
         'catatan',
         'diinput_oleh',
+    ];
+
+    protected $casts = [
+        'tanggal_ujian' => 'date',
     ];
 
     public function ujian()
@@ -34,6 +40,11 @@ class PresensiUjian extends Model
     public function ruangan()
     {
         return $this->belongsTo(Ruangan::class, 'ruangan_id');
+    }
+
+    public function ruanganImni()
+    {
+        return $this->belongsTo(RuanganImni::class, 'ruangan_imni_id');
     }
 
     public function murid()

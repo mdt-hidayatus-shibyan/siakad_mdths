@@ -143,6 +143,33 @@ class MapelJadwalNilaiResponse {
   }
 }
 
+class NilaiInputDataResponse {
+  final bool canEdit;
+  final bool isReadOnly;
+  final String? readOnlyReason;
+  final bool isWaliRuangan;
+  final List<MuridNilaiItem> murids;
+
+  NilaiInputDataResponse({
+    this.canEdit = true,
+    this.isReadOnly = false,
+    this.readOnlyReason,
+    this.isWaliRuangan = false,
+    required this.murids,
+  });
+
+  factory NilaiInputDataResponse.fromJson(Map<String, dynamic> json) {
+    final rawList = (json['murids'] as List? ?? []);
+    return NilaiInputDataResponse(
+      canEdit: json['can_edit'] ?? true,
+      isReadOnly: json['is_read_only'] ?? false,
+      readOnlyReason: json['read_only_reason'],
+      isWaliRuangan: json['is_wali_ruangan'] ?? false,
+      murids: rawList.map((e) => MuridNilaiItem.fromJson(e)).toList(),
+    );
+  }
+}
+
 class MuridNilaiItem {
   final int muridId;
   final String nism;
@@ -195,21 +222,23 @@ class KolomMapelItem {
 }
 
 class LegerStatistik {
-  final int totalSantri;
+  final int totalMurid;
   final double rataRataKelas;
   final double nilaiTertinggi;
   final double nilaiTerendah;
 
   LegerStatistik({
-    required this.totalSantri,
+    required this.totalMurid,
     required this.rataRataKelas,
     required this.nilaiTertinggi,
     required this.nilaiTerendah,
   });
 
+  int get totalSantri => totalMurid;
+
   factory LegerStatistik.fromJson(Map<String, dynamic> json) {
     return LegerStatistik(
-      totalSantri: json['total_santri'] ?? 0,
+      totalMurid: json['total_murid'] ?? json['total_santri'] ?? 0,
       rataRataKelas: (json['rata_rata_kelas'] as num?)?.toDouble() ?? 0.0,
       nilaiTertinggi: (json['nilai_tertinggi'] as num?)?.toDouble() ?? 0.0,
       nilaiTerendah: (json['nilai_terendah'] as num?)?.toDouble() ?? 0.0,

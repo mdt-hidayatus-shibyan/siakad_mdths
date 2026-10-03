@@ -66,6 +66,35 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
       );
     }
 
+    if (provider.daftarRuangan.isEmpty) {
+      final primaryColor = isDark
+          ? AppColors.primaryDark
+          : AppColors.primaryLight;
+      final onPrimaryColor = isDark
+          ? AppColors.onPrimaryDark
+          : AppColors.onPrimaryLight;
+      return RefreshIndicator(
+        onRefresh: () => provider.fetchMapelJadwal(),
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            24,
+            16,
+            120 + MediaQuery.of(context).padding.bottom,
+          ),
+          children: [
+            _buildBelumAdaRuanganEmptyState(
+              context,
+              isDark,
+              primaryColor,
+              onPrimaryColor,
+              provider,
+            ),
+          ],
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: () => provider.fetchMapelJadwal(
         ruanganId: provider.selectedRuanganId,
@@ -147,7 +176,9 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                   key: ValueKey(
                     'ujian_${provider.selectedRuanganId}_${provider.selectedUjianId}',
                   ),
-                  initialValue: provider.selectedUjianId,
+                  initialValue: provider.daftarUjian.any((u) => u.id == provider.selectedUjianId)
+                      ? provider.selectedUjianId
+                      : (provider.daftarUjian.isNotEmpty ? provider.daftarUjian.first.id : null),
                   decoration: const InputDecoration(
                     labelText: 'Agenda Ujian',
                     prefixIcon: Icon(Icons.auto_stories_rounded, size: 18),
@@ -278,6 +309,46 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
             // ===================================================================
             // 4. DAFTAR MATA PELAJARAN SESUAI JADWAL UJIAN
             // ===================================================================
+            if (provider.isWaliRuangan &&
+                provider.currentUjian?.tipeUjian == 'IMNI') ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.amberAccent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.amberAccent.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.visibility_rounded,
+                      size: 20,
+                      color: AppColors.amberAccent,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Mode Pantau Nilai: Pada ujian IMNI, Wali Ruangan hanya memiliki akses membaca nilai.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? const Color(0xFFFFD54F)
+                              : const Color(0xFFB78103),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -551,6 +622,73 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBelumAdaRuanganEmptyState(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+    Color onPrimaryColor,
+    NilaiProvider provider,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+      child: GlassCard(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.meeting_room_outlined,
+                size: 48,
+                color: primaryColor,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Belum Ada Ruangan Kelas',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Anda belum memiliki ruangan kelas binaan atau jadwal mengajar yang aktif.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: isDark
+                    ? const Color(0xFF8D9387)
+                    : const Color(0xFF73796E),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () => provider.fetchMapelJadwal(),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Muat Ulang Data'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: onPrimaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
             ),
           ],

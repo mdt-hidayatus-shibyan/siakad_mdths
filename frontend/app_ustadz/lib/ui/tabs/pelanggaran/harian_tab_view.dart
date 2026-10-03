@@ -153,16 +153,47 @@ class _HarianTabViewState extends State<HarianTabView> {
               child: Row(
                 children: ruanganList.map((r) {
                   final isSelected = _selectedRuanganId == r.id;
+                  final primary = isDark
+                      ? AppColors.primaryDark
+                      : AppColors.primaryLight;
                   return Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: ChoiceChip(
-                      label: Text(
-                        r.namaRuangan,
-                        style: const TextStyle(fontSize: 11),
-                      ),
+                      label: Text(r.namaRuangan),
                       selected: isSelected,
+                      selectedColor: isDark
+                          ? AppColors.primaryContainerDark
+                              .withValues(alpha: 0.6)
+                          : AppColors.primaryContainerLight,
+                      backgroundColor: isDark
+                          ? const Color(0xFF162016)
+                          : Colors.white,
+                      labelStyle: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected
+                            ? primary
+                            : (isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B)),
+                      ),
+                      side: BorderSide(
+                        color: isSelected
+                            ? primary.withValues(alpha: 0.6)
+                            : (isDark
+                                ? AppColors.outlineDark
+                                : const Color(0xFFE2E8F0)),
+                        width: 1,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      showCheckmark: false,
+                      visualDensity: VisualDensity.compact,
                       onSelected: (selected) {
                         if (selected && _selectedRuanganId != r.id) {
+                          HapticHelper.light();
                           setState(() => _selectedRuanganId = r.id);
                           _loadData();
                         }

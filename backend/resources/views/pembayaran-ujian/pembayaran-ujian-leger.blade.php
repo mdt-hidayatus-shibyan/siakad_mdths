@@ -77,6 +77,8 @@
                         class="m3-input-glass w-full !pl-9 !pr-8 text-xs font-bold cursor-pointer appearance-none disabled:opacity-50 disabled:cursor-not-allowed">
                         @if (!$ruanganTerpilih)
                             <option value="">-- Pilih Ruangan Dulu --</option>
+                        @elseif ($masterBiayas->isEmpty())
+                            <option value="">-- Tidak Ada Tagihan Ujian --</option>
                         @else
                             <option value="">-- Jenis Tagihan --</option>
                             @foreach ($masterBiayas as $biaya)
@@ -144,14 +146,6 @@
                     @foreach ($murids as $murid)
                         @php
                             $namaSpesifik = $jenisTagihanTerpilih->nama_tagihan;
-
-                            if (
-                                $jenisTagihanTerpilih->tipe === 'semester' &&
-                                in_array($ruanganTerpilih->level->nama_level ?? '', ['3 TPQ', '6 IBT', '3 TSA']) &&
-                                strtolower($namaSpesifik) === 'iuran imda 2'
-                            ) {
-                                $namaSpesifik = 'Iuran IMNI';
-                            }
 
                             $tagihan = isset($tagihanExisting[$murid->id])
                                 ? $tagihanExisting[$murid->id]->firstWhere('nama_tagihan_spesifik', $namaSpesifik)
@@ -594,8 +588,13 @@
     @else
         <!-- State Awal -->
         <div class="col-span-full">
-            <x-empty-state icon="bi-grid-1x2" title="Menunggu Parameter Kasir Leger"
-                message="Silakan pilih Ruangan dan Tagihan pada filter di atas untuk menampilkan buku leger pembayaran." />
+            @if ($ruanganTerpilih && $masterBiayas->isEmpty())
+                <x-empty-state icon="bi-tags" title="Tagihan Ujian Reguler Belum Diatur"
+                    message="Ruangan {{ $ruanganTerpilih->nama_ruangan }} ({{ $ruanganTerpilih->level->nama_level ?? '' }}) tidak memiliki tagihan ujian reguler (IMDA) pada tahun pelajaran ini." />
+            @else
+                <x-empty-state icon="bi-grid-1x2" title="Menunggu Parameter Kasir Leger"
+                    message="Silakan pilih Ruangan dan Tagihan pada filter di atas untuk menampilkan buku leger pembayaran." />
+            @endif
         </div>
     @endif
 

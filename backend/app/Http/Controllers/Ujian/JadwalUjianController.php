@@ -41,6 +41,18 @@ class JadwalUjianController extends Controller
             ->orderBy('tingkat_id')
             ->orderBy('nama_level');
 
+        if ($ujianId) {
+            $ujian = Ujian::find($ujianId);
+            if ($ujian) {
+                if (in_array($ujian->tipe_ujian, ['IMDA 2', 'IMDA 3'])) {
+                    $levelsQuery->whereNotIn('nama_level', ['3 TPQ', '6 IBT', '3 TSA']);
+                }
+                if ($ujian->tingkat_id) {
+                    $levelsQuery->where('tingkat_id', $ujian->tingkat_id);
+                }
+            }
+        }
+
         $levels = $levelsQuery->get();
 
         // =========================================================================
@@ -105,10 +117,13 @@ class JadwalUjianController extends Controller
         // =========================================================================
         $daftarTahun = TahunPelajaran::orderBy('id', 'desc')->get();
 
-        // (Opsional) Kirim data daftar ujian untuk dropdown filter kedua
+        // (Opsional) Kirim data daftar ujian untuk dropdown filter kedua (khusus IMDA)
         $daftarUjian = collect();
         if ($tahunPelajaranId) {
-            $daftarUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)->orderBy('id', 'desc')->get();
+            $daftarUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)
+                ->where('tipe_ujian', '!=', 'IMNI')
+                ->orderBy('id', 'desc')
+                ->get();
         }
 
         return view('jadwal-ujian.index', compact(
@@ -135,10 +150,23 @@ class JadwalUjianController extends Controller
         }
 
         // 2. Panggil Level (Kelas) beserta relasi tingkat (sebagai pengganti Ruangan)
-        $levels = Level::with(['tingkat'])
+        $levelsQuery = Level::with(['tingkat'])
             ->orderBy('tingkat_id')
-            ->orderBy('nama_level')
-            ->get();
+            ->orderBy('nama_level');
+
+        if ($ujian_id) {
+            $ujian = Ujian::find($ujian_id);
+            if ($ujian) {
+                if (in_array($ujian->tipe_ujian, ['IMDA 2', 'IMDA 3'])) {
+                    $levelsQuery->whereNotIn('nama_level', ['3 TPQ', '6 IBT', '3 TSA']);
+                }
+                if ($ujian->tingkat_id) {
+                    $levelsQuery->where('tingkat_id', $ujian->tingkat_id);
+                }
+            }
+        }
+
+        $levels = $levelsQuery->get();
 
         // 3. Bangun query Jadwal Ujian
         $jadwalQuery = JadwalUjian::with(['mataPelajaran', 'pengawas', 'level', 'ujian'])
@@ -148,7 +176,8 @@ class JadwalUjianController extends Controller
         // Filter jadwal berdasarkan tahun pelajaran
         if ($tahun_pelajaran_id) {
             $jadwalQuery->whereHas('ujian', function ($query) use ($tahun_pelajaran_id) {
-                $query->where('tahun_pelajaran_id', $tahun_pelajaran_id);
+                $query->where('tahun_pelajaran_id', $tahun_pelajaran_id)
+                    ->where('tipe_ujian', '!=', 'IMNI');
             });
         }
 
@@ -183,11 +212,32 @@ class JadwalUjianController extends Controller
 
         // Tarik Master Data
         $tahunPelajarans = TahunPelajaran::orderBy('id', 'asc')->get();
-        $levels = Level::orderBy('id')->get(); // <-- UBAH KE LEVEL
+
+        $levelsQuery = Level::orderBy('id');
+        if ($ujian_id) {
+            $ujian = Ujian::find($ujian_id);
+            if ($ujian) {
+                if (in_array($ujian->tipe_ujian, ['IMDA 2', 'IMDA 3'])) {
+                    $levelsQuery->whereNotIn('nama_level', ['3 TPQ', '6 IBT', '3 TSA']);
+                }
+                if ($ujian->tingkat_id) {
+                    $levelsQuery->where('tingkat_id', $ujian->tingkat_id);
+                }
+            }
+        }
+        $levels = $levelsQuery->get();
 
         $ujians = collect();
         if ($tahun_pelajaran_id) {
-            $ujians = Ujian::where('tahun_pelajaran_id', $tahun_pelajaran_id)->get();
+            $ujiansQuery = Ujian::where('tahun_pelajaran_id', $tahun_pelajaran_id)
+                ->where('tipe_ujian', '!=', 'IMNI');
+            if ($level_id) {
+                $levelTerpilih = Level::find($level_id);
+                if ($levelTerpilih) {
+                    $ujiansQuery->berlakuUntukLevel($levelTerpilih);
+                }
+            }
+            $ujians = $ujiansQuery->get();
         }
 
         $dates = [];
@@ -196,8 +246,21 @@ class JadwalUjianController extends Controller
 
         if ($ujian_id && $level_id) {
             $ujian = Ujian::find($ujian_id);
+            $levelTerpilih = Level::find($level_id);
 
-            if ($ujian && $ujian->tanggal_mulai && $ujian->tanggal_selesai) {
+            // Validasi kecocokan level dengan tipe ujian
+            $isValidForLevel = true;
+            if ($ujian && $levelTerpilih) {
+                $isKelasAkhir = Ujian::isKelasAkhir($levelTerpilih->nama_level);
+                if ($ujian->tipe_ujian === 'IMNI' || ($isKelasAkhir && in_array($ujian->tipe_ujian, ['IMDA 2', 'IMDA 3']))) {
+                    $isValidForLevel = false;
+                }
+                if ($ujian->tingkat_id && $levelTerpilih->tingkat_id && (int)$ujian->tingkat_id !== (int)$levelTerpilih->tingkat_id) {
+                    $isValidForLevel = false;
+                }
+            }
+
+            if ($isValidForLevel && $ujian && $ujian->tanggal_mulai && $ujian->tanggal_selesai) {
                 $start = Carbon::parse($ujian->tanggal_mulai);
                 $end = Carbon::parse($ujian->tanggal_selesai);
 
@@ -207,19 +270,21 @@ class JadwalUjianController extends Controller
                 }
             }
 
-            // Tarik jadwal yang sudah ada berdasarkan LEVEL
-            $existingJadwal = JadwalUjian::where('ujian_id', $ujian_id)
-                ->where('level_id', $level_id)
-                ->orderBy('waktu_mulai', 'asc')
-                ->get()
-                ->groupBy(function ($item) {
-                    return Carbon::parse($item->tanggal_ujian)->format('Y-m-d');
-                });
+            if ($isValidForLevel) {
+                // Tarik jadwal yang sudah ada berdasarkan LEVEL
+                $existingJadwal = JadwalUjian::where('ujian_id', $ujian_id)
+                    ->where('level_id', $level_id)
+                    ->orderBy('waktu_mulai', 'asc')
+                    ->get()
+                    ->groupBy(function ($item) {
+                        return Carbon::parse($item->tanggal_ujian)->format('Y-m-d');
+                    });
 
-            // Ambil Mapel langsung dari level_id
-            $mapels = MataPelajaran::where('level_id', $level_id)
-                ->orderBy('nama_mapel')
-                ->get();
+                // Ambil Mapel langsung dari level_id
+                $mapels = MataPelajaran::where('level_id', $level_id)
+                    ->orderBy('nama_mapel')
+                    ->get();
+            }
         }
 
         $pengawas = Ustadz::orderBy('nama_lengkap')->get();
@@ -245,6 +310,17 @@ class JadwalUjianController extends Controller
             'level_id' => 'required', // <-- UBAH KE LEVEL
             'jadwal'   => 'required|array'
         ]);
+
+        $ujian = Ujian::findOrFail($request->ujian_id);
+        $level = Level::findOrFail($request->level_id);
+        $isKelasAkhir = Ujian::isKelasAkhir($level->nama_level);
+
+        if ($ujian->tipe_ujian === 'IMNI') {
+            return back()->with('error', 'Ujian IMNI dikelola khusus melalui menu Panitia IMNI.');
+        }
+        if ($isKelasAkhir && in_array($ujian->tipe_ujian, ['IMDA 2', 'IMDA 3'])) {
+            return back()->with('error', 'Kelas akhir (' . $level->nama_level . ') tidak mengikuti ujian IMDA 2/3.');
+        }
 
         DB::transaction(function () use ($request) {
             // Hapus jadwal lama untuk ujian & LEVEL ini

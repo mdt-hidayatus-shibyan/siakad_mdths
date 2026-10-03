@@ -193,24 +193,118 @@ class RbacSeeder extends Seeder
                 ],
             ],
             [
+                'name'        => 'Kepanitiaan IMNI',
+                'url'         => '#panitia-imni',
+                'category'    => 'AKADEMIK',
+                'icon'        => 'bi-award-fill',
+                'orders'      => 16,
+                'permissions' => ['read'],
+                'sub_menus'   => [
+                    [
+                        'name'        => 'Dashboard',
+                        'url'         => 'dashboard-imni.index',
+                        'icon'        => 'bi-speedometer2',
+                        'orders'      => 1,
+                        'permissions' => ['read'],
+                    ],
+                    [
+                        'name'        => 'Master IMNI',
+                        'url'         => 'master-imni.index',
+                        'icon'        => 'bi-journal-bookmark-fill',
+                        'orders'      => 2,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Susunan Kepanitiaan',
+                        'url'         => 'panitia-imni.index',
+                        'icon'        => 'bi-people-fill',
+                        'orders'      => 3,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Peserta IMNI',
+                        'url'         => 'peserta-imni.index',
+                        'icon'        => 'bi-mortarboard-fill',
+                        'orders'      => 4,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Jadwal Ujian IMNI',
+                        'url'         => 'jadwal-imni.index',
+                        'icon'        => 'bi-calendar-week-fill',
+                        'orders'      => 5,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Ruangan IMNI',
+                        'url'         => 'ruangan-imni.index',
+                        'icon'        => 'bi-door-open-fill',
+                        'orders'      => 6,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Plotting Peserta',
+                        'url'         => 'plotting-imni.index',
+                        'icon'        => 'bi-shuffle',
+                        'orders'      => 7,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Pembayaran IMNI',
+                        'url'         => 'pembayaran-imni.index',
+                        'icon'        => 'bi-credit-card-fill',
+                        'orders'      => 8,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Pengeluaran IMNI',
+                        'url'         => 'pengeluaran-imni.index',
+                        'icon'        => 'bi-cash-coin',
+                        'orders'      => 9,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Presensi IMNI',
+                        'url'         => 'presensi-imni.index',
+                        'icon'        => 'bi-clipboard-check-fill',
+                        'orders'      => 10,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Input Nilai Mapel',
+                        'url'         => 'nilai-imni.index',
+                        'icon'        => 'bi-pencil-square',
+                        'orders'      => 11,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                    [
+                        'name'        => 'Putusan Kelulusan',
+                        'url'         => 'putusan-imni.index',
+                        'icon'        => 'bi-file-earmark-check-fill',
+                        'orders'      => 12,
+                        'permissions' => ['read', 'create', 'update', 'delete'],
+                    ],
+                ],
+            ],
+            [
                 'name'        => "Ujian Al-Qur'an",
                 'url'         => '#ujian-alquran',
                 'category'    => 'AKADEMIK',
                 'icon'        => 'bi-book-half',
-                'orders'      => 16,
+                'orders'      => 17,
                 'permissions' => ['read'],
                 'sub_menus'   => [
                     [
                         'name'        => 'Master Agenda Ujian',
                         'url'         => 'ujian-alquran.index',
-                        'icon'        => 'bi-calendar2-week-fill',
+                        'icon'        => 'bi-calendar-check-fill',
                         'orders'      => 1,
                         'permissions' => ['read', 'create', 'update', 'delete'],
                     ],
                     [
                         'name'        => 'Input Nilai Ujian',
                         'url'         => 'penilaian-ujian-alquran.index',
-                        'icon'        => 'bi-patch-check-fill',
+                        'icon'        => 'bi-pencil-square',
                         'orders'      => 2,
                         'permissions' => ['read', 'create', 'update', 'delete'],
                     ],
@@ -231,9 +325,9 @@ class RbacSeeder extends Seeder
                     [
                         'name'        => 'Rekapitulasi & Dokumen',
                         'url'         => 'rekap-ujian-alquran.index',
-                        'icon'        => 'bi-file-earmark-spreadsheet-fill',
+                        'icon'        => 'bi-file-earmark-text-fill',
                         'orders'      => 5,
-                        'permissions' => ['read'],
+                        'permissions' => ['read', 'create', 'update', 'delete'],
                     ],
                 ],
             ],
@@ -242,7 +336,7 @@ class RbacSeeder extends Seeder
                 'url'         => 'bintang-pelajar.index',
                 'category'    => 'AKADEMIK',
                 'icon'        => 'bi-star-fill',
-                'orders'      => 17,
+                'orders'      => 18,
                 'permissions' => ['read'],
             ],
             [
@@ -250,7 +344,7 @@ class RbacSeeder extends Seeder
                 'url'         => 'bintang-madrasah.index',
                 'category'    => 'AKADEMIK',
                 'icon'        => 'bi-stars',
-                'orders'      => 18,
+                'orders'      => 19,
                 'permissions' => ['read'],
             ],
             [
@@ -258,7 +352,7 @@ class RbacSeeder extends Seeder
                 'url'         => 'rapor.index',
                 'category'    => 'AKADEMIK',
                 'icon'        => 'bi-file-earmark-spreadsheet-fill',
-                'orders'      => 18,
+                'orders'      => 20,
                 'permissions' => ['read', 'create', 'update', 'delete'],
             ],
             [
@@ -950,6 +1044,8 @@ class RbacSeeder extends Seeder
                 ->orWhere('name', 'like', '%presensi-ustadz%')
                 ->orWhere('name', 'like', '%pelanggaran-murid%')
                 ->orWhere('name', 'like', '%ujian%')
+                ->orWhere('name', 'like', '%panitia%')
+                ->orWhere('name', 'like', '%imni%')
                 ->orWhere('name', 'like', '%jadwal-ujian%')
                 ->orWhere('name', 'like', '%bintang-pelajar%')
                 ->orWhere('name', 'like', '%bintang-madrasah%')

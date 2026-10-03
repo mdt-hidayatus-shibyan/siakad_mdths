@@ -41,8 +41,8 @@ class PublicProfileController extends Controller
                 break;
 
             case 'administrator':
-                $profil = Administrator::findOrFail($id);
-                $roleName = 'Administrator';
+                $profil = Administrator::with('tingkat')->findOrFail($id);
+                $roleName = $profil->tingkat ? ('Kepala Administrasi ' . ($profil->tingkat->nama_tingkat ?? $profil->tingkat->nama)) : 'Administrator';
                 break;
 
             case 'pengurus':

@@ -330,10 +330,15 @@ $(document).on(
                                 .attr(
                                     "data-events",
                                     $newContainer.attr("data-events"),
-                                )
-                                .fadeIn(300, function () {
-                                    $(document).trigger("dataGridRefreshed");
-                                });
+                                );
+                            if (typeof Alpine !== 'undefined' && $(target)[0]) {
+                                try {
+                                    Alpine.initTree($(target)[0]);
+                                } catch (e) {}
+                            }
+                            $(target).fadeIn(300, function () {
+                                $(document).trigger("dataGridRefreshed");
+                            });
                             targetFound = true;
                         }
                     }
@@ -438,6 +443,11 @@ window.refreshDataGrid = function (targetSelector = "#data-grid-container") {
                 $(this)
                     .html($newContainer.html())
                     .attr("data-events", $newContainer.attr("data-events"));
+                if (typeof Alpine !== 'undefined' && $(activeSelector)[0]) {
+                    try {
+                        Alpine.initTree($(activeSelector)[0]);
+                    } catch (e) {}
+                }
                 $(this).animate({ opacity: 1 }, 300, function () {
                     $(document).trigger("dataGridRefreshed");
                 });
@@ -609,11 +619,11 @@ $(document).on("submit", "form.ajax-post, form.ajax-action", function (e) {
         $form.attr("data-refresh-target") || "#data-table-container";
     const submitBtn = $form.find('button[type="submit"]');
     const originalBtnText = submitBtn.html();
+    const isMultipart = $form.attr("enctype") === "multipart/form-data";
 
-    $.ajax({
+    let ajaxOptions = {
         url: $form.attr("action"),
         method: $form.attr("method") || "POST",
-        data: $form.serialize(),
         headers: { Accept: "application/json" },
         beforeSend: function () {
             submitBtn.prop("disabled", true);
@@ -637,7 +647,17 @@ $(document).on("submit", "form.ajax-post, form.ajax-action", function (e) {
                 Swal.fire("Error!", errorMsg, "error");
             }
         },
-    });
+    };
+
+    if (isMultipart) {
+        ajaxOptions.data = new FormData(this);
+        ajaxOptions.processData = false;
+        ajaxOptions.contentType = false;
+    } else {
+        ajaxOptions.data = $form.serialize();
+    }
+
+    $.ajax(ajaxOptions);
 });
 
 // 1. FUNGSI FULLSCREEN

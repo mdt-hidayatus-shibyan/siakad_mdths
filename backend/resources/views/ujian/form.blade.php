@@ -78,7 +78,7 @@
                         Nama Ujian <span class="text-rose-500">*</span>
                     </label>
                     <input type="text" name="nama_ujian" value="{{ $ujian->nama_ujian ?? old('nama_ujian') }}"
-                        placeholder="Contoh: Ujian Akhir Semester" class="m3-input-glass w-full">
+                        placeholder="Contoh: Imtihan Dauri 1 (IMDA 1)" class="m3-input-glass w-full">
                 </div>
 
                 <div class="space-y-1.5">
@@ -98,9 +98,6 @@
                             <option value="IMDA 3"
                                 {{ (isset($ujian) && $ujian->tipe_ujian == 'IMDA 3') || old('tipe_ujian') == 'IMDA 3' ? 'selected' : '' }}>
                                 IMDA 3 (Imtihan Dauri 3)</option>
-                            <option value="IMNI"
-                                {{ (isset($ujian) && $ujian->tipe_ujian == 'IMNI') || old('tipe_ujian') == 'IMNI' ? 'selected' : '' }}>
-                                IMNI (Imtihan Nihai)</option>
                         </select>
                         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
                             <i class="bi bi-chevron-down text-xs font-bold"></i>
@@ -109,7 +106,35 @@
                 </div>
             </div>
 
-            <!-- Baris 3: Tanggal Mulai & Selesai -->
+            <!-- Baris 3: Sasaran Tingkat -->
+            <div class="space-y-1.5">
+                <label
+                    class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">
+                    Sasaran Tingkat / Jenjang <span class="text-zinc-400 font-normal lowercase">(opsional)</span>
+                </label>
+                <div class="relative group/select">
+                    <select name="tingkat_id" id="tingkat_id" class="m3-input-glass w-full appearance-none cursor-pointer !pr-9">
+                        <option value="">-- Berlaku Semua Tingkat (Global / Serentak) --</option>
+                        @if(isset($tingkats))
+                            @foreach ($tingkats as $tkt)
+                                <option value="{{ $tkt->id }}"
+                                    {{ (isset($ujian) && $ujian->tingkat_id == $tkt->id) || old('tingkat_id') == $tkt->id ? 'selected' : '' }}>
+                                    Khusus Tingkat {{ $tkt->nama_tingkat }} ({{ $tkt->kode_tingkat }})
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
+                        <i class="bi bi-chevron-down text-xs font-bold"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 ml-1 leading-relaxed">
+                    <i class="bi bi-info-circle text-primary dark:text-primary-dark mr-0.5"></i>
+                    Pilih tingkat khusus jika jadwal atau durasi ujian berbeda antar jenjang (contoh: IMDA TPQ terpisah dari IMDA Ibtidaiyah/Tsanawiyah). Biarkan global untuk ujian umum serentak seperti IMDA 1 & IMDA 2.
+                </p>
+            </div>
+
+            <!-- Baris 4: Tanggal Mulai & Selesai -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-1.5">
                     <label

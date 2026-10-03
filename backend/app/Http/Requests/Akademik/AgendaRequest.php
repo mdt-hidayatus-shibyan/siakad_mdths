@@ -41,6 +41,7 @@ class AgendaRequest extends FormRequest
             $rules['level_id']   = 'nullable|exists:levels,id';
         } elseif ($this->jenis_agenda === 'ujian') {
             $rules['semester_id'] = 'required|exists:semesters,id';
+            $rules['tingkat_id']  = 'nullable|exists:tingkats,id';
             $rules['tipe_ujian']  = 'required|in:IMDA 1,IMDA 2,IMDA 3,IMNI';
         } elseif ($this->jenis_agenda === 'kegiatan') {
             $rules['kategori_kegiatan_id'] = 'required|exists:kategori_kegiatans,id';

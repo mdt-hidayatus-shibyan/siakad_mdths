@@ -36,20 +36,29 @@ class PembayaranUjianController extends Controller
             $ruanganTerpilih = Ruangan::with('level')->find($request->ruangan_id);
 
             if ($ruanganTerpilih) {
+                // Hanya ambil tagihan Ujian Reguler (IMDA), kecualikan tagihan IMNI & SPP
                 $masterBiayas = PengaturanTagihan::where('tahun_pelajaran_id', $tahunPelajaranId)
                     ->where(function ($q) use ($ruanganTerpilih) {
                         $q->where('level_id', $ruanganTerpilih->level_id);
-                    })->get();
+                    })
+                    ->where('kode_tagihan', '!=', 'IMNI')
+                    ->where('kode_tagihan', 'NOT LIKE', '%IMNI%')
+                    ->where('nama_tagihan', 'NOT LIKE', '%IMNI%')
+                    ->where('kode_tagihan', '!=', 'SPP')
+                    ->orderBy('id', 'asc')
+                    ->get();
 
                 if ($request->pengaturan_tagihan_id) {
-                    $jenisTagihanTerpilih = PengaturanTagihan::find($request->pengaturan_tagihan_id);
-                    $murids = $this->muridRuanganRepo->getMuridAktifByRuanganAndTahun($ruanganTerpilih->id, $tahunPelajaranId);
-                    $ruanganTerpilih->setRelation('murids', $murids);
+                    $jenisTagihanTerpilih = $masterBiayas->firstWhere('id', $request->pengaturan_tagihan_id);
+                    if ($jenisTagihanTerpilih) {
+                        $murids = $this->muridRuanganRepo->getMuridAktifByRuanganAndTahun($ruanganTerpilih->id, $tahunPelajaranId);
+                        $ruanganTerpilih->setRelation('murids', $murids);
 
-                    $tagihanExisting = TagihanMurid::whereIn('murid_id', $murids->pluck('id'))
-                        ->where('pengaturan_tagihan_id', $jenisTagihanTerpilih->id)
-                        ->get()
-                        ->groupBy('murid_id');
+                        $tagihanExisting = TagihanMurid::whereIn('murid_id', $murids->pluck('id'))
+                            ->where('pengaturan_tagihan_id', $jenisTagihanTerpilih->id)
+                            ->get()
+                            ->groupBy('murid_id');
+                    }
                 }
             }
         }
@@ -202,7 +211,8 @@ class PembayaranUjianController extends Controller
         if ($jenisBiaya === 'Lainnya') {
             $query->whereHas('tagihanMurids', function ($q) {
                 $q->where('nama_tagihan_spesifik', 'NOT LIKE', '%SPP%')
-                    ->where('nama_tagihan_spesifik', 'NOT LIKE', '%Syahriyah%');
+                    ->where('nama_tagihan_spesifik', 'NOT LIKE', '%Syahriyah%')
+                    ->where('nama_tagihan_spesifik', 'NOT LIKE', '%IMNI%');
             });
         }
 

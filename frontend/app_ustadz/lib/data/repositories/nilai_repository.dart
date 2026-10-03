@@ -59,7 +59,7 @@ class NilaiRepository {
     }
   }
 
-  Future<List<MuridNilaiItem>> getInputData({
+  Future<NilaiInputDataResponse> getInputData({
     required int ujianId,
     required int ruanganId,
     int? jadwalUjianId,
@@ -78,8 +78,7 @@ class NilaiRepository {
         queryParameters: query,
       );
       if (response.statusCode == 200 && response.data['success'] == true) {
-        final rawList = response.data['data']['murids'] as List;
-        return rawList.map((e) => MuridNilaiItem.fromJson(e)).toList();
+        return NilaiInputDataResponse.fromJson(response.data['data']);
       } else {
         throw Exception(
           response.data['message'] ?? 'Gagal memuat data input nilai',
@@ -89,7 +88,7 @@ class NilaiRepository {
       if (e.response?.data != null && e.response?.data['message'] != null) {
         throw Exception(e.response!.data['message']);
       }
-      throw Exception('Gagal memuat data nilai santri: ${e.message}');
+      throw Exception('Gagal memuat data nilai murid: ${e.message}');
     }
   }
 
@@ -119,14 +118,14 @@ class NilaiRepository {
         return true;
       } else {
         throw Exception(
-          response.data['message'] ?? 'Gagal menyimpan nilai santri',
+          response.data['message'] ?? 'Gagal menyimpan nilai murid',
         );
       }
     } on DioException catch (e) {
       if (e.response?.data != null && e.response?.data['message'] != null) {
         throw Exception(e.response!.data['message']);
       }
-      throw Exception('Gagal menyimpan nilai santri: ${e.message}');
+      throw Exception('Gagal menyimpan nilai murid: ${e.message}');
     }
   }
 

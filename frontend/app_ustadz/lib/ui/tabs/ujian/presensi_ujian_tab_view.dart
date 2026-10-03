@@ -117,6 +117,35 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
       );
     }
 
+    if (provider.daftarRuangan.isEmpty) {
+      final primaryColor = isDark
+          ? AppColors.primaryDark
+          : AppColors.primaryLight;
+      final onPrimaryColor = isDark
+          ? AppColors.onPrimaryDark
+          : AppColors.onPrimaryLight;
+      return RefreshIndicator(
+        onRefresh: () => provider.fetchData(),
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            24,
+            16,
+            120 + MediaQuery.of(context).padding.bottom,
+          ),
+          children: [
+            _buildBelumAdaRuanganEmptyState(
+              context,
+              isDark,
+              primaryColor,
+              onPrimaryColor,
+              provider,
+            ),
+          ],
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: () => provider.fetchData(),
       child: ListView(
@@ -193,7 +222,9 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                   key: ValueKey(
                     'ujian_${provider.selectedRuanganId}_${provider.selectedUjianId}',
                   ),
-                  initialValue: provider.selectedUjianId,
+                  initialValue: provider.daftarUjian.any((u) => u.id == provider.selectedUjianId)
+                      ? provider.selectedUjianId
+                      : (provider.daftarUjian.isNotEmpty ? provider.daftarUjian.first.id : null),
                   decoration: const InputDecoration(
                     labelText: 'Agenda Ujian',
                     prefixIcon: Icon(Icons.auto_stories_rounded, size: 18),
@@ -1290,6 +1321,73 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBelumAdaRuanganEmptyState(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+    Color onPrimaryColor,
+    PresensiUjianProvider provider,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+      child: GlassCard(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.meeting_room_outlined,
+                size: 48,
+                color: primaryColor,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Belum Ada Ruangan Kelas',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Anda belum memiliki ruangan kelas binaan atau tugas mengawas ujian yang aktif.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: isDark
+                    ? const Color(0xFF8D9387)
+                    : const Color(0xFF73796E),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () => provider.fetchData(),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Muat Ulang Data'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: onPrimaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
             ),
           ],

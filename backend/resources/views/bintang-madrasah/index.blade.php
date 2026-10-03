@@ -4,22 +4,13 @@
     <!-- 1. HEADER & TOOLBAR SECTION -->
     <div class="mb-6 md:mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-4 relative z-10 print:hidden">
         <div>
-            <div class="flex items-center gap-2 mb-1.5">
-                <span
-                    class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1.5 shadow-2xs">
-                    <i class="bi bi-stars text-xs"></i>
-                    <span>Akademik & Prestasi</span>
-                </span>
-                <span class="text-xs text-zinc-400">•</span>
-                <span class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
-                    Best of The Best
-                </span>
-            </div>
+
             <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
                 Bintang Madrasah
             </h2>
             <p class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
                 Penghargaan prestasi tertinggi murid teladan madrasah berdasarkan akumulasi komprehensif IMDA 1 & IMDA 2
+                / IMNI
                 sepanjang tahun pelajaran.
             </p>
         </div>
@@ -86,7 +77,7 @@
                     <span
                         class="bg-white/90 dark:bg-zinc-900/90 px-2.5 py-1.5 rounded-xl border border-amber-300/60 dark:border-amber-700/60 shadow-2xs flex items-center gap-1.5">
                         <i class="bi bi-check2-circle text-amber-600 dark:text-amber-400 text-xs"></i> 1. Juara 1 (IMDA
-                        1 & 2)
+                        1 & IMDA 2 / IMNI)
                     </span>
                     <span
                         class="bg-white/90 dark:bg-zinc-900/90 px-2.5 py-1.5 rounded-xl border border-amber-300/60 dark:border-amber-700/60 shadow-2xs flex items-center gap-1.5">
@@ -202,7 +193,7 @@
     @else
         <!-- STATE KOSONG -->
         <x-empty-state icon="bi-shield-lock" title="Bintang Madrasah Belum Tersedia"
-            message="Kandidat Bintang Madrasah belum dapat diakumulasikan. Pastikan agenda ujian IMDA 1 dan IMDA 2 pada tahun pelajaran ini telah selesai dilaksanakan beserta seluruh nilai murid yang telah diinput." />
+            message="Kandidat Bintang Madrasah belum dapat diakumulasikan. Pastikan agenda ujian IMDA 1 serta ujian akhir semester (IMDA 2 / IMNI) pada tahun pelajaran ini telah selesai dilaksanakan beserta seluruh nilai murid yang telah diinput." />
     @endif
 
 </x-app-layout>

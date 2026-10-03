@@ -617,6 +617,58 @@
                 color: #e4e4e7 !important;
             }
 
+            /* ==========================================================================
+                   Select2 Avatar & Image Constraints (Crucial)
+                   ========================================================================== */
+            .select2-container img,
+            .select2-dropdown img {
+                max-width: 24px !important;
+                max-height: 24px !important;
+                border-radius: 9999px !important;
+                object-fit: cover !important;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__rendered img {
+                width: 20px !important;
+                height: 20px !important;
+                min-width: 20px !important;
+                min-height: 20px !important;
+                max-width: 20px !important;
+                max-height: 20px !important;
+                border-radius: 9999px !important;
+                object-fit: cover !important;
+                display: inline-block !important;
+                vertical-align: middle !important;
+                margin-right: 6px !important;
+            }
+
+            .select2-container--default .select2-selection--multiple .select2-selection__choice img {
+                width: 16px !important;
+                height: 16px !important;
+                min-width: 16px !important;
+                min-height: 16px !important;
+                max-width: 16px !important;
+                max-height: 16px !important;
+                border-radius: 9999px !important;
+                object-fit: cover !important;
+                display: inline-block !important;
+                vertical-align: middle !important;
+                margin-right: 4px !important;
+            }
+
+            .select2-results__option img {
+                width: 24px !important;
+                height: 24px !important;
+                min-width: 24px !important;
+                min-height: 24px !important;
+                max-width: 24px !important;
+                max-height: 24px !important;
+                border-radius: 9999px !important;
+                object-fit: cover !important;
+                display: inline-block !important;
+                vertical-align: middle !important;
+            }
+
             .dark .select2-container--default .select2-results__option[aria-selected=true] {
                 background-color: #082f49 !important;
                 color: #bae6fd !important;
@@ -649,12 +701,12 @@
                     if (foto) {
                         avatarHtml =
                             '<img src="' + foto +
-                            '" class="w-6 h-6 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0" onerror="this.style.display=\'none\'" />';
+                            '" style="width:24px!important;height:24px!important;min-width:24px!important;max-width:24px!important;min-height:24px!important;max-height:24px!important;border-radius:9999px!important;object-fit:cover!important;display:inline-block!important;vertical-align:middle!important;" class="rounded-full border border-zinc-200 dark:border-zinc-700 shrink-0" onerror="this.style.display=\'none\'" />';
                     } else {
                         var bgClass = gender === 'P' ?
                             'bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300' :
                             'bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300';
-                        avatarHtml = '<span class="w-6 h-6 rounded-full ' + bgClass +
+                        avatarHtml = '<span style="width:24px!important;height:24px!important;min-width:24px!important;min-height:24px!important;border-radius:9999px!important;" class="' + bgClass +
                             ' text-[10px] font-black flex items-center justify-center shrink-0">' + initials +
                             '</span>';
                     }
@@ -699,12 +751,12 @@
                     var avatarTag = '';
                     if (foto) {
                         avatarTag = '<img src="' + foto +
-                            '" class="w-4 h-4 rounded-full object-cover shrink-0 inline-block align-middle" onerror="this.style.display=\'none\'" />';
+                            '" style="width:16px!important;height:16px!important;min-width:16px!important;max-width:16px!important;min-height:16px!important;max-height:16px!important;border-radius:9999px!important;object-fit:cover!important;display:inline-block!important;vertical-align:middle!important;" class="rounded-full shrink-0" onerror="this.style.display=\'none\'" />';
                     } else if (initials) {
                         var bgClass = gender === 'P' ?
                             'bg-rose-200/80 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300' :
                             'bg-sky-200/80 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300';
-                        avatarTag = '<span class="w-4 h-4 rounded-full ' + bgClass +
+                        avatarTag = '<span style="width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;border-radius:9999px!important;" class="' + bgClass +
                             ' text-[8px] font-black inline-flex items-center justify-center shrink-0">' +
                             initials + '</span>';
                     }
@@ -735,13 +787,13 @@
                     var avatarTag = '';
                     if (foto) {
                         avatarTag = '<img src="' + foto +
-                            '" class="w-4.5 h-4.5 rounded-full object-cover shrink-0 inline-block align-middle mr-1.5" onerror="this.style.display=\'none\'" />';
+                            '" style="width:20px!important;height:20px!important;min-width:20px!important;max-width:20px!important;min-height:20px!important;max-height:20px!important;border-radius:9999px!important;object-fit:cover!important;display:inline-block!important;vertical-align:middle!important;margin-right:6px!important;" class="rounded-full shrink-0" onerror="this.style.display=\'none\'" />';
                     } else if (initials) {
                         var bgClass = gender === 'P' ?
                             'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300' :
                             'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300';
-                        avatarTag = '<span class="w-4.5 h-4.5 rounded-full ' + bgClass +
-                            ' text-[9px] font-black inline-flex items-center justify-center shrink-0 mr-1.5">' +
+                        avatarTag = '<span style="width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;border-radius:9999px!important;margin-right:6px!important;" class="' + bgClass +
+                            ' text-[9px] font-black inline-flex items-center justify-center shrink-0">' +
                             initials + '</span>';
                     }
 

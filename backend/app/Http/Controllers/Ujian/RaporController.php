@@ -57,15 +57,25 @@ class RaporController extends Controller
 
                 $levelNama = $ruanganTerpilih->level->nama_level ?? '';
 
-                // Filter Ujian Berdasarkan Kelas
+                // Filter Ujian Berdasarkan Kelas & Sasaran Tingkat
                 $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
+                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)
+                    ->where('tipe_ujian', '!=', 'IMNI');
 
                 if ($isKelasAkhir) {
-                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+                    $queryUjian->where('tipe_ujian', 'IMDA 1');
                 } else {
                     $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
                 }
+
+                $tingkatId = $ruanganTerpilih->level->tingkat_id ?? null;
+                if ($tingkatId) {
+                    $queryUjian->where(function ($q) use ($tingkatId) {
+                        $q->whereNull('tingkat_id')
+                          ->orWhere('tingkat_id', $tingkatId);
+                    });
+                }
+
                 $daftarUjian = $queryUjian->get();
 
                 if ($request->ujian_id) {
@@ -83,7 +93,7 @@ class RaporController extends Controller
                         ->keyBy('referensi_id');
 
                     // 2. Cek apakah ini ujian akhir tahun MENGGUNAKAN tipe_ujian
-                    $isAkhirTahun = in_array($ujianTerpilih->tipe_ujian, ['IMDA 2', 'IMNI']);
+                    $isAkhirTahun = in_array($ujianTerpilih->tipe_ujian, ['IMDA 2', 'IMDA 3']);
 
                     // 3. Jika ini ujian akhir tahun, tarik data Riwayat Kenaikan secara massal
                     if ($isAkhirTahun) {

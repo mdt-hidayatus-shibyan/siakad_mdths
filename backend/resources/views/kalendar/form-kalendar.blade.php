@@ -611,6 +611,28 @@
                             </div>
                         </div>
                     </div>
+                    <div class="relative group/select sm:col-span-2">
+                        <label
+                            class="block text-[11px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1 ml-0.5">
+                            Sasaran Tingkat (Opsional)
+                        </label>
+                        <div class="relative">
+                            <select name="tingkat_id" id="inputTingkatUjian"
+                                class="m3-input-glass w-full !pr-9 font-bold text-xs cursor-pointer appearance-none border-amber-300/60 dark:border-amber-700/60 text-amber-900 dark:text-amber-100">
+                                <option value="" class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white">-- Berlaku Semua Tingkat (Global) --</option>
+                                @foreach (\App\Models\Tingkat::orderBy('urutan_tingkat')->get() as $tkt)
+                                    <option value="{{ $tkt->id }}" class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white"
+                                        {{ isset($kegiatan) && isset($kegiatan->tingkat_id) && $kegiatan->tingkat_id == $tkt->id ? 'selected' : '' }}>
+                                        Khusus Tingkat {{ $tkt->nama_tingkat }} ({{ $tkt->kode_tingkat }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-amber-600 dark:text-amber-400">
+                                <i class="bi bi-chevron-down text-xs font-bold"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -27,7 +27,8 @@ class UjianRequest extends FormRequest
             'tahun_pelajaran_id' => 'required|exists:tahun_pelajarans,id',
             'nama_ujian'         => 'required|string|max:255',
             'semester_id'        => 'required|exists:semesters,id', // Validasi ke tabel semesters
-            'tipe_ujian'         => 'required|in:IMDA 1,IMDA 2,IMDA 3,IMNI', // Pilihan disesuaikan
+            'tingkat_id'         => 'nullable|exists:tingkats,id', // Sasaran Tingkat (Opsional/Global)
+            'tipe_ujian'         => 'required|in:IMDA 1,IMDA 2,IMDA 3', // Khusus Ujian IMDA
             'tanggal_mulai'      => 'nullable|date',
             'tanggal_selesai'    => 'nullable|date|after_or_equal:tanggal_mulai',
         ];

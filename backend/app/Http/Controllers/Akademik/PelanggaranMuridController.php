@@ -79,6 +79,143 @@ class PelanggaranMuridController extends Controller
         ));
     }
 
+    /**
+     * Riwayat Pelanggaran Murid Harian untuk Semua Ruangan / Filter Tertentu
+     */
+    public function riwayatHarian(Request $request)
+    {
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+        $ruangan_id = $request->ruangan_id;
+        $kategori = $request->kategori;
+
+        $ruangans = Ruangan::with('level')->berdasarkanHakAkses()->orderBy('level_id')->orderBy('nama_ruangan')->get();
+        $referensiKategoris = ReferensiPelanggaran::select('kategori')->distinct()->whereNotNull('kategori')->pluck('kategori');
+
+        // Query Pelanggaran pada tanggal tersebut
+        $query = PelanggaranMurid::with([
+            'murid',
+            'ruangan.level',
+            'referensiPelanggaran',
+            'penginput',
+            'tahunPelajaran',
+            'semester'
+        ])
+            ->where('tanggal', $tanggal);
+
+        if ($ruangan_id) {
+            $query->where('ruangan_id', $ruangan_id);
+        } else {
+            $query->whereIn('ruangan_id', $ruangans->pluck('id'));
+        }
+
+        if ($kategori) {
+            $query->whereHas('referensiPelanggaran', function ($q) use ($kategori) {
+                $q->where('kategori', $kategori);
+            });
+        }
+
+        $riwayatPelanggaran = $query->orderBy('created_at', 'desc')->get();
+
+        // Metrik Statistik Harian
+        $totalKasus = $riwayatPelanggaran->count();
+        $totalPoin = $riwayatPelanggaran->sum(fn($p) => (float)($p->referensiPelanggaran->poin ?? 0));
+        $totalMurid = $riwayatPelanggaran->pluck('murid_id')->unique()->count();
+        $totalRuangan = $riwayatPelanggaran->pluck('ruangan_id')->unique()->count();
+
+        // Rekap Kategori
+        $rekapKategori = $riwayatPelanggaran->groupBy(fn($p) => $p->referensiPelanggaran->kategori ?? 'Umum')
+            ->map(fn($group) => [
+                'count' => $group->count(),
+                'poin' => $group->sum(fn($p) => (float)($p->referensiPelanggaran->poin ?? 0))
+            ]);
+
+        return view('pelanggaran-murid.riwayat-harian', compact(
+            'tanggal',
+            'ruangan_id',
+            'kategori',
+            'ruangans',
+            'referensiKategoris',
+            'riwayatPelanggaran',
+            'totalKasus',
+            'totalPoin',
+            'totalMurid',
+            'totalRuangan',
+            'rekapKategori'
+        ));
+    }
+
+    /**
+     * Export Riwayat Pelanggaran Harian ke CSV / Excel
+     */
+    public function exportRiwayatHarian(Request $request)
+    {
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+        $ruangan_id = $request->ruangan_id;
+        $kategori = $request->kategori;
+
+        $ruangans = Ruangan::with('level')->berdasarkanHakAkses()->orderBy('level_id')->orderBy('nama_ruangan')->get();
+
+        $query = PelanggaranMurid::with([
+            'murid',
+            'ruangan.level',
+            'referensiPelanggaran',
+            'penginput',
+            'tahunPelajaran',
+            'semester'
+        ])
+            ->where('tanggal', $tanggal);
+
+        if ($ruangan_id) {
+            $query->where('ruangan_id', $ruangan_id);
+        } else {
+            $query->whereIn('ruangan_id', $ruangans->pluck('id'));
+        }
+
+        if ($kategori) {
+            $query->whereHas('referensiPelanggaran', function ($q) use ($kategori) {
+                $q->where('kategori', $kategori);
+            });
+        }
+
+        $pelanggarans = $query->orderBy('created_at', 'desc')->get();
+
+        $ruanganLabel = $ruangan_id ? (Ruangan::find($ruangan_id)?->nama_ruangan ?? 'Ruangan') : 'Semua_Ruangan';
+        $fileName = "Riwayat_Pelanggaran_Murid_{$ruanganLabel}_{$tanggal}.csv";
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function () use ($pelanggarans) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['No', 'Tanggal', 'Waktu', 'Ruangan', 'Level', 'NISM', 'Nama Murid', 'Kategori Kasus', 'Nama Pelanggaran', 'Poin Sanksi', 'Keterangan', 'Petugas Penginput']);
+
+            $no = 1;
+            foreach ($pelanggarans as $p) {
+                fputcsv($file, [
+                    $no++,
+                    $p->tanggal,
+                    $p->created_at ? $p->created_at->format('H:i') : '-',
+                    $p->ruangan->nama_ruangan ?? '-',
+                    $p->ruangan?->level?->nama_level ?? '-',
+                    $p->murid->nism ?? '-',
+                    $p->murid->nama_lengkap ?? '-',
+                    $p->referensiPelanggaran->kategori ?? '-',
+                    $p->referensiPelanggaran->nama_pelanggaran ?? '-',
+                    $p->referensiPelanggaran->poin ?? 0,
+                    $p->keterangan ?: '-',
+                    $p->penginput->name ?? 'Sistem'
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function storeHarian(Request $request)
     {
         $request->validate([

@@ -17,6 +17,29 @@ class NilaiUjianService
      */
     public function hitungProgresRuangan($ujianId, $daftarRuangan)
     {
+        $ujian = \App\Models\Ujian\Ujian::find($ujianId);
+        if ($ujian) {
+            if ($ujian->tingkat_id) {
+                $daftarRuangan = $daftarRuangan->filter(function ($r) use ($ujian) {
+                    return $r->level && $r->level->tingkat_id == $ujian->tingkat_id;
+                });
+            }
+
+            // Exclude kelas akhir dari IMDA 2 (karena kelas akhir melaksanakan IMNI)
+            if (in_array($ujian->tipe_ujian, ['IMDA 2', 'IMDA 3'])) {
+                $daftarRuangan = $daftarRuangan->reject(function ($r) {
+                    return \App\Models\Ujian\Ujian::isKelasAkhir($r->level->nama_level ?? '');
+                });
+            }
+
+            // Hanya sertakan kelas akhir untuk IMNI
+            if ($ujian->tipe_ujian === 'IMNI') {
+                $daftarRuangan = $daftarRuangan->filter(function ($r) {
+                    return \App\Models\Ujian\Ujian::isKelasAkhir($r->level->nama_level ?? '');
+                });
+            }
+        }
+
         $semuaJadwal = JadwalUjian::with('mataPelajaran')
             ->where('ujian_id', $ujianId)
             ->get()

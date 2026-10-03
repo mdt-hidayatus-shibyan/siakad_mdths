@@ -174,7 +174,7 @@
                                                             Al-Qur'an</span>
                                                     </a>
                                                 @elseif (isset($dokumens['peserta_alquran']))
-                                                    <a href="{{ route('penilaian-ujian-alquran.cetak-sk', $dokumens['peserta_alquran']->id) }}"
+                                                    <a href="{{ route('rekap-ujian-alquran.cetak-sk', $dokumens['peserta_alquran']->id) }}"
                                                         target="_blank"
                                                         class="inline-flex items-center gap-1.5 px-3 h-8 bg-teal-500/10 hover:bg-teal-600 text-teal-600 hover:text-white dark:text-teal-400 dark:hover:text-white border border-teal-500/20 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-2xs">
                                                         <i class="bi bi-patch-check-fill text-xs"></i> <span>SK
@@ -197,7 +197,7 @@
                                                             Al-Qur'an</span>
                                                     </a>
                                                 @elseif (isset($dokumens['peserta_alquran']) && $dokumens['peserta_alquran']->status_kelulusan === 'Lulus')
-                                                    <a href="{{ route('penilaian-ujian-alquran.cetak-ijazah', $dokumens['peserta_alquran']->id) }}"
+                                                    <a href="{{ route('rekap-ujian-alquran.cetak-ijazah', $dokumens['peserta_alquran']->id) }}"
                                                         target="_blank"
                                                         class="inline-flex items-center gap-1.5 px-3 h-8 bg-emerald-500/10 hover:bg-emerald-600 text-emerald-600 hover:text-white dark:text-emerald-400 dark:hover:text-white border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-2xs">
                                                         <i class="bi bi-book-half text-xs"></i> <span>Ijazah

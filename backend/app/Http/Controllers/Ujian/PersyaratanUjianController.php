@@ -46,15 +46,25 @@ class PersyaratanUjianController extends Controller
                 $ruanganTerpilih->setRelation('murids', $murids);
                 $levelNama = $ruanganTerpilih->level->nama_level ?? '';
 
-                // FILTER UJIAN
+                // FILTER UJIAN BERDASARKAN KELAS & SASARAN TINGKAT
                 $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
+                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)
+                    ->where('tipe_ujian', '!=', 'IMNI');
 
                 if ($isKelasAkhir) {
-                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+                    $queryUjian->where('tipe_ujian', 'IMDA 1');
                 } else {
                     $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
                 }
+
+                $tingkatId = $ruanganTerpilih->level->tingkat_id ?? null;
+                if ($tingkatId) {
+                    $queryUjian->where(function ($q) use ($tingkatId) {
+                        $q->whereNull('tingkat_id')
+                          ->orWhere('tingkat_id', $tingkatId);
+                    });
+                }
+
                 $daftarUjian = $queryUjian->get();
 
                 // JIKA AGENDA UJIAN DIKLIK

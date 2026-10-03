@@ -54,7 +54,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
   }
 
   // =========================================================================
-  // MODAL KARTU SPP SANTRI (READ ONLY)
+  // MODAL KARTU SPP MURID (READ ONLY)
   // =========================================================================
   void _openKartuSppSheet(MuridSppItem murid) {
     HapticHelper.light();
@@ -242,7 +242,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                             icon: Icons.credit_card_off_rounded,
                             title: 'Tagihan SPP Belum Diterbitkan',
                             description:
-                                'Data kartu SPP untuk santri ini belum diterbitkan atau belum diatur oleh Bendahara.',
+                                'Data kartu SPP untuk murid ini belum diterbitkan atau belum diatur oleh Bendahara.',
                           ),
                         )
                       : kartu.bulanItems.isEmpty
@@ -252,7 +252,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                             icon: Icons.credit_card_off_rounded,
                             title: 'Bulan SPP Belum Diterbitkan',
                             description:
-                                'Belum ada rincian bulan Syahriyah/SPP yang diterbitkan untuk santri ini.',
+                                'Belum ada rincian bulan Syahriyah/SPP yang diterbitkan untuk murid ini.',
                           ),
                         )
                       : ListView.builder(
@@ -832,7 +832,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                         icon: Icons.credit_card_off_rounded,
                         title: 'Tagihan SPP Belum Diterbitkan',
                         description:
-                            'Belum ada rincian tagihan SPP santri yang diterbitkan di Ruangan ini.',
+                            'Belum ada rincian tagihan SPP murid yang diterbitkan di Ruangan ini.',
                         actionLabel: 'Muat Ulang',
                         onActionTap: _loadData,
                       ),

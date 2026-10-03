@@ -130,6 +130,11 @@ class Ustadz extends Model
         return $this->hasMany(\App\Models\Tabungan\Tabungan::class, 'ustadz_id');
     }
 
+    public function panitiaImnis()
+    {
+        return $this->hasMany(\App\Models\Ujian\PanitiaImni::class, 'ustadz_id');
+    }
+
     /**
      * Accessor alias nama agar kompatibel untuk pemanggilan $ustadz->nama
      */

@@ -84,7 +84,7 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            provider.errorMessage ?? 'Gagal menyimpan nilai santri.',
+            provider.errorMessage ?? 'Gagal menyimpan nilai murid.',
           ),
           backgroundColor: AppColors.roseDanger,
           behavior: SnackBarBehavior.floating,
@@ -148,7 +148,7 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Beri dispensasi ujian untuk santri:',
+              'Beri dispensasi ujian untuk murid:',
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).brightness == Brightness.dark
@@ -296,7 +296,7 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: const Text('Batalkan Dispensasi?'),
         content: Text(
-          'Apakah Anda yakin ingin membatalkan dispensasi ujian untuk santri ${murid.nama}?',
+          'Apakah Anda yakin ingin membatalkan dispensasi ujian untuk murid ${murid.nama}?',
           style: const TextStyle(fontSize: 13),
         ),
         actions: [
@@ -348,6 +348,7 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final nilai = context.watch<NilaiProvider>();
+    final isReadOnly = !nilai.canEdit || (nilai.currentUjian?.tipeUjian == 'IMNI' && nilai.isWaliRuangan);
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -367,34 +368,81 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
               child: Text('Tidak ada murid ditemukan untuk ruangan ini.'),
             )
           else
-            ListView.builder(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                12,
-                16,
-                110 + MediaQuery.of(context).padding.bottom,
-              ),
-              itemCount: nilai.muridNilaiList.length,
-              itemBuilder: (context, index) {
-                final murid = nilai.muridNilaiList[index];
+            Column(
+              children: [
+                if (isReadOnly)
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.amberAccent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.amberAccent.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.visibility_rounded,
+                          size: 20,
+                          color: AppColors.amberAccent,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            nilai.readOnlyReason ??
+                                'Ujian IMNI: Wali Ruangan hanya memiliki akses membaca nilai.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? const Color(0xFFFFD54F)
+                                  : const Color(0xFFB78103),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      isReadOnly ? 8 : 12,
+                      16,
+                      isReadOnly
+                          ? 16 + MediaQuery.of(context).padding.bottom
+                          : 110 + MediaQuery.of(context).padding.bottom,
+                    ),
+                    itemCount: nilai.muridNilaiList.length,
+                    itemBuilder: (context, index) {
+                      final murid = nilai.muridNilaiList[index];
 
-                return _MuridNilaiCard(
-                  key: ValueKey('murid_${murid.muridId}'),
-                  murid: murid,
-                  index: index,
-                  isDark: isDark,
-                  isWaliRuangan: nilai.isWaliRuangan,
-                  onDispensasi: () => _showDispensasiDialog(murid),
-                  onBatalDispensasi: () => _showBatalDispensasiDialog(murid),
-                  onScoreChanged: (score) {
-                    nilai.updateScore(murid.muridId, score);
-                  },
-                );
-              },
+                      return _MuridNilaiCard(
+                        key: ValueKey('murid_${murid.muridId}'),
+                        murid: murid,
+                        index: index,
+                        isDark: isDark,
+                        isWaliRuangan: nilai.isWaliRuangan,
+                        isReadOnly: isReadOnly,
+                        onDispensasi: () => _showDispensasiDialog(murid),
+                        onBatalDispensasi: () => _showBatalDispensasiDialog(murid),
+                        onScoreChanged: (score) {
+                          nilai.updateScore(murid.muridId, score);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
 
-          // Bottom Action Bar (Simpan Draf & Publikasikan)
-          if (nilai.muridNilaiList.isNotEmpty)
+          // Bottom Action Bar (Simpan Draf & Publikasikan) - Disembunyikan bila Read-Only
+          if (nilai.muridNilaiList.isNotEmpty && !isReadOnly)
             Positioned(
               left: 16,
               right: 16,
@@ -463,6 +511,7 @@ class _MuridNilaiCard extends StatefulWidget {
   final int index;
   final bool isDark;
   final bool isWaliRuangan;
+  final bool isReadOnly;
   final VoidCallback onDispensasi;
   final VoidCallback onBatalDispensasi;
   final ValueChanged<double?> onScoreChanged;
@@ -473,6 +522,7 @@ class _MuridNilaiCard extends StatefulWidget {
     required this.index,
     required this.isDark,
     required this.isWaliRuangan,
+    this.isReadOnly = false,
     required this.onDispensasi,
     required this.onBatalDispensasi,
     required this.onScoreChanged,
@@ -527,6 +577,7 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
   Widget build(BuildContext context) {
     final murid = widget.murid;
     final isDark = widget.isDark;
+    final isFieldEnabled = !murid.isLocked && !widget.isReadOnly;
 
     return GlassCard(
       margin: const EdgeInsets.only(bottom: 10),
@@ -584,8 +635,8 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  // Tombol Beri Dispensasi (Hanya Wali Ruangan)
-                  if (widget.isWaliRuangan)
+                  // Tombol Beri Dispensasi (Hanya Wali Ruangan dan bukan Read-Only)
+                  if (!widget.isReadOnly && widget.isWaliRuangan)
                     InkWell(
                       onTap: widget.onDispensasi,
                       borderRadius: BorderRadius.circular(8),
@@ -634,7 +685,7 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
                         ),
                       ),
                     )
-                  else
+                  else if (!widget.isWaliRuangan && !widget.isReadOnly)
                     Text(
                       'Hubungi Wali Ruangan untuk izin',
                       style: TextStyle(
@@ -691,7 +742,7 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
                           ],
                         ),
                       ),
-                      if (widget.isWaliRuangan) ...[
+                      if (!widget.isReadOnly && widget.isWaliRuangan) ...[
                         const SizedBox(width: 6),
                         InkWell(
                           onTap: widget.onBatalDispensasi,
@@ -730,14 +781,23 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
             child: TextField(
               controller: _controller,
               focusNode: _focusNode,
+              readOnly: widget.isReadOnly,
+              enabled: isFieldEnabled,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              enabled: !murid.isLocked,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: widget.isReadOnly && murid.nilai == null
+                    ? Colors.grey
+                    : null,
+              ),
               decoration: InputDecoration(
-                hintText: murid.isLocked ? 'Kunci' : '0-100',
+                hintText: murid.isLocked
+                    ? 'Kunci'
+                    : (widget.isReadOnly ? '-' : '0-100'),
                 hintStyle: TextStyle(
                   fontSize: 11,
                   color: murid.isLocked ? AppColors.roseDanger : Colors.grey,
@@ -748,7 +808,9 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
                 ),
                 filled: true,
                 fillColor: (isDark ? Colors.white : Colors.black).withValues(
-                  alpha: murid.isLocked ? 0.02 : 0.05,
+                  alpha: murid.isLocked
+                      ? 0.02
+                      : (widget.isReadOnly ? 0.03 : 0.05),
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -762,10 +824,14 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
                     color: murid.nilai != null
-                        ? AppColors.primaryLight
+                        ? (widget.isReadOnly
+                            ? (isDark
+                                ? AppColors.outlineDark
+                                : AppColors.outlineLight)
+                            : AppColors.primaryLight)
                         : (isDark
-                              ? AppColors.outlineDark
-                              : AppColors.outlineLight),
+                            ? AppColors.outlineDark
+                            : AppColors.outlineLight),
                   ),
                 ),
                 disabledBorder: OutlineInputBorder(
@@ -780,6 +846,7 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
                 ),
               ),
               onChanged: (val) {
+                if (widget.isReadOnly) return;
                 final clean = val.trim().replaceAll(',', '.');
                 if (clean.isEmpty) {
                   widget.onScoreChanged(null);

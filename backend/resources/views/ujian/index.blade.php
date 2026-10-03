@@ -15,12 +15,12 @@
 
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
 
-            <!-- Form Gabungan (Filter Tahun & Pencarian) -->
+            <!-- Form Gabungan (Filter Tahun, Filter Tingkat & Pencarian) -->
             <form action="{{ route('ujian.index') }}" method="GET"
                 class="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
 
                 <!-- Filter Dropdown Tahun Pelajaran -->
-                <div class="relative group/select w-full sm:w-48">
+                <div class="relative group/select w-full sm:w-44">
                     <select name="tahun_pelajaran_id" onchange="this.form.submit()"
                         class="m3-input-glass w-full appearance-none cursor-pointer !pr-9">
                         <option value="">-- Semua Tahun --</option>
@@ -35,8 +35,24 @@
                     </div>
                 </div>
 
+                <!-- Filter Dropdown Tingkat -->
+                <div class="relative group/select w-full sm:w-40">
+                    <select name="tingkat_id" onchange="this.form.submit()"
+                        class="m3-input-glass w-full appearance-none cursor-pointer !pr-9">
+                        <option value="">-- Semua Tingkat --</option>
+                        @foreach ($tingkats as $tkt)
+                            <option value="{{ $tkt->id }}" {{ (isset($selectedTingkatId) && $selectedTingkatId == $tkt->id) ? 'selected' : '' }}>
+                                Tingkat {{ $tkt->nama_tingkat }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
+                        <i class="bi bi-chevron-down text-xs font-bold"></i>
+                    </div>
+                </div>
+
                 <!-- Input Pencarian -->
-                <div class="relative w-full sm:w-56 group/search">
+                <div class="relative w-full sm:w-52 group/search">
                     <div
                         class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors duration-300 text-zinc-400 group-focus-within/search:text-primary dark:group-focus-within/search:text-primary-dark">
                         <i class="bi bi-search text-sm"></i>
@@ -47,7 +63,7 @@
 
                     <!-- Tombol Reset Search -->
                     @if (request('search'))
-                        <a href="{{ route('ujian.index', ['tahun_pelajaran_id' => $selectedTahunId]) }}"
+                        <a href="{{ route('ujian.index', ['tahun_pelajaran_id' => $selectedTahunId, 'tingkat_id' => $selectedTingkatId]) }}"
                             class="absolute inset-y-0 right-0 w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 rounded-xl transition-colors duration-200 outline-none"
                             title="Hapus Pencarian">
                             <i class="bi bi-x-lg text-xs font-bold"></i>

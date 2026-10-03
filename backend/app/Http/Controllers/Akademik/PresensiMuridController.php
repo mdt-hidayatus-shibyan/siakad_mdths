@@ -8,7 +8,6 @@ use App\Models\BulanHijriyah;
 use App\Models\HariLibur;
 use App\Models\JadwalPelajaran;
 use App\Models\KalendarPendidikan;
-use App\Models\MataPelajaran;
 use App\Models\PengaturanAkademik;
 use App\Models\PresensiKegiatanMurid;
 use App\Models\PresensiMurid;
@@ -74,13 +73,30 @@ class PresensiMuridController extends Controller
         $keteranganLibur = $isLibur ? $checkLibur['keterangan'] : null;
 
         // 3. Cek Ujian
-        $ujian = Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
-            ->whereDate('tanggal_selesai', '>=', $tanggal)
-            ->first();
-        if (!$ujian) {
-            $jadwalUjianAda = JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
-            if ($jadwalUjianAda) {
-                $ujian = $jadwalUjianAda->ujian;
+        $ujian = null;
+        if ($ruanganTerpilih && $ruanganTerpilih->level) {
+            $ujian = Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
+                ->whereDate('tanggal_selesai', '>=', $tanggal)
+                ->berlakuUntukLevel($ruanganTerpilih->level)
+                ->first();
+
+            if (!$ujian) {
+                $jadwalUjianAda = JadwalUjian::whereDate('tanggal_ujian', $tanggal)
+                    ->where('level_id', $ruanganTerpilih->level_id)
+                    ->first();
+                if ($jadwalUjianAda) {
+                    $ujian = $jadwalUjianAda->ujian;
+                }
+            }
+        } else {
+            $ujian = Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
+                ->whereDate('tanggal_selesai', '>=', $tanggal)
+                ->first();
+            if (!$ujian) {
+                $jadwalUjianAda = JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
+                if ($jadwalUjianAda) {
+                    $ujian = $jadwalUjianAda->ujian;
+                }
             }
         }
         $isUjian = ($ujian != null);
@@ -359,14 +375,32 @@ class PresensiMuridController extends Controller
         ];
         $hari_ini = $mapHari[$nama_hari_inggris] ?? 'Senin';
 
-        $ujian = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
-            ->whereDate('tanggal_selesai', '>=', $tanggal)
-            ->first();
+        $ruanganTerpilih = $ruangan_id ? Ruangan::with('level')->find($ruangan_id) : null;
+        $ujian = null;
+        if ($ruanganTerpilih && $ruanganTerpilih->level) {
+            $ujian = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
+                ->whereDate('tanggal_selesai', '>=', $tanggal)
+                ->berlakuUntukLevel($ruanganTerpilih->level)
+                ->first();
 
-        if (!$ujian) {
-            $jadwalUjianAda = \App\Models\Ujian\JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
-            if ($jadwalUjianAda) {
-                $ujian = $jadwalUjianAda->ujian;
+            if (!$ujian) {
+                $jadwalUjianAda = \App\Models\Ujian\JadwalUjian::whereDate('tanggal_ujian', $tanggal)
+                    ->where('level_id', $ruanganTerpilih->level_id)
+                    ->first();
+                if ($jadwalUjianAda) {
+                    $ujian = $jadwalUjianAda->ujian;
+                }
+            }
+        } else {
+            $ujian = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
+                ->whereDate('tanggal_selesai', '>=', $tanggal)
+                ->first();
+
+            if (!$ujian) {
+                $jadwalUjianAda = \App\Models\Ujian\JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
+                if ($jadwalUjianAda) {
+                    $ujian = $jadwalUjianAda->ujian;
+                }
             }
         }
 

@@ -120,8 +120,9 @@ class PresensiUjianProvider extends ChangeNotifier {
   void selectRuangan(int ruanganId) {
     if (_selectedRuanganId == ruanganId) return;
     _selectedRuanganId = ruanganId;
+    _selectedUjianId = null;
     _selectedJadwalId = null;
-    fetchData(ujianId: _selectedUjianId, ruanganId: ruanganId);
+    fetchData(ruanganId: ruanganId);
   }
 
   void selectJadwal(int jadwalId) {

@@ -59,7 +59,10 @@ class JadwalHariIniItem {
   final bool isUtama;
   final String peran;
   final bool isTeamTeaching;
-  final bool sudahAbsen;
+  final bool sudahAbsen; // backward compatibility
+  final bool sudahAbsenMurid;
+  final bool sudahAbsenUstadz;
+  final String statusPresensiUstadz;
   final bool isBebasKbm;
   final String? keteranganBebasKbm;
 
@@ -74,11 +77,18 @@ class JadwalHariIniItem {
     this.peran = 'Guru Utama',
     this.isTeamTeaching = false,
     required this.sudahAbsen,
+    this.sudahAbsenMurid = false,
+    this.sudahAbsenUstadz = false,
+    this.statusPresensiUstadz = 'Belum Absen',
     this.isBebasKbm = false,
     this.keteranganBebasKbm,
   });
 
   factory JadwalHariIniItem.fromJson(Map<String, dynamic> json) {
+    final bool muridAbsen =
+        json['sudah_absen_murid'] ?? json['sudah_absen'] ?? false;
+    final bool ustadzAbsen = json['sudah_absen_ustadz'] ?? false;
+
     return JadwalHariIniItem(
       id: json['id'] ?? 0,
       jamKe: json['jam_ke']?.toString() ?? '',
@@ -91,7 +101,12 @@ class JadwalHariIniItem {
           json['peran'] ??
           (json['is_utama'] == false ? 'Guru Pendamping' : 'Guru Utama'),
       isTeamTeaching: json['is_team_teaching'] ?? false,
-      sudahAbsen: json['sudah_absen'] ?? false,
+      sudahAbsen: muridAbsen,
+      sudahAbsenMurid: muridAbsen,
+      sudahAbsenUstadz: ustadzAbsen,
+      statusPresensiUstadz:
+          json['status_presensi_ustadz'] ??
+          (ustadzAbsen ? 'Hadir' : 'Belum Absen'),
       isBebasKbm: json['is_bebas_kbm'] ?? false,
       keteranganBebasKbm: json['keterangan_bebas_kbm'],
     );

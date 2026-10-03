@@ -26,17 +26,20 @@ class BintangMadrasahController extends Controller
             ?? TahunPelajaran::where('is_active', true)->value('id')
             ?? $daftarTahun->first()?->id;
 
-        // Ambil data ujian IMDA 1 dan IMDA 2 pada tahun terpilih
+        // Ambil data ujian IMDA 1, IMDA 2, dan IMNI pada tahun terpilih
         $ujianImda1 = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)->where('tipe_ujian', 'IMDA 1')->first();
         $ujianImda2 = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)->where('tipe_ujian', 'IMDA 2')->first();
+        $ujianImni  = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)->where('tipe_ujian', 'IMNI')->first();
 
         $bintangMadrasah = collect();
 
-        // Syarat Pertama: IMDA 1 dan IMDA 2 harus sudah terlaksana
-        if ($ujianImda1 && $ujianImda2) {
+        // Syarat Pertama: IMDA 1 dan salah satu ujian semester akhir (IMDA 2 atau IMNI) harus sudah ada
+        if ($ujianImda1 && ($ujianImda2 || $ujianImni)) {
 
             // FUNGSI HELPER: Mencari ID Murid yang Juara 1 di tiap ruangan pada suatu Ujian (hanya murid aktif dan tidak dikecualikan)
             $getJuara1PerRuangan = function ($ujianId) {
+                if (!$ujianId) return collect();
+
                 $pengecualianMuridIds = PengecualianUjian::where('ujian_id', $ujianId)->pluck('murid_id');
 
                 $semuaNilai = NilaiUjian::where('ujian_id', $ujianId)
@@ -66,12 +69,16 @@ class BintangMadrasahController extends Controller
                 return $juara1Ids;
             };
 
-            // Dapatkan daftar ID murid Juara 1 di IMDA 1 dan IMDA 2
+            // Dapatkan daftar ID murid Juara 1 di IMDA 1, IMDA 2, dan IMNI
             $juara1Imda1 = $getJuara1PerRuangan($ujianImda1->id);
-            $juara1Imda2 = $getJuara1PerRuangan($ujianImda2->id);
+            $juara1Imda2 = $ujianImda2 ? $getJuara1PerRuangan($ujianImda2->id) : collect();
+            $juara1Imni  = $ujianImni  ? $getJuara1PerRuangan($ujianImni->id)  : collect();
 
-            // SYARAT 1: Irisan (Intersect) -> Murid yang Juara 1 terus di IMDA 1 DAN IMDA 2
-            $kandidatMuridIds = $juara1Imda1->intersect($juara1Imda2);
+            // Gabungkan juara semester akhir: IMDA 2 (ruangan reguler) + IMNI (ruangan kelas akhir)
+            $juara1SemesterAkhir = $juara1Imda2->merge($juara1Imni)->unique();
+
+            // SYARAT 1: Irisan (Intersect) -> Murid yang Juara 1 di IMDA 1 DAN Juara 1 di Ujian Semester Akhir (IMDA 2 / IMNI)
+            $kandidatMuridIds = $juara1Imda1->intersect($juara1SemesterAkhir);
 
             // Process Pengumpulan Syarat 2, 3, dan 4 untuk para Kandidat
             $kandidatArrayIds = $kandidatMuridIds->toArray();
@@ -93,8 +100,9 @@ class BintangMadrasahController extends Controller
                     ->get()
                     ->keyBy('murid_id');
 
-                // 3. Pre-fetch Nilai Rata-rata Gabungan (IMDA 1 + IMDA 2)
-                $nilaiKandidatMap = NilaiUjian::whereIn('ujian_id', [$ujianImda1->id, $ujianImda2->id])
+                // 3. Pre-fetch Nilai Rata-rata Gabungan (IMDA 1 + IMDA 2 / IMNI)
+                $ujianIds = array_filter([$ujianImda1->id, $ujianImda2?->id, $ujianImni?->id]);
+                $nilaiKandidatMap = NilaiUjian::whereIn('ujian_id', $ujianIds)
                     ->whereIn('murid_id', $kandidatArrayIds)
                     ->get()
                     ->groupBy('murid_id');

@@ -110,8 +110,9 @@ class KalendarPendidikanController extends Controller
                 ->orderBy('nama_ruangan')
                 ->get();
             $levels = \App\Models\Level::orderBy('urutan_level')->get();
+            $tingkats = \App\Models\Tingkat::orderBy('urutan_tingkat')->get();
 
-            return view('kalendar.form-kalendar', compact('tahun_pelajarans', 'kategoris', 'ruangans', 'levels'));
+            return view('kalendar.form-kalendar', compact('tahun_pelajarans', 'kategoris', 'ruangans', 'levels', 'tingkats'));
         }
 
         return redirect()->route('kalendar-pendidikan.index')->with('error', 'Silakan gunakan tombol tambah data melalui antarmuka kalender.');
@@ -138,6 +139,7 @@ class KalendarPendidikanController extends Controller
                 'tahun_pelajaran_id' => $validated['tahun_pelajaran_id'],
                 'nama_ujian'         => $validated['nama_agenda'],
                 'semester_id'        => $validated['semester_id'],
+                'tingkat_id'         => $request->tingkat_id ?: null,
                 'tipe_ujian'         => $validated['tipe_ujian'],
                 'tanggal_mulai'      => $validated['tanggal_mulai'],
                 'tanggal_selesai'    => $validated['tanggal_selesai'],
@@ -187,6 +189,7 @@ class KalendarPendidikanController extends Controller
                 ->orderBy('nama_ruangan')
                 ->get();
             $levels = Level::orderBy('urutan_level')->get();
+            $tingkats = \App\Models\Tingkat::orderBy('urutan_tingkat')->get();
 
             if ($tipe === 'libur') {
                 $kegiatan = HariLibur::findOrFail($id);
@@ -198,7 +201,7 @@ class KalendarPendidikanController extends Controller
                 $kegiatan = KalendarPendidikan::findOrFail($id);
             }
             $kegiatan->tipe_agenda = $tipe;
-            return view('kalendar.form-kalendar', compact('kegiatan', 'tahun_pelajarans', 'kategoris', 'ruangans', 'levels'));
+            return view('kalendar.form-kalendar', compact('kegiatan', 'tahun_pelajarans', 'kategoris', 'ruangans', 'levels', 'tingkats'));
         }
         return redirect()->route('kalendar-pendidikan.index')->with('error', 'Silakan gunakan tombol edit data.');
     }
@@ -224,6 +227,7 @@ class KalendarPendidikanController extends Controller
                 'tahun_pelajaran_id' => $validated['tahun_pelajaran_id'],
                 'nama_ujian'         => $validated['nama_agenda'],
                 'semester_id'        => $validated['semester_id'],
+                'tingkat_id'         => $request->tingkat_id ?: null,
                 'tipe_ujian'         => $validated['tipe_ujian'],
                 'tanggal_mulai'      => $validated['tanggal_mulai'],
                 'tanggal_selesai'    => $validated['tanggal_selesai'],

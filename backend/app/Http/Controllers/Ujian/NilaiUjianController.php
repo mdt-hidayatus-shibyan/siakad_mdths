@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Ujian;
 
 use App\Http\Controllers\Controller;
-use App\Models\PengaturanTagihan;
 use App\Models\Ruangan;
-use App\Models\TagihanMurid;
 use App\Models\TahunPelajaran;
-use App\Models\Ujian\DispensasiUjian;
 use App\Models\Ujian\JadwalUjian;
 use App\Models\Ujian\NilaiUjian;
 use App\Models\Ujian\Ujian;
@@ -39,7 +36,16 @@ class NilaiUjianController extends Controller
             ->orderBy('level_id', 'asc')
             ->get();
 
-        $daftarUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
+        $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)
+            ->where('tipe_ujian', '!=', 'IMNI');
+        $user = auth()->user();
+        if ($user && $user->hasRole('staff') && $user->tingkat_id) {
+            $queryUjian->where(function ($q) use ($user) {
+                $q->whereNull('tingkat_id')
+                    ->orWhere('tingkat_id', $user->tingkat_id);
+            });
+        }
+        $daftarUjian = $queryUjian->get();
         $ujianTerpilih = null;
         $dataProgres = collect();
 
@@ -82,15 +88,25 @@ class NilaiUjianController extends Controller
 
                 // (Blok pencarian "MATA PELAJARAN" yang lama DIBUANG karena membuang-buang query DB)
 
-                // FILTER UJIAN
+                // FILTER UJIAN BERDASARKAN KELAS & SASARAN TINGKAT
                 $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
+                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)
+                    ->where('tipe_ujian', '!=', 'IMNI');
 
                 if ($isKelasAkhir) {
-                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+                    $queryUjian->where('tipe_ujian', 'IMDA 1');
                 } else {
                     $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
                 }
+
+                $tingkatId = $ruanganTerpilih->level->tingkat_id ?? null;
+                if ($tingkatId) {
+                    $queryUjian->where(function ($q) use ($tingkatId) {
+                        $q->whereNull('tingkat_id')
+                            ->orWhere('tingkat_id', $tingkatId);
+                    });
+                }
+
                 $daftarUjian = $queryUjian->get();
 
                 // JIKA AGENDA UJIAN DIKLIK
@@ -221,9 +237,10 @@ class NilaiUjianController extends Controller
                 $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
 
                 // Filter Ujian
-                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
+                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)
+                    ->where('tipe_ujian', '!=', 'IMNI');
                 if ($isKelasAkhir) {
-                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+                    $queryUjian->where('tipe_ujian', 'IMDA 1');
                 } else {
                     $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
                 }
@@ -327,10 +344,11 @@ class NilaiUjianController extends Controller
 
                 // Filter Ujian Berdasarkan Kelas
                 $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId);
+                $queryUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)
+                    ->where('tipe_ujian', '!=', 'IMNI');
 
                 if ($isKelasAkhir) {
-                    $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
+                    $queryUjian->where('tipe_ujian', 'IMDA 1');
                 } else {
                     $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
                 }

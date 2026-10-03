@@ -8,6 +8,7 @@ use App\Models\JadwalPelajaran;
 use App\Models\KalendarPendidikan;
 use App\Models\Pengumuman;
 use App\Models\PresensiMurid;
+use App\Models\PresensiUstadz;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
 use Carbon\Carbon;
@@ -81,7 +82,7 @@ class DashboardController extends Controller
 
             // Bulk query status presensi hari ini untuk eliminasi N+1
             $jadwalIds = $jadwalHariIniList->pluck('id')->toArray();
-            $sudahAbsenMap = !empty($jadwalIds)
+            $sudahAbsenMuridMap = !empty($jadwalIds)
                 ? PresensiMurid::whereIn('jadwal_pelajaran_id', $jadwalIds)
                 ->where('tanggal', $todayDate)
                 ->pluck('jadwal_pelajaran_id')
@@ -89,14 +90,31 @@ class DashboardController extends Controller
                 ->toArray()
                 : [];
 
-            $formattedJadwal = $jadwalHariIniList->map(function ($j) use ($sudahAbsenMap, &$presensiSelesaiCount, $ustadzId, $todayDate) {
+            $presensiUstadzList = !empty($jadwalIds)
+                ? PresensiUstadz::whereIn('jadwal_pelajaran_id', $jadwalIds)
+                ->where('tanggal', $todayDate)
+                ->get()
+                : collect();
+
+            $formattedJadwal = $jadwalHariIniList->map(function ($j) use ($sudahAbsenMuridMap, $presensiUstadzList, &$presensiSelesaiCount, $ustadzId, $todayDate) {
                 $checkSesi = HariLibur::checkBebasKbm($todayDate, $j->jam_ke, $j->ruangan_id, $j->ruangan?->level_id);
                 $isBebasKbm = $checkSesi['is_libur'];
                 $keteranganBebasKbm = $checkSesi['keterangan'];
 
-                $sudahAbsen = isset($sudahAbsenMap[$j->id]);
+                $sudahAbsenMurid = isset($sudahAbsenMuridMap[$j->id]);
 
-                if ($sudahAbsen || $isBebasKbm) {
+                // Presensi Ustadz: Cari apakah ustadz ini (atau ustadz jadwal) sudah ada presensinya
+                $presUstadz = $presensiUstadzList->first(function ($p) use ($j, $ustadzId) {
+                    if ($p->jadwal_pelajaran_id != $j->id) return false;
+                    if ($ustadzId) {
+                        return $p->ustadz_id == $ustadzId || $p->ustadz_pengganti_id == $ustadzId;
+                    }
+                    return true;
+                });
+                $sudahAbsenUstadz = ($presUstadz != null);
+                $statusPresensiUstadz = $presUstadz ? $presUstadz->status : 'Belum Absen';
+
+                if (($sudahAbsenMurid && $sudahAbsenUstadz) || $isBebasKbm) {
                     $presensiSelesaiCount++;
                 }
 
@@ -116,18 +134,21 @@ class DashboardController extends Controller
                 }
 
                 return [
-                    'id'                   => $j->id,
-                    'jam_ke'               => $j->jam_ke,
-                    'jam'                  => $jamText,
-                    'mapel'                => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
-                    'kelas'                => $j->ruangan->nama_ruangan ?? '-',
-                    'guru'                 => $j->daftar_nama_pengampu,
-                    'is_utama'             => $isUtama,
-                    'peran'                => $isUtama ? 'Guru Utama' : 'Guru Pendamping',
-                    'is_team_teaching'     => $j->daftar_ustadz->count() > 1,
-                    'sudah_absen'          => $sudahAbsen,
-                    'is_bebas_kbm'         => $isBebasKbm,
-                    'keterangan_bebas_kbm' => $keteranganBebasKbm,
+                    'id'                     => $j->id,
+                    'jam_ke'                 => $j->jam_ke,
+                    'jam'                    => $jamText,
+                    'mapel'                  => $j->mataPelajaran->nama_mapel ?? 'Pelajaran',
+                    'kelas'                  => $j->ruangan->nama_ruangan ?? '-',
+                    'guru'                   => $j->daftar_nama_pengampu,
+                    'is_utama'               => $isUtama,
+                    'peran'                  => $isUtama ? 'Guru Utama' : 'Guru Pendamping',
+                    'is_team_teaching'       => $j->daftar_ustadz->count() > 1,
+                    'sudah_absen'            => $sudahAbsenMurid, // backward compatibility
+                    'sudah_absen_murid'      => $sudahAbsenMurid,
+                    'sudah_absen_ustadz'     => $sudahAbsenUstadz,
+                    'status_presensi_ustadz' => $statusPresensiUstadz,
+                    'is_bebas_kbm'           => $isBebasKbm,
+                    'keterangan_bebas_kbm'   => $keteranganBebasKbm,
                 ];
             });
         }
@@ -186,6 +207,29 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Cek Kepanitiaan IMNI Ustadz pada Tahun Pelajaran Aktif
+        $panitiaImni = $ustadzId
+            ? \App\Models\Ujian\PanitiaImni::with('tahunPelajaran')
+                ->where('ustadz_id', $ustadzId)
+                ->whereHas('tahunPelajaran', fn($tp) => $tp->where('is_active', true))
+                ->where('is_active', true)
+                ->first()
+            : null;
+
+        $panitiaImniData = $panitiaImni ? [
+            'is_panitia' => true,
+            'jabatan' => $panitiaImni->jabatan,
+            'no_sk' => $panitiaImni->no_sk,
+            'keterangan' => $panitiaImni->keterangan,
+            'tahun_pelajaran' => $panitiaImni->tahunPelajaran?->nama_hijriyah . ' H / ' . $panitiaImni->tahunPelajaran?->nama_masehi . ' M',
+        ] : [
+            'is_panitia' => false,
+            'jabatan' => null,
+            'no_sk' => null,
+            'keterangan' => null,
+            'tahun_pelajaran' => null,
+        ];
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -199,6 +243,7 @@ class DashboardController extends Controller
                 ],
                 'jadwal_hari_ini' => $formattedJadwal,
                 'pengumuman' => $pengumuman,
+                'panitia_imni' => $panitiaImniData,
             ]
         ], 200);
     }

@@ -36,6 +36,21 @@
                         class="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/40 rounded-md border border-amber-200/80 dark:border-amber-800/40">
                         {{ $item->tipe_ujian }}
                     </span>
+
+                    <!-- Badge Sasaran Tingkat -->
+                    @if ($item->tingkat)
+                        <span
+                            class="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/40 rounded-md border border-emerald-200/80 dark:border-emerald-800/40 flex items-center gap-1">
+                            <i class="bi bi-mortarboard-fill text-[9px]"></i>
+                            Tingkat {{ $item->tingkat->nama_tingkat }}
+                        </span>
+                    @else
+                        <span
+                            class="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 bg-zinc-100/90 dark:text-zinc-400 dark:bg-zinc-800/60 rounded-md border border-zinc-200/80 dark:border-zinc-700/60 flex items-center gap-1">
+                            <i class="bi bi-globe text-[9px]"></i>
+                            Semua Tingkat (Global)
+                        </span>
+                    @endif
                 </div>
 
                 <p

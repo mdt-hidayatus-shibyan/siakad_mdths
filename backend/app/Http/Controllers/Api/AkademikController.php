@@ -529,6 +529,13 @@ class AkademikController extends Controller
             } else {
                 $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
             }
+
+            if ($ruangan->level->tingkat_id) {
+                $queryUjian->where(function ($q) use ($ruangan) {
+                    $q->whereNull('tingkat_id')
+                      ->orWhere('tingkat_id', $ruangan->level->tingkat_id);
+                });
+            }
         }
 
         $daftarUjian = $queryUjian->orderBy('id', 'asc')

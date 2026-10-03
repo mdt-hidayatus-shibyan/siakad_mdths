@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -224,6 +224,7 @@
             $levelsTingkat = $levels->filter(function ($l) use ($tingkat) {
                 return $l->tingkat_id == $tingkat->id;
             });
+            $adminTtd = \App\Models\Administrator::getTandaTanganAdmin($tingkat->id);
         @endphp
 
         <div class="page-break">
@@ -303,36 +304,20 @@
                 </tbody>
             </table>
 
-            <!-- AREA TANDA TANGAN -->
+            <!-- AREA TANDA TANGAN (1 ORANG) -->
             <table class="signature-table">
                 <tr>
-                    <td style="width: 50%;">
-                        <p style="margin: 0; font-size: 11px;">Mengetahui,</p>
-                        <p style="margin: 2px 0 6px 0; font-size: 11px; font-weight: bold;">Pengasuh Madrasah</p>
-                        <div style="min-height: 60px; display: flex; justify-content: center; align-items: center;">
-                            @if (!empty($pengasuh?->id))
-                                {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(60)->generate(
-                                    URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $pengasuh->id]),
-                                ) !!}
-                            @else
-                                <div style="height: 50px;"></div>
-                            @endif
-                        </div>
-                        <p
-                            style="margin: 6px 0 0 0; font-size: 11px; font-weight: bold; text-decoration: underline; text-transform: uppercase;">
-                            {{ $pengasuh?->anggota?->nama_lengkap ?? ($pengasuh?->nama ?? 'Nama Pengasuh Belum Diatur') }}
-                        </p>
-                    </td>
-
-                    <td style="width: 50%;">
+                    <td style="width: 65%;"></td>
+                    <td style="width: 35%;">
                         <p style="margin: 0; font-size: 11px;">Somor Koneng,
                             {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
-                        <p style="margin: 2px 0 6px 0; font-size: 11px; font-weight: bold;">Panitia Ujian / Kurikulum
+                        <p style="margin: 2px 0 6px 0; font-size: 11px; font-weight: bold;">
+                            {{ $adminTtd?->tingkat ? 'Kepala Administrasi ' . ($adminTtd->tingkat->nama_tingkat ?? $adminTtd->tingkat->nama) : 'Kepala Administrasi' }}
                         </p>
                         <div style="min-height: 60px; display: flex; justify-content: center; align-items: center;">
-                            @if (!empty($panitiaUjian?->id))
+                            @if (!empty($adminTtd?->id))
                                 {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(60)->generate(
-                                    URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $panitiaUjian->id]),
+                                    URL::signedRoute('profil.publik', ['tipe' => 'administrator', 'id' => $adminTtd->id]),
                                 ) !!}
                             @else
                                 <div style="height: 50px;"></div>
@@ -340,7 +325,7 @@
                         </div>
                         <p
                             style="margin: 6px 0 0 0; font-size: 11px; font-weight: bold; text-decoration: underline; text-transform: uppercase;">
-                            {{ $panitiaUjian?->anggota?->nama_lengkap ?? ($panitiaUjian?->nama ?? 'Nama Panitia Belum Diatur') }}
+                            {{ $adminTtd?->nama_lengkap ?? 'Administrator' }}
                         </p>
                     </td>
                 </tr>

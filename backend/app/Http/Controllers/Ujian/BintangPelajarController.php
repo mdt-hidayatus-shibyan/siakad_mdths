@@ -21,7 +21,9 @@ class BintangPelajarController extends Controller
             ?? TahunPelajaran::where('is_active', true)->value('id')
             ?? $daftarTahun->first()?->id;
 
-        $daftarUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
+        $daftarUjian = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)
+            ->orderBy('id', 'asc')
+            ->get();
 
         $ujianTerpilih = null;
         $bintangLevel = collect();

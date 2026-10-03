@@ -369,6 +369,29 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
       );
     }
 
+    if (provider.daftarRuangan.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () => provider.fetchData(),
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            24,
+            16,
+            120 + MediaQuery.of(context).padding.bottom,
+          ),
+          children: [
+            _buildBelumAdaRuanganEmptyState(
+              context,
+              isDark,
+              primaryColor,
+              onPrimaryColor,
+              provider,
+            ),
+          ],
+        ),
+      );
+    }
+
     final muridList = provider.filteredMuridList;
 
     return RefreshIndicator(
@@ -447,7 +470,9 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                   key: ValueKey(
                     'ujian_${provider.selectedRuanganId}_${provider.selectedUjianId}',
                   ),
-                  initialValue: provider.selectedUjianId,
+                  initialValue: provider.daftarUjian.any((u) => u.id == provider.selectedUjianId)
+                      ? provider.selectedUjianId
+                      : (provider.daftarUjian.isNotEmpty ? provider.daftarUjian.first.id : null),
                   decoration: const InputDecoration(
                     labelText: 'Agenda Ujian',
                     prefixIcon: Icon(Icons.auto_stories_rounded, size: 18),
@@ -479,8 +504,14 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
           const SizedBox(height: 12),
 
           // ===================================================================
-          // 2. KETERANGAN STATUS RUANGAN & HAK AKSES USTADZ
+          // 2. KONDISI EMPTY STATE JIKA BELUM ADA AGENDA UJIAN
           // ===================================================================
+          if (provider.daftarUjian.isEmpty)
+            _buildBelumAdaUjianEmptyState(context, isDark, provider)
+          else ...[
+            // ===================================================================
+            // 2. KETERANGAN STATUS RUANGAN & HAK AKSES USTADZ
+            // ===================================================================
           if (provider.selectedRuanganId != null &&
               provider.selectedRuanganNama.isNotEmpty) ...[
             Container(
@@ -958,7 +989,128 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                 ),
               );
             }),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildBelumAdaRuanganEmptyState(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+    Color onPrimaryColor,
+    SyaratUjianProvider provider,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+      child: GlassCard(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.meeting_room_outlined,
+                size: 48,
+                color: primaryColor,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Belum Ada Ruangan Kelas',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Anda belum memiliki ruangan kelas binaan atau belum ditugaskan sebagai Wali Ruangan aktif.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: isDark
+                    ? const Color(0xFF8D9387)
+                    : const Color(0xFF73796E),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () => provider.fetchData(),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Muat Ulang Data'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: onPrimaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBelumAdaUjianEmptyState(
+    BuildContext context,
+    bool isDark,
+    SyaratUjianProvider provider,
+  ) {
+    final ruanganName = provider.selectedRuanganNama.isNotEmpty
+        ? provider.selectedRuanganNama
+        : 'Ruangan ini';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+      child: GlassCard(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.primaryDark : AppColors.primaryLight)
+                    .withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.pending_actions_rounded,
+                size: 48,
+                color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Agenda Ujian Belum Dibuat',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Agenda ujian untuk $ruanganName belum dibuat oleh Administrator.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: isDark
+                    ? const Color(0xFF8D9387)
+                    : const Color(0xFF73796E),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

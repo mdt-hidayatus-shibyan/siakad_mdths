@@ -27,7 +27,7 @@ class ScheduleCard extends StatelessWidget {
         children: [
           // 1. Header: Jam Ke & Status Presensi
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Jam Ke Pill Badge
               Container(
@@ -67,46 +67,43 @@ class ScheduleCard extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 6),
 
-              // Status Absen Badge / Bebas KBM Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: item.isBebasKbm
-                      ? AppColors.amberAccent.withValues(alpha: 0.15)
-                      : (item.sudahAbsen
-                            ? (isDark
-                                  ? AppColors.hadirBgDark
-                                  : AppColors.hadirBgLight)
-                            : AppColors.amberAccent.withValues(alpha: 0.15)),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: item.isBebasKbm
-                        ? AppColors.amberAccent.withValues(alpha: 0.5)
-                        : (item.sudahAbsen
-                              ? (isDark
-                                        ? AppColors.hadirTextDark
-                                        : const Color(0xFF86EFAC))
-                                    .withValues(alpha: 0.5)
-                              : AppColors.amberAccent.withValues(alpha: 0.4)),
-                    width: 0.8,
-                  ),
-                ),
-                child: Text(
-                  item.isBebasKbm
-                      ? '⏸ Bebas KBM'
-                      : (item.sudahAbsen ? '✓ Sudah Absen' : '● Belum Absen'),
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.bold,
-                    color: item.isBebasKbm
-                        ? AppColors.amberAccent
-                        : (item.sudahAbsen
-                              ? (isDark
-                                    ? AppColors.hadirTextDark
-                                    : AppColors.hadirTextLight)
-                              : AppColors.amberAccent),
-                  ),
+              // Status Badges: Ustadz & Murid / Bebas KBM
+              Expanded(
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    if (item.isBebasKbm)
+                      _buildStatusBadge(
+                        label: '⏸ Bebas KBM',
+                        isSuccess: false,
+                        isDark: isDark,
+                        customColor: AppColors.amberAccent,
+                        customBg: AppColors.amberAccent.withValues(alpha: 0.15),
+                      )
+                    else ...[
+                      // Badge Presensi Ustadz
+                      _buildStatusBadge(
+                        label: item.sudahAbsenUstadz
+                            ? '✓ Ustadz: ${item.statusPresensiUstadz}'
+                            : '● Ustadz: Belum',
+                        isSuccess: item.sudahAbsenUstadz,
+                        isDark: isDark,
+                        statusType: item.sudahAbsenUstadz ? item.statusPresensiUstadz : null,
+                      ),
+                      // Badge Presensi Murid
+                      _buildStatusBadge(
+                        label: item.sudahAbsenMurid
+                            ? '✓ Murid: Sudah'
+                            : '● Murid: Belum',
+                        isSuccess: item.sudahAbsenMurid,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -284,54 +281,100 @@ class ScheduleCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: SizedBox(
-                      height: 32,
-                      child: OutlinedButton.icon(
-                        onPressed: onPresensiGuruTap,
-                        icon: const Icon(Icons.badge_rounded, size: 14),
-                        label: const Text(
-                          'Presensi Ustadz',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          side: BorderSide(
-                            color:
-                                (isDark
-                                        ? AppColors.primaryDark
-                                        : AppColors.primaryLight)
+                      height: 34,
+                      child: item.sudahAbsenUstadz
+                          ? OutlinedButton.icon(
+                              onPressed: onPresensiGuruTap,
+                              icon: Icon(
+                                Icons.check_circle_rounded,
+                                size: 14,
+                                color: isDark
+                                    ? AppColors.hadirTextDark
+                                    : AppColors.hadirTextLight,
+                              ),
+                              label: Text(
+                                '✓ Ustadz (${item.statusPresensiUstadz})',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? AppColors.hadirTextDark
+                                      : AppColors.hadirTextLight,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: (isDark
+                                        ? AppColors.hadirBgDark
+                                        : AppColors.hadirBgLight)
                                     .withValues(alpha: 0.5),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 6),
+                                side: BorderSide(
+                                  color: (isDark
+                                          ? AppColors.hadirTextDark
+                                          : const Color(0xFF86EFAC))
+                                      .withValues(alpha: 0.5),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            )
+                          : OutlinedButton.icon(
+                              onPressed: onPresensiGuruTap,
+                              icon: const Icon(Icons.badge_rounded, size: 14),
+                              label: const Text(
+                                'Presensi Ustadz',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 6),
+                                side: BorderSide(
+                                  color: (isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight)
+                                      .withValues(alpha: 0.5),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: SizedBox(
-                      height: 32,
+                      height: 34,
                       child: FilledButton.icon(
                         onPressed: onAbsenTap,
                         icon: Icon(
-                          item.sudahAbsen
+                          item.sudahAbsenMurid
                               ? Icons.edit_note_rounded
                               : Icons.fact_check_rounded,
                           size: 15,
                         ),
                         label: Text(
-                          item.sudahAbsen ? 'Ubah Presensi' : 'Presensi Murid',
+                          item.sudahAbsenMurid
+                              ? 'Ubah Presensi'
+                              : 'Presensi Murid',
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         style: FilledButton.styleFrom(
                           backgroundColor: isDark
@@ -340,7 +383,7 @@ class ScheduleCard extends StatelessWidget {
                           foregroundColor: isDark
                               ? AppColors.onPrimaryDark
                               : AppColors.onPrimaryLight,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -353,17 +396,17 @@ class ScheduleCard extends StatelessWidget {
             else if (onAbsenTap != null)
               SizedBox(
                 width: double.infinity,
-                height: 32,
+                height: 34,
                 child: FilledButton.icon(
                   onPressed: onAbsenTap,
                   icon: Icon(
-                    item.sudahAbsen
+                    item.sudahAbsenMurid
                         ? Icons.edit_note_rounded
                         : Icons.fact_check_rounded,
                     size: 15,
                   ),
                   label: Text(
-                    item.sudahAbsen ? 'Ubah Presensi' : 'Presensi Murid',
+                    item.sudahAbsenMurid ? 'Ubah Presensi Murid' : 'Presensi Murid',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -386,34 +429,131 @@ class ScheduleCard extends StatelessWidget {
             else if (onPresensiGuruTap != null)
               SizedBox(
                 width: double.infinity,
-                height: 32,
-                child: OutlinedButton.icon(
-                  onPressed: onPresensiGuruTap,
-                  icon: const Icon(Icons.badge_rounded, size: 14),
-                  label: const Text(
-                    'Presensi Ustadz',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark
-                        ? AppColors.primaryDark
-                        : AppColors.primaryLight,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    side: BorderSide(
-                      color:
-                          (isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight)
+                height: 34,
+                child: item.sudahAbsenUstadz
+                    ? OutlinedButton.icon(
+                        onPressed: onPresensiGuruTap,
+                        icon: Icon(
+                          Icons.check_circle_rounded,
+                          size: 14,
+                          color: isDark
+                              ? AppColors.hadirTextDark
+                              : AppColors.hadirTextLight,
+                        ),
+                        label: Text(
+                          '✓ Ustadz (${item.statusPresensiUstadz})',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? AppColors.hadirTextDark
+                                : AppColors.hadirTextLight,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: (isDark
+                                  ? AppColors.hadirBgDark
+                                  : AppColors.hadirBgLight)
                               .withValues(alpha: 0.5),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          side: BorderSide(
+                            color: (isDark
+                                    ? AppColors.hadirTextDark
+                                    : const Color(0xFF86EFAC))
+                                .withValues(alpha: 0.5),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      )
+                    : OutlinedButton.icon(
+                        onPressed: onPresensiGuruTap,
+                        icon: const Icon(Icons.badge_rounded, size: 14),
+                        label: const Text(
+                          'Presensi Ustadz',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          side: BorderSide(
+                            color: (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight)
+                                .withValues(alpha: 0.5),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
               ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge({
+    required String label,
+    required bool isSuccess,
+    required bool isDark,
+    String? statusType,
+    Color? customColor,
+    Color? customBg,
+  }) {
+    final Color textColor;
+    final Color bgColor;
+    final Color borderColor;
+
+    if (customColor != null && customBg != null) {
+      textColor = customColor;
+      bgColor = customBg;
+      borderColor = customColor.withValues(alpha: 0.4);
+    } else if (isSuccess) {
+      if (statusType == 'Izin') {
+        bgColor = isDark ? AppColors.izinBgDark : AppColors.izinBgLight;
+        textColor = isDark ? AppColors.izinTextDark : AppColors.izinTextLight;
+        borderColor = (isDark ? AppColors.izinTextDark : AppColors.izinTextLight).withValues(alpha: 0.4);
+      } else if (statusType == 'Sakit') {
+        bgColor = isDark ? AppColors.sakitBgDark : AppColors.sakitBgLight;
+        textColor = isDark ? AppColors.sakitTextDark : AppColors.sakitTextLight;
+        borderColor = (isDark ? AppColors.sakitTextDark : AppColors.sakitTextLight).withValues(alpha: 0.4);
+      } else if (statusType == 'Alpha') {
+        bgColor = isDark ? AppColors.alphaBgDark : AppColors.alphaBgLight;
+        textColor = isDark ? AppColors.alphaTextDark : AppColors.alphaTextLight;
+        borderColor = (isDark ? AppColors.alphaTextDark : AppColors.alphaTextLight).withValues(alpha: 0.4);
+      } else {
+        bgColor = isDark ? AppColors.hadirBgDark : AppColors.hadirBgLight;
+        textColor = isDark ? AppColors.hadirTextDark : AppColors.hadirTextLight;
+        borderColor = (isDark ? AppColors.hadirTextDark : const Color(0xFF86EFAC)).withValues(alpha: 0.5);
+      }
+    } else {
+      bgColor = AppColors.amberAccent.withValues(alpha: 0.15);
+      textColor = AppColors.amberAccent;
+      borderColor = AppColors.amberAccent.withValues(alpha: 0.4);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: borderColor, width: 0.8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
       ),
     );
   }

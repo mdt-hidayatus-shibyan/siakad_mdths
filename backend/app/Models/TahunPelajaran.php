@@ -36,4 +36,9 @@ class TahunPelajaran extends Model
     {
         return $this->hasOne(PengaturanAkademik::class);
     }
+
+    public function panitiaImnis()
+    {
+        return $this->hasMany(\App\Models\Ujian\PanitiaImni::class, 'tahun_pelajaran_id');
+    }
 }

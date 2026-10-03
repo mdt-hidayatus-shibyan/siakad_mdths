@@ -16,6 +16,9 @@ class NilaiProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _canEdit = true;
+  bool _isReadOnly = false;
+  String? _readOnlyReason;
   String? _errorMessage;
 
   // Getters
@@ -57,6 +60,9 @@ class NilaiProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
+  bool get canEdit => _canEdit;
+  bool get isReadOnly => _isReadOnly;
+  String? get readOnlyReason => _readOnlyReason;
   String? get errorMessage => _errorMessage;
 
   // Compatibility getter for older references
@@ -114,11 +120,15 @@ class NilaiProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _muridNilaiList = await _repo.getInputData(
+      final res = await _repo.getInputData(
         ujianId: ujianId,
         ruanganId: ruanganId,
         jadwalUjianId: jadwalUjianId,
       );
+      _muridNilaiList = res.murids;
+      _canEdit = res.canEdit;
+      _isReadOnly = res.isReadOnly;
+      _readOnlyReason = res.readOnlyReason;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
     } finally {
@@ -143,6 +153,12 @@ class NilaiProvider extends ChangeNotifier {
     int? jadwalUjianId,
     required String action,
   }) async {
+    if (_isReadOnly || !_canEdit) {
+      _errorMessage = _readOnlyReason ?? 'Pada ujian IMNI, Wali Ruangan hanya memiliki akses membaca nilai.';
+      notifyListeners();
+      return false;
+    }
+
     _isSaving = true;
     notifyListeners();
 
@@ -284,6 +300,9 @@ class NilaiProvider extends ChangeNotifier {
     _selectedJadwal = null;
     _isLoading = false;
     _isSaving = false;
+    _canEdit = true;
+    _isReadOnly = false;
+    _readOnlyReason = null;
     _errorMessage = null;
     notifyListeners();
   }

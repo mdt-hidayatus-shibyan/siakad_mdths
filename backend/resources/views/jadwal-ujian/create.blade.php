@@ -14,7 +14,8 @@
                     class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight transition-colors duration-300">
                     Kertas Kerja Jadwal Ujian
                 </h2>
-                <p class="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 transition-colors duration-300">
+                <p
+                    class="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 transition-colors duration-300">
                     Atur sesi, waktu, mata pelajaran, dan pengawas ujian per tingkatan.
                 </p>
             </div>
@@ -22,22 +23,22 @@
     </div>
 
     <!-- FILTER AREA -->
-    <div
-        class="m3-glass-card p-4 sm:p-5 mb-6 relative z-10">
+    <div class="m3-glass-card p-4 sm:p-5 mb-6 relative z-10">
         <form action="{{ route('jadwal-ujian.create') }}" method="GET" id="filterForm"
             class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
 
             <!-- Filter Tahun Pelajaran -->
             <div class="space-y-1.5">
                 <label
-                    class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Tahun Pelajaran</label>
+                    class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Tahun
+                    Pelajaran</label>
                 <div class="relative group/select">
                     <select name="tahun_pelajaran_id" onchange="document.getElementById('filterForm').submit();"
                         class="m3-input-glass w-full appearance-none cursor-pointer !pr-9">
                         <option value="">-- Pilih Tahun Pelajaran --</option>
                         @foreach ($tahunPelajarans as $tp)
                             <option value="{{ $tp->id }}" {{ $tahun_pelajaran_id == $tp->id ? 'selected' : '' }}>
-                                {{ $tp->nama_hijriyah }}</option>
+                                {{ $tp->nama_hijriyah }} | {{ $tp->nama_masehi }}</option>
                         @endforeach
                     </select>
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
@@ -49,7 +50,8 @@
             <!-- Filter Ujian -->
             <div class="space-y-1.5">
                 <label
-                    class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Data Ujian</label>
+                    class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Data
+                    Ujian</label>
                 <div class="relative group/select">
                     <select name="ujian_id" onchange="document.getElementById('filterForm').submit();"
                         {{ !$tahun_pelajaran_id ? 'disabled' : '' }}
@@ -69,7 +71,8 @@
             <!-- Filter Level / Tingkat -->
             <div class="space-y-1.5">
                 <label
-                    class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Tingkat / Level</label>
+                    class="block text-[11px] font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider ml-1">Tingkat
+                    / Level</label>
                 <div class="relative group/select">
                     <select name="level_id" onchange="document.getElementById('filterForm').submit();"
                         {{ !$tahun_pelajaran_id ? 'disabled' : '' }}
@@ -119,10 +122,15 @@
                 <table class="m3-table w-full text-left whitespace-nowrap min-w-[900px]">
                     <thead>
                         <tr>
-                            <th scope="col" class="border-r border-zinc-200/80 dark:border-zinc-800 w-48 text-center">Hari / Tanggal</th>
-                            <th scope="col" class="border-r border-zinc-200/80 dark:border-zinc-800 w-16 text-center">Sesi</th>
-                            <th scope="col" class="border-r border-zinc-200/80 dark:border-zinc-800 w-[220px]">Waktu (Mulai - Selesai)</th>
-                            <th scope="col" class="border-r border-zinc-200/80 dark:border-zinc-800 min-w-[250px]">Mata Pelajaran</th>
+                            <th scope="col"
+                                class="border-r border-zinc-200/80 dark:border-zinc-800 w-48 text-center">Hari / Tanggal
+                            </th>
+                            <th scope="col"
+                                class="border-r border-zinc-200/80 dark:border-zinc-800 w-16 text-center">Sesi</th>
+                            <th scope="col" class="border-r border-zinc-200/80 dark:border-zinc-800 w-[220px]">Waktu
+                                (Mulai - Selesai)</th>
+                            <th scope="col" class="border-r border-zinc-200/80 dark:border-zinc-800 min-w-[250px]">
+                                Mata Pelajaran</th>
                             <th scope="col" class="w-48">Pengawas</th>
                         </tr>
                     </thead>
@@ -182,7 +190,8 @@
                                     <td
                                         class="py-2.5 px-3 border-r border-zinc-200/80 dark:border-zinc-800 text-center font-black text-zinc-400 dark:text-zinc-500 text-xs">
                                         <div class="flex flex-col items-center justify-center gap-1">
-                                            <span class="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">{{ $sesi }}</span>
+                                            <span
+                                                class="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-black">{{ $sesi }}</span>
                                             @if ($sesi == 2)
                                                 <input type="checkbox"
                                                     class="toggle-sesi w-4 h-4 rounded-md border-zinc-300 dark:border-zinc-600 text-primary focus:ring-primary cursor-pointer"
@@ -273,9 +282,11 @@
                                 });
 
                                 if (this.checked) {
-                                    targetRow.classList.remove('opacity-50', 'bg-zinc-50/30', 'dark:bg-black/30');
+                                    targetRow.classList.remove('opacity-50', 'bg-zinc-50/30',
+                                        'dark:bg-black/30');
                                 } else {
-                                    targetRow.classList.add('opacity-50', 'bg-zinc-50/30', 'dark:bg-black/30');
+                                    targetRow.classList.add('opacity-50', 'bg-zinc-50/30',
+                                        'dark:bg-black/30');
                                 }
                             }
                         });
@@ -285,7 +296,8 @@
 
             <div
                 class="p-3.5 bg-zinc-50/80 dark:bg-black/40 border-t border-zinc-100 dark:border-zinc-800/80 text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex items-center justify-center gap-2">
-                <i class="bi bi-info-circle-fill text-primary"></i> Kosongkan jam dan mapel jika sesi tersebut tidak ada ujian.
+                <i class="bi bi-info-circle-fill text-primary"></i> Kosongkan jam dan mapel jika sesi tersebut tidak
+                ada ujian.
             </div>
         </form>
     @elseif($tahun_pelajaran_id && $ujian_id && count($dates) == 0)
@@ -295,8 +307,10 @@
                 class="w-12 h-12 bg-rose-50 dark:bg-rose-950/40 text-rose-500 border border-rose-200/60 dark:border-rose-800/40 rounded-xl flex items-center justify-center text-xl mb-3 mx-auto shadow-2xs">
                 <i class="bi bi-exclamation-triangle-fill"></i>
             </div>
-            <h3 class="text-base font-black text-zinc-900 dark:text-white tracking-tight mb-1">Rentang Tanggal Tidak Valid</h3>
-            <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">Sistem tidak dapat mengenerate hari. Pastikan data tanggal mulai dan selesai ujian telah diisi.</p>
+            <h3 class="text-base font-black text-zinc-900 dark:text-white tracking-tight mb-1">Rentang Tanggal Tidak
+                Valid</h3>
+            <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">Sistem tidak dapat
+                mengenerate hari. Pastikan data tanggal mulai dan selesai ujian telah diisi.</p>
         </div>
     @else
         <!-- State Awal -->
@@ -305,4 +319,3 @@
     @endif
 
 </x-app-layout>
-

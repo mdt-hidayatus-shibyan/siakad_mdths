@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Ujian\UjianRequest;
 use App\Models\Semester;
 use App\Models\TahunPelajaran;
+use App\Models\Tingkat;
 use App\Models\Ujian\Ujian;
 use Illuminate\Http\Request;
 
@@ -16,16 +17,24 @@ class UjianController extends Controller
         $tahunPelajarans = TahunPelajaran::orderBy('id', 'asc')->get();
         $tahunAktif = TahunPelajaran::where('is_active', 1)->first();
         $selectedTahunId = $request->input('tahun_pelajaran_id', $tahunAktif ? $tahunAktif->id : null);
-        $query = Ujian::with(['tahunPelajaran', 'semester_relasi']);
+        $selectedTingkatId = $request->input('tingkat_id');
+
+        $tingkats = Tingkat::orderBy('urutan_tingkat', 'asc')->get();
+
+        $query = Ujian::with(['tahunPelajaran', 'semester_relasi', 'tingkat'])
+            ->where('tipe_ujian', '!=', 'IMNI');
         if ($selectedTahunId) {
             $query->where('tahun_pelajaran_id', $selectedTahunId);
+        }
+        if ($selectedTingkatId) {
+            $query->where('tingkat_id', $selectedTingkatId);
         }
         if ($request->filled('search')) {
             $query->where('nama_ujian', 'like', '%' . $request->search . '%');
         }
 
         $ujians = $query->latest()->get();
-        return view('ujian.index', compact('ujians', 'tahunPelajarans', 'selectedTahunId'));
+        return view('ujian.index', compact('ujians', 'tahunPelajarans', 'selectedTahunId', 'tingkats', 'selectedTingkatId'));
     }
 
     public function create(Request $request)
@@ -36,8 +45,9 @@ class UjianController extends Controller
             $semesters = $tahunAktif
                 ? Semester::where('tahun_pelajaran_id', $tahunAktif->id)->get()
                 : collect();
+            $tingkats = Tingkat::orderBy('urutan_tingkat', 'asc')->get();
 
-            return view('ujian.form', compact('tahun_pelajarans', 'tahunAktif', 'semesters'));
+            return view('ujian.form', compact('tahun_pelajarans', 'tahunAktif', 'semesters', 'tingkats'));
         }
 
         return redirect()->route('ujian.index')->with('error', 'Silakan gunakan tombol tambah data.');
@@ -59,7 +69,9 @@ class UjianController extends Controller
             $ujian = Ujian::findOrFail($id);
             $tahun_pelajarans = TahunPelajaran::orderBy('id', 'asc')->get();
             $semesters = Semester::where('tahun_pelajaran_id', $ujian->tahun_pelajaran_id)->get();
-            return view('ujian.form', compact('ujian', 'tahun_pelajarans', 'semesters'));
+            $tingkats = Tingkat::orderBy('urutan_tingkat', 'asc')->get();
+
+            return view('ujian.form', compact('ujian', 'tahun_pelajarans', 'semesters', 'tingkats'));
         }
 
         return redirect()->route('ujian.index')->with('error', 'Silakan gunakan tombol edit data.');

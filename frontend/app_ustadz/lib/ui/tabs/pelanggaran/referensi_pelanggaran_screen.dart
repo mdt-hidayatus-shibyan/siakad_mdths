@@ -283,63 +283,68 @@ class _ReferensiPelanggaranScreenState
     AkademikProvider akademik,
   ) {
     final isSelected = akademik.selectedKategori == label;
+    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
 
-    return InkWell(
-      onTap: () {
-        HapticHelper.light();
-        akademik.setSelectedKategori(label);
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? AppColors.primaryDark : AppColors.primaryLight)
-              : (isDark ? const Color(0xFF101710) : const Color(0xFFF1F5F0)),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return ChoiceChip(
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label),
+          if (count > 0) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
                 color: isSelected
-                    ? (isDark ? Colors.black : Colors.white)
+                    ? primary.withValues(alpha: 0.15)
                     : (isDark
-                          ? const Color(0xFF8D9387)
-                          : const Color(0xFF555D50)),
+                        ? const Color(0xFF1D281D)
+                        : const Color(0xFFE2E8F0)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? primary
+                      : (isDark ? Colors.white70 : Colors.black87),
+                ),
               ),
             ),
-            if (count > 0) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? (isDark ? Colors.black26 : Colors.white24)
-                      : (isDark
-                            ? const Color(0xFF1D281D)
-                            : const Color(0xFFE2E8F0)),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$count',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected
-                        ? (isDark ? Colors.black : Colors.white)
-                        : (isDark ? Colors.white70 : Colors.black87),
-                  ),
-                ),
-              ),
-            ],
           ],
-        ),
+        ],
       ),
+      selected: isSelected,
+      selectedColor: isDark
+          ? AppColors.primaryContainerDark.withValues(alpha: 0.6)
+          : AppColors.primaryContainerLight,
+      backgroundColor: isDark ? const Color(0xFF162016) : Colors.white,
+      labelStyle: TextStyle(
+        fontSize: 11.5,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+        color: isSelected
+            ? primary
+            : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+      ),
+      side: BorderSide(
+        color: isSelected
+            ? primary.withValues(alpha: 0.6)
+            : (isDark ? AppColors.outlineDark : const Color(0xFFE2E8F0)),
+        width: 1,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+      onSelected: (selected) {
+        if (selected) {
+          HapticHelper.light();
+          akademik.setSelectedKategori(label);
+        }
+      },
     );
   }
 }

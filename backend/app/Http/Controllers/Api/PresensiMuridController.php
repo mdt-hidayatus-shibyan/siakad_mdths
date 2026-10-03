@@ -206,13 +206,31 @@ class PresensiMuridController extends Controller
             ], 200);
         }
 
-        // 5. Cek apakah tanggal bertepatan dengan masa / jadwal Ujian Madrasah
-        $ujian = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
+        // 5. Cek apakah tanggal bertepatan dengan masa / jadwal Ujian Madrasah yang berlaku untuk kelas yang diajar
+        $activeUjians = \App\Models\Ujian\Ujian::whereDate('tanggal_mulai', '<=', $tanggal)
             ->whereDate('tanggal_selesai', '>=', $tanggal)
-            ->first();
+            ->get();
+
+        $ujian = null;
+        if ($jadwals->isNotEmpty() && $activeUjians->isNotEmpty()) {
+            $firstJadwal = $jadwals->first();
+            if ($firstJadwal && $firstJadwal->ruangan && $firstJadwal->ruangan->level) {
+                $ujian = $activeUjians->first(function ($u) use ($firstJadwal) {
+                    return $u->isBerlakuUntukLevel($firstJadwal->ruangan->level);
+                });
+            }
+        } elseif ($activeUjians->isNotEmpty()) {
+            $ujian = $activeUjians->first();
+        }
 
         if (!$ujian) {
-            $jadwalUjianAda = \App\Models\Ujian\JadwalUjian::whereDate('tanggal_ujian', $tanggal)->first();
+            $ruanganIdsJadwal = $jadwals->pluck('ruangan_id')->unique()->filter()->toArray();
+            $jadwalUjianQuery = \App\Models\Ujian\JadwalUjian::whereDate('tanggal_ujian', $tanggal);
+            if (!empty($ruanganIdsJadwal)) {
+                $levelIds = \App\Models\Ruangan::whereIn('id', $ruanganIdsJadwal)->pluck('level_id')->unique()->toArray();
+                $jadwalUjianQuery->whereIn('level_id', $levelIds);
+            }
+            $jadwalUjianAda = $jadwalUjianQuery->first();
             if ($jadwalUjianAda) {
                 $ujian = $jadwalUjianAda->ujian;
             }

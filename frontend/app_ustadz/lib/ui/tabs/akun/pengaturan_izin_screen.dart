@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/bell_provider.dart';
 import '../../../providers/theme_provider.dart';
@@ -41,6 +42,12 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
 
   Future<void> _handleAutoRequestAll() async {
     final bell = context.read<BellProvider>();
+    final themeProvider = context.read<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
+    final primary = isDark
+        ? themeProvider.activePreset.primaryDark
+        : themeProvider.activePreset.primaryLight;
+
     setState(() => _isRequesting = true);
     HapticHelper.medium();
 
@@ -69,7 +76,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                 ),
               ],
             ),
-            backgroundColor: const Color(0xFF15803D),
+            backgroundColor: primary,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -95,7 +102,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                 ),
               ],
             ),
-            backgroundColor: const Color(0xFFD97706),
+            backgroundColor: AppColors.amberAccent,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -117,6 +124,13 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
     final primary = isDark
         ? themeProvider.activePreset.primaryDark
         : themeProvider.activePreset.primaryLight;
+    final primaryContainer = isDark
+        ? themeProvider.activePreset.primaryContainerDark
+        : themeProvider.activePreset.primaryContainerLight;
+    final onPrimaryContainer = isDark
+        ? themeProvider.activePreset.onPrimaryContainerDark
+        : themeProvider.activePreset.onPrimaryContainerLight;
+
     final bell = context.watch<BellProvider>();
     final status = bell.permissionStatus;
 
@@ -136,30 +150,28 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
         ),
         children: [
           // ===================================================================
-          // 1. HERO CARD: AKTIVASI 1-KLIK OTOMATIS (ALA ISLAMIC PRAYER APPS)
+          // 1. HERO CARD: AKTIVASI 1-KLIK OTOMATIS BERDASARKAN WARNA TEMA
           // ===================================================================
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: allGranted
-                    ? (isDark
-                          ? [const Color(0xFF065F46), const Color(0xFF047857)]
-                          : [const Color(0xFF059669), const Color(0xFF10B981)])
-                    : (isDark
-                          ? [primary.withValues(alpha: 0.7), primary]
-                          : [primary, primary.withValues(alpha: 0.88)]),
+                colors: isDark
+                    ? [
+                        primary.withValues(alpha: 0.9),
+                        primaryContainer.withValues(alpha: 0.85),
+                      ]
+                    : [
+                        primary,
+                        primary.withValues(alpha: 0.88),
+                      ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color:
-                      (allGranted
-                              ? const Color(0xFF059669)
-                              : (isDark ? Colors.black : primary))
-                          .withValues(alpha: 0.3),
+                  color: (isDark ? Colors.black : primary).withValues(alpha: 0.28),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -206,7 +218,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                                 ? 'Bel masuk dan notifikasi dijamin berbunyi tepat waktu di semua merek HP (Samsung, Xiaomi, Oppo, Vivo, iPhone).'
                                 : 'Tekan tombol di bawah untuk memberikan seluruh izin yang dibutuhkan aplikasi tanpa perlu setel manual.',
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
+                              color: Colors.white.withValues(alpha: 0.92),
                               fontSize: 11.5,
                               height: 1.35,
                             ),
@@ -248,9 +260,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: allGranted
-                          ? const Color(0xFF047857)
-                          : const Color(0xFF1E293B),
+                      foregroundColor: primary,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(
@@ -261,13 +271,13 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                         ? null
                         : () => _handleAutoRequestAll(),
                     icon: _isRequesting
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF047857),
+                                primary,
                               ),
                             ),
                           )
@@ -276,9 +286,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                                 ? Icons.refresh_rounded
                                 : Icons.touch_app_rounded,
                             size: 19,
-                            color: allGranted
-                                ? const Color(0xFF047857)
-                                : primary,
+                            color: primary,
                           ),
                     label: Text(
                       _isRequesting
@@ -289,9 +297,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color: allGranted
-                            ? const Color(0xFF047857)
-                            : (isDark ? Colors.black87 : primary),
+                        color: primary,
                       ),
                     ),
                   ),
@@ -312,46 +318,23 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
           _buildPermissionCard(
             context: context,
             isDark: isDark,
+            primary: primary,
             icon: Icons.notifications_active_rounded,
-            badgeColor: primary,
             isGranted: notifGranted,
             title: '1. Izin Notifikasi (Push & Lock Screen)',
             subtitle: 'Untuk memunculkan bel & pengumuman di layar HP',
             description:
                 'Menampilkan kartu notifikasi bel jam ke-1 dan ke-2 di layar kunci (*lockscreen*) serta pemberitahuan informasi akademik.',
-            actionButton: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: notifGranted
-                    ? (isDark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFE2E8F0))
-                    : primary,
-                foregroundColor: notifGranted
-                    ? (isDark ? Colors.white70 : Colors.black87)
-                    : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () {
-                HapticHelper.light();
-                bell.openNotificationSettings();
-              },
-              icon: Icon(
-                notifGranted
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.notifications_outlined,
-                size: 16,
-              ),
-              label: Text(
-                notifGranted
-                    ? 'Pengaturan Notifikasi (Aktif)'
-                    : 'Buka Pengaturan Notifikasi HP',
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            actionButton: _buildPermissionActionButton(
+              context: context,
+              isDark: isDark,
+              primary: primary,
+              isGranted: notifGranted,
+              activeLabel: 'Pengaturan Notifikasi (Aktif)',
+              inactiveLabel: 'Buka Pengaturan Notifikasi HP',
+              activeIcon: Icons.check_circle_outline_rounded,
+              inactiveIcon: Icons.notifications_outlined,
+              onPressed: () => bell.openNotificationSettings(),
             ),
           ),
           const SizedBox(height: 12),
@@ -360,46 +343,24 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
           _buildPermissionCard(
             context: context,
             isDark: isDark,
+            primary: primary,
             icon: Icons.battery_charging_full_rounded,
-            badgeColor: const Color(0xFFD97706),
             isGranted: batteryGranted,
             title: '2. Pembebasan Hemat Daya Baterai',
             subtitle: 'Mencegah sistem Android mematikan alarm saat HP tidur',
             description:
                 'Pada HP Samsung, Xiaomi, Oppo, Realme, dan Vivo, sistem baterai sering menidurkan aplikasi latar belakang sehingga bel terlambat berbunyi.',
-            actionButton: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: batteryGranted
-                    ? (isDark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFE2E8F0))
-                    : const Color(0xFFD97706),
-                foregroundColor: batteryGranted
-                    ? (isDark ? Colors.white70 : Colors.black87)
-                    : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () {
-                HapticHelper.light();
-                bell.requestBatteryExemption();
-              },
-              icon: Icon(
-                batteryGranted
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.bolt_rounded,
-                size: 16,
-              ),
-              label: Text(
-                batteryGranted
-                    ? 'Hemat Daya Bebas (Optimal)'
-                    : 'Bebaskan Batasan Baterai (1-Klik)',
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            actionButton: _buildPermissionActionButton(
+              context: context,
+              isDark: isDark,
+              primary: primary,
+              isGranted: batteryGranted,
+              activeLabel: 'Hemat Daya Bebas (Optimal)',
+              inactiveLabel: 'Bebaskan Batasan Baterai (1-Klik)',
+              activeIcon: Icons.check_circle_outline_rounded,
+              inactiveIcon: Icons.bolt_rounded,
+              inactiveColor: AppColors.amberAccent,
+              onPressed: () => bell.requestBatteryExemption(),
             ),
           ),
           const SizedBox(height: 12),
@@ -408,47 +369,24 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
           _buildPermissionCard(
             context: context,
             isDark: isDark,
+            primary: primary,
             icon: Icons.alarm_on_rounded,
-            badgeColor: primary,
             isGranted: exactAlarmGranted,
             title: '3. Izin Alarm & Pengingat (Exact Alarms)',
             subtitle:
                 'Wajib untuk membunyikan Bel Masuk KBM secara tepat detik',
             description:
                 'Memastikan nada bel sekolah pada Jam Ke-1 (13:45) dan Jam Ke-2 (15:30) langsung memicu audio sistem seketika.',
-            actionButton: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: exactAlarmGranted
-                    ? (isDark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFE2E8F0))
-                    : primary,
-                foregroundColor: exactAlarmGranted
-                    ? (isDark ? Colors.white70 : Colors.black87)
-                    : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () {
-                HapticHelper.light();
-                bell.openExactAlarmSettings();
-              },
-              icon: Icon(
-                exactAlarmGranted
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.settings_suggest_rounded,
-                size: 16,
-              ),
-              label: Text(
-                exactAlarmGranted
-                    ? 'Izin Alarm Tepat Waktu (Aktif)'
-                    : 'Buka Izin Alarm & Pengingat',
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            actionButton: _buildPermissionActionButton(
+              context: context,
+              isDark: isDark,
+              primary: primary,
+              isGranted: exactAlarmGranted,
+              activeLabel: 'Izin Alarm Tepat Waktu (Aktif)',
+              inactiveLabel: 'Buka Izin Alarm & Pengingat',
+              activeIcon: Icons.check_circle_outline_rounded,
+              inactiveIcon: Icons.settings_suggest_rounded,
+              onPressed: () => bell.openExactAlarmSettings(),
             ),
           ),
           const SizedBox(height: 12),
@@ -457,18 +395,23 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
           _buildPermissionCard(
             context: context,
             isDark: isDark,
+            primary: primary,
             icon: Icons.power_settings_new_rounded,
-            badgeColor: const Color(0xFF7C3AED),
             title: '4. Mulai Otomatis (Autostart)',
             subtitle: 'Khusus HP Xiaomi, Oppo, Realme & Vivo',
             description:
                 'Menjaga agar jadwal bel tetap otomatis aktif kembali saat HP selesai di-restart/dimatikan.',
             actionButton: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF7C3AED),
-                side: const BorderSide(color: Color(0xFF7C3AED), width: 1.2),
+                foregroundColor: primary,
+                backgroundColor: primary.withValues(alpha: isDark ? 0.12 : 0.06),
+                side: BorderSide(
+                  color: primary.withValues(alpha: 0.5),
+                  width: 1.1,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               onPressed: () {
@@ -490,11 +433,14 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: isDark
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFFE2E8F0),
-                foregroundColor: isDark ? Colors.white : Colors.black87,
+                    ? primaryContainer.withValues(alpha: 0.35)
+                    : primaryContainer.withValues(alpha: 0.65),
+                foregroundColor: isDark ? primary : onPrimaryContainer,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: BorderSide(
+                  color: primary.withValues(alpha: 0.3),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 13),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -503,10 +449,18 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                 HapticHelper.light();
                 bell.openAppSettings();
               },
-              icon: const Icon(Icons.settings_rounded, size: 18),
-              label: const Text(
+              icon: Icon(
+                Icons.settings_rounded,
+                size: 18,
+                color: isDark ? primary : onPrimaryContainer,
+              ),
+              label: Text(
                 'Buka Setelan Lengkap Aplikasi (App Info)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.5,
+                  color: isDark ? primary : onPrimaryContainer,
+                ),
               ),
             ),
           ),
@@ -528,8 +482,8 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isGranted
-              ? Colors.white.withValues(alpha: 0.3)
-              : Colors.amber.withValues(alpha: 0.6),
+              ? Colors.white.withValues(alpha: 0.35)
+              : AppColors.amberAccent.withValues(alpha: 0.7),
           width: 1,
         ),
       ),
@@ -541,7 +495,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                 ? Icons.check_circle_rounded
                 : Icons.error_outline_rounded,
             size: 14,
-            color: isGranted ? Colors.white : Colors.amberAccent,
+            color: isGranted ? Colors.white : AppColors.amberAccent,
           ),
           const SizedBox(width: 5),
           Text(
@@ -549,7 +503,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: isGranted ? Colors.white : Colors.amberAccent,
+              color: isGranted ? Colors.white : AppColors.amberAccent,
             ),
           ),
         ],
@@ -560,8 +514,8 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
   Widget _buildPermissionCard({
     required BuildContext context,
     required bool isDark,
+    required Color primary,
     required IconData icon,
-    required Color badgeColor,
     required String title,
     required String subtitle,
     required String description,
@@ -579,16 +533,22 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
               Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                  color:
-                      (isGranted == true ? const Color(0xFF15803D) : badgeColor)
-                          .withValues(alpha: 0.15),
+                  color: (isGranted == true
+                          ? (isDark ? AppColors.hadirBgDark : AppColors.hadirBgLight)
+                          : AppColors.amberAccent.withValues(alpha: 0.15)),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isGranted == true
+                        ? (isDark ? AppColors.hadirTextDark : const Color(0xFF86EFAC))
+                            .withValues(alpha: 0.4)
+                        : AppColors.amberAccent.withValues(alpha: 0.35),
+                  ),
                 ),
                 child: Icon(
                   isGranted == true ? Icons.check_circle_rounded : icon,
                   color: isGranted == true
-                      ? const Color(0xFF15803D)
-                      : badgeColor,
+                      ? (isDark ? AppColors.hadirTextDark : AppColors.hadirTextLight)
+                      : AppColors.amberAccent,
                   size: 22,
                 ),
               ),
@@ -615,12 +575,17 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  (isGranted
-                                          ? const Color(0xFF15803D)
-                                          : const Color(0xFFD97706))
-                                      .withValues(alpha: 0.15),
+                              color: isGranted
+                                  ? (isDark ? AppColors.hadirBgDark : AppColors.hadirBgLight)
+                                  : AppColors.amberAccent.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isGranted
+                                    ? (isDark ? AppColors.hadirTextDark : const Color(0xFF86EFAC))
+                                        .withValues(alpha: 0.4)
+                                    : AppColors.amberAccent.withValues(alpha: 0.4),
+                                width: 0.8,
+                              ),
                             ),
                             child: Text(
                               isGranted ? 'Aktif' : 'Perlu Izin',
@@ -628,8 +593,8 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 color: isGranted
-                                    ? const Color(0xFF15803D)
-                                    : const Color(0xFFD97706),
+                                    ? (isDark ? AppColors.hadirTextDark : AppColors.hadirTextLight)
+                                    : AppColors.amberAccent,
                               ),
                             ),
                           ),
@@ -640,7 +605,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                       subtitle,
                       style: TextStyle(
                         fontSize: 11,
-                        color: isDark ? Colors.white60 : Colors.black54,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -662,6 +627,72 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
             SizedBox(width: double.infinity, child: actionButton),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionActionButton({
+    required BuildContext context,
+    required bool isDark,
+    required Color primary,
+    required bool isGranted,
+    required String activeLabel,
+    required String inactiveLabel,
+    required IconData activeIcon,
+    required IconData inactiveIcon,
+    required VoidCallback onPressed,
+    Color? inactiveColor,
+  }) {
+    if (isGranted) {
+      return OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: (isDark ? AppColors.hadirBgDark : AppColors.hadirBgLight).withValues(alpha: 0.5),
+          foregroundColor: isDark ? AppColors.hadirTextDark : AppColors.hadirTextLight,
+          side: BorderSide(
+            color: (isDark ? AppColors.hadirTextDark : const Color(0xFF86EFAC)).withValues(alpha: 0.5),
+            width: 1.0,
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: () {
+          HapticHelper.light();
+          onPressed();
+        },
+        icon: Icon(activeIcon, size: 16),
+        label: Text(
+          activeLabel,
+          style: const TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    final btnColor = inactiveColor ?? primary;
+    return FilledButton.icon(
+      style: FilledButton.styleFrom(
+        backgroundColor: btnColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      onPressed: () {
+        HapticHelper.light();
+        onPressed();
+      },
+      icon: Icon(inactiveIcon, size: 16),
+      label: Text(
+        inactiveLabel,
+        style: const TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

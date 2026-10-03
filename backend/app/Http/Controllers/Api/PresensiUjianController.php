@@ -108,14 +108,7 @@ class PresensiUjianController extends Controller
         $queryUjian = Ujian::with('semester')->where('tahun_pelajaran_id', $tahunPelajaranId);
 
         if ($ruangan && $ruangan->level) {
-            $levelNama = $ruangan->level->nama_level ?? '';
-            $isKelasAkhir = in_array($levelNama, ['3 TPQ', '6 IBT', '3 TSA']);
-
-            if ($isKelasAkhir) {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMNI']);
-            } else {
-                $queryUjian->whereIn('tipe_ujian', ['IMDA 1', 'IMDA 2']);
-            }
+            $queryUjian->berlakuUntukLevel($ruangan->level);
         }
 
         $daftarUjian = $queryUjian->orderBy('id', 'asc')

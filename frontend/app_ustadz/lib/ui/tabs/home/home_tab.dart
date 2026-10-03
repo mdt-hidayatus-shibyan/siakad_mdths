@@ -4,7 +4,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/dashboard_model.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../providers/bell_provider.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../widgets/app_avatar.dart';
 import '../../widgets/glass_card.dart';
@@ -131,10 +130,29 @@ class _HomeTabState extends State<HomeTab> {
         .where((s) => s.jadwalId == j.id)
         .firstOrNull;
     if (matching != null) {
-      CheckinUstadzSheet.show(context, matching);
+      await CheckinUstadzSheet.show(context, matching);
+      if (!mounted) return;
+      context.read<DashboardProvider>().fetchDashboard();
     } else {
       widget.onNavigateToPresensiGuru?.call();
     }
+  }
+
+  Future<void> _handleAbsenMurid(JadwalHariIniItem j) async {
+    HapticHelper.light();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FormPresensiScreen(
+          jadwalId: j.id,
+          mapel: j.mapel,
+          ruangan: j.kelas,
+          jam: j.jam,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    context.read<DashboardProvider>().fetchDashboard();
   }
 
   @override
@@ -160,141 +178,171 @@ class _HomeTabState extends State<HomeTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Header Bar: Profile, Salam, & Badges
+                // 1. Header Bar: Profile, Salam, & Action Buttons
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     AppAvatar(
                       name: user?.name ?? 'Ustadz',
                       imageUrl: user?.photo,
-                      radius: 24,
+                      radius: 22,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             user?.name ?? '-',
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: -0.2,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          Text(
-                            'Wali Ruangan: ${user?.ruanganWali ?? "-"}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: (isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight)
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  (user?.isWaliRuangan == true &&
+                                          (user?.ruanganWali?.isNotEmpty ??
+                                              false))
+                                      ? 'Wali ${user!.ruanganWali}'
+                                      : 'Pengampu',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  user?.tahunPelajaran ?? '1447/1448 H',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? const Color(0xFF94A3B8)
+                                        : const Color(0xFF64748B),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    const SignalIndicatorWidget(),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color:
-                              (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight)
-                                  .withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
+                    const SizedBox(width: 6),
+                    const SignalIndicatorWidget(size: 34),
+                    const SizedBox(width: 6),
+                    Tooltip(
+                      message: 'Perbarui & Sinkronisasi Data',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: (_isRefreshing || dashboard.isLoading)
+                              ? null
+                              : _refreshData,
+                          borderRadius: BorderRadius.circular(17),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color:
+                                  (isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight)
+                                      .withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: _isRefreshing || dashboard.isLoading
+                                  ? SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.refresh_rounded,
+                                      size: 18,
+                                      color: isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight,
+                                    ),
+                            ),
+                          ),
                         ),
-                        child: _isRefreshing || dashboard.isLoading
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight,
-                                ),
-                              )
-                            : Icon(
-                                Icons.refresh_rounded,
-                                size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Tooltip(
+                      message: 'Hubungi Admin & Pusat Bantuan',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            HapticHelper.light();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const HubungiAdminScreen(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(17),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color:
+                                  (isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight)
+                                      .withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.support_agent_rounded,
+                                size: 18,
                                 color: isDark
                                     ? AppColors.primaryDark
                                     : AppColors.primaryLight,
                               ),
-                      ),
-                      tooltip: 'Perbarui & Sinkronisasi Data',
-                      onPressed: (_isRefreshing || dashboard.isLoading)
-                          ? null
-                          : _refreshData,
-                    ),
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color:
-                              (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight)
-                                  .withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.support_agent_rounded,
-                          size: 20,
-                          color: isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight,
-                        ),
-                      ),
-                      tooltip: 'Hubungi Admin & Pusat Bantuan',
-                      onPressed: () {
-                        HapticHelper.light();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const HubungiAdminScreen(),
+                            ),
                           ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Dual Badges: Tahun Ajaran & Status Wali
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF101710) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.outlineDark
-                              : AppColors.outlineLight,
-                        ),
-                      ),
-                      child: Text(
-                        user?.tahunPelajaran ?? '1447/1448 H • Ganjil',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -377,125 +425,9 @@ class _HomeTabState extends State<HomeTab> {
                   ...dashboard.dashboardData!.pengumumanList.map(
                     (p) => _buildPengumumanCard(context, p, isDark),
                   ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
 
-                // 2. Banner Pengingat Bel Masuk
-                Consumer<BellProvider>(
-                  builder: (context, bellProvider, _) {
-                    if (!bellProvider.isEnabled) return const SizedBox.shrink();
-                    final nextInfo = bellProvider.nextBellInfo;
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF1E293B)
-                            : const Color(0xFFF0FDF4),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white12
-                              : const Color(0xFFBBF7D0),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color:
-                                  (isDark
-                                          ? AppColors.primaryDark
-                                          : const Color(0xFF059669))
-                                      .withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.notifications_active_rounded,
-                              size: 16,
-                              color: isDark
-                                  ? AppColors.primaryDark
-                                  : const Color(0xFF059669),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Bel Masuk KBM Otomatis',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 1),
-                                Text(
-                                  nextInfo['text'] ??
-                                      'Jam 1 (13:45) & Jam 2 (15:30)',
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    color: isDark
-                                        ? Colors.white70
-                                        : const Color(0xFF15803D),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () {
-                              HapticHelper.light();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const PengingatBelScreen(),
-                                ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(8),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Atur',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? AppColors.primaryDark
-                                          : const Color(0xFF059669),
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 16,
-                                    color: isDark
-                                        ? AppColors.primaryDark
-                                        : const Color(0xFF059669),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-
-                // 3. Jadwal Mengajar Hari Ini
+                // 2. Jadwal Mengajar Hari Ini
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -628,20 +560,7 @@ class _HomeTabState extends State<HomeTab> {
                     (j) => ScheduleCard(
                       item: j,
                       onPresensiGuruTap: () => _handlePresensiGuru(j),
-                      onAbsenTap: () {
-                        HapticHelper.light();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => FormPresensiScreen(
-                              jadwalId: j.id,
-                              mapel: j.mapel,
-                              ruangan: j.kelas,
-                              jam: j.jam,
-                            ),
-                          ),
-                        );
-                      },
+                      onAbsenTap: () => _handleAbsenMurid(j),
                     ),
                   ),
                 const SizedBox(height: 22),
