@@ -85,10 +85,16 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
         builder: (context, setModalState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final provider = context.watch<PanitiaImniProvider>();
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
 
           return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              bottom: bottomPadding,
               left: 20,
               right: 20,
               top: 20,

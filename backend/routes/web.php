@@ -709,6 +709,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cetak-sk/{tahun_id}/{ruangan_id}/{murid_id}', [KelulusanImniController::class, 'cetak_sk'])->name('cetak-sk');
         Route::get('/cetak-ijazah/{tahun_id}/{ruangan_id}/{murid_id}', [KelulusanImniController::class, 'cetak_ijazah'])->name('cetak-ijazah');
         Route::get('/cetak-sk-panitia', [KelulusanImniController::class, 'cetakSkPanitia'])->name('cetak-sk-panitia');
+        Route::get('/cetak-sk-yudisium', [KelulusanImniController::class, 'cetakSkYudisium'])->name('cetak-sk-yudisium');
         Route::get('/cetak-transkrip/{pesertaId?}', [KelulusanImniController::class, 'cetakTranskrip'])->name('cetak-transkrip');
         Route::get('/cetak-leger', [KelulusanImniController::class, 'cetakLeger'])->name('cetak-leger');
     });

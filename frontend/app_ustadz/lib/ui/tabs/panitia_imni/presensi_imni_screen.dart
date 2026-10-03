@@ -99,110 +99,6 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
         titleText: 'Presensi IMNI',
         subtitleText: 'Presensi Peserta IMNI & Pengawas Ujian',
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF101710) : Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    provider.setAllPresensiStatus('Hadir');
-                  },
-                  icon: const Icon(Icons.done_all_rounded, size: 18),
-                  label: const Text(
-                    'Semua Hadir',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: ElevatedButton.icon(
-                  onPressed: provider.isSavingPresensi
-                      ? null
-                      : () async {
-                          HapticHelper.medium();
-                          final ok = await provider.simpanPresensi();
-                          if (context.mounted) {
-                            if (ok) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    isTpq
-                                        ? 'Presensi Kelas 3 TPQ berhasil disimpan!'
-                                        : 'Presensi Ruangan IMNI berhasil disimpan!',
-                                  ),
-                                  backgroundColor: AppColors.primaryLight,
-                                ),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    provider.errorMessage ??
-                                        'Gagal menyimpan presensi.',
-                                  ),
-                                  backgroundColor: AppColors.roseDanger,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  icon: provider.isSavingPresensi
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.save_rounded, size: 18),
-                  label: Text(
-                    provider.isSavingPresensi
-                        ? 'Menyimpan...'
-                        : (isTpq
-                              ? 'Simpan Presensi TPQ'
-                              : 'Simpan Presensi Ruangan'),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark
-                        ? AppColors.primaryDark
-                        : AppColors.primaryLight,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
       body: RefreshIndicator(
         onRefresh: () async {
           await provider.fetchPresensiData();
@@ -703,7 +599,7 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
                 // 1.5 DAFTAR SANTRI 3 TPQ
                 if (provider.presensiMuridList.isEmpty)
                   _buildBelumAdaMuridEmptyState(context, isDark, isTpq: true)
-                else
+                else ...[
                   ...provider.presensiMuridList.map((m) {
                     return _buildMuridCard(
                       context,
@@ -713,6 +609,65 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
                       isTpq: true,
                     );
                   }),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: provider.isSavingPresensi
+                        ? null
+                        : () async {
+                            HapticHelper.medium();
+                            final ok = await provider.simpanPresensi();
+                            if (context.mounted) {
+                              if (ok) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      'Presensi Kelas 3 TPQ berhasil disimpan!',
+                                    ),
+                                    backgroundColor: AppColors.primaryLight,
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      provider.errorMessage ??
+                                          'Gagal menyimpan presensi.',
+                                    ),
+                                    backgroundColor: AppColors.roseDanger,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    icon: provider.isSavingPresensi
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.save_rounded, size: 18),
+                    label: Text(
+                      provider.isSavingPresensi
+                          ? 'Menyimpan Presensi...'
+                          : 'Simpan Presensi (${provider.countPresensiSudahDiisi}/${provider.totalPresensiMurid})',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
+                      foregroundColor: isDark
+                          ? AppColors.onPrimaryDark
+                          : AppColors.onPrimaryLight,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ],
 
@@ -1255,7 +1210,7 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
                 // 2.5 DAFTAR SANTRI 6 IBT & 3 TSA
                 if (provider.presensiMuridList.isEmpty)
                   _buildBelumAdaMuridEmptyState(context, isDark, isTpq: false)
-                else
+                else ...[
                   ...provider.presensiMuridList.map((m) {
                     return _buildMuridCard(
                       context,
@@ -1265,6 +1220,65 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
                       isTpq: false,
                     );
                   }),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: provider.isSavingPresensi
+                        ? null
+                        : () async {
+                            HapticHelper.medium();
+                            final ok = await provider.simpanPresensi();
+                            if (context.mounted) {
+                              if (ok) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      'Presensi Ruangan IMNI berhasil disimpan!',
+                                    ),
+                                    backgroundColor: AppColors.primaryLight,
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      provider.errorMessage ??
+                                          'Gagal menyimpan presensi.',
+                                    ),
+                                    backgroundColor: AppColors.roseDanger,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    icon: provider.isSavingPresensi
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.save_rounded, size: 18),
+                    label: Text(
+                      provider.isSavingPresensi
+                          ? 'Menyimpan Presensi...'
+                      : 'Simpan Presensi Ruangan (${provider.countPresensiSudahDiisi}/${provider.totalPresensiMurid})',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
+                      foregroundColor: isDark
+                          ? AppColors.onPrimaryDark
+                          : AppColors.onPrimaryLight,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ],
           ],

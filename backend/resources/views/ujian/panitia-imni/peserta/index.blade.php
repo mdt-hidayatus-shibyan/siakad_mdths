@@ -28,8 +28,8 @@
                             class="pl-9 pr-8 py-2 text-xs font-bold bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl shadow-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer">
                             @foreach ($daftarTahun as $th)
                                 <option value="{{ $th->id }}" {{ $selectedTahunId == $th->id ? 'selected' : '' }}>
-                                    {{ $th->nama_hijriyah }} H ({{ $th->nama_masehi }} M)
-                                    {{ $th->is_active ? '★' : '' }}
+                                    {{ $th->nama_hijriyah }} H | {{ $th->nama_masehi }} M
+                                    {{ $th->is_active ? '(Aktif)' : '' }}
                                 </option>
                             @endforeach
                         </select>
@@ -156,7 +156,8 @@
                     </div>
                 </div>
                 <h3 class="text-xl md:text-2xl font-black text-zinc-900 dark:text-white tracking-tight font-mono">
-                    {{ $totalTerdaftar }} <span class="text-xs font-bold text-zinc-400">/ {{ $kandidatTotal }} Murid</span>
+                    {{ $totalTerdaftar }} <span class="text-xs font-bold text-zinc-400">/ {{ $kandidatTotal }}
+                        Murid</span>
                 </h3>
                 <p class="text-[11px] font-bold text-zinc-400 mt-2.5">
                     Total peserta terdaftar tahun ini
@@ -174,7 +175,8 @@
                         <i class="bi bi-check2-circle"></i>
                     </div>
                 </div>
-                <h3 class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight font-mono">
+                <h3
+                    class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight font-mono">
                     {{ $totalLunas }} <span class="text-xs font-bold text-zinc-400">Murid</span>
                 </h3>
                 <p class="text-[11px] font-bold text-zinc-400 mt-2.5">
@@ -229,7 +231,8 @@
 
                 <!-- Filter Tingkat -->
                 <div class="lg:col-span-3">
-                    <label class="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">Tingkat</label>
+                    <label
+                        class="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">Tingkat</label>
                     <select name="tingkat_id" onchange="this.form.submit()"
                         class="m3-input-glass w-full text-xs font-bold">
                         <option value="">-- Semua Tingkat --</option>
@@ -244,7 +247,8 @@
 
                 <!-- Filter Ruangan Ujian -->
                 <div class="lg:col-span-3">
-                    <label class="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">Ruangan Ujian</label>
+                    <label class="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">Ruangan
+                        Ujian</label>
                     <select name="ruangan_ujian_id" onchange="this.form.submit()"
                         class="m3-input-glass w-full text-xs font-bold">
                         <option value="">-- Semua Ruangan --</option>
@@ -259,19 +263,26 @@
 
                 <!-- Filter Status Syarat / Administrasi -->
                 <div class="lg:col-span-3">
-                    <label class="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">Status Syarat</label>
+                    <label class="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">Status
+                        Syarat</label>
                     <select name="status_administrasi" onchange="this.form.submit()"
                         class="m3-input-glass w-full text-xs font-bold">
                         <option value="">-- Semua Status --</option>
-                        <option value="Lunas" {{ request('status_administrasi') == 'Lunas' ? 'selected' : '' }}>Lunas Tagihan</option>
-                        <option value="Dispensasi" {{ request('status_administrasi') == 'Dispensasi' ? 'selected' : '' }}>Dispensasi Panitia</option>
-                        <option value="Belum Lunas" {{ request('status_administrasi') == 'Belum Lunas' ? 'selected' : '' }}>Belum Lunas (Terkunci)</option>
+                        <option value="Lunas" {{ request('status_administrasi') == 'Lunas' ? 'selected' : '' }}>Lunas
+                            Tagihan</option>
+                        <option value="Dispensasi"
+                            {{ request('status_administrasi') == 'Dispensasi' ? 'selected' : '' }}>Dispensasi Panitia
+                        </option>
+                        <option value="Belum Lunas"
+                            {{ request('status_administrasi') == 'Belum Lunas' ? 'selected' : '' }}>Belum Lunas
+                            (Terkunci)</option>
                     </select>
                 </div>
 
                 <!-- Input Pencarian -->
                 <div class="lg:col-span-3">
-                    <label class="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">Cari Murid / No. Peserta</label>
+                    <label class="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-1">Cari Murid
+                        / No. Peserta</label>
                     <div class="relative">
                         <input type="text" name="search" value="{{ request('search') }}"
                             placeholder="Cari nama murid, NISM..."
@@ -408,17 +419,22 @@
                                 </td>
                                 <td class="py-3.5 px-3 text-center whitespace-nowrap">
                                     @if ($isLunas)
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-black">
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-black">
                                             <i class="bi bi-check-circle-fill"></i>
                                             <span>Lunas</span>
                                         </span>
                                     @elseif ($isDispensasi)
-                                        <a href="{{ route('peserta-imni.modal-dispensasi', $p->id) }}" class="action-modal inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] font-black" title="{{ $p->catatan ? 'Alasan: '.$p->catatan : 'Dispensasi Panitia' }}">
+                                        <a href="{{ route('peserta-imni.modal-dispensasi', $p->id) }}"
+                                            class="action-modal inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] font-black"
+                                            title="{{ $p->catatan ? 'Alasan: ' . $p->catatan : 'Dispensasi Panitia' }}">
                                             <i class="bi bi-shield-check"></i>
                                             <span>Dispensasi</span>
                                         </a>
                                     @else
-                                        <a href="{{ route('peserta-imni.modal-dispensasi', $p->id) }}" class="action-modal inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-[10px] font-black hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors" title="Klik untuk beri dispensasi panitia">
+                                        <a href="{{ route('peserta-imni.modal-dispensasi', $p->id) }}"
+                                            class="action-modal inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-[10px] font-black hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors"
+                                            title="Klik untuk beri dispensasi panitia">
                                             <i class="bi bi-lock-fill"></i>
                                             <span>Belum Lunas</span>
                                         </a>
@@ -446,7 +462,8 @@
                                         <a href="{{ route('peserta-imni.modal-dispensasi', $p->id) }}"
                                             class="action-modal w-7 h-7 rounded-xl {{ $isDispensasi ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-600 hover:text-white' : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-amber-600 hover:text-white dark:hover:bg-amber-600 text-zinc-600 dark:text-zinc-300' }} flex items-center justify-center text-xs transition-colors"
                                             title="{{ $isDispensasi ? 'Kelola / Cabut Dispensasi' : 'Beri Dispensasi Panitia' }}">
-                                            <i class="bi {{ $isDispensasi ? 'bi-shield-shaded' : 'bi-shield-plus' }}"></i>
+                                            <i
+                                                class="bi {{ $isDispensasi ? 'bi-shield-shaded' : 'bi-shield-plus' }}"></i>
                                         </a>
 
                                         <!-- Edit Modal Button (AJAX Action Modal) -->

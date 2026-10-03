@@ -227,8 +227,8 @@ class _HomeTabState extends State<HomeTab> {
                                   (user?.isWaliRuangan == true &&
                                           (user?.ruanganWali?.isNotEmpty ??
                                               false))
-                                      ? 'Wali ${user!.ruanganWali}'
-                                      : 'Pengampu',
+                                      ? 'Wali Ruangan : ${user!.ruanganWali}'
+                                      : 'Ustadz',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -239,20 +239,20 @@ class _HomeTabState extends State<HomeTab> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  user?.tahunPelajaran ?? '1447/1448 H',
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF64748B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
+                              // Expanded(
+                              //   child: Text(
+                              //     user?.tahunPelajaran ?? '1447/1448 H',
+                              //     style: TextStyle(
+                              //       fontSize: 10.5,
+                              //       fontWeight: FontWeight.w500,
+                              //       color: isDark
+                              //           ? const Color(0xFF94A3B8)
+                              //           : const Color(0xFF64748B),
+                              //     ),
+                              //     maxLines: 1,
+                              //     overflow: TextOverflow.ellipsis,
+                              //   ),
+                              // ),
                             ],
                           ),
                         ],

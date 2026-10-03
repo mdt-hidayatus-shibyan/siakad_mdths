@@ -74,7 +74,7 @@ class PembayaranImniController extends Controller
             'ruanganUjian',
             'pembayaran.penerima'
         ])
-        ->where('tahun_pelajaran_id', $selectedTahunId);
+        ->where('peserta_imnis.tahun_pelajaran_id', $selectedTahunId);
 
         // Filter Tingkat (Wajib terfilter per tingkat)
         if ($selectedTingkatId) {
@@ -83,7 +83,7 @@ class PembayaranImniController extends Controller
 
         // Filter Ruangan Ujian
         if ($request->filled('ruangan_ujian_id')) {
-            $query->where('ruangan_ujian_id', $request->ruangan_ujian_id);
+            $query->where('peserta_imnis.ruangan_ujian_id', $request->ruangan_ujian_id);
         }
 
         // Filter Status Pembayaran
@@ -722,21 +722,25 @@ class PembayaranImniController extends Controller
             'level',
             'ruanganUjian',
             'pembayaran.penerima'
-        ])->where('tahun_pelajaran_id', $selectedTahunId);
+        ])->where('peserta_imnis.tahun_pelajaran_id', $selectedTahunId);
 
         if ($selectedTingkatId) {
-            $query->where('tingkat_id', $selectedTingkatId);
+            $query->where('peserta_imnis.tingkat_id', $selectedTingkatId);
         }
 
         if ($request->filled('ruangan_ujian_id')) {
-            $query->where('ruangan_ujian_id', $request->ruangan_ujian_id);
+            $query->where('peserta_imnis.ruangan_ujian_id', $request->ruangan_ujian_id);
         }
 
         if ($request->filled('status_pembayaran')) {
             $status = $request->status_pembayaran;
-            $query->whereHas('pembayaran', function ($q) use ($status) {
-                $q->where('status_pembayaran', $status);
-            });
+            if ($status === 'Belum Ada Tagihan') {
+                $query->whereDoesntHave('pembayaran');
+            } else {
+                $query->whereHas('pembayaran', function ($q) use ($status) {
+                    $q->where('status_pembayaran', $status);
+                });
+            }
         }
 
         $pesertas = $query

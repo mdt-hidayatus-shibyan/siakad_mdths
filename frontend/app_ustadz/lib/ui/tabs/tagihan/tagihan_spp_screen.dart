@@ -71,6 +71,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
         builder: (context, provider, _) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final kartu = provider.kartuMurid;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
 
           return Container(
             decoration: BoxDecoration(
@@ -79,7 +80,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                 top: Radius.circular(28),
               ),
             ),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, systemBottom + 24),
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),

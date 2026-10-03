@@ -391,6 +391,7 @@ class PanitiaImniProvider extends ChangeNotifier {
   int get countPresensiAlpha => _presensiMuridList.where((m) => m.status == 'Alpha').length;
   int get countPresensiDispensasi => _presensiMuridList.where((m) => m.status == 'Dispensasi').length;
   int get countPresensiBelum => _presensiMuridList.where((m) => m.status == null || m.status!.isEmpty).length;
+  int get countPresensiSudahDiisi => _presensiMuridList.where((m) => m.status != null && m.status!.isNotEmpty).length;
 
   Future<void> fetchPresensiData({
     String? kategori,

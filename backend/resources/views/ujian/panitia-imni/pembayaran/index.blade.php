@@ -478,12 +478,14 @@
                                 <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-1.5">
                                         <!-- Tombol Bayar / Kasir Modal (AJAX Action Modal) -->
-                                        <a href="{{ route('pembayaran-imni.modal-bayar', $p->id) }}"
-                                            class="action-modal px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                                            title="Buka Kasir Pembayaran">
-                                            <i class="bi bi-wallet2"></i>
-                                            <span>Bayar</span>
-                                        </a>
+                                        @if ($status !== 'Lunas')
+                                            <a href="{{ route('pembayaran-imni.modal-bayar', $p->id) }}"
+                                                class="action-modal px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                                title="Buka Kasir Pembayaran">
+                                                <i class="bi bi-wallet2"></i>
+                                                <span>Bayar</span>
+                                            </a>
+                                        @endif
 
                                         <!-- Tombol Edit Tagihan (AJAX Action Modal) -->
                                         <a href="{{ route('pembayaran-imni.modal-edit-tagihan', $p->id) }}"

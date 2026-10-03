@@ -232,32 +232,8 @@
             </tbody>
         </table>
 
-        <!-- TANDA TANGAN PENGESAHAN -->
-        @php
-            $kepalaMadrasah = \App\Models\Kepengurusan\Pengurus::getAktifByJabatan('Kepala Madrasah') ?? \App\Models\Kepengurusan\Pengurus::getAktifByJabatan('Kepala');
-            $namaKepala = $kepalaMadrasah?->anggota?->nama_lengkap ?? getSetting('nama_kepala_madrasah', 'K.H. Ahmad Dahlan, S.Pd.I.');
-        @endphp
-        <div class="mt-6 flex justify-between items-start text-center text-[10px] break-inside-avoid">
-            <div class="w-64">
-                <p class="font-bold text-zinc-500 mb-1">Mengetahui,</p>
-                <p class="font-bold uppercase text-zinc-800">Kepala Madrasah</p>
-                <div class="min-h-[65px] flex items-center justify-center my-1.5">
-                    @if (!empty($kepalaMadrasah?->id))
-                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(65)->margin(0)->generate(
-                            URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $kepalaMadrasah->id])
-                        ) !!}
-                    @elseif (!empty($kepalaMadrasah?->anggota_id))
-                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(65)->margin(0)->generate(
-                            URL::signedRoute('profil.publik', ['tipe' => 'ustadz', 'id' => $kepalaMadrasah->anggota_id])
-                        ) !!}
-                    @else
-                        <div class="h-14 flex items-center justify-center text-zinc-300 italic text-[10px]">[Tanda Tangan & Stempel]</div>
-                    @endif
-                </div>
-                <p class="font-black text-zinc-900 underline">{{ $namaKepala }}</p>
-                <p class="text-[9px] text-zinc-500">NIP: {{ getSetting('nip_kepala_madrasah', '-') }}</p>
-            </div>
-
+        <!-- TANDA TANGAN PENGESAHAN (KETUA PANITIA IMNI) -->
+        <div class="mt-6 flex justify-end text-center text-[10px] break-inside-avoid">
             <div class="w-64">
                 <p class="font-bold text-zinc-500 mb-1">
                     {{ getSetting('kota_madrasah', 'Bangkalan') }}, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
@@ -272,12 +248,18 @@
                         {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(65)->margin(0)->generate(
                             URL::signedRoute('profil.publik', ['tipe' => 'ustadz', 'id' => $ketuaPanitia->ustadz->id])
                         ) !!}
+                    @elseif ($ketuaPanitia && $ketuaPanitia->ustadz && $ketuaPanitia->ustadz->signature_url)
+                        <img src="{{ asset($ketuaPanitia->ustadz->signature_url) }}" alt="TTD Ketua Panitia" class="h-14 object-contain">
                     @else
                         <div class="h-14 flex items-center justify-center text-zinc-300 italic text-[10px]">[Tanda Tangan]</div>
                     @endif
                 </div>
-                <p class="font-black text-zinc-900 underline">{{ $ketuaPanitia?->ustadz?->nama_lengkap ?? '...................................' }}</p>
-                <p class="text-[9px] text-zinc-500">SK Panitia: {{ $ketuaPanitia?->nomor_sk ?? '-' }}</p>
+                <p class="font-black text-zinc-900 underline uppercase text-xs">
+                    {{ $ketuaPanitia?->ustadz?->nama_lengkap ?? 'Ketua Panitia IMNI' }}
+                </p>
+                @if ($ketuaPanitia?->ustadz?->nip_ustadz)
+                    <p class="text-[9px] text-zinc-500 font-mono">NIP: {{ $ketuaPanitia->ustadz->nip_ustadz }}</p>
+                @endif
             </div>
         </div>
     </div>

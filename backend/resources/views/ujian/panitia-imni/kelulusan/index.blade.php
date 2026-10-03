@@ -12,32 +12,52 @@
                 Kalkulasi algoritma sistem, pertimbangan panitia/wali kelas, dan pengesahan SK & Ijazah akhir (3 TPQ, 6 IBT, 3 TSA)
             </p>
         </div>
-        <!-- Dropdown Cetak Berkas Massal Sidang -->
-        <div class="flex items-center gap-2 flex-wrap">
-            <div class="relative" x-data="{ openCetak: false }">
-                <button type="button" @click="openCetak = !openCetak" @click.outside="openCetak = false"
+        <!-- Toolbar Aksi Dokumen Sidang & Yudisium -->
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <!-- Dropdown Berkas Pra-Sidang (Panitia IMNI) -->
+            <div class="relative" x-data="{ openPanitia: false }">
+                <button type="button" @click="openPanitia = !openPanitia" @click.outside="openPanitia = false"
                     class="px-3.5 py-2 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-black flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer">
-                    <i class="bi bi-printer-fill text-sm text-rose-600"></i>
-                    <span>Cetak Berkas Sidang</span>
+                    <i class="bi bi-file-earmark-text-fill text-sm text-indigo-600"></i>
+                    <span>Berkas Pengajuan Panitia</span>
                     <i class="bi bi-chevron-down text-[10px]"></i>
                 </button>
 
-                <div x-show="openCetak" x-transition
-                    class="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200/80 dark:border-zinc-800 py-1.5 z-50">
+                <div x-show="openPanitia" x-transition
+                    class="absolute right-0 mt-2 w-72 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200/80 dark:border-zinc-800 py-1.5 z-50">
+                    <div class="px-3.5 py-1 text-[10px] font-extrabold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                        Dokumen Bahan Sidang (Pra-Yudisium)
+                    </div>
                     <a href="{{ route('putusan-imni.cetak-sk-panitia', ['tahun_id' => $tahunPelajaranId]) }}"
                         target="_blank"
-                        class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-primary/10 hover:text-primary transition-colors">
-                        <i class="bi bi-file-earmark-text text-indigo-600"></i>
-                        <span>Cetak SK Kelulusan Panitia</span>
+                        class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+                        <i class="bi bi-file-earmark-text text-indigo-600 text-sm"></i>
+                        <div class="flex flex-col text-left">
+                            <span>SK Rekomendasi Panitia</span>
+                            <span class="text-[10px] font-normal text-zinc-400">Pengajuan evaluasi ujian IMNI</span>
+                        </div>
                     </a>
                     <a href="{{ route('putusan-imni.cetak-leger', ['tahun_id' => $tahunPelajaranId]) }}"
                         target="_blank"
-                        class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-primary/10 hover:text-primary transition-colors">
-                        <i class="bi bi-table text-emerald-600"></i>
-                        <span>Cetak Leger Yudisium Akhir</span>
+                        class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-700 dark:hover:text-amber-300 transition-colors">
+                        <i class="bi bi-table text-amber-600 text-sm"></i>
+                        <div class="flex flex-col text-left">
+                            <span>Leger Nilai Sidang</span>
+                            <span class="text-[10px] font-normal text-zinc-400">Rekapitulasi nilai & presensi</span>
+                        </div>
                     </a>
                 </div>
             </div>
+
+            <!-- Tombol Utama: Cetak SK Hasil Sidang Yudisium (Hanya muncul jika telah disahkan semua) -->
+            @if ($semuaDisahkanTahun || (request('ruangan_id') && $ruanganSemuaDisahkan))
+                <a href="{{ route('putusan-imni.cetak-sk-yudisium', ['tahun_id' => $tahunPelajaranId, 'ruangan_id' => request('ruangan_id')]) }}"
+                    target="_blank"
+                    class="px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-md flex items-center gap-2 transition-all cursor-pointer animate-[fadeIn_0.2s_ease-out]">
+                    <i class="bi bi-award-fill text-sm"></i>
+                    <span>Cetak SK Hasil Yudisium</span>
+                </a>
+            @endif
         </div>
     </div>
 
@@ -149,8 +169,17 @@
                         </p>
                     </div>
 
-                    <!-- Legend -->
-                    <div class="flex items-center gap-2 shrink-0">
+                    <!-- Action & Legend -->
+                    <div class="flex items-center gap-2.5 flex-wrap shrink-0">
+                        @if ($ruanganSemuaDisahkan)
+                            <a href="{{ route('putusan-imni.cetak-sk-yudisium', ['tahun_id' => $tahunPelajaranId, 'ruangan_id' => $ruanganTerpilih->id]) }}"
+                                target="_blank"
+                                class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black shadow-xs flex items-center gap-1.5 transition-all animate-[fadeIn_0.2s_ease-out]">
+                                <i class="bi bi-printer-fill text-xs"></i>
+                                <span>Cetak SK Yudisium ({{ $ruanganTerpilih->nama_ruangan }})</span>
+                            </a>
+                        @endif
+
                         <span
                             class="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 px-2.5 py-1 rounded-md border border-emerald-200/80 dark:border-emerald-800/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
                             <i class="bi bi-arrow-up-right-circle-fill"></i> KKM > 55 (Lulus)

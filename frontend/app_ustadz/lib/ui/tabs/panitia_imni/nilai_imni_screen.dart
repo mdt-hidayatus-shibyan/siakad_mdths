@@ -61,6 +61,7 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
   }
 
   void _simpanNilai(String action) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = context.read<PanitiaImniProvider>();
     final isPublish = (action == 'publish');
 
@@ -79,7 +80,11 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark
+                    ? AppColors.primaryDark
+                    : AppColors.primaryLight,
+              ),
               child: const Text(
                 'Ya, Publikasikan',
                 style: TextStyle(color: Colors.white),
@@ -101,14 +106,16 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
                   ? 'Nilai IMNI resmi dipublikasikan!'
                   : 'Draf nilai IMNI berhasil disimpan.',
             ),
-            backgroundColor: isPublish ? Colors.green : Colors.blue,
+            backgroundColor: isPublish
+                ? (isDark ? AppColors.primaryDark : AppColors.primaryLight)
+                : AppColors.skyBlueAccent,
           ),
         );
       } else if (provider.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(provider.errorMessage!),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppColors.roseDanger,
           ),
         );
       }
@@ -191,69 +198,139 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
 
     final isPublished = selectedJadwal?.isPublished ?? false;
 
-    return Column(
+    return Stack(
       children: [
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: () async {
-              await provider.fetchNilaiData();
-            },
-            child: CustomScrollView(
-              slivers: [
-                // Ruangan & Jadwal Selector
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: GlassCard(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.filter_list_rounded,
-                                size: 18,
-                                color: AppColors.primaryLight,
+        RefreshIndicator(
+          onRefresh: () async {
+            await provider.fetchNilaiData();
+          },
+          child: CustomScrollView(
+            slivers: [
+              // Ruangan & Jadwal Selector
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: GlassCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.filter_list_rounded,
+                              size: 18,
+                              color: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                'Pilih Ruangan & Mata Pelajaran IMNI',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  'Pilih Ruangan & Mata Pelajaran IMNI',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Dropdown Ruangan Ujian IMNI
+                        DropdownButtonFormField<int>(
+                          key: ValueKey('ruangan_${provider.nilaiRuanganId}'),
+                          initialValue: provider.nilaiDaftarRuangan.any(
+                                (r) => r.id == provider.nilaiRuanganId,
+                              )
+                              ? provider.nilaiRuanganId
+                              : (provider.nilaiDaftarRuangan.isNotEmpty
+                                    ? provider.nilaiDaftarRuangan.first.id
+                                    : null),
+                          decoration: const InputDecoration(
+                            labelText: 'Ruangan Ujian IMNI',
+                            prefixIcon: Icon(Icons.meeting_room_rounded, size: 18),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                          ),
+                          items: provider.nilaiDaftarRuangan.map((r) {
+                            return DropdownMenuItem<int>(
+                              value: r.id,
+                              child: Text(
+                                '${r.namaRuangan} (${r.namaLevel} - ${r.kodeTingkat})',
+                                style: const TextStyle(fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              provider.selectNilaiRuangan(val);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Dropdown Mata Pelajaran Berdasarkan Jadwal Ujian
+                        if (jadwals.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF161F16)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDark ? Colors.white12 : Colors.black12,
+                              ),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'Tidak ada mapel ujian di ruangan ini.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Dropdown Ruangan Ujian IMNI
+                            ),
+                          )
+                        else
                           DropdownButtonFormField<int>(
-                            key: ValueKey('ruangan_${provider.nilaiRuanganId}'),
-                            initialValue: provider.nilaiDaftarRuangan.any(
-                                  (r) => r.id == provider.nilaiRuanganId,
+                            key: ValueKey(
+                              'jadwal_${provider.nilaiRuanganId}_${provider.nilaiJadwalId}',
+                            ),
+                            initialValue: jadwals.any(
+                                  (j) => j.id == provider.nilaiJadwalId,
                                 )
-                                ? provider.nilaiRuanganId
-                                : (provider.nilaiDaftarRuangan.isNotEmpty
-                                      ? provider.nilaiDaftarRuangan.first.id
-                                      : null),
+                                ? provider.nilaiJadwalId
+                                : (jadwals.isNotEmpty ? jadwals.first.id : null),
+                            isExpanded: true,
                             decoration: const InputDecoration(
-                              labelText: 'Ruangan Ujian IMNI',
-                              prefixIcon: Icon(Icons.meeting_room_rounded, size: 18),
+                              labelText: 'Mata Pelajaran (Jadwal Ujian)',
+                              prefixIcon: Icon(Icons.quiz_rounded, size: 18),
                               contentPadding: EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 10,
                               ),
                             ),
-                            items: provider.nilaiDaftarRuangan.map((r) {
+                            items: jadwals.map((j) {
+                              final dateStr =
+                                  j.hariTanggalSingkat ?? j.hariTanggal ?? '-';
+                              final timeStr = (j.waktuMulai != null &&
+                                      j.waktuSelesai != null)
+                                  ? '${j.waktuMulai} - ${j.waktuSelesai}'
+                                  : '';
+                              final jadwalInfo = timeStr.isNotEmpty
+                                  ? '$dateStr • $timeStr'
+                                  : dateStr;
                               return DropdownMenuItem<int>(
-                                value: r.id,
+                                value: j.id,
                                 child: Text(
-                                  '${r.namaRuangan} (${r.namaLevel} - ${r.kodeTingkat})',
+                                  '${j.namaMapel} ($jadwalInfo)',
                                   style: const TextStyle(fontSize: 13),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -261,322 +338,254 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
                             }).toList(),
                             onChanged: (val) {
                               if (val != null) {
-                                provider.selectNilaiRuangan(val);
+                                provider.selectNilaiJadwal(val);
                               }
                             },
                           ),
-                          const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
-                          // Dropdown Mata Pelajaran Berdasarkan Jadwal Ujian
-                          if (jadwals.isEmpty)
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF161F16)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isDark ? Colors.white12 : Colors.black12,
+              // Status Info Banner & Detail Jadwal Terpilih
+              if (selectedJadwal != null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: GlassCard(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.event_available_rounded,
+                                      size: 16,
+                                      color: isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        '${selectedJadwal.hariTanggal ?? selectedJadwal.hariTanggalSingkat ?? '-'}${selectedJadwal.waktuMulai != null ? " • ${selectedJadwal.waktuMulai} - ${selectedJadwal.waktuSelesai} WIB" : ""}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: const Center(
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: (isPublished
+                                          ? (isDark
+                                              ? AppColors.primaryDark
+                                              : AppColors.primaryLight)
+                                          : AppColors.amberAccent)
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: (isPublished
+                                            ? (isDark
+                                                ? AppColors.primaryDark
+                                                : AppColors.primaryLight)
+                                            : AppColors.amberAccent)
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isPublished
+                                          ? Icons.verified_rounded
+                                          : Icons.pending_actions_rounded,
+                                      size: 12,
+                                      color: isPublished
+                                          ? (isDark
+                                              ? AppColors.primaryDark
+                                              : AppColors.primaryLight)
+                                          : AppColors.amberAccent,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      isPublished
+                                          ? 'Terpublikasi'
+                                          : 'Draf',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11,
+                                        color: isPublished
+                                            ? (isDark
+                                                ? AppColors.primaryDark
+                                                : AppColors.primaryLight)
+                                            : AppColors.amberAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
                                 child: Text(
-                                  'Tidak ada mapel ujian di ruangan ini.',
+                                  'Mapel: ${selectedJadwal.namaMapel}',
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? const Color(0xFF8D9387)
+                                        : const Color(0xFF73796E),
                                   ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            )
-                          else
-                            DropdownButtonFormField<int>(
-                              key: ValueKey(
-                                'jadwal_${provider.nilaiRuanganId}_${provider.nilaiJadwalId}',
-                              ),
-                              initialValue: jadwals.any(
-                                    (j) => j.id == provider.nilaiJadwalId,
-                                  )
-                                  ? provider.nilaiJadwalId
-                                  : (jadwals.isNotEmpty ? jadwals.first.id : null),
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: 'Mata Pelajaran (Jadwal Ujian)',
-                                prefixIcon: Icon(Icons.quiz_rounded, size: 18),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
+                              Text(
+                                '${provider.nilaiMuridList.where((m) => m.nilai != null).length}/${provider.nilaiMuridList.length} Murid Dinilai',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? const Color(0xFF8D9387)
+                                      : const Color(0xFF73796E),
                                 ),
                               ),
-                              items: jadwals.map((j) {
-                                final dateStr =
-                                    j.hariTanggalSingkat ?? j.hariTanggal ?? '-';
-                                final timeStr = (j.waktuMulai != null &&
-                                        j.waktuSelesai != null)
-                                    ? '${j.waktuMulai} - ${j.waktuSelesai}'
-                                    : '';
-                                final jadwalInfo = timeStr.isNotEmpty
-                                    ? '$dateStr • $timeStr'
-                                    : dateStr;
-                                return DropdownMenuItem<int>(
-                                  value: j.id,
-                                  child: Text(
-                                    '${j.namaMapel} ($jadwalInfo)',
-                                    style: const TextStyle(fontSize: 13),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                if (val != null) {
-                                  provider.selectNilaiJadwal(val);
-                                }
-                              },
-                            ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
                   ),
                 ),
 
-                // Status Info Banner & Detail Jadwal Terpilih
-                if (selectedJadwal != null)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      child: GlassCard(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.event_available_rounded,
-                                        size: 16,
-                                        color: isDark
-                                            ? AppColors.primaryDark
-                                            : AppColors.primaryLight,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(
-                                          '${selectedJadwal.hariTanggal ?? selectedJadwal.hariTanggalSingkat ?? '-'}${selectedJadwal.waktuMulai != null ? " • ${selectedJadwal.waktuMulai} - ${selectedJadwal.waktuSelesai} WIB" : ""}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: (isPublished
-                                            ? Colors.green
-                                            : Colors.orange)
-                                        .withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: (isPublished
-                                              ? Colors.green
-                                              : Colors.orange)
-                                          .withValues(alpha: 0.3),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        isPublished
-                                            ? Icons.verified_rounded
-                                            : Icons.pending_actions_rounded,
-                                        size: 12,
-                                        color: isPublished
-                                            ? Colors.green
-                                            : Colors.orange,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        isPublished
-                                            ? 'Terpublikasi'
-                                            : 'Draf',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 11,
-                                          color: isPublished
-                                              ? Colors.green
-                                              : Colors.orange,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Mapel: ${selectedJadwal.namaMapel}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: isDark
-                                          ? const Color(0xFF8D9387)
-                                          : const Color(0xFF73796E),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Text(
-                                  '${provider.nilaiMuridList.where((m) => m.nilai != null).length}/${provider.nilaiMuridList.length} Murid Dinilai',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? const Color(0xFF8D9387)
-                                        : const Color(0xFF73796E),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+              // Murid List
+              if (provider.isLoadingNilai)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: ShimmerLoadingList(count: 6, height: 60),
+                  ),
+                )
+              else if (provider.nilaiMuridList.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: Text(
+                        'Tidak ada data murid di ruangan ini.',
+                        style: TextStyle(
+                          color: isDark ? Colors.white38 : Colors.black38,
                         ),
                       ),
                     ),
                   ),
-
-                // Murid List
-                if (provider.isLoadingNilai)
-                  const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: ShimmerLoadingList(count: 6, height: 60),
-                    ),
-                  )
-                else if (provider.nilaiMuridList.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Center(
-                        child: Text(
-                          'Tidak ada data murid di ruangan ini.',
-                          style: TextStyle(
-                            color: isDark ? Colors.white38 : Colors.black38,
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final m = provider.nilaiMuridList[index];
-                        return _buildMuridNilaiRow(context, m, isDark);
-                      }, childCount: provider.nilaiMuridList.length),
-                    ),
+                )
+              else
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    8,
+                    16,
+                    provider.nilaiMuridList.isEmpty
+                        ? 16
+                        : 110 + MediaQuery.of(context).padding.bottom,
                   ),
-              ],
-            ),
-          ),
-        ),
-
-        // Bottom Action Buttons
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF101710) : Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 10,
-                offset: const Offset(0, -3),
-              ),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final m = provider.nilaiMuridList[index];
+                      return _buildMuridNilaiRow(context, m, isDark);
+                    }, childCount: provider.nilaiMuridList.length),
+                  ),
+                ),
             ],
           ),
-          child: SafeArea(
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: provider.isSavingNilai
-                        ? null
-                        : () => _simpanNilai('draft'),
-                    icon: const Icon(Icons.drafts_outlined, size: 16),
-                    label: const Text(
-                      'Simpan Draf',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+        ),
+
+        // Bottom Action Bar (Simpan Draf & Publikasikan) - floating GlassCard like in form_nilai_screen.dart
+        if (provider.nilaiMuridList.isNotEmpty)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16 + MediaQuery.of(context).padding.bottom,
+            child: GlassCard(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: provider.isSavingNilai
+                          ? null
+                          : () => _simpanNilai('draft'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      child: const Text('Simpan Draf'),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: provider.isSavingNilai
-                        ? null
-                        : () => _simpanNilai('publish'),
-                    icon: provider.isSavingNilai
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: provider.isSavingNilai
+                          ? null
+                          : () => _simpanNilai('publish'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: provider.isSavingNilai
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Publikasikan',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          )
-                        : const Icon(Icons.publish_rounded, size: 16),
-                    label: Text(
-                      provider.isSavingNilai ? 'Menyimpan...' : 'Publikasikan',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -597,7 +606,7 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: m.isLocked
-              ? Colors.redAccent.withValues(alpha: 0.3)
+              ? AppColors.roseDanger.withValues(alpha: 0.3)
               : (isDark
                     ? Colors.white10
                     : Colors.black.withValues(alpha: 0.06)),
@@ -650,14 +659,14 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.redAccent.withValues(alpha: 0.15),
+                          color: AppColors.roseDanger.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Terkunci',
                           style: TextStyle(
                             fontSize: 9,
-                            color: Colors.redAccent,
+                            color: AppColors.roseDanger,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -794,25 +803,25 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
                       _buildLegerMiniStat(
                         'Peserta',
                         '${stat.totalMurid}',
-                        Colors.blue,
+                        AppColors.skyBlueAccent,
                         isDark,
                       ),
                       _buildLegerMiniStat(
                         'Rata-rata',
                         '${stat.rataRataKelas}',
-                        Colors.green,
+                        isDark ? AppColors.primaryDark : AppColors.primaryLight,
                         isDark,
                       ),
                       _buildLegerMiniStat(
                         'Tertinggi',
                         '${stat.nilaiTertinggi}',
-                        Colors.amber,
+                        AppColors.amberAccent,
                         isDark,
                       ),
                       _buildLegerMiniStat(
                         'Terendah',
                         '${stat.nilaiTerendah}',
-                        Colors.redAccent,
+                        AppColors.roseDanger,
                         isDark,
                       ),
                     ],
@@ -978,10 +987,12 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
                 children: [
                   Text(
                     'Rata: ${row.rataRata}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: Colors.green,
+                      color: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
                     ),
                   ),
                   Container(
@@ -990,15 +1001,15 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.12),
+                      color: AppColors.skyBlueAccent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       'Predikat: ${row.predikat}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        color: AppColors.skyBlueAccent,
                       ),
                     ),
                   ),

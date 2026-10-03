@@ -41,17 +41,17 @@ class AppVersionConfig {
   // ---------------------------------------------------------------------------
   static const String appTitle = 'Ustadz - MDTHS';
   static const String appSubtitle = 'MDT Hidayatus Shibyan';
-  static const String version = '2.0.0';
-  static const String buildNumber = '2026.10.01';
+  static const String version = '2.0.2';
+  static const String buildNumber = '2026.10.02';
   static const String releaseDate = 'Oktober 2026';
-  static const String statusBadge = 'Versi Beta';
+  static const String statusBadge = 'Versi Rilis';
   static const bool isLatest = true;
 
   // ---------------------------------------------------------------------------
   // 2. CATATAN RILIS (CHANGELOG)
   // ---------------------------------------------------------------------------
-  static const String releaseSubtitle = 'Preview Release - Oktober 2026';
-  static const String releaseBadge = 'Beta Version';
+  static const String releaseSubtitle = 'Stabil Release - Oktober 2026';
+  static const String releaseBadge = 'Release Version';
 
   /// 🌟 DAFTAR PENAMBAHAN FITUR BARU
   /// Ubah / tambahkan fitur baru di sini:

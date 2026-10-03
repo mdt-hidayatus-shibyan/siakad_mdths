@@ -76,7 +76,7 @@ class LoginRequest extends FormRequest
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        if (!$user->hasAnyRole(['administrator', 'staff', 'petugas-tabungan', 'petugas-koperasi', 'ustadz'])) {
+        if (!$user->hasAnyRole(['administrator', 'staff', 'petugas-tabungan', 'petugas-koperasi'])) {
             Auth::logout();
             RateLimiter::hit($this->throttleKey());
 

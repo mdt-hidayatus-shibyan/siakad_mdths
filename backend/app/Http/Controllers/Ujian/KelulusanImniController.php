@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ujian;
 use App\Http\Controllers\Controller;
 use App\Models\Arsip\ArsipDokumen;
 use App\Models\BulanHijriyah;
+use App\Models\Kepengurusan\Pengurus;
 use App\Models\Level;
 use App\Models\Murid;
 use App\Models\PelanggaranMurid;
@@ -264,6 +265,16 @@ class KelulusanImniController extends Controller
             }
         }
 
+        // Cek status pengesahan kelulusan
+        $totalPesertaTahun = PesertaImni::where('tahun_pelajaran_id', $tahunPelajaranId)->where('is_active', true)->count();
+        $totalDisahkanTahun = KelulusanImni::where('tahun_pelajaran_id', $tahunPelajaranId)->where('is_locked', true)->count();
+        $semuaDisahkanTahun = ($totalPesertaTahun > 0 && $totalDisahkanTahun >= $totalPesertaTahun);
+
+        $ruanganSemuaDisahkan = false;
+        if ($dataKenaikan->isNotEmpty()) {
+            $ruanganSemuaDisahkan = $dataKenaikan->every(fn($r) => $r->sudah_dikunci);
+        }
+
         return view('ujian.panitia-imni.kelulusan.index', compact(
             'daftarTahun',
             'tahunPelajaranId',
@@ -272,7 +283,9 @@ class KelulusanImniController extends Controller
             'ruanganTerpilih',
             'dataKenaikan',
             'isKelasAkhir',
-            'config'
+            'config',
+            'semuaDisahkanTahun',
+            'ruanganSemuaDisahkan'
         ));
     }
 
@@ -604,12 +617,14 @@ class KelulusanImniController extends Controller
 
         $query = KelulusanImni::with([
             'murid.waliMurid',
-            'peserta',
+            'peserta.ruanganAsal',
             'tingkat',
             'level'
         ])
             ->join('levels', 'kelulusan_imnis.level_id', '=', 'levels.id')
             ->join('murids', 'kelulusan_imnis.murid_id', '=', 'murids.id')
+            ->leftJoin('peserta_imnis', 'kelulusan_imnis.peserta_imni_id', '=', 'peserta_imnis.id')
+            ->leftJoin('ruangans', 'peserta_imnis.ruangan_asal_id', '=', 'ruangans.id')
             ->where('kelulusan_imnis.tahun_pelajaran_id', $selectedTahunId)
             ->select('kelulusan_imnis.*');
 
@@ -618,6 +633,7 @@ class KelulusanImniController extends Controller
         }
 
         $kelulusans = $query->orderBy('levels.urutan_level', 'asc')
+            ->orderBy('ruangans.nama_ruangan', 'asc')
             ->orderBy('murids.jenis_kelamin', 'asc')
             ->orderBy('murids.nama_lengkap', 'asc')
             ->get();
@@ -633,6 +649,101 @@ class KelulusanImniController extends Controller
             'lulusList',
             'tidakLulusList',
             'ketuaPanitia'
+        ));
+    }
+
+    /**
+     * Cetak SK Penetapan Kelulusan Akhir Hasil Sidang Yudisium
+     */
+    public function cetakSkYudisium(Request $request)
+    {
+        $tahunId = $request->input('tahun_id');
+        $tingkatId = $request->input('tingkat_id');
+        $ruanganId = $request->input('ruangan_id');
+
+        $daftarTahun = TahunPelajaran::orderBy('id', 'desc')->get();
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first() ?? $daftarTahun->first();
+        $selectedTahunId = $tahunId ?? $tahunAktif?->id;
+        $selectedTahun = $daftarTahun->firstWhere('id', $selectedTahunId) ?? $tahunAktif;
+
+        $query = KelulusanImni::with([
+            'murid.waliMurid',
+            'peserta.ruanganAsal',
+            'tingkat',
+            'level'
+        ])
+            ->join('levels', 'kelulusan_imnis.level_id', '=', 'levels.id')
+            ->join('murids', 'kelulusan_imnis.murid_id', '=', 'murids.id')
+            ->leftJoin('peserta_imnis', 'kelulusan_imnis.peserta_imni_id', '=', 'peserta_imnis.id')
+            ->leftJoin('ruangans', 'peserta_imnis.ruangan_asal_id', '=', 'ruangans.id')
+            ->where('kelulusan_imnis.tahun_pelajaran_id', $selectedTahunId)
+            ->select('kelulusan_imnis.*');
+
+        if ($tingkatId) {
+            $query->where('kelulusan_imnis.tingkat_id', $tingkatId);
+        }
+
+        if ($ruanganId) {
+            $query->where('peserta_imnis.ruangan_asal_id', $ruanganId);
+        }
+
+        $kelulusans = $query->orderBy('levels.urutan_level', 'asc')
+            ->orderBy('ruangans.nama_ruangan', 'asc')
+            ->orderBy('murids.jenis_kelamin', 'asc')
+            ->orderBy('murids.nama_lengkap', 'asc')
+            ->get();
+
+        $lulusList = $kelulusans->whereIn('status_kelulusan', ['Lulus', 'Lulus Murni', 'Lulus Bersyarat']);
+        $tidakLulusList = $kelulusans->where('status_kelulusan', 'Tidak Lulus');
+
+        $ketuaPanitia = PanitiaImni::getKetua($selectedTahunId);
+        $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
+        $sekjen = Pengurus::getAktifByJabatan('Sekretaris Jenderal');
+        $dewanTimSembilan = Pengurus::getAktifByJabatan('Dewan tim sembilan') ?? Pengurus::getAktifByJabatan('Tim Sembilan');
+        $semuaTimSembilan = Pengurus::whereHas('jabatan', fn($q) => $q->where('nama_jabatan', 'LIKE', '%tim sembilan%')->orWhere('nama_jabatan', 'LIKE', '%Dewan%'))->with(['anggota.ustadz'])->get();
+        $semuaKabid = Pengurus::whereHas('jabatan', fn($q) => $q->where('nama_jabatan', 'LIKE', '%Bidang Pendidikan%')->orWhere('nama_jabatan', 'LIKE', '%Kepala Bidang%'))->with(['anggota.ustadz', 'tingkat'])->get();
+        $kabidTpq = $semuaKabid->first(fn($k) => str_contains(strtoupper($k->tingkat?->nama_tingkat ?? ''), 'TPQ') || str_contains(strtoupper($k->tingkat?->nama_tingkat ?? ''), 'TAMAN'));
+        $kabidIbt = $semuaKabid->first(fn($k) => str_contains(strtoupper($k->tingkat?->nama_tingkat ?? ''), 'IBT') || str_contains(strtoupper($k->tingkat?->nama_tingkat ?? ''), 'IBTIDAIYAH'));
+        $kabidTsa = $semuaKabid->first(fn($k) => str_contains(strtoupper($k->tingkat?->nama_tingkat ?? ''), 'TSA') || str_contains(strtoupper($k->tingkat?->nama_tingkat ?? ''), 'TSANAWIYAH'));
+
+        if (!$kabidTpq) {
+            $tingkatTpq = Tingkat::where('nama_tingkat', 'LIKE', '%TPQ%')->orWhere('nama_tingkat', 'LIKE', '%TAMAN%')->first();
+            if ($tingkatTpq) {
+                $kabidTpq = Pengurus::getAktifByJabatan('Bidang', $tingkatTpq->id) ?? Pengurus::getAktifByJabatan('Kepala Bidang Pendidikan', $tingkatTpq->id);
+            }
+        }
+        if (!$kabidIbt) {
+            $tingkatIbt = Tingkat::where('nama_tingkat', 'LIKE', '%IBT%')->orWhere('nama_tingkat', 'LIKE', '%IBTIDAIYAH%')->first();
+            if ($tingkatIbt) {
+                $kabidIbt = Pengurus::getAktifByJabatan('Bidang', $tingkatIbt->id) ?? Pengurus::getAktifByJabatan('Kepala Bidang Pendidikan', $tingkatIbt->id);
+            }
+        }
+        if (!$kabidTsa) {
+            $tingkatTsa = Tingkat::where('nama_tingkat', 'LIKE', '%TSA%')->orWhere('nama_tingkat', 'LIKE', '%TSANAWIYAH%')->first();
+            if ($tingkatTsa) {
+                $kabidTsa = Pengurus::getAktifByJabatan('Bidang', $tingkatTsa->id) ?? Pengurus::getAktifByJabatan('Kepala Bidang Pendidikan', $tingkatTsa->id);
+            }
+        }
+
+        $kabidByTingkatId = $semuaKabid->keyBy('tingkat_id');
+        $kabidTingkat = $tingkatId ? ($kabidByTingkatId->get($tingkatId) ?? Pengurus::getAktifByJabatan('Kepala Bidang Pendidikan', $tingkatId)) : null;
+
+        return view('ujian.panitia-imni.kelulusan.cetak-sk-yudisium', compact(
+            'selectedTahun',
+            'kelulusans',
+            'lulusList',
+            'tidakLulusList',
+            'ketuaPanitia',
+            'pengasuh',
+            'sekjen',
+            'dewanTimSembilan',
+            'semuaTimSembilan',
+            'semuaKabid',
+            'kabidTpq',
+            'kabidIbt',
+            'kabidTsa',
+            'kabidByTingkatId',
+            'kabidTingkat'
         ));
     }
 }

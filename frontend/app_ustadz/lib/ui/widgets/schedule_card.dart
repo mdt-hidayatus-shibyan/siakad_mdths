@@ -25,87 +25,135 @@ class ScheduleCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Header: Jam Ke & Status Presensi
+          // 1. Header: Jam Ke & Status Presensi Ringkas
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Jam Ke Pill Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.primaryContainerDark.withValues(alpha: 0.3)
-                      : AppColors.primaryContainerLight.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
                     color: isDark
-                        ? AppColors.primaryDark.withValues(alpha: 0.3)
-                        : AppColors.primaryLight.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 12,
+                        ? AppColors.primaryContainerDark.withValues(alpha: 0.3)
+                        : AppColors.primaryContainerLight.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(
                       color: isDark
-                          ? AppColors.primaryDark
-                          : AppColors.primaryLight,
+                          ? AppColors.primaryDark.withValues(alpha: 0.3)
+                          : AppColors.primaryLight.withValues(alpha: 0.25),
+                      width: 0.8,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Jam Ke-${item.jamKe} • ${item.jam}',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.bold,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 11.5,
                         color: isDark
                             ? AppColors.primaryDark
                             : AppColors.primaryLight,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 3.5),
+                      Flexible(
+                        child: Text(
+                          'Jam Ke-${item.jamKe} • ${item.jam}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 6),
 
-              // Status Badges: Ustadz & Murid / Bebas KBM
-              Expanded(
-                child: Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: [
-                    if (item.isBebasKbm)
-                      _buildStatusBadge(
-                        label: '⏸ Bebas KBM',
-                        isSuccess: false,
-                        isDark: isDark,
-                        customColor: AppColors.amberAccent,
-                        customBg: AppColors.amberAccent.withValues(alpha: 0.15),
-                      )
-                    else ...[
-                      // Badge Presensi Ustadz
-                      _buildStatusBadge(
-                        label: item.sudahAbsenUstadz
-                            ? '✓ Ustadz: ${item.statusPresensiUstadz}'
-                            : '● Ustadz: Belum',
-                        isSuccess: item.sudahAbsenUstadz,
-                        isDark: isDark,
-                        statusType: item.sudahAbsenUstadz ? item.statusPresensiUstadz : null,
+              // Status Presensi Compact
+              if (item.isBebasKbm)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.amberAccent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppColors.amberAccent.withValues(alpha: 0.3),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.pause_circle_outline_rounded,
+                        size: 11,
+                        color: AppColors.amberAccent,
                       ),
-                      // Badge Presensi Murid
-                      _buildStatusBadge(
-                        label: item.sudahAbsenMurid
-                            ? '✓ Murid: Sudah'
-                            : '● Murid: Belum',
+                      SizedBox(width: 3),
+                      Text(
+                        'Bebas KBM',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.amberAccent,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.06),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Status Ustadz
+                      _buildInlineStatusDot(
+                        label: item.sudahAbsenUstadz
+                            ? 'U: ${item.statusPresensiUstadz}'
+                            : 'U: Belum',
+                        isSuccess: item.sudahAbsenUstadz,
+                        statusType: item.sudahAbsenUstadz
+                            ? item.statusPresensiUstadz
+                            : null,
+                        isDark: isDark,
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        width: 1,
+                        height: 9,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.black.withValues(alpha: 0.15),
+                      ),
+                      // Status Murid
+                      _buildInlineStatusDot(
+                        label: item.sudahAbsenMurid ? 'M: Sudah' : 'M: Belum',
                         isSuccess: item.sudahAbsenMurid,
                         isDark: isDark,
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -500,61 +548,55 @@ class ScheduleCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge({
+  Widget _buildInlineStatusDot({
     required String label,
     required bool isSuccess,
     required bool isDark,
     String? statusType,
-    Color? customColor,
-    Color? customBg,
   }) {
+    final Color dotColor;
     final Color textColor;
-    final Color bgColor;
-    final Color borderColor;
 
-    if (customColor != null && customBg != null) {
-      textColor = customColor;
-      bgColor = customBg;
-      borderColor = customColor.withValues(alpha: 0.4);
-    } else if (isSuccess) {
+    if (isSuccess) {
       if (statusType == 'Izin') {
-        bgColor = isDark ? AppColors.izinBgDark : AppColors.izinBgLight;
+        dotColor = isDark ? AppColors.izinTextDark : AppColors.izinTextLight;
         textColor = isDark ? AppColors.izinTextDark : AppColors.izinTextLight;
-        borderColor = (isDark ? AppColors.izinTextDark : AppColors.izinTextLight).withValues(alpha: 0.4);
       } else if (statusType == 'Sakit') {
-        bgColor = isDark ? AppColors.sakitBgDark : AppColors.sakitBgLight;
+        dotColor = isDark ? AppColors.sakitTextDark : AppColors.sakitTextLight;
         textColor = isDark ? AppColors.sakitTextDark : AppColors.sakitTextLight;
-        borderColor = (isDark ? AppColors.sakitTextDark : AppColors.sakitTextLight).withValues(alpha: 0.4);
       } else if (statusType == 'Alpha') {
-        bgColor = isDark ? AppColors.alphaBgDark : AppColors.alphaBgLight;
+        dotColor = isDark ? AppColors.alphaTextDark : AppColors.alphaTextLight;
         textColor = isDark ? AppColors.alphaTextDark : AppColors.alphaTextLight;
-        borderColor = (isDark ? AppColors.alphaTextDark : AppColors.alphaTextLight).withValues(alpha: 0.4);
       } else {
-        bgColor = isDark ? AppColors.hadirBgDark : AppColors.hadirBgLight;
+        dotColor = isDark ? AppColors.hadirTextDark : AppColors.hadirTextLight;
         textColor = isDark ? AppColors.hadirTextDark : AppColors.hadirTextLight;
-        borderColor = (isDark ? AppColors.hadirTextDark : const Color(0xFF86EFAC)).withValues(alpha: 0.5);
       }
     } else {
-      bgColor = AppColors.amberAccent.withValues(alpha: 0.15);
-      textColor = AppColors.amberAccent;
-      borderColor = AppColors.amberAccent.withValues(alpha: 0.4);
+      dotColor = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
+      textColor = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: borderColor, width: 0.8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: textColor,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 5.5,
+          height: 5.5,
+          decoration: BoxDecoration(
+            color: dotColor,
+            shape: BoxShape.circle,
+          ),
         ),
-      ),
+        const SizedBox(width: 3.5),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
+      ],
     );
   }
 }

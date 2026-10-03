@@ -91,6 +91,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
@@ -103,7 +106,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
               20,
               12,
               20,
-              MediaQuery.of(context).viewInsets.bottom + 24,
+              bottomPadding,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -271,6 +274,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
@@ -283,7 +289,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
               20,
               12,
               20,
-              MediaQuery.of(context).viewInsets.bottom + 20,
+              bottomPadding,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -511,6 +517,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
@@ -523,7 +532,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
               20,
               12,
               20,
-              MediaQuery.of(context).viewInsets.bottom + 20,
+              bottomPadding,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -716,6 +725,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       builder: (ctx) => Consumer<KasProvider>(
         builder: (context, provider, _) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
 
           return Container(
             decoration: BoxDecoration(
@@ -724,7 +734,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                 top: Radius.circular(28),
               ),
             ),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, systemBottom + 24),
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.75,
             ),
@@ -955,6 +965,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
@@ -967,7 +980,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
               20,
               12,
               20,
-              MediaQuery.of(context).viewInsets.bottom + 24,
+              bottomPadding,
             ),
             child: SingleChildScrollView(
               child: Column(
@@ -1359,6 +1372,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
         builder: (context, setModalState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final kas = context.watch<KasProvider>();
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
@@ -1371,7 +1387,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
               20,
               12,
               20,
-              MediaQuery.of(context).viewInsets.bottom + 24,
+              bottomPadding,
             ),
             child: SingleChildScrollView(
               child: Column(

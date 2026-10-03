@@ -24,8 +24,8 @@
                             class="pl-9 pr-8 py-2 text-xs font-bold bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl shadow-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer">
                             @foreach ($daftarTahun as $th)
                                 <option value="{{ $th->id }}" {{ $selectedTahunId == $th->id ? 'selected' : '' }}>
-                                    {{ $th->nama_hijriyah }} H ({{ $th->nama_masehi }} M)
-                                    {{ $th->is_active ? '★' : '' }}
+                                    {{ $th->nama_hijriyah }} H | {{ $th->nama_masehi }} M
+                                    {{ $th->is_active ? '(Aktif)' : '' }}
                                 </option>
                             @endforeach
                         </select>

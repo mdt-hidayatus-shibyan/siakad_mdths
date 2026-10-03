@@ -13,26 +13,7 @@
                 <p class="text-[13px] font-semibold text-zinc-500 dark:text-zinc-400">
                     Distribusi jadwal pelaksanaan Imtihan Niha'i kelas akhir (3 TPQ, 6 IBT, 3 TSA).
                 </p>
-                @if (isset($imniUjians) && $imniUjians->isNotEmpty())
-                    @foreach ($imniUjians as $uItem)
-                        @if ($uItem->tanggal_mulai && $uItem->tanggal_selesai)
-                            <span
-                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-primary/10 text-primary dark:text-primary-dark border border-primary/20">
-                                <i class="bi bi-calendar-check"></i>
-                                {{ $uItem->tingkat?->nama_tingkat ?? $uItem->nama_ujian }}:
-                                {{ \Carbon\Carbon::parse($uItem->tanggal_mulai)->translatedFormat('d M Y') }} -
-                                {{ \Carbon\Carbon::parse($uItem->tanggal_selesai)->translatedFormat('d M Y') }}
-                            </span>
-                        @endif
-                    @endforeach
-                @elseif ($ujianImni && $ujianImni->tanggal_mulai && $ujianImni->tanggal_selesai)
-                    <span
-                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-primary/10 text-primary dark:text-primary-dark border border-primary/20">
-                        <i class="bi bi-calendar-check"></i>
-                        {{ \Carbon\Carbon::parse($ujianImni->tanggal_mulai)->translatedFormat('d M Y') }} -
-                        {{ \Carbon\Carbon::parse($ujianImni->tanggal_selesai)->translatedFormat('d M Y') }}
-                    </span>
-                @endif
+
             </div>
         </div>
 
@@ -113,6 +94,23 @@
 
                 <div id="content-tab-{{ $tingkat->id }}"
                     class="tab-content {{ $index == 0 ? '' : 'hidden' }} space-y-6 animate-[modalFadeIn_0.2s_ease-out]">
+
+                    <!-- Header Bar Tingkat & Tombol Cetak Khusus Tingkat Ini -->
+                    <div class="flex items-center justify-between gap-3 pb-1 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-xs font-black uppercase tracking-wide border border-indigo-200/60 dark:border-indigo-800/40">
+                                Tingkat {{ $tingkat->nama_tingkat }}
+                            </span>
+                            <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                                ({{ $levelsTingkat->pluck('nama_level')->implode(', ') }})
+                            </span>
+                        </div>
+                        <a href="{{ route('jadwal-imni.cetak', ['tahun_id' => $tahunPelajaranId, 'tingkat_id' => $tingkat->id]) }}" target="_blank"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-black transition-all hover:scale-[1.02] active:scale-95 border border-zinc-200/80 dark:border-zinc-700">
+                            <i class="bi bi-printer text-xs"></i>
+                            <span>Cetak Jadwal {{ $tingkat->nama_tingkat }}</span>
+                        </a>
+                    </div>
 
                     @foreach ($semuaTanggal as $tanggal)
                         @php

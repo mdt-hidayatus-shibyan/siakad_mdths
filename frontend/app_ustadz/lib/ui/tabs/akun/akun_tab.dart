@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -354,18 +353,6 @@ class _AkunTabState extends State<AkunTab> {
       case ThemeMode.system:
         return 'Ikuti Pengaturan Sistem';
     }
-  }
-
-  void _copyToClipboard(String text, String label) {
-    Clipboard.setData(ClipboardData(text: text));
-    HapticHelper.light();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$label berhasil disalin ke papan klip!'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   // =========================================================================
@@ -1395,68 +1382,181 @@ class _AkunTabState extends State<AkunTab> {
   }
 
   // =========================================================================
-  // HELPER DETAIL ROW WIDGET
+  // 7. MODAL PREVIEW TANDA TANGAN DIGITAL
   // =========================================================================
-  Widget _buildDetailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    required bool isDark,
-    Color? iconColor,
-    VoidCallback? onCopy,
-  }) {
-    final defaultIconColor =
-        iconColor ?? (isDark ? AppColors.primaryDark : AppColors.primaryLight);
+  void _showTandaTanganSheet() {
+    HapticHelper.light();
+    final user = context.read<AuthProvider>().user;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: defaultIconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 16, color: defaultIconColor),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark
-                        ? const Color(0xFF8D9387)
-                        : const Color(0xFF73796E),
-                    fontWeight: FontWeight.w500,
-                  ),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF101710) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          12,
+          20,
+          MediaQuery.of(context).padding.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF43483E)
+                      : const Color(0xFFC3C8BC),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Tanda Tangan Digital',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  onPressed: () => Navigator.pop(ctx),
                 ),
               ],
             ),
-          ),
-          if (onCopy != null)
-            IconButton(
-              icon: const Icon(Icons.copy_rounded, size: 15),
-              tooltip: 'Salin $label',
-              color: isDark ? const Color(0xFF8D9387) : const Color(0xFF73796E),
-              onPressed: onCopy,
-              constraints: const BoxConstraints(),
-              padding: const EdgeInsets.all(6),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            if (user?.tandaTangan != null) ...[
+              Container(
+                height: 140,
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF162016)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF263326)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Center(
+                  child: Image.network(
+                    user!.tandaTangan!,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Text(
+                      'Gagal memuat berkas tanda tangan',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Icon(
+                    Icons.verified_rounded,
+                    size: 16,
+                    color: isDark
+                        ? AppColors.primaryDark
+                        : AppColors.primaryLight,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Tanda Tangan Digital Terverifikasi',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Tanda tangan digital ini resmi digunakan secara otomatis pada pengesahan rapor, lembar penilaian, dan berkas akademik madrasah.',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: isDark
+                      ? const Color(0xFF8D9387)
+                      : const Color(0xFF73796E),
+                  height: 1.4,
+                ),
+              ),
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 16,
+                ),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF162016)
+                      : const Color(0xFFF8FAF7),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF263326)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.draw_rounded,
+                      size: 36,
+                      color: isDark
+                          ? const Color(0xFF43483E)
+                          : const Color(0xFF94A3B8),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Belum Ada Tanda Tangan Digital',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Pengaturan foto profil dan tanda tangan dikelola oleh Administrator Madrasah.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark
+                            ? const Color(0xFF8D9387)
+                            : const Color(0xFF73796E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Tutup'),
+              ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1569,260 +1669,53 @@ class _AkunTabState extends State<AkunTab> {
             const SizedBox(height: 18),
 
             // =================================================================
-            // 2. KARTU DATA BIODATA USTADZ LENGKAP
-            // =================================================================
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Biodata Pribadi',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                TextButton.icon(
-                  onPressed: _showEditBiodataSheet,
-                  icon: const Icon(Icons.edit_rounded, size: 14),
-                  label: const Text('Edit Biodata'),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            GlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                children: [
-                  _buildDetailRow(
-                    icon: Icons.credit_card_rounded,
-                    label: 'Nomor Induk Kependudukan (NIK)',
-                    value: user?.nik ?? 'Belum diisi',
-                    isDark: isDark,
-                    onCopy: user?.nik != null
-                        ? () => _copyToClipboard(user!.nik!, 'NIK')
-                        : null,
-                  ),
-                  const Divider(height: 1),
-                  _buildDetailRow(
-                    icon: Icons.badge_rounded,
-                    label: 'Nomor Induk Guru Madrasah (NIGM)',
-                    value: user?.nigm ?? 'Belum diisi',
-                    isDark: isDark,
-                    onCopy: user?.nigm != null
-                        ? () => _copyToClipboard(user!.nigm!, 'NIGM')
-                        : null,
-                  ),
-                  const Divider(height: 1),
-                  _buildDetailRow(
-                    icon: Icons.wc_rounded,
-                    label: 'Jenis Kelamin',
-                    value: user?.jenisKelamin == 'P'
-                        ? 'Perempuan (P)'
-                        : 'Laki-laki (L)',
-                    isDark: isDark,
-                  ),
-                  const Divider(height: 1),
-                  _buildDetailRow(
-                    icon: Icons.cake_rounded,
-                    label: 'Tempat & Tanggal Lahir',
-                    value:
-                        '${user?.tempatLahir ?? "-"}, ${user?.tanggalLahir != null ? DateFormat('dd MMMM yyyy').format(DateTime.parse(user!.tanggalLahir!)) : "-"}',
-                    isDark: isDark,
-                  ),
-                  const Divider(height: 1),
-                  _buildDetailRow(
-                    icon: Icons.phone_android_rounded,
-                    label: 'Nomor WhatsApp / HP',
-                    value: user?.noHp ?? 'Belum diisi',
-                    isDark: isDark,
-                    onCopy: user?.noHp != null
-                        ? () => _copyToClipboard(user!.noHp!, 'Nomor HP')
-                        : null,
-                  ),
-                  const Divider(height: 1),
-                  _buildDetailRow(
-                    icon: Icons.history_edu_rounded,
-                    label: 'Masa Pengabdian / Mengajar',
-                    value: user?.tahunMulaiMengajar != null
-                        ? 'Mulai Mengajar Tahun ${user!.tahunMulaiMengajar}'
-                        : 'Belum diatur',
-                    isDark: isDark,
-                  ),
-                  const Divider(height: 1),
-                  _buildDetailRow(
-                    icon: Icons.location_on_rounded,
-                    label: 'Alamat Tempat Tinggal',
-                    value: user?.alamat ?? 'Belum diisi',
-                    isDark: isDark,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-
-            // =================================================================
-            // 3. KARTU TANDA TANGAN DIGITAL (READ-ONLY)
+            // 2. KARTU PROFIL & BIODATA
             // =================================================================
             const Text(
-              'Tanda Tangan Digital',
+              'Profil & Kepegawaian',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             GlassCard(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (user?.tandaTangan != null) ...[
-                    Container(
-                      height: 88,
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(8),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF162016)
-                            : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF263326)
-                              : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Center(
-                        child: Image.network(
-                          user!.tandaTangan!,
-                          height: 72,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Text(
-                            'Gagal memuat berkas tanda tangan',
-                            style: TextStyle(fontSize: 11, color: Colors.grey),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.verified_rounded,
-                          size: 15,
-                          color: AppColors.primaryLight,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Tanda Tangan Digital Terverifikasi',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
+                        color: (isDark
                                 ? AppColors.primaryDark
-                                : AppColors.primaryLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ] else ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 20,
-                        horizontal: 16,
+                                : AppColors.primaryLight)
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
+                      child: Icon(
+                        Icons.badge_rounded,
+                        size: 18,
                         color: isDark
-                            ? const Color(0xFF162016)
-                            : const Color(0xFFF8FAF7),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF263326)
-                              : const Color(0xFFE2E8F0),
-                          style: BorderStyle.solid,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.draw_rounded,
-                            size: 32,
-                            color: isDark
-                                ? const Color(0xFF43483E)
-                                : const Color(0xFF94A3B8),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Belum ada tanda tangan digital tersimpan.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Pengaturan foto profil dan tanda tangan dikelola oleh Administrator Madrasah.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isDark
-                                  ? const Color(0xFF8D9387)
-                                  : const Color(0xFF73796E),
-                            ),
-                          ),
-                        ],
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
                       ),
                     ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-
-            // =================================================================
-            // 4. KARTU AKUN PENGGUNA & KEAMANAN
-            // =================================================================
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Akun Pengguna & Keamanan',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                TextButton.icon(
-                  onPressed: _showEditAkunSheet,
-                  icon: const Icon(Icons.manage_accounts_rounded, size: 14),
-                  label: const Text('Edit Akun'),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            GlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                children: [
-                  _buildDetailRow(
-                    icon: Icons.alternate_email_rounded,
-                    label: 'Username Login',
-                    value: user?.username != null ? '@${user!.username}' : '-',
-                    isDark: isDark,
-                    onCopy: user?.username != null
-                        ? () => _copyToClipboard(user!.username!, 'Username')
-                        : null,
-                  ),
-                  const Divider(height: 1),
-                  _buildDetailRow(
-                    icon: Icons.email_outlined,
-                    label: 'Alamat Email Terdaftar',
-                    value: user?.email ?? '-',
-                    isDark: isDark,
-                    onCopy: user?.email != null
-                        ? () => _copyToClipboard(user!.email!, 'Email')
-                        : null,
+                    title: const Text(
+                      'Biodata Pribadi',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      user?.nik != null && user!.nik!.isNotEmpty
+                          ? 'NIK: ${user.nik} • ${user.jenisKelamin == "P" ? "Perempuan" : "Laki-laki"}'
+                          : 'NIK, NIGM, tempat tanggal lahir, no. HP, dan alamat',
+                      style: const TextStyle(fontSize: 11),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: _showEditBiodataSheet,
                   ),
                   const Divider(height: 1),
                   ListTile(
@@ -1830,16 +1723,105 @@ class _AkunTabState extends State<AkunTab> {
                     leading: Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color:
-                            (isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight)
-                                .withValues(alpha: 0.12),
+                        color: (isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight)
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.draw_rounded,
+                        size: 18,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                      ),
+                    ),
+                    title: const Text(
+                      'Tanda Tangan Digital',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      user?.tandaTangan != null
+                          ? 'Terverifikasi & aktif'
+                          : 'Belum ada berkas tanda tangan',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: _showTandaTanganSheet,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // =================================================================
+            // 3. KARTU AKUN PENGGUNA & KEAMANAN
+            // =================================================================
+            const Text(
+              'Akun & Keamanan',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            GlassCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Column(
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: (isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight)
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.manage_accounts_rounded,
+                        size: 18,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                      ),
+                    ),
+                    title: const Text(
+                      'Akun Pengguna',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      user?.username != null
+                          ? '@${user!.username} • ${user.email ?? "-"}'
+                          : 'Username login & email terdaftar',
+                      style: const TextStyle(fontSize: 11),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: _showEditAkunSheet,
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: (isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight)
+                            .withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.lock_reset_rounded,
-                        size: 16,
+                        size: 18,
                         color: isDark
                             ? AppColors.primaryDark
                             : AppColors.primaryLight,
@@ -1865,14 +1847,14 @@ class _AkunTabState extends State<AkunTab> {
             const SizedBox(height: 18),
 
             // =================================================================
-            // 5. KARTU PENGATURAN KAS RUANGAN (KHUSUS WALI RUANGAN)
+            // 4. KARTU PUSAT LAPORAN & KAS RUANGAN (KHUSUS WALI RUANGAN)
             // =================================================================
             if (user?.isWaliRuangan == true) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Pusat Laporan Ruangan',
+                    'Pusat Laporan & Ruangan',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   Container(
@@ -1881,11 +1863,10 @@ class _AkunTabState extends State<AkunTab> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color:
-                          (isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight)
-                              .withValues(alpha: 0.12),
+                      color: (isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight)
+                          .withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -1909,61 +1890,57 @@ class _AkunTabState extends State<AkunTab> {
                 ),
                 child: Column(
                   children: [
-                    if (user?.isWaliRuangan == true) ...[
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color:
-                                (isDark
-                                        ? AppColors.primaryDark
-                                        : AppColors.primaryLight)
-                                    .withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            Icons.admin_panel_settings_rounded,
-                            size: 18,
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
-                          ),
-                        ),
-                        title: Text(
-                          'Laporan ${user?.ruanganWali ?? "Ruangan"}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: const Text(
-                          'Presensi kelas, ustadz pengajar, leger, & pelanggaran',
-                          style: TextStyle(fontSize: 11),
-                        ),
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () {
-                          HapticHelper.light();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const LaporanRuanganScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                    ],
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color:
-                              (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight)
-                                  .withValues(alpha: 0.12),
+                          color: (isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight)
+                              .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.admin_panel_settings_rounded,
+                          size: 18,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
+                      ),
+                      title: Text(
+                        'Laporan ${user?.ruanganWali ?? "Ruangan"}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Presensi kelas, ustadz pengajar, leger, & pelanggaran',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () {
+                        HapticHelper.light();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const LaporanRuanganScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: (isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight)
+                              .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -1996,59 +1973,39 @@ class _AkunTabState extends State<AkunTab> {
                         );
                       },
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Pengaturan Kas Ruangan Binaan',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                  TextButton.icon(
-                    onPressed: _showPengaturanKasSheet,
-                    icon: const Icon(Icons.tune_rounded, size: 14),
-                    label: const Text('Ubah Nominal'),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              GlassCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Column(
-                  children: [
-                    _buildDetailRow(
-                      icon: Icons.meeting_room_rounded,
-                      label: 'Ruangan Binaan',
-                      value: user?.ruanganWali ?? 'Kelas Binaan',
-                      isDark: isDark,
-                    ),
                     const Divider(height: 1),
-                    _buildDetailRow(
-                      icon: Icons.boy_rounded,
-                      label: 'Target Kas Murid Putra (Per Murid)',
-                      value: DateHelper.formatRupiah(
-                        pengaturanKas?.nominalLaki ?? 0,
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: (isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight)
+                              .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.payments_rounded,
+                          size: 18,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
                       ),
-                      isDark: isDark,
-                    ),
-                    const Divider(height: 1),
-                    _buildDetailRow(
-                      icon: Icons.girl_rounded,
-                      label: 'Target Kas Murid Putri (Per Murid)',
-                      value: DateHelper.formatRupiah(
-                        pengaturanKas?.nominalPerempuan ?? 0,
+                      title: const Text(
+                        'Pengaturan Kas Ruangan',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      isDark: isDark,
+                      subtitle: Text(
+                        'Putra: ${DateHelper.formatRupiah(pengaturanKas?.nominalLaki ?? 0)} • Putri: ${DateHelper.formatRupiah(pengaturanKas?.nominalPerempuan ?? 0)}',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: _showPengaturanKasSheet,
                     ),
                   ],
                 ),

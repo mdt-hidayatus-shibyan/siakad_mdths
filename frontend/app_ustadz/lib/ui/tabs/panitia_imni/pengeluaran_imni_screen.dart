@@ -27,13 +27,13 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
 
   Color _getKategoriColor(String kat) {
     if (kat.contains('Pra')) {
-      return Colors.indigo;
+      return AppColors.skyBlueAccent;
     } else if (kat.contains('Saat')) {
-      return Colors.teal;
+      return AppColors.primaryLight;
     } else if (kat.contains('Pasca') || kat.contains('Wisuda')) {
-      return Colors.purple;
+      return AppColors.violetAccent;
     }
-    return Colors.blue;
+    return AppColors.primaryLight;
   }
 
   @override
@@ -99,10 +99,16 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
         builder: (context, setModalState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final provider = context.watch<PanitiaImniProvider>();
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
 
           return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              bottom: bottomPadding,
               left: 20,
               right: 20,
               top: 20,
@@ -246,7 +252,9 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 hintText: '0',
-                                prefixIcon: const Icon(Icons.attach_money_rounded, size: 20),
+                                prefixText: 'Rp ',
+                                prefixStyle: const TextStyle(fontWeight: FontWeight.bold),
+                                prefixIcon: const Icon(Icons.account_balance_wallet_outlined, size: 20),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -360,7 +368,7 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                           selectedColor: (isDark
                                   ? AppColors.primaryDark
                                   : AppColors.primaryLight)
-                              .withValues(alpha: 0.2),
+                              .withValues(alpha: 0.15),
                           labelStyle: TextStyle(
                             color: isSelected
                                 ? (isDark
@@ -463,7 +471,7 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                                             ? 'Pengeluaran berhasil diperbarui!'
                                             : 'Pengeluaran IMNI berhasil dicatat!',
                                       ),
-                                      backgroundColor: Colors.green,
+                                      backgroundColor: AppColors.primaryLight,
                                     ),
                                   );
                                 }
@@ -489,7 +497,9 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                         backgroundColor: isDark
                             ? AppColors.primaryDark
                             : AppColors.primaryLight,
-                        foregroundColor: Colors.white,
+                        foregroundColor: isDark
+                            ? AppColors.onPrimaryDark
+                            : AppColors.onPrimaryLight,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -533,7 +543,7 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.roseDanger),
             child: const Text('Hapus', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -555,7 +565,7 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openFormPengeluaranSheet(),
         backgroundColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-        foregroundColor: Colors.white,
+        foregroundColor: isDark ? AppColors.onPrimaryDark : AppColors.onPrimaryLight,
         icon: const Icon(Icons.add_rounded),
         label: const Text('Catat Pengeluaran', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
@@ -598,8 +608,10 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
                                       color: (ringkasan?.sisaSaldo ?? 0) >= 0
-                                          ? Colors.green
-                                          : Colors.redAccent,
+                                          ? (isDark
+                                              ? AppColors.primaryDark
+                                              : AppColors.primaryLight)
+                                          : AppColors.roseDanger,
                                     ),
                                   ),
                                 ],
@@ -611,8 +623,10 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: ((ringkasan?.sisaSaldo ?? 0) >= 0
-                                          ? Colors.green
-                                          : Colors.redAccent)
+                                          ? (isDark
+                                              ? AppColors.primaryDark
+                                              : AppColors.primaryLight)
+                                          : AppColors.roseDanger)
                                       .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -622,8 +636,10 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
                                     color: (ringkasan?.sisaSaldo ?? 0) >= 0
-                                        ? Colors.green
-                                        : Colors.redAccent,
+                                        ? (isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight)
+                                        : AppColors.roseDanger,
                                   ),
                                 ),
                               ),
@@ -650,10 +666,12 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                                   const SizedBox(height: 2),
                                   Text(
                                     _formatRupiah(ringkasan?.totalPemasukan ?? 0),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.green,
+                                      color: isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight,
                                     ),
                                   ),
                                 ],
@@ -676,74 +694,132 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.redAccent,
+                                      color: AppColors.roseDanger,
                                     ),
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
 
-                    // Breakdown Kategori Horizontal Cards
-                    if (ringkasan != null && ringkasan.breakdownKategori.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: ringkasan.breakdownKategori.map((b) {
-                            final katColor = _getKategoriColor(b.kategori);
-                            return Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          // Realisasi per Kategori IMNI (Integrated Micro-Dashboard)
+                          if (ringkasan != null && ringkasan.breakdownKategori.isNotEmpty) ...[
+                            const SizedBox(height: 14),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF161F16) : Colors.white,
-                                borderRadius: BorderRadius.circular(10),
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.25)
+                                    : const Color(0xFFF4F7F2),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: katColor.withValues(alpha: 0.3),
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.06)
+                                      : Colors.black.withValues(alpha: 0.05),
                                 ),
                               ),
-                              child: Row(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 4,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      color: katColor,
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  Row(
                                     children: [
+                                      Icon(
+                                        Icons.pie_chart_outline_rounded,
+                                        size: 13,
+                                        color: isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight,
+                                      ),
+                                      const SizedBox(width: 5),
                                       Text(
-                                        b.kategori,
+                                        'Realisasi Pengeluaran per Tahap',
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: isDark ? Colors.white70 : Colors.black87,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        _formatRupiah(b.total),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? const Color(0xFF8D9387)
+                                              : const Color(0xFF73796E),
                                         ),
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: ringkasan.breakdownKategori.map((b) {
+                                      final katColor = _getKategoriColor(b.kategori);
+                                      final displayLabel = b.kategori.replaceAll(' (Wisuda)', '');
+                                      return Expanded(
+                                        child: Container(
+                                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isDark
+                                                ? const Color(0xFF161F16)
+                                                : Colors.white,
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: katColor.withValues(alpha: 0.25),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    width: 6,
+                                                    height: 6,
+                                                    decoration: BoxDecoration(
+                                                      color: katColor,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      displayLabel,
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: isDark
+                                                            ? const Color(0xFF8D9387)
+                                                            : const Color(0xFF73796E),
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 3),
+                                              Text(
+                                                _formatRupiah(b.total),
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : const Color(0xFF1E261E),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
                                 ],
                               ),
-                            );
-                          }).toList(),
-                        ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
@@ -810,7 +886,18 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                             selectedColor: (isDark
                                     ? AppColors.primaryDark
                                     : AppColors.primaryLight)
-                                .withValues(alpha: 0.2),
+                                .withValues(alpha: 0.15),
+                            labelStyle: TextStyle(
+                              fontSize: 12,
+                              color: _selectedKategori == 'Semua'
+                                  ? (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  : null,
+                              fontWeight: _selectedKategori == 'Semua'
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
                           ),
                           const SizedBox(width: 6),
                           ..._kategoriOptions.map((k) {
@@ -829,7 +916,18 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                                 selectedColor: (isDark
                                         ? AppColors.primaryDark
                                         : AppColors.primaryLight)
-                                    .withValues(alpha: 0.2),
+                                    .withValues(alpha: 0.15),
+                                labelStyle: TextStyle(
+                                  fontSize: 12,
+                                  color: isSelected
+                                      ? (isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight)
+                                      : null,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
                               ),
                             );
                           }),
@@ -980,7 +1078,7 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Colors.redAccent,
+                    color: AppColors.roseDanger,
                   ),
                 ),
               ],
@@ -1018,7 +1116,7 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                       tooltip: 'Edit',
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                      icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.roseDanger),
                       onPressed: () => _confirmHapusPengeluaran(item),
                       visualDensity: VisualDensity.compact,
                       tooltip: 'Hapus',

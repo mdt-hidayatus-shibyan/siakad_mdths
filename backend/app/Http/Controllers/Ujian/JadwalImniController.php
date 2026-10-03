@@ -347,7 +347,7 @@ class JadwalImniController extends Controller
         $imniUjianIds = $imniUjians->pluck('id')->toArray();
         $ujianImni = $imniUjians->first() ?? $this->getOrCreateUjianImni($selectedTahunId);
 
-        $levels = Level::with('tingkat')
+        $levelsAll = Level::with('tingkat')
             ->where('is_active', true)
             ->where(function ($q) {
                 $q->where('nama_level', 'LIKE', '%3%TPQ%')
@@ -358,45 +358,57 @@ class JadwalImniController extends Controller
             ->orderBy('urutan_level', 'asc')
             ->get();
 
-        if ($request->filled('tingkat_id')) {
-            $levels = $levels->where('tingkat_id', $request->tingkat_id)->values();
-        }
+        $allTingkats = $levelsAll->pluck('tingkat')->filter()->unique('id')->sortBy('urutan_tingkat')->values();
+        $selectedTingkatId = $request->input('tingkat_id');
 
-        $levelIds = $levels->pluck('id')->toArray();
+        $tingkatList = $selectedTingkatId
+            ? $allTingkats->where('id', $selectedTingkatId)->values()
+            : $allTingkats;
 
-        $jadwals = JadwalUjian::with(['mataPelajaran', 'pengawas', 'level.tingkat'])
-            ->whereIn('ujian_id', $imniUjianIds ?: [$ujianImni->id])
-            ->whereIn('level_id', $levelIds)
-            ->orderBy('tanggal_ujian', 'asc')
-            ->orderBy('waktu_mulai', 'asc')
-            ->get();
+        $tingkatSchedules = [];
+        foreach ($tingkatList as $t) {
+            $levelsTingkat = $levelsAll->where('tingkat_id', $t->id)->values();
+            $levelIds = $levelsTingkat->pluck('id')->toArray();
 
-        // Matriks Jadwal
-        $matrix = [];
-        $daftarTanggal = [];
-        foreach ($jadwals as $j) {
-            $tgl = Carbon::parse($j->tanggal_ujian)->format('Y-m-d');
-            $waktu = Carbon::parse($j->waktu_mulai)->format('H:i') . ' - ' . ($j->waktu_selesai ? Carbon::parse($j->waktu_selesai)->format('H:i') : 'Selesai');
-            $matrix[$tgl][$waktu][$j->level_id] = $j;
-            if (!in_array($tgl, $daftarTanggal)) {
-                $daftarTanggal[] = $tgl;
+            $jadwalsTingkat = JadwalUjian::with(['mataPelajaran', 'pengawas', 'level.tingkat'])
+                ->whereIn('ujian_id', $imniUjianIds ?: [$ujianImni->id])
+                ->whereIn('level_id', $levelIds)
+                ->orderBy('tanggal_ujian', 'asc')
+                ->orderBy('waktu_mulai', 'asc')
+                ->get();
+
+            $matrix = [];
+            $daftarTanggal = [];
+            foreach ($jadwalsTingkat as $j) {
+                $tgl = Carbon::parse($j->tanggal_ujian)->format('Y-m-d');
+                $waktu = Carbon::parse($j->waktu_mulai)->format('H:i') . ' - ' . ($j->waktu_selesai ? Carbon::parse($j->waktu_selesai)->format('H:i') : 'Selesai');
+                $matrix[$tgl][$waktu][$j->level_id] = $j;
+                if (!in_array($tgl, $daftarTanggal)) {
+                    $daftarTanggal[] = $tgl;
+                }
             }
+            sort($daftarTanggal);
+
+            $tingkatSchedules[] = [
+                'tingkat' => $t,
+                'levels' => $levelsTingkat,
+                'matrix' => $matrix,
+                'daftarTanggal' => $daftarTanggal,
+                'jadwals' => $jadwalsTingkat,
+                'totalJadwal' => $jadwalsTingkat->count(),
+            ];
         }
-        sort($daftarTanggal);
 
         $ketuaPanitia = PanitiaImni::getKetua($selectedTahunId);
-        $pengasuh = Pengurus::getAktifByJabatan('Pengasuh') ?? Pengurus::getAktifByJabatan('Kepala Madrasah');
 
         return view('ujian.panitia-imni.jadwal.cetak-jadwal', compact(
             'selectedTahun',
             'ujianImni',
             'imniUjians',
-            'levels',
-            'jadwals',
-            'matrix',
-            'daftarTanggal',
-            'ketuaPanitia',
-            'pengasuh'
+            'tingkatSchedules',
+            'allTingkats',
+            'selectedTingkatId',
+            'ketuaPanitia'
         ));
     }
 

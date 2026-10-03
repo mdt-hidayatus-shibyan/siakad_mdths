@@ -137,9 +137,9 @@
                     <tr class="bg-zinc-100 text-zinc-900 font-black text-center">
                         <th class="border border-zinc-900 py-2 px-1 w-7">No</th>
                         <th class="border border-zinc-900 py-2 px-2 w-32">No. Peserta</th>
+                        <th class="border border-zinc-900 py-2 px-2 w-16">NISM</th>
                         <th class="border border-zinc-900 py-2 px-2 text-left">Nama Murid</th>
                         <th class="border border-zinc-900 py-2 px-1 w-7">L/P</th>
-                        <th class="border border-zinc-900 py-2 px-2 w-16">NISM</th>
                         <th class="border border-zinc-900 py-2 px-2 w-24">Kelas Asal</th>
                         <th class="border border-zinc-900 py-2 px-2 w-24">Ruang Ujian</th>
                         <th class="border border-zinc-900 py-2 px-2 w-28 text-left">Tanda Tangan</th>
@@ -153,12 +153,13 @@
                             <td
                                 class="border border-zinc-900 py-1.5 px-2 text-center font-black font-mono whitespace-nowrap">
                                 {{ $p->nomor_peserta ?? '-' }}</td>
+                            <td class="border border-zinc-900 py-1.5 px-2 text-center font-mono text-[9px]">
+                                {{ $p->murid?->nism ?? '-' }}</td>
                             <td class="border border-zinc-900 py-1.5 px-2 font-bold uppercase truncate max-w-[150px]">
                                 {{ $p->murid?->nama_lengkap ?? '-' }}</td>
                             <td class="border border-zinc-900 py-1.5 px-1 text-center font-bold">
                                 {{ $p->murid?->jenis_kelamin ?? '-' }}</td>
-                            <td class="border border-zinc-900 py-1.5 px-2 text-center font-mono text-[9px]">
-                                {{ $p->murid?->nism ?? '-' }}</td>
+
                             <td class="border border-zinc-900 py-1.5 px-2 text-center">
                                 {{ $p->ruanganAsal?->nama_ruangan ?? '-' }}</td>
                             <td class="border border-zinc-900 py-1.5 px-2 text-center font-bold text-emerald-800">
@@ -179,9 +180,8 @@
         </div>
 
 
-        <div class="grid grid-cols-2 gap-8 text-center text-xs mt-6 break-inside-avoid">
-
-            <div>
+        <div class="flex justify-end mt-6 break-inside-avoid">
+            <div class="text-center w-64">
                 <p class="text-zinc-500 text-[10.5px]">{{ getSetting('kota_madrasah', 'Bangkalan') }},
                     {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
                 <p class="font-bold text-zinc-800 text-xs">Ketua Panitia IMNI</p>
