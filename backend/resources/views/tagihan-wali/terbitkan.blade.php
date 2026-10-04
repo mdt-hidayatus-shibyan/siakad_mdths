@@ -5,15 +5,7 @@
         <!-- HEADER PAGE -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-                <div class="flex items-center gap-2">
-                    <span
-                        class="px-2.5 py-1 rounded-xl text-[10px] font-black tracking-wider uppercase bg-primary/10 text-primary dark:text-primary-dark border border-primary/20">
-                        ADMINISTRASI KEUANGAN
-                    </span>
-                    <span class="text-xs font-semibold text-zinc-400">
-                        {{ $masterTagihans->firstWhere('id', $selectedMasterId)?->nama_tagihan ?? 'Tagihan KK' }}
-                    </span>
-                </div>
+
                 <h2 class="text-xl md:text-2xl font-black text-zinc-900 dark:text-white tracking-tight mt-1">
                     Penerbitan Tagihan Per Wali Murid (KK Aktif)
                 </h2>
@@ -23,19 +15,7 @@
                 </p>
             </div>
 
-            <!-- Navigasi Cepat Antar Submenu -->
-            <div class="flex items-center gap-2">
-                <a href="{{ route('tagihan-wali.kasir') }}"
-                    class="px-3 py-2 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-black flex items-center gap-1.5 transition-colors">
-                    <i class="bi bi-wallet2 text-emerald-500"></i>
-                    <span>Kasir Pembayaran</span>
-                </a>
-                <a href="{{ route('tagihan-wali.laporan') }}"
-                    class="px-3 py-2 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-black flex items-center gap-1.5 transition-colors">
-                    <i class="bi bi-file-earmark-bar-graph-fill text-sky-500"></i>
-                    <span>Laporan & Rekap</span>
-                </a>
-            </div>
+
         </div>
         <!-- ALERT FEEDBACK -->
         @if (session('success'))
@@ -230,8 +210,7 @@
                         <i class="bi bi-lightning-charge-fill"></i>
                     </div>
                 </div>
-                <h3
-                    class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight mt-1.5">
+                <h3 class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight mt-1.5">
                     {{ number_format($totalSudahTerbitCount, 0, ',', '.') }} <span class="text-xs font-bold">KK</span>
                 </h3>
                 <p class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
@@ -259,18 +238,17 @@
             </div>
         </div>
 
-        <!-- ACTION BAR & TOOLBAR MASSAL -->
+        <!-- ACTION BAR & TOOLBAR MASSAL (SIMPEL & TIDAK MEMBINGUNGKAN) -->
         <div
-            class="m3-glass-card p-4 rounded-3xl bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            class="m3-glass-card p-3.5 rounded-3xl bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-30">
+            <!-- Sisi Kiri: Centang & Hitungan Terpilih -->
             <div class="flex items-center gap-2 flex-wrap">
-                <!-- Tombol Check All Helper -->
                 <button type="button" onclick="toggleCentangSemuaWali()"
                     class="h-9 px-3 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-2xs">
                     <i class="bi bi-check2-square text-sm"></i>
                     <span>Pilih Semua / Batal</span>
                 </button>
 
-                <!-- Badge Terpilih -->
                 <span id="selectedCountBadge"
                     class="hidden items-center gap-1.5 px-3 py-1 rounded-2xl bg-primary/10 text-primary dark:text-primary-dark border border-primary/20 text-xs font-black">
                     <i class="bi bi-check2-circle"></i>
@@ -278,56 +256,70 @@
                 </span>
             </div>
 
-            <!-- Grup Tombol Aksi Massal -->
+            <!-- Sisi Kanan: 2 Tombol Utama + 1 Menu Dropdown -->
             <div class="flex items-center gap-2 flex-wrap justify-end">
                 @if ($selectedMaster)
-                    <!-- Tombol Terbitkan ke Semua KK (Belum Terbit) -->
-                    <form action="{{ route('tagihan-wali.terbitkan') }}" method="POST" class="m-0"
-                        onsubmit="return confirm('Apakah Anda yakin ingin MENERBITKAN tagihan \'{{ addslashes($selectedMaster->nama_tagihan) }}\' ke SELURUH {{ $totalBelumTerbitCount }} Wali Murid yang belum memiliki tagihan?')">
-                        @csrf
-                        <input type="hidden" name="tahun_pelajaran_id" value="{{ $tahunPelajaranId }}">
-                        <input type="hidden" name="pengaturan_tagihan_id" value="{{ $selectedMaster->id }}">
-                        <input type="hidden" name="kampung_id" value="{{ $selectedKampungId }}">
-                        <button type="submit"
-                            class="m3-btn-primary h-9 px-3.5 rounded-2xl text-xs font-black shadow-2xs flex items-center gap-1.5 active:scale-95 transition-all">
-                            <i class="bi bi-lightning-charge-fill text-xs"></i>
-                            <span>Terbitkan Semua ({{ $totalBelumTerbitCount }})</span>
-                        </button>
-                    </form>
-
-                    <!-- Tombol Terbitkan Tercentang -->
-                    <button type="button" onclick="submitTerbitkanTercentang()"
-                        class="h-9 px-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-2xs flex items-center gap-1.5 transition-all active:scale-95">
-                        <i class="bi bi-check2-all text-sm"></i>
-                        <span>Terbitkan Tercentang</span>
+                    <!-- 1. Tombol Terbitkan Tagihan -->
+                    <button type="button" onclick="submitTerbitkanSmart()"
+                        class="h-9 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-2xs flex items-center gap-1.5 transition-all active:scale-95"
+                        title="Terbitkan tagihan untuk yang dicentang atau semua wali">
+                        <i class="bi bi-lightning-charge-fill text-xs"></i>
+                        <span>Terbitkan Tagihan</span>
                     </button>
 
-                    <!-- Tombol Hapus Tercentang -->
-                    <button type="button" onclick="submitHapusTagihanTercentang()"
-                        class="h-9 px-3 rounded-2xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white dark:text-rose-400 border border-rose-500/20 font-black text-xs shadow-2xs flex items-center gap-1.5 transition-all active:scale-95">
-                        <i class="bi bi-trash3-fill text-xs"></i>
-                        <span>Hapus Tercentang</span>
+                    <!-- 2. Tombol Cetak Kartu -->
+                    <button type="button" onclick="submitCetakKartuSmart()"
+                        class="h-9 px-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-2xs flex items-center gap-1.5 transition-all active:scale-95"
+                        title="Cetak kartu tagihan untuk yang dicentang atau semua wali">
+                        <i class="bi bi-card-heading text-xs"></i>
+                        <span>Cetak Kartu Tagihan</span>
                     </button>
 
-                    <!-- Tombol Hapus Semua Tagihan Belum Lunas -->
-                    <form action="{{ route('tagihan-wali.hapus-semua') }}" method="POST" class="m-0"
-                        onsubmit="return confirm('PERINGATAN: Apakah Anda yakin ingin MENGHAPUS SEMUA tagihan \'{{ addslashes($selectedMaster->nama_tagihan) }}\' yang BELUM LUNAS pada tahun pelajaran ini?\n\nTagihan yang sudah Lunas TIDAK akan terhapus.')">
-                        @csrf
-                        <input type="hidden" name="tahun_pelajaran_id" value="{{ $tahunPelajaranId }}">
-                        <input type="hidden" name="pengaturan_tagihan_id" value="{{ $selectedMaster->id }}">
-                        <input type="hidden" name="kampung_id" value="{{ $selectedKampungId }}">
-                        <button type="submit"
-                            class="h-9 px-3 rounded-2xl bg-zinc-100 hover:bg-rose-600 hover:text-white text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-rose-600 dark:hover:text-white font-bold text-xs flex items-center gap-1 transition-colors"
-                            title="Hapus Semua Tagihan Belum Lunas">
-                            <i class="bi bi-trash text-xs"></i>
-                            <span>Hapus Semua Belum Lunas</span>
-                        </button>
-                    </form>
+                    <!-- 3. Dropdown Opsi Lainnya -->
+                    <x-dropdown align="right" width="w-64" contentClasses="p-1.5 divide-y divide-zinc-100 dark:divide-zinc-800/80">
+                        <x-slot name="trigger">
+                            <button type="button"
+                                class="h-9 px-3 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer">
+                                <i class="bi bi-three-dots-vertical"></i>
+                                <span>Opsi Lainnya</span>
+                                <i class="bi bi-chevron-down text-[10px]"></i>
+                            </button>
+                        </x-slot>
+
+                        <!-- Opsi Cetak & Terbit Massal Wilayah -->
+                        <div class="py-1 space-y-0.5">
+                            <a href="{{ route('tagihan-wali.cetak-kartu-massal', ['tahun_id' => $tahunPelajaranId, 'pengaturan_tagihan_id' => $selectedMasterId, 'kampung_id' => $selectedKampungId, 'status_terbit' => request('status_terbit')]) }}"
+                                target="_blank"
+                                class="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-xs font-bold transition-colors">
+                                <i class="bi bi-printer text-sky-500 text-sm"></i>
+                                <span>Cetak Semua Kartu (Wilayah Ini)</span>
+                            </a>
+                            <button type="button" onclick="submitTerbitkanSemuaLangsung()"
+                                class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-xs font-bold transition-colors cursor-pointer">
+                                <i class="bi bi-lightning-charge text-emerald-500 text-sm"></i>
+                                <span>Terbitkan Semua ({{ $totalBelumTerbitCount }})</span>
+                            </button>
+                        </div>
+
+                        <!-- Opsi Hapus -->
+                        <div class="py-1 space-y-0.5">
+                            <button type="button" onclick="submitHapusTagihanTercentang()"
+                                class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold transition-colors cursor-pointer">
+                                <i class="bi bi-trash3 text-rose-500 text-sm"></i>
+                                <span>Hapus Tagihan Tercentang</span>
+                            </button>
+                            <button type="button" onclick="submitHapusSemuaBelumLunasLangsung()"
+                                class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold transition-colors cursor-pointer">
+                                <i class="bi bi-trash text-rose-500 text-sm"></i>
+                                <span>Hapus Semua Belum Lunas</span>
+                            </button>
+                        </div>
+                    </x-dropdown>
                 @endif
             </div>
         </div>
 
-        <!-- FORM HIDDEN UNTUK SUBMIT TERCENTANG -->
+        <!-- FORM HIDDEN UNTUK TERBITKAN & HAPUS -->
         <form action="{{ route('tagihan-wali.terbitkan') }}" method="POST" id="formTerbitkanTercentang"
             class="hidden">
             @csrf
@@ -336,10 +328,25 @@
             <div id="containerWaliIdsTercentang"></div>
         </form>
 
+        <form action="{{ route('tagihan-wali.terbitkan') }}" method="POST" id="formTerbitkanSemua" class="hidden">
+            @csrf
+            <input type="hidden" name="tahun_pelajaran_id" value="{{ $tahunPelajaranId }}">
+            <input type="hidden" name="pengaturan_tagihan_id" value="{{ $selectedMasterId }}">
+            <input type="hidden" name="kampung_id" value="{{ $selectedKampungId }}">
+        </form>
+
         <form action="{{ route('tagihan-wali.hapus-massal') }}" method="POST" id="formHapusTercentang"
             class="hidden">
             @csrf
             <div id="containerHapusTagihanIds"></div>
+        </form>
+
+        <form action="{{ route('tagihan-wali.hapus-semua') }}" method="POST" id="formHapusSemuaBelumLunas"
+            class="hidden">
+            @csrf
+            <input type="hidden" name="tahun_pelajaran_id" value="{{ $tahunPelajaranId }}">
+            <input type="hidden" name="pengaturan_tagihan_id" value="{{ $selectedMasterId }}">
+            <input type="hidden" name="kampung_id" value="{{ $selectedKampungId }}">
         </form>
 
         <!-- TABEL DATA WALI MURID AKTIF -->
@@ -467,6 +474,14 @@
                                 <td
                                     class="py-3.5 px-4 text-center align-middle rounded-r-2xl border-y border-r border-zinc-200/80 dark:border-zinc-800">
                                     <div class="flex items-center justify-center gap-1.5">
+                                        <!-- Tombol Cetak Kartu Penarapan/Tagihan Single KK -->
+                                        <a href="{{ route('tagihan-wali.cetak-kartu', ['wali_id' => $wali->id, 'tahun_id' => $tahunPelajaranId, 'pengaturan_tagihan_id' => $selectedMasterId]) }}"
+                                            target="_blank"
+                                            class="w-8 h-8 rounded-xl bg-amber-500/10 hover:bg-amber-500 text-amber-600 hover:text-white dark:text-amber-400 border border-amber-500/20 flex items-center justify-center transition-all shadow-2xs active:scale-95"
+                                            title="Cetak Kartu Tagihan KK {{ $wali->nama_kepala_keluarga }}">
+                                            <i class="bi bi-card-heading text-xs"></i>
+                                        </a>
+
                                         @if ($isBelumTerbit && $selectedMaster)
                                             <!-- Tombol Terbitkan Single KK -->
                                             <form action="{{ route('tagihan-wali.terbitkan') }}" method="POST"
@@ -605,6 +620,26 @@
                 form.submit();
             }
 
+            function submitCetakKartuTercentang() {
+                const checkedBoxes = Array.from(document.querySelectorAll('.wali-checkbox:checked'));
+                if (checkedBoxes.length === 0) {
+                    alert('Silakan centang minimal 1 Wali Murid untuk mencetak kartu tagihan.');
+                    return;
+                }
+
+                let url = new URL("{{ route('tagihan-wali.cetak-kartu-massal') }}", window.location.origin);
+                url.searchParams.append('tahun_id', "{{ $tahunPelajaranId }}");
+                if ("{{ $selectedMasterId }}") {
+                    url.searchParams.append('pengaturan_tagihan_id', "{{ $selectedMasterId }}");
+                }
+
+                checkedBoxes.forEach(cb => {
+                    url.searchParams.append('wali_ids[]', cb.getAttribute('data-wali-id'));
+                });
+
+                window.open(url.toString(), '_blank');
+            }
+
             function submitHapusTagihanTercentang() {
                 const checkedBoxes = Array.from(document.querySelectorAll('.wali-checkbox:checked'));
                 if (checkedBoxes.length === 0) {
@@ -636,6 +671,59 @@
                 });
 
                 form.submit();
+            }
+
+            function submitTerbitkanSmart() {
+                const checkedBoxes = Array.from(document.querySelectorAll('.wali-checkbox:checked'));
+                if (checkedBoxes.length > 0) {
+                    submitTerbitkanTercentang();
+                } else {
+                    submitTerbitkanSemuaLangsung();
+                }
+            }
+
+            function submitCetakKartuSmart() {
+                const checkedBoxes = Array.from(document.querySelectorAll('.wali-checkbox:checked'));
+                if (checkedBoxes.length > 0) {
+                    submitCetakKartuTercentang();
+                } else {
+                    let url = new URL("{{ route('tagihan-wali.cetak-kartu-massal') }}", window.location.origin);
+                    url.searchParams.append('tahun_id', "{{ $tahunPelajaranId }}");
+                    if ("{{ $selectedMasterId }}") {
+                        url.searchParams.append('pengaturan_tagihan_id', "{{ $selectedMasterId }}");
+                    }
+                    if ("{{ $selectedKampungId }}") {
+                        url.searchParams.append('kampung_id', "{{ $selectedKampungId }}");
+                    }
+                    const statusTerbit = "{{ request('status_terbit') }}";
+                    if (statusTerbit) {
+                        url.searchParams.append('status_terbit', statusTerbit);
+                    }
+                    window.open(url.toString(), '_blank');
+                }
+            }
+
+            function submitTerbitkanSemuaLangsung() {
+                const count = {{ $totalBelumTerbitCount }};
+                if (count === 0) {
+                    alert('Semua Wali Murid pada filter/wilayah ini sudah memiliki tagihan yang diterbitkan.');
+                    return;
+                }
+                if (!confirm(`Terbitkan tagihan untuk SEMUA ${count} Wali Murid yang belum terbit di wilayah/filter ini?`)) {
+                    return;
+                }
+                const form = document.getElementById('formTerbitkanSemua');
+                if (form) form.submit();
+            }
+
+            function submitHapusSemuaBelumLunasLangsung() {
+                if (!confirm(
+                        'Apakah Anda yakin ingin MENGHAPUS SEMUA tagihan Wali Murid yang BELUM LUNAS pada filter/wilayah ini?\n\nPerhatian: Tindakan ini tidak dapat dibatalkan.'
+                    )) {
+                    return;
+                }
+                const form = document.getElementById('formHapusSemuaBelumLunas');
+                if (form) form.submit();
             }
 
             function bukaModalDetailWali(waliId) {

@@ -192,6 +192,16 @@
                             @endforelse
                         </div>
                     </div>
+
+                    <!-- Tombol Cetak Kartu Tagihan / Penarapan KK -->
+                    <div class="pt-3 border-t border-zinc-200/60 dark:border-zinc-800">
+                        <a href="{{ route('tagihan-wali.cetak-kartu', ['wali_id' => $waliTerpilih->id, 'tahun_id' => $tahunPelajaranId]) }}"
+                            target="_blank"
+                            class="w-full py-2.5 px-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500 text-amber-700 hover:text-white dark:text-amber-400 dark:hover:text-white border border-amber-500/20 text-xs font-black flex items-center justify-center gap-2 transition-all shadow-2xs active:scale-95">
+                            <i class="bi bi-card-heading text-sm"></i>
+                            <span>Cetak Kartu Tagihan KK</span>
+                        </a>
+                    </div>
                 </div>
             </div>
 

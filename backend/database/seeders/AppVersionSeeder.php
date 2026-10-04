@@ -13,8 +13,8 @@ class AppVersionSeeder extends Seeder
     public function run(): void
     {
         AppVersion::firstOrCreate(
-            ['app_type' => 'ustadz', 'version' => '1.0.0'],
-            AppVersion::defaultUstadzData()
+            ['app_type' => 'web', 'version' => '1.0.0'],
+            AppVersion::defaultWebData()
         );
     }
 }

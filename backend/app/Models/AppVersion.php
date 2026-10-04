@@ -29,24 +29,20 @@ class AppVersion extends Model
         static::saved(function ($model) {
             Cache::forget('active_app_version_' . $model->app_type);
             Cache::forget('active_app_version_web');
-            Cache::forget('active_app_version_ustadz');
-            Cache::forget('active_app_version_murid');
             Cache::forget('active_app_version_all');
         });
 
         static::deleted(function ($model) {
             Cache::forget('active_app_version_' . $model->app_type);
             Cache::forget('active_app_version_web');
-            Cache::forget('active_app_version_ustadz');
-            Cache::forget('active_app_version_murid');
             Cache::forget('active_app_version_all');
         });
     }
 
     /**
-     * Ambil versi aktif berdasarkan tipe aplikasi (ustadz / murid)
+     * Ambil versi aktif aplikasi Web
      */
-    public static function getActiveVersion(string $appType = 'ustadz'): ?self
+    public static function getActiveVersion(string $appType = 'web'): ?self
     {
         return self::where('is_active', true)
             ->where(function ($q) use ($appType) {

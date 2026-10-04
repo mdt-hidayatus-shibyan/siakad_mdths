@@ -1123,4 +1123,155 @@ class TagihanWaliMuridController extends Controller
             'administrator'
         ));
     }
+
+    /**
+     * Cetak Kartu Penarapan / Tagihan Wali Murid (Single KK)
+     */
+    public function cetakKartu(Request $request, $wali_id, $tahun_id)
+    {
+        $tahunPelajaran = TahunPelajaran::findOrFail($tahun_id);
+        $selectedMasterId = $request->pengaturan_tagihan_id;
+
+        $masterTagihans = PengaturanTagihan::where('tahun_pelajaran_id', $tahun_id)
+            ->where('sasaran', 'wali_murid')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $selectedMaster = $selectedMasterId
+            ? $masterTagihans->firstWhere('id', $selectedMasterId)
+            : $masterTagihans->first();
+
+        $wali = WaliMurid::with([
+            'kampung',
+            'murids' => function ($q) use ($tahun_id) {
+                $q->where('status', 'Aktif')
+                    ->whereHas('ruangans', function ($rq) use ($tahun_id) {
+                        $rq->where('murid_ruangans.tahun_pelajaran_id', $tahun_id);
+                    })
+                    ->with(['ruangans' => function ($rq) use ($tahun_id) {
+                        $rq->where('murid_ruangans.tahun_pelajaran_id', $tahun_id);
+                    }]);
+            },
+            'tagihanWaliMurids' => function ($q) use ($tahun_id, $selectedMaster) {
+                $q->where('tahun_pelajaran_id', $tahun_id)
+                    ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id))
+                    ->with('pembayaranTagihan');
+            }
+        ])->findOrFail($wali_id);
+
+        $wali->current_tagihan = $wali->tagihanWaliMurids->first();
+        $walis = collect([$wali]);
+
+        $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
+        $sekretaris = Pengurus::getAktifByJabatan('Sekretaris') ?? Pengurus::getAktifByJabatan('Sekretaris Jenderal');
+        $bendahara = Pengurus::getAktifByJabatan('Bendahara') ?? $sekretaris;
+
+        return view('cetak-baru.cetak_kartu_tagihan_wali', compact(
+            'walis',
+            'tahunPelajaran',
+            'selectedMaster',
+            'pengasuh',
+            'sekretaris',
+            'bendahara'
+        ));
+    }
+
+    /**
+     * Cetak Kartu Penarapan / Tagihan Wali Murid (Massal)
+     */
+    public function cetakKartuMassal(Request $request)
+    {
+        $tahunId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id');
+        $tahunPelajaran = TahunPelajaran::findOrFail($tahunId);
+
+        $selectedMasterId = $request->pengaturan_tagihan_id;
+        $selectedMaster = PengaturanTagihan::where('tahun_pelajaran_id', $tahunId)
+            ->where('sasaran', 'wali_murid')
+            ->when($selectedMasterId, fn($q) => $q->where('id', $selectedMasterId))
+            ->first();
+
+        $kampungId = $request->filled('kampung_id') && $request->kampung_id !== 'semua' ? $request->kampung_id : null;
+
+        $queryWali = WaliMurid::with([
+            'kampung',
+            'murids' => function ($q) use ($tahunId) {
+                $q->where('status', 'Aktif')
+                    ->whereHas('ruangans', function ($rq) use ($tahunId) {
+                        $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunId);
+                    })
+                    ->with(['ruangans' => function ($rq) use ($tahunId) {
+                        $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunId);
+                    }]);
+            },
+            'tagihanWaliMurids' => function ($q) use ($tahunId, $selectedMaster) {
+                $q->where('tahun_pelajaran_id', $tahunId)
+                    ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id))
+                    ->with('pembayaranTagihan');
+            }
+        ])
+            ->where('is_active', true)
+            ->whereHas('murids', function ($q) use ($tahunId) {
+                $q->where('status', 'Aktif')
+                    ->whereHas('ruangans', function ($rq) use ($tahunId) {
+                        $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunId);
+                    });
+            });
+
+        if ($kampungId) {
+            $queryWali->where('kampung_id', $kampungId);
+        }
+
+        // Filter jika memilih spesifik wali_ids (dari centang tabel)
+        if ($request->filled('wali_ids') && is_array($request->wali_ids)) {
+            $queryWali->whereIn('id', $request->wali_ids);
+        }
+
+        // Filter status penerbitan jika ada
+        if ($request->filled('status_terbit')) {
+            if ($request->status_terbit === 'Belum Terbit') {
+                $queryWali->whereDoesntHave('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMaster) {
+                    $q->where('tahun_pelajaran_id', $tahunId)
+                        ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id));
+                });
+            } elseif ($request->status_terbit === 'Terbit (Belum Lunas)') {
+                $queryWali->whereHas('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMaster) {
+                    $q->where('tahun_pelajaran_id', $tahunId)
+                        ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id))
+                        ->where('status_bayar', '!=', 'Lunas');
+                });
+            } elseif ($request->status_terbit === 'Terbit & Lunas') {
+                $queryWali->whereHas('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMaster) {
+                    $q->where('tahun_pelajaran_id', $tahunId)
+                        ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id))
+                        ->where('status_bayar', 'Lunas');
+                });
+            }
+        }
+
+        $walis = $queryWali->get()->sortBy(function ($w) {
+            $kode = $w->kampung ? str_pad($w->kampung->kode, 4, '0', STR_PAD_LEFT) : '9999';
+            return $kode . '_' . ($w->nama_kepala_keluarga ?? '');
+        });
+
+        foreach ($walis as $w) {
+            $w->current_tagihan = $w->tagihanWaliMurids->first();
+        }
+
+        if ($walis->isEmpty()) {
+            abort(404, 'Tidak ada data wali murid yang sesuai kriteria cetak kartu.');
+        }
+
+        $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
+        $sekretaris = Pengurus::getAktifByJabatan('Sekretaris') ?? Pengurus::getAktifByJabatan('Sekretaris Jenderal');
+        $bendahara = Pengurus::getAktifByJabatan('Bendahara') ?? $sekretaris;
+
+        return view('cetak-baru.cetak_kartu_tagihan_wali', compact(
+            'walis',
+            'tahunPelajaran',
+            'selectedMaster',
+            'pengasuh',
+            'sekretaris',
+            'bendahara'
+        ));
+    }
 }

@@ -853,6 +853,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/laporan', 'laporan')->name('laporan');
         Route::get('/cetak-rekap', 'cetakRekap')->name('cetak-rekap');
 
+        // 4. Cetak Kartu Tagihan / Penarapan KK
+        Route::get('/cetak-kartu/{wali_id}/{tahun_id}', 'cetakKartu')->name('cetak-kartu');
+        Route::get('/cetak-kartu-massal', 'cetakKartuMassal')->name('cetak-kartu-massal');
+
         // Detail AJAX Modal
         Route::get('/detail/{id}', 'detail')->name('detail');
     });
@@ -1122,16 +1126,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pengaturan-aplikasi', [SettingController::class, 'index'])->name('pengaturan-aplikasi.index');
     Route::post('/pengaturan-aplikasi', [SettingController::class, 'update'])->name('pengaturan-aplikasi.update');
 
-    // -- Versi & Rilis Aplikasi Mobile / Web --
+    // -- Versi & Rilis Aplikasi Web --
     Route::prefix('pengaturan-versi')->name('pengaturan-versi.')->group(function () {
         Route::get('/', [AppVersionController::class, 'index'])->name('index');
-        Route::get('/riwayat', [AppVersionController::class, 'riwayat'])->name('riwayat');
+        Route::get('/riwayat', [AppVersionController::class, 'index'])->name('riwayat');
         Route::get('/tambah', [AppVersionController::class, 'create'])->name('create');
+        Route::get('/edit/{id?}', [AppVersionController::class, 'editor'])->name('edit');
+        Route::get('/editor', [AppVersionController::class, 'editor'])->name('editor');
         Route::post('/', [AppVersionController::class, 'update'])->name('update');
         Route::post('/set-active/{id}', [AppVersionController::class, 'setActive'])->name('set-active');
         Route::delete('/{id}', [AppVersionController::class, 'destroy'])->name('destroy');
     });
-    Route::get('/riwayat-versi', [AppVersionController::class, 'riwayat'])->name('riwayat-versi');
+    Route::get('/riwayat-versi', [AppVersionController::class, 'index'])->name('riwayat-versi');
 
     // -- Backup & Restore Database --
     Route::prefix('backup')->name('backup.')->controller(BackupController::class)->group(function () {

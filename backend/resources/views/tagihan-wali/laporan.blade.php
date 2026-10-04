@@ -8,13 +8,32 @@
         </div>
 
         @if ($selectedMaster)
-            <div class="w-full xl:w-auto shrink-0 mt-1 md:mt-2">
-                <a href="{{ route('tagihan-wali.cetak-rekap', ['tahun_id' => $tahunPelajaranId, 'pengaturan_tagihan_id' => $selectedMaster->id, 'kampung_id' => $selectedKampungId]) }}"
-                    target="_blank"
-                    class="px-4 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-black flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95">
-                    <i class="bi bi-printer-fill"></i>
-                    <span>Cetak Rekapitulasi (A4)</span>
-                </a>
+            <div class="w-full xl:w-auto shrink-0 mt-1 md:mt-2 flex items-center gap-2 flex-wrap justify-end">
+                <x-dropdown align="right" width="w-64" contentClasses="p-1.5 divide-y divide-zinc-100 dark:divide-zinc-800/80">
+                    <x-slot name="trigger">
+                        <button type="button"
+                            class="px-4 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-black flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95 cursor-pointer">
+                            <i class="bi bi-printer-fill"></i>
+                            <span>Cetak Dokumen</span>
+                            <i class="bi bi-chevron-down text-[10px]"></i>
+                        </button>
+                    </x-slot>
+
+                    <div class="py-1 space-y-0.5 text-xs font-bold">
+                        <a href="{{ route('tagihan-wali.cetak-kartu-massal', ['tahun_id' => $tahunPelajaranId, 'pengaturan_tagihan_id' => $selectedMaster->id, 'kampung_id' => $selectedKampungId]) }}"
+                            target="_blank"
+                            class="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors">
+                            <i class="bi bi-card-heading text-amber-500 text-sm"></i>
+                            <span>Cetak Kartu Tagihan Massal</span>
+                        </a>
+                        <a href="{{ route('tagihan-wali.cetak-rekap', ['tahun_id' => $tahunPelajaranId, 'pengaturan_tagihan_id' => $selectedMaster->id, 'kampung_id' => $selectedKampungId]) }}"
+                            target="_blank"
+                            class="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors">
+                            <i class="bi bi-file-earmark-text text-sky-500 text-sm"></i>
+                            <span>Cetak Rekapitulasi (A4)</span>
+                        </a>
+                    </div>
+                </x-dropdown>
             </div>
         @endif
     </div>

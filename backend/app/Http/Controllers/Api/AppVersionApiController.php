@@ -13,13 +13,13 @@ class AppVersionApiController extends Controller
      */
     public function getAppVersion(Request $request)
     {
-        $appType = $request->query('app', 'ustadz');
+        $appType = $request->query('app', 'web');
 
         $version = AppVersion::getActiveVersion($appType);
 
         if (!$version) {
             // Fallback ke data default jika database kosong
-            $data = AppVersion::defaultUstadzData();
+            $data = AppVersion::defaultWebData();
         } else {
             $data = [
                 'id'                => $version->id,

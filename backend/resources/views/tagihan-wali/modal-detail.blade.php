@@ -117,10 +117,16 @@
 
 <div
     class="px-6 py-3.5 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200/80 dark:border-zinc-800 flex justify-between items-center shrink-0">
-    <a href="{{ route('wali-murid.show', $wali->id) }}" target="_blank"
-        class="text-xs font-bold text-primary dark:text-primary-dark hover:underline flex items-center gap-1">
-        <i class="bi bi-box-arrow-up-right text-[10px]"></i> <span>Buka Profil KK Lengkap</span>
-    </a>
+    <div class="flex items-center gap-4">
+        <a href="{{ route('wali-murid.show', $wali->id) }}" target="_blank"
+            class="text-xs font-bold text-primary dark:text-primary-dark hover:underline flex items-center gap-1">
+            <i class="bi bi-box-arrow-up-right text-[10px]"></i> <span>Buka Profil KK Lengkap</span>
+        </a>
+        <a href="{{ route('tagihan-wali.cetak-kartu', ['wali_id' => $wali->id, 'tahun_id' => $tahunId]) }}" target="_blank"
+            class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1">
+            <i class="bi bi-card-heading text-xs"></i> <span>Cetak Kartu Tagihan KK</span>
+        </a>
+    </div>
     <button type="button" onclick="tutupModalDetail()"
         class="px-4 py-2 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors shadow-2xs">
         Tutup

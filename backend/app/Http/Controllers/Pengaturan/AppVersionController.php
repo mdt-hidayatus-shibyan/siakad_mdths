@@ -9,18 +9,13 @@ use Illuminate\Http\Request;
 class AppVersionController extends Controller
 {
     /**
-     * Tampilkan halaman riwayat rilis / changelog seluruh versi aplikasi
+     * Tampilkan halaman utama (Riwayat Rilis / Changelog Web SIAKAD)
      */
-    public function riwayat(Request $request)
+    public function index(Request $request)
     {
-        $appType = $request->query('app', 'all');
         $search = $request->query('q');
 
-        $query = AppVersion::query();
-
-        if ($appType && $appType !== 'all') {
-            $query->where('app_type', $appType);
-        }
+        $query = AppVersion::query()->where('app_type', 'web');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -36,69 +31,52 @@ class AppVersionController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        $latestVersion = AppVersion::where('is_active', true)->latest('id')->first();
-        $totalVersions = AppVersion::count();
-        $ustadzCount = AppVersion::where('app_type', 'ustadz')->count();
-        $muridCount = AppVersion::where('app_type', 'murid')->count();
-        $webCount = AppVersion::where('app_type', 'web')->count();
+        $latestVersion = AppVersion::where('app_type', 'web')->where('is_active', true)->latest('id')->first();
+        $totalVersions = AppVersion::where('app_type', 'web')->count();
 
         return view('pengaturan-versi.riwayat', compact(
             'versions',
-            'appType',
             'search',
             'latestVersion',
-            'totalVersions',
-            'ustadzCount',
-            'muridCount',
-            'webCount'
+            'totalVersions'
         ));
     }
 
     /**
-     * Tampilkan halaman formulir pengaturan versi & catatan rilis aplikasi
+     * Tampilkan halaman formulir editor versi & catatan rilis Web SIAKAD
      */
-    public function index(Request $request)
+    public function editor(Request $request, $id = null)
     {
-        $appType = $request->query('app', 'ustadz');
-        $editId = $request->query('id');
+        $editId = $id ?? $request->query('id');
 
         if ($editId) {
-            $version = AppVersion::findOrFail($editId);
-            $appType = $version->app_type;
+            $version = AppVersion::where('app_type', 'web')->findOrFail($editId);
         } else {
-            $version = AppVersion::getActiveVersion($appType);
+            $version = AppVersion::getActiveVersion('web');
             if (!$version) {
-                $defaultData = match ($appType) {
-                    'murid' => AppVersion::defaultMuridData(),
-                    'web'   => AppVersion::defaultWebData(),
-                    default => AppVersion::defaultUstadzData(),
-                };
-                $version = AppVersion::create($defaultData);
+                $version = AppVersion::create(AppVersion::defaultWebData());
             }
         }
 
-        $allVersions = AppVersion::where('app_type', $appType)
-            ->orWhere('app_type', 'all')
+        $allVersions = AppVersion::where('app_type', 'web')
             ->latest('id')
             ->get();
 
-        return view('pengaturan-versi.index', compact('version', 'allVersions', 'appType'));
+        return view('pengaturan-versi.index', compact('version', 'allVersions'));
     }
 
     /**
-     * Form tambah versi rilis baru
+     * Form tambah versi rilis baru Web SIAKAD
      */
-    public function create(Request $request)
+    public function create()
     {
-        $appType = $request->query('app', 'ustadz');
-
-        $template = AppVersion::where('app_type', $appType)->latest('id')->first();
+        $template = AppVersion::where('app_type', 'web')->latest('id')->first();
         $version = new AppVersion([
-            'app_type'          => $appType,
-            'app_title'         => $appType === 'ustadz' ? 'Ustadz - MDTHS' : ($appType === 'murid' ? 'Santri - MDTHS' : 'SIAKAD Web MDTHS'),
+            'app_type'          => 'web',
+            'app_title'         => 'SIAKAD Web MDTHS',
             'app_subtitle'      => 'MDT Hidayatus Shibyan',
-            'version'           => '1.0.1',
-            'build_number'      => date('Y.m'),
+            'version'           => '1.4.7',
+            'build_number'      => date('Y.m.d'),
             'release_date'      => \Carbon\Carbon::now()->translatedFormat('F Y'),
             'release_subtitle'  => 'Pembaruan Fitur & Perbaikan Sistem',
             'release_badge'     => 'Rilis Baru',
@@ -110,21 +88,21 @@ class AppVersionController extends Controller
             'dev_name'          => $template?->dev_name ?? 'Mikyal Adly Ghoffar Hasin',
             'dev_role'          => $template?->dev_role ?? 'Lead Developer & Tim IT',
             'dev_institution'   => $template?->dev_institution ?? 'MDT Hidayatus Shibyan',
-            'dev_description'   => $template?->dev_description ?? 'Aplikasi ini dirancang dan dikembangkan untuk mendukung digitalisasi tata kelola madrasah, presensi KBM, evaluasi catatan murid, serta transparansi pelaporan terpadu.',
-            'tech_stacks'       => $template?->tech_stacks ?? ['Flutter', 'Dart', 'Laravel', 'REST API', 'MySQL'],
+            'dev_description'   => $template?->dev_description ?? 'Sistem Informasi Akademik berbasis web untuk mempermudah operasional dan manajemen pendidikan madrasah secara terintegrasi.',
+            'tech_stacks'       => $template?->tech_stacks ?? ['Laravel', 'PHP', 'Blade', 'Tailwind CSS', 'Alpine.js', 'MySQL'],
             'copyright_year'    => date('Y'),
             'copyright_owner'   => 'MDT Hidayatus Shibyan',
             'copyright_subtitle' => 'All Rights Reserved • SIAKAD MDTHS',
         ]);
 
-        $allVersions = AppVersion::where('app_type', $appType)->latest('id')->get();
+        $allVersions = AppVersion::where('app_type', 'web')->latest('id')->get();
         $isNew = true;
 
-        return view('pengaturan-versi.index', compact('version', 'allVersions', 'appType', 'isNew'));
+        return view('pengaturan-versi.index', compact('version', 'allVersions', 'isNew'));
     }
 
     /**
-     * Simpan / Perbarui versi dan changelog aplikasi
+     * Simpan / Perbarui versi dan changelog Web SIAKAD
      */
     public function update(Request $request)
     {
@@ -148,7 +126,7 @@ class AppVersionController extends Controller
             'improve_descs'     => 'nullable|array',
         ]);
 
-        $appType = $request->input('app_type', 'ustadz');
+        $appType = 'web';
         $id = $request->input('id');
         $isLatest = $request->has('is_latest');
 
@@ -190,24 +168,24 @@ class AppVersionController extends Controller
                 }
             }
         } else {
-            $techStacks = ['Flutter', 'Dart', 'Laravel', 'REST API', 'MySQL', 'Provider'];
+            $techStacks = ['Laravel', 'PHP', 'Blade', 'Tailwind CSS', 'Alpine.js', 'MySQL'];
         }
 
         $devDetails = [
             [
-                'icon'  => 'developer_mode',
-                'label' => 'Framework & Bahasa',
-                'value' => 'Flutter (Dart)',
+                'icon'  => 'dns',
+                'label' => 'Web Engine',
+                'value' => 'Laravel 11 & PHP 8.2+',
             ],
             [
-                'icon'  => 'dns',
-                'label' => 'Backend & Server',
-                'value' => 'Laravel REST API & MySQL',
+                'icon'  => 'database',
+                'label' => 'Database',
+                'value' => 'MySQL / MariaDB',
             ],
             [
                 'icon'  => 'security',
                 'label' => 'Keamanan Autentikasi',
-                'value' => 'Laravel Sanctum Token',
+                'value' => 'Bcrypt & Session Guard',
             ],
             [
                 'icon'  => 'domain',
@@ -216,15 +194,15 @@ class AppVersionController extends Controller
             ],
         ];
 
-        // Jika versi ini ditandai sebagai latest, matikan is_latest pada versi lain dengan app_type sama
+        // Jika versi ini ditandai sebagai latest, matikan is_latest pada versi web lain
         if ($isLatest) {
-            AppVersion::where('app_type', $appType)
+            AppVersion::where('app_type', 'web')
                 ->when($id, fn($q) => $q->where('id', '!=', $id))
                 ->update(['is_latest' => false]);
         }
 
         $payload = [
-            'app_type'          => $appType,
+            'app_type'          => 'web',
             'app_title'         => $request->app_title,
             'app_subtitle'      => $request->app_subtitle,
             'version'           => $request->version,
@@ -245,11 +223,11 @@ class AppVersionController extends Controller
             'tech_stacks'       => $techStacks,
             'copyright_year'    => $request->copyright_year ?? date('Y'),
             'copyright_owner'   => $request->copyright_owner ?? 'MDT Hidayatus Shibyan',
-            'copyright_subtitle' => $request->copyright_subtitle ?? 'All Rights Reserved • SIAKAD MDTHS',
+            'copyright_subtitle' => $request->copyright_subtitle ?? 'All Rights Reserved • SIAKAD MDTHS Web',
         ];
 
         if ($id) {
-            $version = AppVersion::find($id);
+            $version = AppVersion::where('app_type', 'web')->find($id);
             if ($version) {
                 $version->update($payload);
             } else {
@@ -259,8 +237,8 @@ class AppVersionController extends Controller
             $version = AppVersion::create($payload);
         }
 
-        return redirect()->route('pengaturan-versi.riwayat', ['app' => $appType])
-            ->with('success', 'Versi ' . $version->version . ' & Catatan Rilis Pembaruan berhasil disimpan!');
+        return redirect()->route('pengaturan-versi.index')
+            ->with('success', 'Versi Web ' . $version->version . ' & Catatan Rilis Pembaruan berhasil disimpan!');
     }
 
     /**
@@ -268,9 +246,9 @@ class AppVersionController extends Controller
      */
     public function setActive($id)
     {
-        $version = AppVersion::findOrFail($id);
+        $version = AppVersion::where('app_type', 'web')->findOrFail($id);
 
-        AppVersion::where('app_type', $version->app_type)
+        AppVersion::where('app_type', 'web')
             ->update(['is_latest' => false]);
 
         $version->update([
@@ -279,7 +257,7 @@ class AppVersionController extends Controller
         ]);
 
         return redirect()->back()
-            ->with('success', "Versi {$version->version} ({$version->app_type}) berhasil diatur sebagai versi utama/terbaru!");
+            ->with('success', "Versi Web {$version->version} berhasil diatur sebagai versi utama/terbaru!");
     }
 
     /**
@@ -287,19 +265,18 @@ class AppVersionController extends Controller
      */
     public function destroy($id)
     {
-        $version = AppVersion::findOrFail($id);
-        $appType = $version->app_type;
+        $version = AppVersion::where('app_type', 'web')->findOrFail($id);
         $vName = $version->version;
 
         $version->delete();
 
         // Jika versi yang dihapus adalah latest, angkat versi berikutnya
-        $remaining = AppVersion::where('app_type', $appType)->latest('id')->first();
-        if ($remaining && !AppVersion::where('app_type', $appType)->where('is_latest', true)->exists()) {
+        $remaining = AppVersion::where('app_type', 'web')->latest('id')->first();
+        if ($remaining && !AppVersion::where('app_type', 'web')->where('is_latest', true)->exists()) {
             $remaining->update(['is_latest' => true, 'is_active' => true]);
         }
 
-        return redirect()->route('pengaturan-versi.riwayat', ['app' => $appType])
-            ->with('success', "Riwayat rilis versi {$vName} berhasil dihapus.");
+        return redirect()->route('pengaturan-versi.index')
+            ->with('success', "Riwayat rilis versi Web {$vName} berhasil dihapus.");
     }
 }

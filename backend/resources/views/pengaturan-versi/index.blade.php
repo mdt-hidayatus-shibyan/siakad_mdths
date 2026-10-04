@@ -1,62 +1,42 @@
-@section('title', 'Versi & Rilis Aplikasi')
+@section('title', 'Versi & Rilis Web SIAKAD')
 
 <x-app-layout>
     <!-- Header Page -->
     <div class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-20">
         <div>
             <div class="flex items-center gap-2 mb-1">
-                <a href="{{ route('pengaturan-versi.riwayat', ['app' => $appType]) }}"
+                <a href="{{ route('pengaturan-versi.index') }}"
                     class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
                     <i class="bi bi-arrow-left"></i>
-                    <span>Riwayat Versi</span>
+                    <span>Riwayat Versi Web</span>
                 </a>
                 <span class="text-xs text-zinc-400">•</span>
                 <span
                     class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    {{ isset($isNew) && $isNew ? 'Tambah Versi Baru' : 'Editor Versi' }}
+                    {{ isset($isNew) && $isNew ? 'Tambah Versi Baru' : 'Editor Versi Web' }}
                 </span>
             </div>
             <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
-                {{ isset($isNew) && $isNew ? 'Tambah Versi & Catatan Rilis' : 'Pengaturan Versi & Rilis' }}
+                {{ isset($isNew) && $isNew ? 'Tambah Versi & Catatan Rilis Web' : 'Pengaturan Versi & Rilis Web' }}
             </h2>
             <p class="text-xs md:text-[13px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Kelola nomor versi, catatan rilis pembaruan (*changelog*), dan informasi pengembang aplikasi.
+                Kelola nomor versi, catatan rilis pembaruan (*changelog*), dan informasi pengembang Web SIAKAD.
             </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
-            <a href="{{ route('pengaturan-versi.riwayat', ['app' => $appType]) }}"
-                class="px-4 py-2.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs transition-all flex items-center gap-2 border border-zinc-200/80 dark:border-zinc-700/80">
+            <a href="{{ route('pengaturan-versi.index') }}"
+                class="px-4 py-2.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs transition-all flex items-center gap-2 border border-zinc-200/80 dark:border-zinc-700/80 shadow-2xs cursor-pointer">
                 <i class="bi bi-clock-history text-sm"></i>
-                <span>Lihat Riwayat Versi</span>
+                <span>Lihat Riwayat Versi Web</span>
             </a>
-
-            <!-- Tab Pemilih Platform -->
-            <div
-                class="flex items-center gap-1.5 p-1 bg-zinc-200/60 dark:bg-zinc-800/80 rounded-2xl border border-zinc-300/50 dark:border-zinc-700/50">
-                <a href="{{ route('pengaturan-versi.index', ['app' => 'ustadz']) }}"
-                    class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 {{ $appType === 'ustadz' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white' }}">
-                    <i class="bi bi-person-badge-fill"></i>
-                    <span>Ustadz</span>
-                </a>
-                <a href="{{ route('pengaturan-versi.index', ['app' => 'murid']) }}"
-                    class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 {{ $appType === 'murid' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white' }}">
-                    <i class="bi bi-mortarboard-fill"></i>
-                    <span>Murid</span>
-                </a>
-                <a href="{{ route('pengaturan-versi.index', ['app' => 'web']) }}"
-                    class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 {{ $appType === 'web' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white' }}">
-                    <i class="bi bi-globe2"></i>
-                    <span>Web</span>
-                </a>
-            </div>
         </div>
     </div>
 
     <!-- NOTIFIKASI SUCCESS -->
     @if (session('success'))
         <div
-            class="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center gap-3 text-xs font-bold">
+            class="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center gap-3 text-xs font-bold animate-in fade-in duration-200">
             <i class="bi bi-check-circle-fill text-base shrink-0"></i>
             <span>{{ session('success') }}</span>
         </div>
@@ -64,7 +44,7 @@
 
     <form action="{{ route('pengaturan-versi.update') }}" method="POST" class="relative z-10">
         @csrf
-        <input type="hidden" name="app_type" value="{{ $appType }}">
+        <input type="hidden" name="app_type" value="web">
         <input type="hidden" name="id" value="{{ $version->id ?? '' }}">
 
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 md:gap-6">
@@ -78,14 +58,14 @@
                         class="font-black text-zinc-900 dark:text-white text-base tracking-tight mb-5 flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 pb-3.5">
                         <div class="flex items-center">
                             <div
-                                class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mr-2.5 text-emerald-600 dark:text-emerald-400 text-sm shrink-0">
-                                <i class="bi bi-phone"></i>
+                                class="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mr-2.5 text-purple-600 dark:text-purple-400 text-sm shrink-0">
+                                <i class="bi bi-globe2"></i>
                             </div>
-                            Identitas Versi & Rilis
+                            Identitas Versi & Rilis Web SIAKAD
                         </div>
                         <span
-                            class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                            Aktif di Mobile
+                            class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                            SIAKAD Web MDTHS
                         </span>
                     </h3>
 
@@ -96,7 +76,7 @@
                                 Nomor Versi (Semantic) <span class="text-rose-500">*</span>
                             </label>
                             <input type="text" name="version"
-                                value="{{ old('version', $version->version ?? '1.0.0') }}" placeholder="Contoh: 1.0.0"
+                                value="{{ old('version', $version->version ?? '1.4.6') }}" placeholder="Contoh: 1.4.6"
                                 class="m3-input-glass w-full text-xs font-bold" required>
                         </div>
 
@@ -106,8 +86,8 @@
                                 Kode / Build Number <span class="text-rose-500">*</span>
                             </label>
                             <input type="text" name="build_number"
-                                value="{{ old('build_number', $version->build_number ?? '2026.09') }}"
-                                placeholder="Contoh: 2026.09" class="m3-input-glass w-full text-xs font-bold" required>
+                                value="{{ old('build_number', $version->build_number ?? date('Y.m.d')) }}"
+                                placeholder="Contoh: 2026.09.09" class="m3-input-glass w-full text-xs font-bold" required>
                         </div>
 
                         <div>
@@ -127,8 +107,8 @@
                                 Subtitle Rilis
                             </label>
                             <input type="text" name="release_subtitle"
-                                value="{{ old('release_subtitle', $version->release_subtitle ?? 'Rilis Perdana • September 2026') }}"
-                                placeholder="Contoh: Rilis Perdana • September 2026"
+                                value="{{ old('release_subtitle', $version->release_subtitle ?? 'Pembaruan Fitur & Perbaikan Sistem') }}"
+                                placeholder="Contoh: Pembaruan Fitur & Perbaikan Sistem"
                                 class="m3-input-glass w-full text-xs font-bold">
                         </div>
 
@@ -138,8 +118,8 @@
                                 Badge Status Rilis
                             </label>
                             <input type="text" name="release_badge"
-                                value="{{ old('release_badge', $version->release_badge ?? 'Rilis Saat Ini') }}"
-                                placeholder="Contoh: Rilis Saat Ini" class="m3-input-glass w-full text-xs font-bold">
+                                value="{{ old('release_badge', $version->release_badge ?? 'Rilis Stabil') }}"
+                                placeholder="Contoh: Rilis Stabil" class="m3-input-glass w-full text-xs font-bold">
                         </div>
 
                         <div>
@@ -155,11 +135,11 @@
                         <div class="md:col-span-2">
                             <label
                                 class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1.5 ml-1">
-                                Nama Header Aplikasi
+                                Nama Header Aplikasi Web
                             </label>
                             <input type="text" name="app_title"
-                                value="{{ old('app_title', $version->app_title ?? ($appType === 'ustadz' ? 'Ustadz - MDTHS' : 'Murid - MDTHS')) }}"
-                                placeholder="Contoh: Ustadz - MDTHS" class="m3-input-glass w-full text-xs font-bold"
+                                value="{{ old('app_title', $version->app_title ?? 'SIAKAD Web MDTHS') }}"
+                                placeholder="Contoh: SIAKAD Web MDTHS" class="m3-input-glass w-full text-xs font-bold"
                                 required>
                         </div>
 
@@ -219,7 +199,7 @@
                                     </button>
                                 </div>
                                 <input type="text" name="feature_titles[]" value="{{ $feat['title'] ?? '' }}"
-                                    placeholder="Judul Fitur (contoh: Modul Catatan & Keluhan)"
+                                    placeholder="Judul Fitur (contoh: Modul Penerbitan Tagihan Per KK)"
                                     class="m3-input-glass w-full text-xs font-bold mb-2" required>
                                 <textarea name="feature_descs[]" rows="2" placeholder="Deskripsi penjelasan fitur baru..."
                                     class="m3-input-glass w-full text-xs font-medium resize-none">{{ $feat['description'] ?? '' }}</textarea>
@@ -238,7 +218,7 @@
                                     </button>
                                 </div>
                                 <input type="text" name="feature_titles[]" value=""
-                                    placeholder="Judul Fitur (contoh: Modul Catatan & Keluhan)"
+                                    placeholder="Judul Fitur (contoh: Modul Penerbitan Tagihan Per KK)"
                                     class="m3-input-glass w-full text-xs font-bold mb-2">
                                 <textarea name="feature_descs[]" rows="2" placeholder="Deskripsi penjelasan fitur baru..."
                                     class="m3-input-glass w-full text-xs font-medium resize-none"></textarea>
@@ -291,7 +271,7 @@
                                     </button>
                                 </div>
                                 <input type="text" name="improve_titles[]" value="{{ $imp['title'] ?? '' }}"
-                                    placeholder="Judul Perbaikan (contoh: Penyempurnaan Form Pemilihan Ruangan)"
+                                    placeholder="Judul Perbaikan (contoh: Optimalisasi Performa Query Tabel)"
                                     class="m3-input-glass w-full text-xs font-bold mb-2" required>
                                 <textarea name="improve_descs[]" rows="2" placeholder="Deskripsi penjelasan perbaikan yang dilakukan..."
                                     class="m3-input-glass w-full text-xs font-medium resize-none">{{ $imp['description'] ?? '' }}</textarea>
@@ -310,7 +290,7 @@
                                     </button>
                                 </div>
                                 <input type="text" name="improve_titles[]" value=""
-                                    placeholder="Judul Perbaikan (contoh: Penyempurnaan Form Pemilihan Ruangan)"
+                                    placeholder="Judul Perbaikan (contoh: Optimalisasi Performa Query Tabel)"
                                     class="m3-input-glass w-full text-xs font-bold mb-2">
                                 <textarea name="improve_descs[]" rows="2" placeholder="Deskripsi penjelasan perbaikan yang dilakukan..."
                                     class="m3-input-glass w-full text-xs font-medium resize-none"></textarea>
@@ -328,7 +308,7 @@
                 <div class="m3-glass-card p-5 sm:p-6 rounded-3xl shadow-2xs">
                     <h3 class="font-black text-zinc-900 dark:text-white text-sm tracking-tight mb-4 flex items-center">
                         <i class="bi bi-cloud-arrow-up-fill text-emerald-600 mr-2"></i>
-                        Publikasikan Versi
+                        Publikasikan Versi Web
                     </h3>
 
                     <div
@@ -341,7 +321,7 @@
                                 <span class="text-xs font-bold text-zinc-900 dark:text-white block">Jadikan Versi Utama
                                     / Aktif</span>
                                 <span class="text-[11px] text-zinc-500 dark:text-zinc-400 block mt-0.5">Versi ini akan
-                                    otomatis dijadikan versi rujukan utama saat diakses client.</span>
+                                    otomatis dijadikan versi rujukan utama saat diakses pengguna web.</span>
                             </div>
                         </label>
                     </div>
@@ -349,7 +329,7 @@
                     <button type="submit"
                         class="w-full py-3.5 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-black text-xs tracking-wider uppercase transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer">
                         <i class="bi bi-check2-circle text-base"></i>
-                        Simpan & Publikasikan Versi
+                        Simpan & Publikasikan Versi Web
                     </button>
                 </div>
 
@@ -399,7 +379,7 @@
                                 Deskripsi Pengembang
                             </label>
                             <textarea name="dev_description" rows="3" placeholder="Deskripsi dedikasi pengembang..."
-                                class="m3-input-glass w-full text-xs font-medium resize-none">{{ old('dev_description', $version->dev_description ?? 'Aplikasi ini dirancang dan dikembangkan untuk mendukung digitalisasi tata kelola madrasah, presensi KBM, evaluasi catatan murid, serta transparansi pelaporan terpadu.') }}</textarea>
+                                class="m3-input-glass w-full text-xs font-medium resize-none">{{ old('dev_description', $version->dev_description ?? 'Sistem Informasi Akademik berbasis web untuk mempermudah operasional dan manajemen pendidikan madrasah secara terintegrasi.') }}</textarea>
                         </div>
 
                         <div>
@@ -410,10 +390,10 @@
                             @php
                                 $stacksStr = is_array($version->tech_stacks ?? null)
                                     ? implode(', ', $version->tech_stacks)
-                                    : 'Flutter, Dart, Laravel, REST API, MySQL, Provider';
+                                    : 'Laravel, PHP, Blade, Tailwind CSS, Alpine.js, MySQL';
                             @endphp
                             <input type="text" name="tech_stacks" value="{{ old('tech_stacks', $stacksStr) }}"
-                                placeholder="Flutter, Dart, Laravel, REST API, MySQL, Provider"
+                                placeholder="Laravel, PHP, Blade, Tailwind CSS, Alpine.js, MySQL"
                                 class="m3-input-glass w-full text-xs font-bold">
                         </div>
                     </div>
