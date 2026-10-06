@@ -49,6 +49,7 @@ class PresensiMuridController extends Controller
         }
         $ruangans = $ruangansQuery->get();
         $semuaRuangan = Ruangan::with('level')->berdasarkanHakAkses()->orderBy('level_id')->orderBy('nama_ruangan')->get();
+        $ruanganTerpilih = $ruangan_id ? $semuaRuangan->firstWhere('id', $ruangan_id) : null;
 
         $nama_hari_inggris = Carbon::parse($tanggal)->format('l');
         $mapHari = [
@@ -317,24 +318,28 @@ class PresensiMuridController extends Controller
 
         $persenSelesai = $totalSesi > 0 ? round(($totalSudahAbsen / $totalSesi) * 100, 1) : 0;
 
-        return view('presensi-murid.progres', compact(
-            'ruangans',
-            'tanggal',
-            'ruangan_id',
-            'status_filter',
-            'hari_ini',
-            'isLibur',
-            'keteranganLibur',
-            'isUjian',
-            'namaUjian',
-            'ujianId',
-            'totalSesi',
-            'totalSudahAbsen',
-            'totalBelumAbsen',
-            'persenSelesai',
-            'rekapStatus',
-            'detailProgres'
-        ));
+        return view('presensi-murid.progres', [
+            'ruangans' => $semuaRuangan,
+            'tanggal' => $tanggal,
+            'ruangan_id' => $ruangan_id,
+            'status_filter' => $status_filter,
+            'sesi_filter' => $sesi_filter,
+            'hari_ini' => $hari_ini,
+            'isLibur' => $isLibur,
+            'keteranganLibur' => $keteranganLibur,
+            'isUjian' => $isUjian,
+            'namaUjian' => $namaUjian,
+            'ujianId' => $ujianId,
+            'isEvent' => false,
+            'eventInfo' => null,
+            'sesiList' => [],
+            'totalSesi' => $totalSesi,
+            'totalSudahAbsen' => $totalSudahAbsen,
+            'totalBelumAbsen' => $totalBelumAbsen,
+            'persenSelesai' => $persenSelesai,
+            'rekapStatus' => $rekapStatus,
+            'detailProgres' => $detailProgres
+        ]);
     }
 
     public function index(Request $request)
