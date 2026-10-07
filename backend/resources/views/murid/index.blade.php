@@ -34,44 +34,37 @@
             @endcan
 
             <!-- Tombol Dropdown Opsi Data -->
-            <div class="relative inline-block text-left dropdown-container z-10">
+            <x-dropdown align="right" width="w-56">
+                <x-slot name="trigger">
+                    <button type="button"
+                        class="m3-btn-secondary h-10 w-10 !p-0 inline-flex items-center justify-center shadow-2xs cursor-pointer"
+                        title="Opsi Lainnya">
+                        <i class="bi bi-three-dots text-sm"></i>
+                    </button>
+                </x-slot>
 
-                <button type="button" data-dropdown-toggle="dropdownOpsiData"
-                    class="m3-btn-secondary h-10 w-10 !p-0 inline-flex items-center justify-center shadow-2xs"
-                    title="Opsi Lainnya">
-                    <i class="bi bi-three-dots text-sm"></i>
-                </button>
+                <a href="{{ route('kartu-pelajar.index') }}"
+                    class="m3-dropdown-item hover:!text-primary dark:hover:!text-primary-dark">
+                    <i class="bi bi-person-badge text-base text-primary dark:text-primary-dark"></i>
+                    <span>Cetak Kartu Pelajar</span>
+                </a>
 
-                <div id="dropdownOpsiData" class="m3-dropdown-menu hidden right-0 left-auto min-w-[180px]">
+                <a href="{{ route('murid.export-excel', ['status' => request('status', $status), 'search' => request('search')]) }}"
+                    class="m3-dropdown-item hover:!text-emerald-600 dark:hover:!text-emerald-400">
+                    <i class="bi bi-file-earmark-excel text-base text-emerald-600 dark:text-emerald-400"></i>
+                    <span>Export Excel</span>
+                </a>
 
-                    <a href="{{ route('kartu-pelajar.index') }}"
-                        class="m3-dropdown-item hover:!text-primary dark:hover:!text-primary-dark">
-                        <i class="bi bi-person-badge text-base text-primary dark:text-primary-dark"></i>
-                        <span>Cetak Kartu Pelajar</span>
+                @can('create murid')
+                    <hr class="m3-dropdown-divider">
+
+                    <a href="{{ route('murid.import') }}"
+                        class="m3-dropdown-item !text-amber-600 dark:!text-amber-400 hover:!bg-amber-50 dark:hover:!bg-amber-900/20 action-modal">
+                        <i class="bi bi-file-earmark-arrow-up text-base"></i>
+                        <span>Import Data</span>
                     </a>
-
-                    <a href="#" class="m3-dropdown-item hover:!text-emerald-600 dark:hover:!text-emerald-400">
-                        <i class="bi bi-file-earmark-excel text-base text-emerald-600 dark:text-emerald-400"></i>
-                        <span>Export Excel</span>
-                    </a>
-
-                    <a href="#" class="m3-dropdown-item hover:!text-blue-600 dark:hover:!text-blue-400">
-                        <i class="bi bi-printer text-base text-blue-600 dark:text-blue-400"></i>
-                        <span>Print Data</span>
-                    </a>
-
-                    @can('create murid')
-                        <hr class="m3-dropdown-divider">
-
-                        <a href="{{ route('murid.import') }}"
-                            class="m3-dropdown-item !text-amber-600 dark:!text-amber-400 hover:!bg-amber-50 dark:hover:!bg-amber-900/20 action-modal">
-                            <i class="bi bi-file-earmark-arrow-up text-base"></i>
-                            <span>Import Data</span>
-                        </a>
-                    @endcan
-
-                </div>
-            </div>
+                @endcan
+            </x-dropdown>
         </div>
     </div>
 

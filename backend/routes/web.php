@@ -268,6 +268,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // -- Murid --
     Route::prefix('murid')->name('murid.')->group(function () {
+        Route::get('/export-excel', [MuridController::class, 'exportExcel'])->name('export-excel');
         Route::get('/yatim', [MuridController::class, 'filterYatim'])->name('yatim');
         Route::get('/yatim/download', [MuridController::class, 'downloadYatim'])->name('downloadYatim');
         Route::get('/import', [MuridController::class, 'modalImport'])->name('import');

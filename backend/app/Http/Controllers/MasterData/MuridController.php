@@ -557,4 +557,58 @@ class MuridController extends Controller
 
         return back()->with('success', 'Foto berhasil diperbarui!');
     }
+
+    /**
+     * Export Excel Data Murid sesuai Filter (Status, Search, dll.)
+     */
+    public function exportExcel(Request $request)
+    {
+        $status = $request->query('status', 'Aktif');
+        $search = $request->query('search');
+
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        $tahunAktifId = $tahunAktif?->id;
+
+        $query = Murid::with([
+            'waliMurid.kampung',
+            'tahunMasuk',
+            'levelMasuk.tingkat',
+            'ruanganMasuk.level',
+            'ruangans' => function ($q) use ($tahunAktifId) {
+                if ($tahunAktifId) {
+                    $q->where('murid_ruangans.tahun_pelajaran_id', $tahunAktifId)->with('level');
+                }
+            }
+        ]);
+
+        if ($status && $status !== 'Semua') {
+            $query->where('status', $status);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', '%' . $search . '%')
+                    ->orWhere('nism', 'like', '%' . $search . '%')
+                    ->orWhere('nik_hash', hash_sensitive($search));
+            });
+        }
+
+        $murids = $query->orderBy('nism', 'asc')->get();
+
+        $namaFileSuffix = ($status && $status !== 'Semua') ? $status : 'Semua';
+        if ($search) {
+            $namaFileSuffix .= '_' . \Illuminate\Support\Str::slug($search, '_');
+        }
+        $filename = "Data_Murid_{$namaFileSuffix}_" . date('Ymd_His') . '.xls';
+
+        $content = view('cetak-baru.export-murid-excel', compact('murids', 'tahunAktif', 'status', 'search'))->render();
+
+        return response($content, 200, [
+            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ]);
+    }
 }

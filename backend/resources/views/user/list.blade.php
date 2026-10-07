@@ -230,6 +230,6 @@
 @if ($users->hasPages())
     <div
         class="mt-4 bg-zinc-50/70 dark:bg-zinc-950/50 p-4 rounded-2xl md:rounded-3xl border border-zinc-200/80 dark:border-zinc-800 relative z-10 transition-colors">
-        {{ $users->links() }}
+        {{ $users->links('vendor.pagination.custom') }}
     </div>
 @endif
