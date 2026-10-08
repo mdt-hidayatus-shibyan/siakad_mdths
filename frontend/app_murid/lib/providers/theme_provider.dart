@@ -5,10 +5,12 @@ import '../core/theme/app_colors.dart';
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light; // Default Light Mode
   String _colorPresetKey = 'emerald';
+  bool _useDynamicColor = true;
 
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
   String get colorPresetKey => _colorPresetKey;
+  bool get useDynamicColor => _useDynamicColor;
   AppColorPreset get activePreset => AppColors.activePreset;
 
   ThemeProvider() {
@@ -17,6 +19,8 @@ class ThemeProvider extends ChangeNotifier {
       _colorPresetKey = cachedPreset;
       AppColors.setPreset(cachedPreset);
     }
+    _useDynamicColor = StorageService.getUseDynamicColor(defaultValue: true);
+    AppColors.setUseDynamicColor(_useDynamicColor);
     _loadTheme();
   }
 
@@ -27,7 +31,7 @@ class ThemeProvider extends ChangeNotifier {
     } else if (savedMode == 'system') {
       _themeMode = ThemeMode.system;
     } else {
-      _themeMode = ThemeMode.light; // Default Light Mode
+      _themeMode = ThemeMode.light;
     }
 
     final savedPreset = StorageService.getColorPreset();
@@ -35,6 +39,9 @@ class ThemeProvider extends ChangeNotifier {
       _colorPresetKey = savedPreset;
       AppColors.setPreset(savedPreset);
     }
+
+    _useDynamicColor = StorageService.getUseDynamicColor(defaultValue: true);
+    AppColors.setUseDynamicColor(_useDynamicColor);
 
     notifyListeners();
   }
@@ -61,8 +68,22 @@ class ThemeProvider extends ChangeNotifier {
 
   Future<void> setColorPreset(String presetKey) async {
     _colorPresetKey = presetKey;
+    _useDynamicColor = false;
+    AppColors.setUseDynamicColor(false);
     AppColors.setPreset(presetKey);
     notifyListeners();
     await StorageService.setColorPreset(presetKey);
+    await StorageService.setUseDynamicColor(false);
+  }
+
+  Future<void> setUseDynamicColor(bool value) async {
+    _useDynamicColor = value;
+    AppColors.setUseDynamicColor(value);
+    notifyListeners();
+    await StorageService.setUseDynamicColor(value);
+  }
+
+  Future<void> toggleDynamicColor() async {
+    await setUseDynamicColor(!_useDynamicColor);
   }
 }

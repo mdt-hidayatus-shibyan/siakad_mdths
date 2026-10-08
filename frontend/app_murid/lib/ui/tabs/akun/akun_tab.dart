@@ -280,7 +280,7 @@ class AkunTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.surfaceContainerDark : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF121812) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Row(
           children: [
@@ -301,14 +301,14 @@ class AkunTab extends StatelessWidget {
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: AppColors.presets.map((preset) {
-                final isSelected = themeProvider.colorPresetKey == preset.key;
-                return Padding(
+              children: [
+                // 1. Dynamic Color Option (Material You Monet)
+                Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: InkWell(
                     onTap: () {
                       HapticHelper.selection();
-                      themeProvider.setColorPreset(preset.key);
+                      themeProvider.setUseDynamicColor(true);
                       Navigator.of(ctx).pop();
                     },
                     borderRadius: BorderRadius.circular(16),
@@ -318,19 +318,19 @@ class AkunTab extends StatelessWidget {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected
+                        color: themeProvider.useDynamicColor
                             ? (isDark
-                                  ? preset.primaryDark.withValues(alpha: 0.2)
-                                  : preset.primaryLight.withValues(alpha: 0.1))
+                                ? AppColors.primaryDark.withValues(alpha: 0.2)
+                                : AppColors.primaryLight.withValues(alpha: 0.1))
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected
+                          color: themeProvider.useDynamicColor
                               ? (isDark
-                                    ? preset.primaryDark
-                                    : preset.primaryLight)
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight)
                               : (isDark ? Colors.white12 : Colors.black12),
-                          width: isSelected ? 1.5 : 1,
+                          width: themeProvider.useDynamicColor ? 1.5 : 1,
                         ),
                       ),
                       child: Row(
@@ -339,27 +339,23 @@ class AkunTab extends StatelessWidget {
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? preset.primaryDark
-                                  : preset.primaryLight,
                               shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF38BDF8),
+                                  Color(0xFF34D399),
+                                  Color(0xFFFBBF24),
+                                  Color(0xFFA78BFA),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.5),
+                                color: Colors.white.withValues(alpha: 0.6),
                                 width: 2,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      (isDark
-                                              ? preset.primaryDark
-                                              : preset.primaryLight)
-                                          .withValues(alpha: 0.3),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                             ),
-                            child: isSelected
+                            child: themeProvider.useDynamicColor
                                 ? const Icon(
                                     Icons.check_rounded,
                                     size: 16,
@@ -372,21 +368,46 @@ class AkunTab extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  preset.name,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w900
-                                        : FontWeight.w700,
-                                    color: isDark
-                                        ? Colors.white
-                                        : Colors.black87,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Warna Dinamis Sistem',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: themeProvider.useDynamicColor
+                                            ? FontWeight.w900
+                                            : FontWeight.w700,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? const Color(0xFF1E293B)
+                                            : const Color(0xFFE2E8F0),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Text(
+                                        'Monet / Pixel',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.2,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  preset.subtitle,
+                                  'Mengikuti warna wallpaper perangkat Android 12+',
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: isDark
@@ -397,20 +418,137 @@ class AkunTab extends StatelessWidget {
                               ],
                             ),
                           ),
-                          if (isSelected)
+                          if (themeProvider.useDynamicColor)
                             Icon(
                               Icons.check_circle_rounded,
                               size: 18,
                               color: isDark
-                                  ? preset.primaryDark
-                                  : preset.primaryLight,
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
                             ),
                         ],
                       ),
                     ),
                   ),
-                );
-              }).toList(),
+                ),
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Divider(height: 1),
+                ),
+
+                // 2. Fixed Curated Color Presets
+                ...AppColors.presets.map((preset) {
+                  final isSelected = !themeProvider.useDynamicColor &&
+                      themeProvider.colorPresetKey == preset.key;
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: InkWell(
+                      onTap: () {
+                        HapticHelper.selection();
+                        themeProvider.setColorPreset(preset.key);
+                        Navigator.of(ctx).pop();
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? (isDark
+                                  ? preset.primaryDark.withValues(alpha: 0.2)
+                                  : preset.primaryLight.withValues(alpha: 0.1))
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected
+                                ? (isDark
+                                    ? preset.primaryDark
+                                    : preset.primaryLight)
+                                : (isDark ? Colors.white12 : Colors.black12),
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? preset.primaryDark
+                                    : preset.primaryLight,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: (isDark
+                                            ? preset.primaryDark
+                                            : preset.primaryLight)
+                                        .withValues(alpha: 0.3),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: isSelected
+                                  ? const Icon(
+                                      Icons.check_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    preset.name,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w900
+                                          : FontWeight.w700,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    preset.subtitle,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isDark
+                                          ? Colors.white54
+                                          : Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(
+                                Icons.check_circle_rounded,
+                                size: 18,
+                                color: isDark
+                                    ? preset.primaryDark
+                                    : preset.primaryLight,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
             ),
           ),
         ),

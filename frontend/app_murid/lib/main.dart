@@ -1,7 +1,9 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'core/storage/storage_service.dart';
+import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/akademik_provider.dart';
 import 'providers/auth_provider.dart';
@@ -18,13 +20,14 @@ void main() async {
   // Inisialisasi awal SharedPreferences & In-Memory Cache
   await StorageService.init();
 
-  // Enforce Android Full Edge-to-Edge System Bar Transparency
+  // Enforce Android Full Edge-to-Edge System Bar Transparency (Pixel Style)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
       systemNavigationBarContrastEnforced: false,
     ),
   );
@@ -47,15 +50,27 @@ class WaliApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AkademikProvider()),
         ChangeNotifierProvider(create: (_) => BantuanProvider()),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
-          return MaterialApp(
-            title: 'Wali Murid - MDTHS',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.themeMode,
-            home: const SplashScreen(),
+      child: DynamicColorBuilder(
+        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+          return Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) {
+              // Update dynamic schemes globally in AppColors
+              AppColors.setDynamicSchemes(lightDynamic, darkDynamic);
+
+              final effectiveLightDynamic =
+                  themeProvider.useDynamicColor ? lightDynamic : null;
+              final effectiveDarkDynamic =
+                  themeProvider.useDynamicColor ? darkDynamic : null;
+
+              return MaterialApp(
+                title: 'Wali Murid - MDTHS',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.lightTheme(effectiveLightDynamic),
+                darkTheme: AppTheme.darkTheme(effectiveDarkDynamic),
+                themeMode: themeProvider.themeMode,
+                home: const SplashScreen(),
+              );
+            },
           );
         },
       ),

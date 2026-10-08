@@ -57,9 +57,7 @@ class SegmentedTabBar extends StatelessWidget {
                     curve: Curves.easeInOut,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight)
+                          ? Theme.of(context).colorScheme.primary
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -71,7 +69,7 @@ class SegmentedTabBar extends StatelessWidget {
                             tab.icon,
                             size: 16,
                             color: isSelected
-                                ? (isDark ? Colors.black : Colors.white)
+                                ? Theme.of(context).colorScheme.onPrimary
                                 : (isDark ? Colors.white60 : Colors.black54),
                           ),
                           const SizedBox(width: 4),
@@ -84,7 +82,7 @@ class SegmentedTabBar extends StatelessWidget {
                                     ? FontWeight.w900
                                     : FontWeight.w600,
                                 color: isSelected
-                                    ? (isDark ? Colors.black : Colors.white)
+                                    ? Theme.of(context).colorScheme.onPrimary
                                     : (isDark
                                           ? Colors.white60
                                           : Colors.black54),

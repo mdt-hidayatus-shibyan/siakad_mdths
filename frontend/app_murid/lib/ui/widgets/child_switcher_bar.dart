@@ -143,7 +143,7 @@ class ChildSwitcherBar extends StatelessWidget {
                                   fontSize: 12,
                                   fontWeight: FontWeight.w900,
                                   color: isSelected
-                                      ? (isDark ? Colors.black : Colors.white)
+                                      ? Theme.of(context).colorScheme.onPrimary
                                       : (isDark
                                             ? Colors.white70
                                             : Colors.black87),

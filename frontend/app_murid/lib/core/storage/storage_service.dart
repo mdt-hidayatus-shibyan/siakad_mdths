@@ -9,12 +9,14 @@ class StorageService {
   static int? _cachedSelectedAnakId;
   static String? _cachedThemeMode;
   static String? _cachedColorPreset;
+  static bool? _cachedUseDynamicColor;
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
     _cachedToken = _prefs?.getString(AppConstants.keyToken);
     _cachedThemeMode = _prefs?.getString(AppConstants.keyThemeMode);
     _cachedColorPreset = _prefs?.getString(AppConstants.keyColorPreset);
+    _cachedUseDynamicColor = _prefs?.getBool(AppConstants.keyUseDynamicColor);
     _cachedSelectedAnakId = _prefs?.getInt(AppConstants.keySelectedAnakId);
 
     final str = _prefs?.getString(AppConstants.keyWaliData);
@@ -107,6 +109,19 @@ class StorageService {
   }
 
   static String? getCachedColorPreset() => _cachedColorPreset;
+
+  // Dynamic Color (Material You)
+  static Future<void> setUseDynamicColor(bool value) async {
+    _cachedUseDynamicColor = value;
+    final prefs = await _getPrefs();
+    await prefs.setBool(AppConstants.keyUseDynamicColor, value);
+  }
+
+  static bool getUseDynamicColor({bool defaultValue = true}) {
+    return _cachedUseDynamicColor ??
+        _prefs?.getBool(AppConstants.keyUseDynamicColor) ??
+        defaultValue;
+  }
 
   // Clear All on Logout
   static Future<void> clearAll() async {

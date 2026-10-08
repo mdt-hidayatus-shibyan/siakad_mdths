@@ -31,11 +31,11 @@ class AppColorPreset {
   });
 }
 
-/// Material 3 Expressive & Dynamic App Color Palette
+/// Material 3 Expressive & Dynamic App Color Palette (Google Pixel Monet Styled)
 class AppColors {
   AppColors._();
 
-  // === 6 SUITABLE COLOR PRESETS ===
+  // === 6 CURATED M3E COLOR PRESETS ===
   static const List<AppColorPreset> presets = [
     // 1. Hijau Madrasah (Default) - Sejuk, Religius & Asri
     AppColorPreset(
@@ -130,8 +130,22 @@ class AppColors {
   ];
 
   static AppColorPreset _activePreset = presets[0];
-
   static AppColorPreset get activePreset => _activePreset;
+
+  static ColorScheme? _dynamicLightScheme;
+  static ColorScheme? _dynamicDarkScheme;
+  static bool _useDynamicColor = true;
+
+  static bool get useDynamicColor => _useDynamicColor;
+
+  static void setDynamicSchemes(ColorScheme? light, ColorScheme? dark) {
+    _dynamicLightScheme = light;
+    _dynamicDarkScheme = dark;
+  }
+
+  static void setUseDynamicColor(bool value) {
+    _useDynamicColor = value;
+  }
 
   static void setPreset(String key) {
     _activePreset = presets.firstWhere(
@@ -140,34 +154,66 @@ class AppColors {
     );
   }
 
-  // === DYNAMIC BRAND PRIMARY ===
-  static Color get primaryLight => _activePreset.primaryLight;
-  static Color get primaryDark => _activePreset.primaryDark;
-  static Color get onPrimaryLight => _activePreset.onPrimaryLight;
-  static Color get onPrimaryDark => _activePreset.onPrimaryDark;
+  // === DYNAMIC BRAND PRIMARY (Dynamic Color Aware) ===
+  static Color get primaryLight =>
+      (_useDynamicColor && _dynamicLightScheme != null)
+          ? _dynamicLightScheme!.primary
+          : _activePreset.primaryLight;
+
+  static Color get primaryDark =>
+      (_useDynamicColor && _dynamicDarkScheme != null)
+          ? _dynamicDarkScheme!.primary
+          : _activePreset.primaryDark;
+
+  static Color get onPrimaryLight =>
+      (_useDynamicColor && _dynamicLightScheme != null)
+          ? _dynamicLightScheme!.onPrimary
+          : _activePreset.onPrimaryLight;
+
+  static Color get onPrimaryDark =>
+      (_useDynamicColor && _dynamicDarkScheme != null)
+          ? _dynamicDarkScheme!.onPrimary
+          : _activePreset.onPrimaryDark;
 
   // === DYNAMIC PRIMARY CONTAINERS ===
-  static Color get primaryContainerLight => _activePreset.primaryContainerLight;
-  static Color get primaryContainerDark => _activePreset.primaryContainerDark;
-  static Color get onPrimaryContainerLight =>
-      _activePreset.onPrimaryContainerLight;
-  static Color get onPrimaryContainerDark =>
-      _activePreset.onPrimaryContainerDark;
+  static Color get primaryContainerLight =>
+      (_useDynamicColor && _dynamicLightScheme != null)
+          ? _dynamicLightScheme!.primaryContainer
+          : _activePreset.primaryContainerLight;
 
-  // === OLED TRUE BLACK SURFACES ===
+  static Color get primaryContainerDark =>
+      (_useDynamicColor && _dynamicDarkScheme != null)
+          ? _dynamicDarkScheme!.primaryContainer
+          : _activePreset.primaryContainerDark;
+
+  static Color get onPrimaryContainerLight =>
+      (_useDynamicColor && _dynamicLightScheme != null)
+          ? _dynamicLightScheme!.onPrimaryContainer
+          : _activePreset.onPrimaryContainerLight;
+
+  static Color get onPrimaryContainerDark =>
+      (_useDynamicColor && _dynamicDarkScheme != null)
+          ? _dynamicDarkScheme!.onPrimaryContainer
+          : _activePreset.onPrimaryContainerDark;
+
+  // === OLED TRUE BLACK SURFACES (Pixel Dark Theme) ===
   static const Color surfaceLight = Color(0xFFFAF9F6); // Warm Clean Canvas
   static const Color surfaceDark = Color(0xFF000000); // Super AMOLED True Black
 
   static const Color cardGlassLight = Color(0xD9FFFFFF);
-  static const Color cardGlassDark = Color(0xA6181F18);
+  static const Color cardGlassDark = Color(0xB3111711);
 
+  static const Color surfaceContainerLowestDark = Color(0xFF000000);
   static const Color surfaceContainerLowDark = Color(0xFF080D08);
   static const Color surfaceContainerDark = Color(0xFF101710);
   static const Color surfaceContainerHighDark = Color(0xFF182218);
+  static const Color surfaceContainerHighestDark = Color(0xFF202A20);
 
   // === OUTLINE & BORDERS ===
-  static const Color outlineLight = Color(0xFFE4E4E7); // Zinc 200
-  static const Color outlineDark = Color(0xFF272F27); // Deep Zinc
+  static const Color outlineLight = Color(0xFFE2E8F0); // Zinc 200
+  static const Color outlineDark = Color(0xFF273127); // Deep Zinc
+  static const Color outlineVariantLight = Color(0xFFCBD5E1);
+  static const Color outlineVariantDark = Color(0xFF1E261E);
 
   // === ACCENT PALETTE ===
   static const Color amberAccent = Color(0xFFF59E0B);
@@ -202,4 +248,76 @@ class AppColors {
   static const Color dispensasiBgLight = Color(0xFFEDE9FE);
   static const Color dispensasiTextDark = Color(0xFFA78BFA);
   static const Color dispensasiBgDark = Color(0xFF2E1065);
+
+  /// Generate M3 Light ColorScheme with optional dynamic color
+  static ColorScheme buildLightColorScheme([ColorScheme? dynamicScheme]) {
+    if (_useDynamicColor && dynamicScheme != null) {
+      return dynamicScheme.copyWith(
+        surface: surfaceLight,
+        onSurface: const Color(0xFF191C19),
+        outline: outlineLight,
+        outlineVariant: outlineVariantLight,
+        error: roseDanger,
+      );
+    }
+
+    final p = _activePreset;
+    final base = ColorScheme.fromSeed(
+      seedColor: p.primaryLight,
+      brightness: Brightness.light,
+    );
+
+    return base.copyWith(
+      primary: p.primaryLight,
+      onPrimary: p.onPrimaryLight,
+      primaryContainer: p.primaryContainerLight,
+      onPrimaryContainer: p.onPrimaryContainerLight,
+      surface: surfaceLight,
+      onSurface: const Color(0xFF191C19),
+      outline: outlineLight,
+      outlineVariant: outlineVariantLight,
+      error: roseDanger,
+    );
+  }
+
+  /// Generate M3 Dark ColorScheme with optional dynamic color & AMOLED Black
+  static ColorScheme buildDarkColorScheme([ColorScheme? dynamicScheme]) {
+    if (_useDynamicColor && dynamicScheme != null) {
+      return dynamicScheme.copyWith(
+        surface: surfaceDark,
+        onSurface: const Color(0xFFE2E3DD),
+        surfaceContainerLowest: surfaceContainerLowestDark,
+        surfaceContainerLow: surfaceContainerLowDark,
+        surfaceContainer: surfaceContainerDark,
+        surfaceContainerHigh: surfaceContainerHighDark,
+        surfaceContainerHighest: surfaceContainerHighestDark,
+        outline: outlineDark,
+        outlineVariant: outlineVariantDark,
+        error: roseDanger,
+      );
+    }
+
+    final p = _activePreset;
+    final base = ColorScheme.fromSeed(
+      seedColor: p.primaryDark,
+      brightness: Brightness.dark,
+    );
+
+    return base.copyWith(
+      primary: p.primaryDark,
+      onPrimary: p.onPrimaryDark,
+      primaryContainer: p.primaryContainerDark,
+      onPrimaryContainer: p.onPrimaryContainerDark,
+      surface: surfaceDark,
+      onSurface: const Color(0xFFE2E3DD),
+      surfaceContainerLowest: surfaceContainerLowestDark,
+      surfaceContainerLow: surfaceContainerLowDark,
+      surfaceContainer: surfaceContainerDark,
+      surfaceContainerHigh: surfaceContainerHighDark,
+      surfaceContainerHighest: surfaceContainerHighestDark,
+      outline: outlineDark,
+      outlineVariant: outlineVariantDark,
+      error: roseDanger,
+    );
+  }
 }

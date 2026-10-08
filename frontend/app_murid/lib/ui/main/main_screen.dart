@@ -186,15 +186,14 @@ class _MainScreenState extends State<MainScreen> {
     required bool isDark,
   }) {
     final isSelected = _currentIndex == index;
-    final primaryColor = isDark
-        ? AppColors.primaryDark
-        : AppColors.primaryLight;
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = colorScheme.primary;
     final inactiveColor = isDark
         ? const Color(0xFF94A3B8)
         : const Color(0xFF64748B);
     final activeBgColor = isDark
-        ? AppColors.primaryDark.withValues(alpha: 0.15)
-        : AppColors.primaryLight.withValues(alpha: 0.10);
+        ? colorScheme.primary.withValues(alpha: 0.18)
+        : colorScheme.primary.withValues(alpha: 0.10);
 
     return Expanded(
       child: Material(

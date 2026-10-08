@@ -3,9 +3,9 @@ class ApiConstants {
 
   // Backend API URL
   // static const String defaultBaseUrl = 'http://10.22.189.1:8000/api';
-  static const String defaultBaseUrl = 'http://127.0.0.1:8000/api';
-  // static const String defaultBaseUrl =
-  //     'https://mdt-hidayatus-shibyan.sch.id/api';
+  // static const String defaultBaseUrl = 'http://127.0.0.1:8000/api';
+  static const String defaultBaseUrl =
+      'https://mdt-hidayatus-shibyan.sch.id/api';
 
   static const String login = '/login';
   static const String logout = '/logout';
