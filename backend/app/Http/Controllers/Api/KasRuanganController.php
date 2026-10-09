@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\KasRuangan\PembayaranKasRuangan;
 use App\Models\KasRuangan\PengaturanKasRuangan;
+use App\Models\KasRuangan\PengeluaranKasRuangan;
 use App\Models\KasRuangan\SetoranKasRuangan;
 use App\Models\Ruangan;
 use App\Models\Tabungan\Tabungan;
@@ -15,6 +16,7 @@ use App\Repositories\MuridRuanganRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class KasRuanganController extends Controller
@@ -64,10 +66,20 @@ class KasRuanganController extends Controller
             ], 404);
         }
 
-        $totalMurid = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunAktif->id ?? $ruangan->tahun_pelajaran_id, 'Aktif')->count();
+        $murids = $this->muridRuanganRepo->getMuridByRuanganAndTahun($ruangan->id, $tahunAktif->id ?? $ruangan->tahun_pelajaran_id, 'Aktif');
+        $totalMurid = $murids->count();
         $totalTerkumpul = PembayaranKasRuangan::where('ruangan_id', $ruangan->id)->sum('jumlah_bayar');
         $totalSudahDisetor = SetoranKasRuangan::where('ruangan_id', $ruangan->id)->where('status', 'Diterima')->sum('jumlah_setor');
         $totalMenungguVerifikasi = SetoranKasRuangan::where('ruangan_id', $ruangan->id)->where('status', 'Menunggu Verifikasi')->sum('jumlah_setor');
+        $totalPengeluaran = PengeluaranKasRuangan::where('ruangan_id', $ruangan->id)->sum('nominal');
+
+        $pengaturan = PengaturanKasRuangan::where('ruangan_id', $ruangan->id)->first();
+        $targetLaki = (int) ($pengaturan->nominal_laki ?? 0);
+        $targetPerempuan = (int) ($pengaturan->nominal_perempuan ?? 0);
+
+        $totalTargetKas = $murids->reduce(function ($carry, $m) use ($targetLaki, $targetPerempuan) {
+            return $carry + (strtoupper($m->jenis_kelamin ?? 'L') === 'P' ? $targetPerempuan : $targetLaki);
+        }, 0);
 
         // Rekening Tabungan Kas Ruangan
         $tabunganKas = Tabungan::where('jenis_nasabah', 'Kas Ruangan')
@@ -75,7 +87,7 @@ class KasRuanganController extends Controller
             ->first();
 
         $totalDitarik = $tabunganKas ? (float) $tabunganKas->total_tarik : 0;
-        $sisaDiTanganWali = max(0, ($totalTerkumpul + $totalDitarik) - $totalSudahDisetor - $totalMenungguVerifikasi);
+        $sisaDiTanganWali = max(0, ($totalTerkumpul + $totalDitarik) - $totalSudahDisetor - $totalMenungguVerifikasi - $totalPengeluaran);
 
         $ruanganList = $accessibleRuangans->map(fn($r) => [
             'id' => $r->id,
@@ -90,9 +102,11 @@ class KasRuanganController extends Controller
                 'nama_ruangan' => $ruangan->nama_ruangan,
                 'level_nama' => $ruangan->level->nama_level ?? '-',
                 'total_murid' => $totalMurid,
+                'total_target_kas' => (int) $totalTargetKas,
                 'total_terkumpul' => (int) $totalTerkumpul,
                 'total_sudah_disetor' => (int) $totalSudahDisetor,
                 'total_menunggu_verifikasi' => (int) $totalMenungguVerifikasi,
+                'total_pengeluaran' => (int) $totalPengeluaran,
                 'total_ditarik' => (int) $totalDitarik,
                 'sisa_di_tangan_wali' => (int) $sisaDiTanganWali,
                 'ruangan_list' => $ruanganList,
@@ -331,7 +345,8 @@ class KasRuanganController extends Controller
             ->first();
 
         $totalDitarik = $tabunganKas ? (float) $tabunganKas->total_tarik : 0;
-        $diWali = max(0, ($terkumpul + $totalDitarik) - $disetor - $menunggu);
+        $totalPengeluaran = PengeluaranKasRuangan::where('ruangan_id', $ruanganId)->sum('nominal');
+        $diWali = max(0, ($terkumpul + $totalDitarik) - $disetor - $menunggu - $totalPengeluaran);
 
         $list = $setorans->map(function ($s) {
             $tgl = $s->tanggal_setor;
@@ -406,6 +421,7 @@ class KasRuanganController extends Controller
                 'total_terkumpul' => (int) $terkumpul,
                 'total_disetor' => (int) $disetor,
                 'total_menunggu_verifikasi' => (int) $menunggu,
+                'total_pengeluaran' => (int) $totalPengeluaran,
                 'total_ditarik' => (int) $totalDitarik,
                 'sisa_di_tangan_wali' => (int) $diWali,
                 'tabungan' => $tabunganKas ? [
@@ -467,7 +483,8 @@ class KasRuanganController extends Controller
 
         $tabunganKas = Tabungan::where('jenis_nasabah', 'Kas Ruangan')->where('ruangan_id', $ruanganId)->first();
         $totalDitarik = $tabunganKas ? (float) $tabunganKas->total_tarik : 0;
-        $diWali = max(0, ($terkumpul + $totalDitarik) - $disetor - $menunggu);
+        $totalPengeluaran = PengeluaranKasRuangan::where('ruangan_id', $ruanganId)->sum('nominal');
+        $diWali = max(0, ($terkumpul + $totalDitarik) - $disetor - $menunggu - $totalPengeluaran);
 
         if ($request->jumlah_setor > $diWali) {
             return response()->json([
@@ -547,7 +564,8 @@ class KasRuanganController extends Controller
 
         $tabunganKas = Tabungan::where('jenis_nasabah', 'Kas Ruangan')->where('ruangan_id', $ruanganId)->first();
         $totalDitarik = $tabunganKas ? (float) $tabunganKas->total_tarik : 0;
-        $diWali = max(0, ($terkumpul + $totalDitarik) - $disetor - $menungguLain);
+        $totalPengeluaran = PengeluaranKasRuangan::where('ruangan_id', $ruanganId)->sum('nominal');
+        $diWali = max(0, ($terkumpul + $totalDitarik) - $disetor - $menungguLain - $totalPengeluaran);
 
         if ($request->jumlah_setor > $diWali) {
             return response()->json([
@@ -659,13 +677,17 @@ class KasRuanganController extends Controller
 
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
 
-        // Cari ruangan di mana ustadz ini adalah walinya
-        $ruangan = Ruangan::where('tahun_pelajaran_id', $tahunAktif->id ?? 0)
-            ->where('ustadz_id', $ustadzId)
-            ->first();
+        if ($request->filled('ruangan_id')) {
+            $ruangan = Ruangan::find($request->ruangan_id);
+        } else {
+            // Cari ruangan di mana ustadz ini adalah walinya
+            $ruangan = Ruangan::where('tahun_pelajaran_id', $tahunAktif->id ?? 0)
+                ->where('ustadz_id', $ustadzId)
+                ->first();
 
-        if (!$ruangan) {
-            $ruangan = Ruangan::where('ustadz_id', $ustadzId)->first();
+            if (!$ruangan) {
+                $ruangan = Ruangan::where('ustadz_id', $ustadzId)->first();
+            }
         }
 
         if (!$ruangan) {
@@ -754,5 +776,283 @@ class KasRuanganController extends Controller
                 'nominal_perempuan' => (int) $pengaturan->nominal_perempuan,
             ]
         ], 200);
+    }
+
+    // =========================================================================
+    // PENGELUARAN KAS RUANGAN (OPERASIONAL / SARANA KELAS)
+    // =========================================================================
+
+    public function getRiwayatPengeluaran(Request $request)
+    {
+        $user = $request->user();
+        $ustadzId = $user->ustadz->id ?? null;
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+
+        $ruanganId = $request->ruangan_id;
+        if (!$ruanganId) {
+            $ruangan = Ruangan::where('tahun_pelajaran_id', $tahunAktif->id ?? 0)
+                ->where('ustadz_id', $ustadzId)
+                ->first();
+            $ruanganId = $ruangan->id ?? Ruangan::first()?->id;
+        }
+
+        if (!$ruanganId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ruangan tidak ditemukan.'
+            ], 404);
+        }
+
+        $ruangan = Ruangan::with('level')->findOrFail($ruanganId);
+
+        $pengeluarans = PengeluaranKasRuangan::with(['pencatat.ustadz'])
+            ->where('ruangan_id', $ruanganId)
+            ->latest('tanggal_pengeluaran')
+            ->latest('id')
+            ->get();
+
+        $terkumpul = PembayaranKasRuangan::where('ruangan_id', $ruanganId)->sum('jumlah_bayar');
+        $disetor = SetoranKasRuangan::where('ruangan_id', $ruanganId)->where('status', 'Diterima')->sum('jumlah_setor');
+        $menunggu = SetoranKasRuangan::where('ruangan_id', $ruanganId)->where('status', 'Menunggu Verifikasi')->sum('jumlah_setor');
+
+        $tabunganKas = Tabungan::where('jenis_nasabah', 'Kas Ruangan')
+            ->where('ruangan_id', $ruanganId)
+            ->first();
+
+        $totalDitarik = $tabunganKas ? (float) $tabunganKas->total_tarik : 0;
+        $totalPengeluaran = $pengeluarans->sum('nominal');
+        $diWali = max(0, ($terkumpul + $totalDitarik) - $disetor - $menunggu - $totalPengeluaran);
+
+        $list = $pengeluarans->map(function ($p) {
+            $tgl = $p->tanggal_pengeluaran;
+            $hariTanggal = null;
+            if ($tgl) {
+                try {
+                    $carbon = Carbon::parse($tgl)->locale('id');
+                    $hariTanggal = $carbon->isoFormat('dddd, D MMMM YYYY');
+                } catch (\Exception $e) {
+                }
+            }
+
+            return [
+                'id' => $p->id,
+                'ruangan_id' => $p->ruangan_id,
+                'judul' => $p->judul,
+                'kategori' => $p->kategori ?? 'Operasional',
+                'nominal' => (int) $p->nominal,
+                'tanggal_pengeluaran' => is_string($p->tanggal_pengeluaran) ? $p->tanggal_pengeluaran : ($p->tanggal_pengeluaran?->format('Y-m-d') ?? date('Y-m-d')),
+                'hari_tanggal' => $hariTanggal ?? ($p->tanggal_pengeluaran ? (string)$p->tanggal_pengeluaran : date('Y-m-d')),
+                'keterangan' => $p->keterangan ?? '-',
+                'bukti_nota' => $p->bukti_nota ? asset('storage/' . $p->bukti_nota) : null,
+                'diinput_oleh_nama' => $p->pencatat?->ustadz?->nama_lengkap ?? $p->pencatat?->name ?? 'Wali Ruangan',
+                'can_edit' => true,
+                'can_delete' => true,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'ruangan_id' => $ruangan->id,
+                'nama_ruangan' => $ruangan->nama_ruangan,
+                'level_nama' => $ruangan->level->nama_level ?? '-',
+                'total_terkumpul' => (int) $terkumpul,
+                'total_disetor' => (int) $disetor,
+                'total_menunggu_verifikasi' => (int) $menunggu,
+                'total_pengeluaran' => (int) $totalPengeluaran,
+                'total_ditarik' => (int) $totalDitarik,
+                'sisa_di_tangan_wali' => (int) $diWali,
+                'list' => $list,
+            ]
+        ], 200);
+    }
+
+    public function simpanPengeluaran(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ruangan_id' => 'required|exists:ruangans,id',
+            'judul' => 'required|string|max:255',
+            'nominal' => 'required|numeric|min:1000',
+            'tanggal_pengeluaran' => 'required|date',
+            'kategori' => 'nullable|string|max:100',
+            'keterangan' => 'nullable|string|max:1000',
+            'bukti_nota' => 'nullable|image|max:5120',
+        ], [
+            'judul.required' => 'Keperluan/judul pengeluaran wajib diisi.',
+            'nominal.required' => 'Nominal pengeluaran wajib diisi.',
+            'nominal.min' => 'Nominal pengeluaran minimal Rp 1.000.',
+            'tanggal_pengeluaran.required' => 'Tanggal pengeluaran wajib diisi.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Input pengeluaran kas tidak valid.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $ruanganId = $request->ruangan_id;
+        $terkumpul = PembayaranKasRuangan::where('ruangan_id', $ruanganId)->sum('jumlah_bayar');
+        $disetor = SetoranKasRuangan::where('ruangan_id', $ruanganId)->where('status', 'Diterima')->sum('jumlah_setor');
+        $menunggu = SetoranKasRuangan::where('ruangan_id', $ruanganId)->where('status', 'Menunggu Verifikasi')->sum('jumlah_setor');
+        $totalPengeluaran = PengeluaranKasRuangan::where('ruangan_id', $ruanganId)->sum('nominal');
+
+        $tabunganKas = Tabungan::where('jenis_nasabah', 'Kas Ruangan')->where('ruangan_id', $ruanganId)->first();
+        $totalDitarik = $tabunganKas ? (float) $tabunganKas->total_tarik : 0;
+        $diWali = max(0, ($terkumpul + $totalDitarik) - $disetor - $menunggu - $totalPengeluaran);
+
+        if ($request->nominal > $diWali) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nominal pengeluaran (' . number_format($request->nominal, 0, ',', '.') . ') melebihi sisa uang kas fisik di tangan Wali (' . number_format($diWali, 0, ',', '.') . ').'
+            ], 422);
+        }
+
+        $userId = $request->user()->id;
+        $buktiPath = null;
+        if ($request->hasFile('bukti_nota')) {
+            $buktiPath = $request->file('bukti_nota')->store('pengeluaran_kas_ruangan', 'public');
+        }
+
+        DB::beginTransaction();
+        try {
+            $pengeluaran = PengeluaranKasRuangan::create([
+                'ruangan_id' => $ruanganId,
+                'judul' => $request->judul,
+                'kategori' => $request->kategori ?? 'Operasional',
+                'nominal' => $request->nominal,
+                'tanggal_pengeluaran' => $request->tanggal_pengeluaran,
+                'keterangan' => $request->keterangan,
+                'bukti_nota' => $buktiPath,
+                'diinput_oleh' => $userId,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengeluaran kas ruangan berhasil dicatat.',
+                'data' => [
+                    'id' => $pengeluaran->id,
+                    'judul' => $pengeluaran->judul,
+                    'nominal' => (int) $pengeluaran->nominal,
+                    'bukti_nota' => $pengeluaran->bukti_nota ? asset('storage/' . $pengeluaran->bukti_nota) : null,
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($buktiPath && Storage::disk('public')->exists($buktiPath)) {
+                Storage::disk('public')->delete($buktiPath);
+            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mencatat pengeluaran: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updatePengeluaran(Request $request, $id)
+    {
+        $pengeluaran = PengeluaranKasRuangan::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'judul' => 'required|string|max:255',
+            'nominal' => 'required|numeric|min:1000',
+            'tanggal_pengeluaran' => 'required|date',
+            'kategori' => 'nullable|string|max:100',
+            'keterangan' => 'nullable|string|max:1000',
+            'bukti_nota' => 'nullable|image|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Input edit pengeluaran tidak valid.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $ruanganId = $pengeluaran->ruangan_id;
+        $terkumpul = PembayaranKasRuangan::where('ruangan_id', $ruanganId)->sum('jumlah_bayar');
+        $disetor = SetoranKasRuangan::where('ruangan_id', $ruanganId)->where('status', 'Diterima')->sum('jumlah_setor');
+        $menunggu = SetoranKasRuangan::where('ruangan_id', $ruanganId)->where('status', 'Menunggu Verifikasi')->sum('jumlah_setor');
+        $pengeluaranLain = PengeluaranKasRuangan::where('ruangan_id', $ruanganId)->where('id', '!=', $id)->sum('nominal');
+
+        $tabunganKas = Tabungan::where('jenis_nasabah', 'Kas Ruangan')->where('ruangan_id', $ruanganId)->first();
+        $totalDitarik = $tabunganKas ? (float) $tabunganKas->total_tarik : 0;
+        $diWaliTersedia = max(0, ($terkumpul + $totalDitarik) - $disetor - $menunggu - $pengeluaranLain);
+
+        if ($request->nominal > $diWaliTersedia) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nominal pengeluaran baru (' . number_format($request->nominal, 0, ',', '.') . ') melebihi sisa uang kas fisik di tangan Wali (' . number_format($diWaliTersedia, 0, ',', '.') . ').'
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $buktiPath = $pengeluaran->bukti_nota;
+            if ($request->hasFile('bukti_nota')) {
+                if ($pengeluaran->bukti_nota && Storage::disk('public')->exists($pengeluaran->bukti_nota)) {
+                    Storage::disk('public')->delete($pengeluaran->bukti_nota);
+                }
+                $buktiPath = $request->file('bukti_nota')->store('pengeluaran_kas_ruangan', 'public');
+            }
+
+            $pengeluaran->update([
+                'judul' => $request->judul,
+                'kategori' => $request->kategori ?? $pengeluaran->kategori,
+                'nominal' => $request->nominal,
+                'tanggal_pengeluaran' => $request->tanggal_pengeluaran,
+                'keterangan' => $request->keterangan,
+                'bukti_nota' => $buktiPath,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Catatan pengeluaran kas berhasil diperbarui!',
+                'data' => [
+                    'id' => $pengeluaran->id,
+                    'judul' => $pengeluaran->judul,
+                    'nominal' => (int) $pengeluaran->nominal,
+                    'bukti_nota' => $pengeluaran->bukti_nota ? asset('storage/' . $pengeluaran->bukti_nota) : null,
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui pengeluaran: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function hapusPengeluaran(Request $request, $id)
+    {
+        $pengeluaran = PengeluaranKasRuangan::findOrFail($id);
+
+        DB::beginTransaction();
+        try {
+            if ($pengeluaran->bukti_nota && Storage::disk('public')->exists($pengeluaran->bukti_nota)) {
+                Storage::disk('public')->delete($pengeluaran->bukti_nota);
+            }
+
+            $pengeluaran->delete();
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengeluaran kas ruangan berhasil dihapus.'
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus pengeluaran: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

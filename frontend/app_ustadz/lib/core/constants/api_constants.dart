@@ -71,6 +71,11 @@ class ApiConstants {
   static const String kasSetoranSimpan = '/kas-ruangan/setoran/simpan';
   static const String kasSetoranUpdate = '/kas-ruangan/setoran/update';
   static const String kasSetoranHapus = '/kas-ruangan/setoran/hapus';
+  static const String kasPengeluaranRiwayat =
+      '/kas-ruangan/pengeluaran/riwayat';
+  static const String kasPengeluaranSimpan = '/kas-ruangan/pengeluaran/simpan';
+  static const String kasPengeluaranUpdate = '/kas-ruangan/pengeluaran/update';
+  static const String kasPengeluaranHapus = '/kas-ruangan/pengeluaran/hapus';
 
   static const String tagihanSppRingkasan = '/tagihan/spp/ringkasan';
   static const String tagihanSppMuridList = '/tagihan/spp/murid-list';

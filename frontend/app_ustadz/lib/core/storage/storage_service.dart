@@ -7,6 +7,9 @@ class StorageService {
   static const String _keyTheme = 'app_theme_mode';
   static const String _keyColorPreset = 'app_color_preset';
   static const String _keyBaseUrl = 'custom_base_url';
+  static const String _keyMenuSizes = 'quick_menu_tile_sizes';
+  static const String _keyMenuOrder = 'quick_menu_tile_order';
+  static const String _keyPinnedMenus = 'quick_menu_pinned_ids';
 
   static SharedPreferences? _prefs;
   static String? _cachedToken;
@@ -14,6 +17,9 @@ class StorageService {
   static String? _cachedTheme;
   static String? _cachedColorPreset;
   static String? _cachedBaseUrl;
+  static Map<String, String>? _cachedMenuSizes;
+  static Map<String, List<String>>? _cachedMenuOrder;
+  static List<String>? _cachedPinnedMenus;
 
   /// Inisialisasi awal SharedPreferences & populate in-memory cache saat app start
   static Future<void> init() async {
@@ -22,6 +28,26 @@ class StorageService {
     _cachedTheme = _prefs?.getString(_keyTheme);
     _cachedColorPreset = _prefs?.getString(_keyColorPreset);
     _cachedBaseUrl = _prefs?.getString(_keyBaseUrl);
+
+    final pinnedStr = _prefs?.getString(_keyPinnedMenus);
+    if (pinnedStr != null) {
+      try {
+        final decoded = (jsonDecode(pinnedStr) as List<dynamic>).map((e) => e.toString()).toList();
+        _cachedPinnedMenus = decoded;
+      } catch (_) {
+        _cachedPinnedMenus = null;
+      }
+    }
+
+    final menuSizesStr = _prefs?.getString(_keyMenuSizes);
+    if (menuSizesStr != null) {
+      try {
+        final decoded = jsonDecode(menuSizesStr) as Map<String, dynamic>;
+        _cachedMenuSizes = decoded.map((k, v) => MapEntry(k, v.toString()));
+      } catch (_) {
+        _cachedMenuSizes = null;
+      }
+    }
 
     final userStr = _prefs?.getString(_keyUser);
     if (userStr != null) {
@@ -128,4 +154,92 @@ class StorageService {
   }
 
   static String? getCachedBaseUrl() => _cachedBaseUrl;
+
+  // --- MENU TILE SIZES ---
+  static Future<void> saveMenuSizes(Map<String, String> sizes) async {
+    _cachedMenuSizes = Map<String, String>.from(sizes);
+    final prefs = await _getPrefs();
+    await prefs.setString(_keyMenuSizes, jsonEncode(sizes));
+  }
+
+  static Map<String, String> getMenuSizes() {
+    if (_cachedMenuSizes != null) {
+      return Map<String, String>.from(_cachedMenuSizes!);
+    }
+    final str = _prefs?.getString(_keyMenuSizes);
+    if (str != null) {
+      try {
+        final decoded = jsonDecode(str) as Map<String, dynamic>;
+        _cachedMenuSizes = decoded.map((k, v) => MapEntry(k, v.toString()));
+        return Map<String, String>.from(_cachedMenuSizes!);
+      } catch (_) {}
+    }
+    return {};
+  }
+
+  static Future<void> clearMenuSizes() async {
+    _cachedMenuSizes = null;
+    final prefs = await _getPrefs();
+    await prefs.remove(_keyMenuSizes);
+  }
+
+  // --- MENU ORDER ---
+  static Future<void> saveMenuOrder(String sectionKey, List<String> order) async {
+    _cachedMenuOrder ??= {};
+    _cachedMenuOrder![sectionKey] = List<String>.from(order);
+    final prefs = await _getPrefs();
+    await prefs.setString('${_keyMenuOrder}_$sectionKey', jsonEncode(order));
+  }
+
+  static List<String>? getMenuOrder(String sectionKey) {
+    if (_cachedMenuOrder != null && _cachedMenuOrder!.containsKey(sectionKey)) {
+      return List<String>.from(_cachedMenuOrder![sectionKey]!);
+    }
+    final str = _prefs?.getString('${_keyMenuOrder}_$sectionKey');
+    if (str != null) {
+      try {
+        final decoded = (jsonDecode(str) as List<dynamic>).map((e) => e.toString()).toList();
+        _cachedMenuOrder ??= {};
+        _cachedMenuOrder![sectionKey] = decoded;
+        return List<String>.from(decoded);
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  static Future<void> clearMenuOrder() async {
+    _cachedMenuOrder = null;
+    final prefs = await _getPrefs();
+    for (final sec in ['cepat', 'wali', 'imni']) {
+      await prefs.remove('${_keyMenuOrder}_$sec');
+    }
+  }
+
+  // --- PINNED MENUS ---
+  static Future<void> savePinnedMenus(List<String> pinnedIds) async {
+    _cachedPinnedMenus = List<String>.from(pinnedIds);
+    final prefs = await _getPrefs();
+    await prefs.setString(_keyPinnedMenus, jsonEncode(pinnedIds));
+  }
+
+  static List<String> getPinnedMenus() {
+    if (_cachedPinnedMenus != null) {
+      return List<String>.from(_cachedPinnedMenus!);
+    }
+    final str = _prefs?.getString(_keyPinnedMenus);
+    if (str != null) {
+      try {
+        final decoded = (jsonDecode(str) as List<dynamic>).map((e) => e.toString()).toList();
+        _cachedPinnedMenus = decoded;
+        return List<String>.from(decoded);
+      } catch (_) {}
+    }
+    return [];
+  }
+
+  static Future<void> clearPinnedMenus() async {
+    _cachedPinnedMenus = null;
+    final prefs = await _getPrefs();
+    await prefs.remove(_keyPinnedMenus);
+  }
 }

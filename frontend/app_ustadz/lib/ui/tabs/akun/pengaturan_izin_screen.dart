@@ -187,7 +187,7 @@ class _PengaturanIzinScreenState extends State<PengaturanIzinScreen>
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
                         allGranted

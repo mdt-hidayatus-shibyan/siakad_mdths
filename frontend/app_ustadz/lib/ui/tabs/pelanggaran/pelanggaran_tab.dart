@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/haptic_helper.dart';
 import '../../../providers/pelanggaran_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
-import 'catat_pelanggaran_sheet.dart';
 import 'harian_tab_view.dart';
 import 'massal_tab_view.dart';
-import 'referensi_pelanggaran_screen.dart';
 import 'riwayat_tab_view.dart';
 
 class PelanggaranTab extends StatefulWidget {
@@ -43,23 +40,13 @@ class _PelanggaranTabState extends State<PelanggaranTab>
     super.dispose();
   }
 
-  void _openCatatSheet() {
-    HapticHelper.light();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const CatatPelanggaranSheet(),
-    );
-  }
-
-  void _openReferensiScreen() {
-    HapticHelper.light();
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ReferensiPelanggaranScreen()),
-    );
-  }
+  // void _openReferensiScreen() {
+  //   HapticHelper.light();
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(builder: (_) => const ReferensiPelanggaranScreen()),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -67,22 +54,15 @@ class _PelanggaranTabState extends State<PelanggaranTab>
     return Scaffold(
       appBar: CustomAppBar(
         titleText: 'Buku Kasus & Disiplin',
-        actions: [
-          CircularIconButton(
-            tooltip: 'Katalog Referensi Sanksi',
-            icon: Icons.rule_folder_outlined,
-            iconSize: 20,
-            iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-            onPressed: _openReferensiScreen,
-          ),
-          CircularIconButton(
-            tooltip: 'Catat Pelanggaran',
-            icon: Icons.add_moderator_rounded,
-            iconSize: 20,
-            iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-            onPressed: _openCatatSheet,
-          ),
-        ],
+        // actions: [
+        //   CircularIconButton(
+        //     tooltip: 'Katalog Referensi Sanksi',
+        //     icon: Icons.rule_folder_outlined,
+        //     iconSize: 20,
+        //     iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+        //     onPressed: _openReferensiScreen,
+        //   ),
+        // ],
       ),
       body: Column(
         children: [

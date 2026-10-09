@@ -13,19 +13,7 @@
                 <i class="bi bi-arrow-left text-base font-bold"></i>
             </a>
             <div>
-                <div class="flex items-center gap-2 mb-1">
-                    <span
-                        class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5 shadow-2xs">
-                        <i class="bi bi-door-open-fill text-[10px]"></i>
-                        <span>{{ $ruangan->level->nama_level ?? 'Madrasah' }}</span>
-                    </span>
-                    @if ($ruangan->waliRuangan)
-                        <span class="text-xs font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                            <i class="bi bi-person-badge text-emerald-500 text-xs"></i>
-                            <span>{{ $ruangan->waliRuangan->nama }}</span>
-                        </span>
-                    @endif
-                </div>
+
                 <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
                     Kas {{ $ruangan->nama_ruangan }}
                 </h2>
@@ -35,21 +23,15 @@
             </div>
         </div>
 
-        <!-- Sisi Kanan: Action Shortcut -->
-        <div class="flex items-center gap-2">
-            <a href="{{ route('setoran-kas-ruangan.index') }}?ruangan_id={{ $ruangan->id }}"
-                class="h-10 px-4 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs flex items-center justify-center gap-2 border border-zinc-200/80 dark:border-zinc-700 shadow-2xs transition-all active:scale-95">
-                <i class="bi bi-bank2 text-emerald-500"></i>
-                <span>Setoran Kas</span>
-            </a>
-        </div>
+
     </div>
 
-    <!-- 2. RINGKASAN FINANSIAL RUANGAN (4 KARTU ATAS) -->
+    <!-- 2. RINGKASAN FINANSIAL RUANGAN (5 KARTU ATAS) -->
     @php
         $terkumpul = $ruangan->total_terkumpul ?? ($ruangan->pembayaranKas->sum('jumlah_bayar') ?? 0);
         $disetor = $ruangan->total_disetor ?? 0;
-        $sisaKas = max(0, $terkumpul - $disetor);
+        $pengeluaran = $ruangan->total_pengeluaran ?? ($ruangan->pengeluaranKas->sum('nominal') ?? 0);
+        $sisaKas = max(0, $terkumpul - $disetor - $pengeluaran);
         $totalTarget = 0;
         $lunasCount = 0;
 
@@ -67,7 +49,7 @@
         $persenTerkumpulRuangan = $totalTarget > 0 ? min(100, round(($terkumpul / $totalTarget) * 100)) : 0;
     @endphp
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 md:gap-4 mb-6 relative z-10">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 md:gap-4 mb-6 relative z-10">
 
         <!-- 1. Total Kas Terkumpul -->
         <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
@@ -87,7 +69,24 @@
             </div>
         </div>
 
-        <!-- 2. Disetor ke Madrasah -->
+        <!-- 2. Pengeluaran Kas -->
+        <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
+            <div
+                class="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl shrink-0 border border-rose-500/20 shadow-2xs">
+                <i class="bi bi-receipt"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p
+                    class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5 truncate">
+                    Pengeluaran Kas
+                </p>
+                <h4 class="text-base md:text-xl font-black text-rose-600 dark:text-rose-400 tracking-tight font-mono">
+                    Rp {{ number_format($pengeluaran, 0, ',', '.') }}
+                </h4>
+            </div>
+        </div>
+
+        <!-- 3. Disetor ke Madrasah -->
         <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
             <div
                 class="w-11 h-11 rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xl shrink-0 border border-sky-500/20 shadow-2xs">
@@ -104,7 +103,7 @@
             </div>
         </div>
 
-        <!-- 3. Sisa di Ruangan -->
+        <!-- 4. Sisa di Ruangan -->
         <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
             <div
                 class="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0 border border-amber-500/20 shadow-2xs">
@@ -121,7 +120,7 @@
             </div>
         </div>
 
-        <!-- 4. Target Ruangan -->
+        <!-- 5. Target Ruangan -->
         <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
             <div
                 class="w-11 h-11 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl shrink-0 border border-indigo-500/20 shadow-2xs">
@@ -370,6 +369,117 @@
     <div id="noMuridSearchMatch" class="hidden col-span-full mt-6">
         <x-empty-state icon="bi-search" title="Murid Tidak Ditemukan"
             message="Tidak ada Murid yang cocok dengan kata kunci atau filter status." />
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 4. TABEL PENGELUARAN KAS RUANGAN (READ-ONLY)               -->
+    <!-- ========================================================= -->
+    <div class="mt-8 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2 mb-1">
+                <span
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1.5 shadow-2xs">
+                    <i class="bi bi-receipt text-xs"></i>
+                    <span>Buku Kas Keluar</span>
+                </span>
+            </div>
+            <h3 class="text-xl font-black text-zinc-900 dark:text-white tracking-tight">
+                Pengeluaran Kas Ruangan
+            </h3>
+            <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Riwayat belanja operasional kelas, sarana prasarana, atau kebutuhan murid binaan oleh Wali Ruangan.
+            </p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <span
+                class="px-3 py-1.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold text-xs border border-zinc-200 dark:border-zinc-700 inline-flex items-center gap-1.5 shadow-2xs">
+                <i class="bi bi-info-circle text-rose-500"></i>
+                <span>Dicatat oleh Wali Ruangan via Mobile</span>
+            </span>
+        </div>
+    </div>
+
+    <div
+        class="m3-glass-card rounded-3xl overflow-hidden shadow-2xs relative z-10 border border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xl mb-8">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr
+                        class="border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-100/70 dark:bg-zinc-900/80 text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-sans">
+                        <th class="py-3.5 pl-5 pr-2 w-12 text-center">No</th>
+                        <th class="py-3.5 px-4 min-w-[130px]">Tanggal</th>
+                        <th class="py-3.5 px-4 min-w-[200px]">Keperluan / Judul</th>
+                        <th class="py-3.5 px-3 min-w-[120px]">Kategori</th>
+                        <th class="py-3.5 px-4 text-right min-w-[130px]">Nominal</th>
+                        <th class="py-3.5 px-4 min-w-[150px]">Keterangan</th>
+                        <th class="py-3.5 px-3 text-center min-w-[90px]">Nota</th>
+                        <th class="py-3.5 pl-3 pr-5 min-w-[140px]">Dicatat Oleh</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-200/70 dark:divide-zinc-800/70 font-mono">
+                    @forelse ($pengeluarans as $idx => $p)
+                        <tr class="hover:bg-zinc-500/5 dark:hover:bg-zinc-800/40 transition-colors font-sans">
+                            <td class="py-3.5 pl-5 pr-2 text-center text-zinc-400 font-bold text-[11px]">
+                                {{ $idx + 1 }}
+                            </td>
+                            <td class="py-3.5 px-4 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                                {{ \Carbon\Carbon::parse($p->tanggal_pengeluaran)->locale('id')->isoFormat('D MMM Y') }}
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span
+                                    class="font-black text-xs text-zinc-900 dark:text-white">{{ $p->judul }}</span>
+                            </td>
+                            <td class="py-3.5 px-3">
+                                <span
+                                    class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                                    {{ $p->kategori ?? 'Operasional' }}
+                                </span>
+                            </td>
+                            <td
+                                class="py-3.5 px-4 text-right font-black text-rose-600 dark:text-rose-400 font-mono text-xs">
+                                - Rp {{ number_format($p->nominal, 0, ',', '.') }}
+                            </td>
+                            <td class="py-3.5 px-4 text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-xs">
+                                {{ $p->keterangan ?? '-' }}
+                            </td>
+                            <td class="py-3.5 px-3 text-center">
+                                @if ($p->bukti_nota)
+                                    <a href="{{ asset('storage/' . $p->bukti_nota) }}" target="_blank"
+                                        class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 inline-flex items-center justify-center hover:scale-105 transition-all"
+                                        title="Lihat Bukti Nota">
+                                        <i class="bi bi-image text-xs"></i>
+                                    </a>
+                                @else
+                                    <span class="text-zinc-400 text-xs">-</span>
+                                @endif
+                            </td>
+                            <td class="py-3.5 pl-3 pr-5 text-xs font-bold text-zinc-600 dark:text-zinc-400">
+                                {{ $p->pencatat->ustadz->nama_lengkap ?? ($p->pencatat->name ?? 'Wali') }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="py-10 text-center font-sans text-xs text-zinc-400">
+                                <i class="bi bi-receipt text-3xl block mb-2 opacity-50"></i>
+                                Belum ada catatan pengeluaran kas di ruangan ini.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                @if ($pengeluarans->isNotEmpty())
+                    <tfoot
+                        class="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 font-sans font-bold text-xs">
+                        <tr>
+                            <td colspan="4" class="py-3 px-4 text-right">Total Pengeluaran:</td>
+                            <td class="py-3 px-4 text-right text-rose-600 dark:text-rose-400 font-black font-mono">
+                                - Rp {{ number_format($pengeluarans->sum('nominal'), 0, ',', '.') }}
+                            </td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                @endif
+            </table>
+        </div>
     </div>
 
     <!-- ========================================================= -->

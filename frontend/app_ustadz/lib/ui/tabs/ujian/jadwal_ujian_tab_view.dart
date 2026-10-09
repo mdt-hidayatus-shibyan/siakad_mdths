@@ -94,7 +94,7 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
             16,
             24,
             16,
-            120 + MediaQuery.of(context).padding.bottom,
+            MediaQuery.of(context).padding.bottom + 12,
           ),
           children: [
             _buildBelumAdaRuanganEmptyState(
@@ -120,7 +120,7 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
           16,
           12,
           16,
-          120 + MediaQuery.of(context).padding.bottom,
+          MediaQuery.of(context).padding.bottom + 12,
         ),
         children: [
           // ===================================================================
@@ -1102,7 +1102,7 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 Icons.meeting_room_outlined,
@@ -1172,7 +1172,7 @@ class _JadwalUjianTabViewState extends State<JadwalUjianTabView> {
               decoration: BoxDecoration(
                 color: (isDark ? AppColors.primaryDark : AppColors.primaryLight)
                     .withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 Icons.pending_actions_rounded,

@@ -96,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
                     color: isDark
                         ? const Color(0xFF0F2313)
                         : AppColors.primaryContainerLight,
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(26),
                     boxShadow: [
                       BoxShadow(
                         color:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../providers/presensi_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
@@ -123,7 +124,7 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                           color: isDark
                               ? AppColors.primaryDark.withValues(alpha: 0.2)
                               : AppColors.primaryLight.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Icon(
                           Icons.edit_note_rounded,
@@ -360,7 +361,7 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(14),
               color: isDark ? AppColors.surfaceContainerHighDark : Colors.white,
               border: Border.all(
                 color: isDark ? AppColors.outlineDark : const Color(0xFFE2E8F0),
@@ -492,7 +493,7 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                                     : AppColors.primaryLight.withValues(
                                         alpha: 0.15,
                                       ),
-                                shape: BoxShape.circle,
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: Icon(
                                 Icons.swap_horiz_rounded,
@@ -643,10 +644,12 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                 final isFilled =
                     murid.status != null && murid.status!.isNotEmpty;
 
-                return GlassCard(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
+                return M3StaggeredFadeSlide(
+                  index: muridIndex,
+                  child: GlassCard(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Baris Atas: Nomor, Nama Murid (Full Width), NISM, & Badge Status
@@ -658,7 +661,7 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                              borderRadius: BorderRadius.circular(12),
                               color: isFilled
                                   ? (isDark
                                         ? AppColors.primaryContainerDark
@@ -809,6 +812,7 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                       ),
                     ],
                   ),
+                ),
                 );
               },
             ),
@@ -832,8 +836,8 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                 border: Border(
                   top: BorderSide(
                     color: isDark
-                        ? AppColors.outlineDark
-                        : AppColors.outlineLight,
+                        ? AppColors.outlineVariantDark
+                        : AppColors.outlineVariantLight,
                   ),
                 ),
               ),
@@ -853,7 +857,7 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                             AppColors.amberAccent,
                             isDark,
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                         ],
                         _buildSummaryPill(
                           'Hadir',
@@ -861,28 +865,28 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                           AppColors.hadirTextLight,
                           isDark,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         _buildSummaryPill(
                           'Sakit',
                           presensi.countSakit,
                           AppColors.sakitTextLight,
                           isDark,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         _buildSummaryPill(
                           'Izin',
                           presensi.countIzin,
                           AppColors.izinTextLight,
                           isDark,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         _buildSummaryPill(
                           'Alpha',
                           presensi.countAlpha,
                           AppColors.alphaTextLight,
                           isDark,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         _buildSummaryPill(
                           'Disp',
                           presensi.countDispensasi,
@@ -892,31 +896,56 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
 
                   // Submit Button
-                  ElevatedButton(
-                    onPressed: (presensi.isSaving || presensi.isLoading)
+                  M3ScaleOnPress(
+                    onTap: (presensi.isSaving || presensi.isLoading)
                         ? null
                         : _handleSimpan,
-                    child: presensi.isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            presensi.countBelumDiisi == 0
-                                ? 'Simpan Semua Presensi (${presensi.totalMurid} Murid)'
-                                : 'Simpan Presensi (${presensi.countSudahDiisi}/${presensi.totalMurid} Diisi)',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    pressedScale: 0.96,
+                    borderRadius: BorderRadius.circular(16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: (presensi.isSaving || presensi.isLoading)
+                            ? null
+                            : _handleSimpan,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
+                          backgroundColor: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                          foregroundColor: isDark
+                              ? AppColors.onPrimaryDark
+                              : AppColors.onPrimaryLight,
+                        ),
+                        child: presensi.isSaving
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: isDark
+                                      ? AppColors.onPrimaryDark
+                                      : Colors.white,
+                                ),
+                              )
+                            : Text(
+                                presensi.countBelumDiisi == 0
+                                    ? 'Simpan Semua Presensi (${presensi.totalMurid} Murid)'
+                                    : 'Simpan Presensi (${presensi.countSudahDiisi}/${presensi.totalMurid} Diisi)',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1007,23 +1036,39 @@ class _FormPresensiScreenState extends State<FormPresensiScreen> {
   }
 
   Widget _buildSummaryPill(String label, int count, Color color, bool isDark) {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark
+            ? color.withValues(alpha: 0.16)
+            : color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark
+              ? color.withValues(alpha: 0.35)
+              : color.withValues(alpha: 0.25),
+          width: 0.8,
         ),
-        const SizedBox(width: 4),
-        Text(
-          '$label: $count',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: isDark ? const Color(0xFFE2E3DD) : const Color(0xFF191C19),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-        ),
-      ],
+          const SizedBox(width: 5),
+          Text(
+            '$label $count',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

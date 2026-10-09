@@ -7,6 +7,7 @@ import '../../../providers/laporan_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
+import '../../widgets/app_avatar.dart';
 
 class LaporanKenaikanScreen extends StatefulWidget {
   final int? initialRuanganId;
@@ -608,26 +609,12 @@ class _LaporanKenaikanScreenState extends State<LaporanKenaikanScreen> {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    CircleAvatar(
+                    AppAvatar(
                       radius: 20,
-                      backgroundColor: isDark
-                          ? primary.withValues(alpha: 0.25)
-                          : primary.withValues(alpha: 0.12),
-                      backgroundImage: murid.foto != null
-                          ? NetworkImage(murid.foto!)
-                          : null,
-                      child: murid.foto == null
-                          ? Text(
-                              murid.nama.isNotEmpty
-                                  ? murid.nama[0].toUpperCase()
-                                  : 'M',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: primary,
-                                fontSize: 14,
-                              ),
-                            )
-                          : null,
+                      name: murid.nama,
+                      imageUrl: murid.foto,
+                      shape: BoxShape.circle,
+                      cacheDimension: 100,
                     ),
                     Positioned(
                       bottom: -2,

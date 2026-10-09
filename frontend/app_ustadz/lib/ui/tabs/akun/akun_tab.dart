@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../core/utils/session_helper.dart';
@@ -47,7 +48,9 @@ class _AkunTabState extends State<AkunTab> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.surfaceContainerDark : Colors.white,
+        backgroundColor: isDark
+            ? AppColors.surfaceContainerDark
+            : AppColors.surfaceContainerLight,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Row(
           children: [
@@ -124,7 +127,9 @@ class _AkunTabState extends State<AkunTab> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.surfaceContainerDark : Colors.white,
+        backgroundColor: isDark
+            ? AppColors.surfaceContainerDark
+            : AppColors.surfaceContainerLight,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Row(
           children: [
@@ -149,12 +154,13 @@ class _AkunTabState extends State<AkunTab> {
                 final isSelected = themeProvider.colorPresetKey == preset.key;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: InkWell(
+                  child: M3ScaleOnPress(
                     onTap: () {
                       HapticHelper.selection();
                       themeProvider.setColorPreset(preset.key);
                       Navigator.of(ctx).pop();
                     },
+                    pressedScale: 0.95,
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -186,7 +192,7 @@ class _AkunTabState extends State<AkunTab> {
                               color: isDark
                                   ? preset.primaryDark
                                   : preset.primaryLight,
-                              shape: BoxShape.circle,
+                              borderRadius: BorderRadius.circular(9),
                               border: Border.all(
                                 color: Colors.white.withValues(alpha: 0.5),
                                 width: 2,
@@ -277,11 +283,12 @@ class _AkunTabState extends State<AkunTab> {
     required VoidCallback onTap,
     required bool isDark,
   }) {
-    return InkWell(
+    return M3ScaleOnPress(
       onTap: () {
         HapticHelper.selection();
         onTap();
       },
+      pressedScale: 0.95,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -344,6 +351,60 @@ class _AkunTabState extends State<AkunTab> {
     );
   }
 
+  Widget _buildMenuTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required bool isDark,
+    Widget? trailing,
+  }) {
+    return M3ScaleOnPress(
+      onTap: () {
+        HapticHelper.light();
+        onTap();
+      },
+      pressedScale: 0.98,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: isDark
+                ? color.withValues(alpha: 0.18)
+                : color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Center(
+            child: Icon(
+              icon,
+              size: 20,
+              color: isDark && color == AppColors.primaryLight
+                  ? AppColors.primaryDark
+                  : color,
+            ),
+          ),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: trailing ?? const Icon(Icons.chevron_right_rounded),
+      ),
+    );
+  }
+
   String _getThemeSubtitle(ThemeMode mode) {
     switch (mode) {
       case ThemeMode.light:
@@ -396,7 +457,9 @@ class _AkunTabState extends State<AkunTab> {
               maxHeight: MediaQuery.of(context).size.height * 0.88,
             ),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: isDark
+                  ? AppColors.surfaceContainerLowDark
+                  : AppColors.surfaceContainerLowLight,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
@@ -757,7 +820,9 @@ class _AkunTabState extends State<AkunTab> {
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: isDark
+                  ? AppColors.surfaceContainerLowDark
+                  : AppColors.surfaceContainerLowLight,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
@@ -934,7 +999,9 @@ class _AkunTabState extends State<AkunTab> {
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: isDark
+                  ? AppColors.surfaceContainerLowDark
+                  : AppColors.surfaceContainerLowLight,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
@@ -1144,7 +1211,9 @@ class _AkunTabState extends State<AkunTab> {
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: isDark
+                  ? AppColors.surfaceContainerLowDark
+                  : AppColors.surfaceContainerLowLight,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
@@ -1395,7 +1464,9 @@ class _AkunTabState extends State<AkunTab> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF101710) : Colors.white,
+          color: isDark
+              ? AppColors.surfaceContainerLowDark
+              : AppColors.surfaceContainerLowLight,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         padding: EdgeInsets.fromLTRB(
@@ -1563,7 +1634,9 @@ class _AkunTabState extends State<AkunTab> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final user = context.watch<AuthProvider>().user;
     final themeProvider = context.watch<ThemeProvider>();
     final kasProvider = context.watch<KasProvider>();
@@ -1585,83 +1658,133 @@ class _AkunTabState extends State<AkunTab> {
             16,
             12,
             16,
-            120 + MediaQuery.of(context).padding.bottom,
+            MediaQuery.of(context).padding.bottom + 12,
           ),
           children: [
             // =================================================================
-            // 1. HERO PROFIL CARD
+            // 1. M3 EXPRESSIVE HERO PROFIL CARD
             // =================================================================
-            GlassCard(
-              padding: const EdgeInsets.all(20),
-              child: Row(
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? colorScheme.surfaceContainerHigh
+                    : colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Column(
                 children: [
-                  // AVATAR (READ-ONLY)
-                  AppAvatar(
-                    radius: 38,
-                    imageUrl: user?.photo,
-                    name: user?.name ?? '-',
-                    cacheDimension: 200,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user?.name ?? '-',
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          'Kode: ${user?.kodeUstadz ?? "-"} • NIGM: ${user?.nigm ?? "-"}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark
-                                ? const Color(0xFF8D9387)
-                                : const Color(0xFF73796E),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: user?.isWaliRuangan == true
-                                ? (isDark
-                                      ? AppColors.primaryContainerDark
-                                      : AppColors.primaryContainerLight)
-                                : (isDark
-                                      ? const Color(0xFF1E293B)
-                                      : const Color(0xFFF1F5F9)),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            user?.isWaliRuangan == true
-                                ? 'Wali Ruangan: ${user?.ruanganWali ?? "-"}'
-                                : 'Ustadz',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: user?.isWaliRuangan == true
-                                  ? (isDark
+                  Row(
+                    children: [
+                      // AVATAR WITH M3 ACCENT RING
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color:
+                                (isDark
                                         ? AppColors.primaryDark
                                         : AppColors.primaryLight)
-                                  : (isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF64748B)),
-                            ),
+                                    .withValues(alpha: 0.7),
+                            width: 2.5,
                           ),
                         ),
-                      ],
-                    ),
+                        child: AppAvatar(
+                          radius: 36,
+                          imageUrl: user?.photo,
+                          name: user?.name ?? '-',
+                          cacheDimension: 200,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user?.name ?? '-',
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 5),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: user?.isWaliRuangan == true
+                                        ? (isDark
+                                              ? AppColors.primaryContainerDark
+                                              : AppColors.primaryContainerLight)
+                                        : (isDark
+                                              ? const Color(0xFF1E293B)
+                                              : const Color(0xFFF1F5F9)),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        user?.isWaliRuangan == true
+                                            ? Icons.shield_rounded
+                                            : Icons.school_rounded,
+                                        size: 11,
+                                        color: user?.isWaliRuangan == true
+                                            ? (isDark
+                                                  ? AppColors.primaryDark
+                                                  : AppColors.primaryLight)
+                                            : (isDark
+                                                  ? const Color(0xFF94A3B8)
+                                                  : const Color(0xFF64748B)),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        user?.isWaliRuangan == true
+                                            ? 'Wali Ruangan: ${user?.ruanganWali ?? "-"}'
+                                            : 'Ustadz Pengajar',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: user?.isWaliRuangan == true
+                                              ? (isDark
+                                                    ? AppColors.primaryDark
+                                                    : AppColors.primaryLight)
+                                              : (isDark
+                                                    ? const Color(0xFF94A3B8)
+                                                    : const Color(0xFF64748B)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Kode: ${user?.kodeUstadz ?? "-"} • NIGM: ${user?.nigm ?? "-"}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1672,7 +1795,7 @@ class _AkunTabState extends State<AkunTab> {
             // 2. KARTU PROFIL & BIODATA
             // =================================================================
             const Text(
-              'Profil & Kepegawaian',
+              'Profil',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
@@ -1680,78 +1803,26 @@ class _AkunTabState extends State<AkunTab> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Column(
                 children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight)
-                            .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.badge_rounded,
-                        size: 18,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                      ),
-                    ),
-                    title: const Text(
-                      'Biodata Pribadi',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      user?.nik != null && user!.nik!.isNotEmpty
-                          ? 'NIK: ${user.nik} • ${user.jenisKelamin == "P" ? "Perempuan" : "Laki-laki"}'
-                          : 'NIK, NIGM, tempat tanggal lahir, no. HP, dan alamat',
-                      style: const TextStyle(fontSize: 11),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                  _buildMenuTile(
+                    icon: Icons.badge_rounded,
+                    color: const Color(0xFF0284C7),
+                    title: 'Biodata Pribadi',
+                    subtitle: user?.nik != null && user!.nik!.isNotEmpty
+                        ? 'NIK: ${user.nik} • ${user.jenisKelamin == "P" ? "Perempuan" : "Laki-laki"}'
+                        : 'NIK, NIGM, tempat tanggal lahir, no. HP, dan alamat',
                     onTap: _showEditBiodataSheet,
+                    isDark: isDark,
                   ),
                   const Divider(height: 1),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight)
-                            .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.draw_rounded,
-                        size: 18,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                      ),
-                    ),
-                    title: const Text(
-                      'Tanda Tangan Digital',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      user?.tandaTangan != null
-                          ? 'Terverifikasi & aktif'
-                          : 'Belum ada berkas tanda tangan',
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                  _buildMenuTile(
+                    icon: Icons.draw_rounded,
+                    color: const Color(0xFF8B5CF6),
+                    title: 'Tanda Tangan Digital',
+                    subtitle: user?.tandaTangan != null
+                        ? 'Terverifikasi & aktif'
+                        : 'Belum ada berkas tanda tangan',
                     onTap: _showTandaTanganSheet,
+                    isDark: isDark,
                   ),
                 ],
               ),
@@ -1770,76 +1841,24 @@ class _AkunTabState extends State<AkunTab> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Column(
                 children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight)
-                            .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.manage_accounts_rounded,
-                        size: 18,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                      ),
-                    ),
-                    title: const Text(
-                      'Akun Pengguna',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      user?.username != null
-                          ? '@${user!.username} • ${user.email ?? "-"}'
-                          : 'Username login & email terdaftar',
-                      style: const TextStyle(fontSize: 11),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                  _buildMenuTile(
+                    icon: Icons.manage_accounts_rounded,
+                    color: const Color(0xFF10B981),
+                    title: 'Akun Pengguna',
+                    subtitle: user?.username != null
+                        ? '@${user!.username} • ${user.email ?? "-"}'
+                        : 'Username login & email terdaftar',
                     onTap: _showEditAkunSheet,
+                    isDark: isDark,
                   ),
                   const Divider(height: 1),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight)
-                            .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.lock_reset_rounded,
-                        size: 18,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                      ),
-                    ),
-                    title: const Text(
-                      'Kata Sandi Akun',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: const Text(
-                      '•••••••• (Disarankan perbarui berkala)',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                  _buildMenuTile(
+                    icon: Icons.lock_reset_rounded,
+                    color: const Color(0xFFF59E0B),
+                    title: 'Kata Sandi Akun',
+                    subtitle: '•••••••• (Disarankan perbarui berkala)',
                     onTap: _showUpdatePasswordDialog,
+                    isDark: isDark,
                   ),
                 ],
               ),
@@ -1863,10 +1882,11 @@ class _AkunTabState extends State<AkunTab> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: (isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight)
-                          .withValues(alpha: 0.12),
+                      color:
+                          (isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight)
+                              .withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -1890,37 +1910,12 @@ class _AkunTabState extends State<AkunTab> {
                 ),
                 child: Column(
                   children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: (isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight)
-                              .withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.admin_panel_settings_rounded,
-                          size: 18,
-                          color: isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight,
-                        ),
-                      ),
-                      title: Text(
-                        'Laporan ${user?.ruanganWali ?? "Ruangan"}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'Presensi kelas, ustadz pengajar, leger, & pelanggaran',
-                        style: TextStyle(fontSize: 11),
-                      ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
+                    _buildMenuTile(
+                      icon: Icons.admin_panel_settings_rounded,
+                      color: const Color(0xFF6366F1),
+                      title: 'Laporan ${user?.ruanganWali ?? "Ruangan"}',
+                      subtitle:
+                          'Presensi kelas, ustadz pengajar, leger, & pelanggaran',
                       onTap: () {
                         HapticHelper.light();
                         Navigator.push(
@@ -1930,39 +1925,15 @@ class _AkunTabState extends State<AkunTab> {
                           ),
                         );
                       },
+                      isDark: isDark,
                     ),
                     const Divider(height: 1),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: (isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight)
-                              .withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.assessment_rounded,
-                          size: 18,
-                          color: isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight,
-                        ),
-                      ),
-                      title: const Text(
-                        'Laporan Pengampu',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'Presensi murid diampu, kehadiran mengajar, & nilai ujian',
-                        style: TextStyle(fontSize: 11),
-                      ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
+                    _buildMenuTile(
+                      icon: Icons.assessment_rounded,
+                      color: const Color(0xFF0D9488),
+                      title: 'Laporan Pengampu',
+                      subtitle:
+                          'Presensi murid diampu, kehadiran mengajar, & nilai ujian',
                       onTap: () {
                         HapticHelper.light();
                         Navigator.push(
@@ -1972,40 +1943,17 @@ class _AkunTabState extends State<AkunTab> {
                           ),
                         );
                       },
+                      isDark: isDark,
                     ),
                     const Divider(height: 1),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: (isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight)
-                              .withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.payments_rounded,
-                          size: 18,
-                          color: isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight,
-                        ),
-                      ),
-                      title: const Text(
-                        'Pengaturan Kas Ruangan',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Putra: ${DateHelper.formatRupiah(pengaturanKas?.nominalLaki ?? 0)} • Putri: ${DateHelper.formatRupiah(pengaturanKas?.nominalPerempuan ?? 0)}',
-                        style: const TextStyle(fontSize: 11),
-                      ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
+                    _buildMenuTile(
+                      icon: Icons.payments_rounded,
+                      color: const Color(0xFF10B981),
+                      title: 'Pengaturan Kas Ruangan',
+                      subtitle:
+                          'Putra: ${DateHelper.formatRupiah(pengaturanKas?.nominalLaki ?? 0)} • Putri: ${DateHelper.formatRupiah(pengaturanKas?.nominalPerempuan ?? 0)}',
                       onTap: _showPengaturanKasSheet,
+                      isDark: isDark,
                     ),
                   ],
                 ),
@@ -2023,35 +1971,12 @@ class _AkunTabState extends State<AkunTab> {
             const SizedBox(height: 4),
             GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color:
-                        (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight)
-                            .withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.support_agent_rounded,
-                    size: 18,
-                    color: isDark
-                        ? AppColors.primaryDark
-                        : AppColors.primaryLight,
-                  ),
-                ),
-                title: const Text(
-                  'Hubungi Admin & Pusat Bantuan',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text(
-                  'Laporan kendala, masalah teknis, & rekomendasi fitur',
-                  style: TextStyle(fontSize: 11),
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded),
+              child: _buildMenuTile(
+                icon: Icons.support_agent_rounded,
+                color: const Color(0xFF0284C7),
+                title: 'Hubungi Admin & Pusat Bantuan',
+                subtitle:
+                    'Laporan kendala, masalah teknis, & rekomendasi fitur',
                 onTap: () {
                   HapticHelper.light();
                   Navigator.push(
@@ -2061,6 +1986,7 @@ class _AkunTabState extends State<AkunTab> {
                     ),
                   );
                 },
+                isDark: isDark,
               ),
             ),
             const SizedBox(height: 18),
@@ -2077,148 +2003,109 @@ class _AkunTabState extends State<AkunTab> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Column(
                 children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color:
-                            (isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight)
-                                .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.brightness_6_rounded,
-                        size: 16,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                      ),
-                    ),
-                    title: const Text(
-                      'Tema Tampilan',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      _getThemeSubtitle(themeProvider.themeMode),
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                  _buildMenuTile(
+                    icon: Icons.brightness_6_rounded,
+                    color: const Color(0xFF06B6D4),
+                    title: 'Tema Tampilan',
+                    subtitle: _getThemeSubtitle(themeProvider.themeMode),
                     onTap: _showThemeDialog,
+                    isDark: isDark,
                   ),
                   const Divider(height: 1),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? themeProvider.activePreset.primaryDark
-                            : themeProvider.activePreset.primaryLight,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark ? Colors.white24 : Colors.black12,
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                (isDark
-                                        ? themeProvider.activePreset.primaryDark
-                                        : themeProvider
-                                              .activePreset
-                                              .primaryLight)
-                                    .withValues(alpha: 0.25),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
+                  M3ScaleOnPress(
+                    onTap: () {
+                      HapticHelper.light();
+                      _showColorPresetDialog();
+                    },
+                    pressedScale: 0.98,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? themeProvider.activePreset.primaryDark
+                              : themeProvider.activePreset.primaryLight,
+                          borderRadius: BorderRadius.circular(11),
+                          border: Border.all(
+                            color: isDark ? Colors.white24 : Colors.black12,
+                            width: 1.2,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  (isDark
+                                          ? themeProvider
+                                                .activePreset
+                                                .primaryDark
+                                          : themeProvider
+                                                .activePreset
+                                                .primaryLight)
+                                      .withValues(alpha: 0.25),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.palette_rounded,
+                            size: 19,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      title: const Text(
+                        'Warna Aksen Aplikasi',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${themeProvider.activePreset.name} • ${themeProvider.activePreset.subtitle}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? themeProvider.activePreset.primaryDark
+                                  : themeProvider.activePreset.primaryLight,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.chevron_right_rounded),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.palette_rounded,
-                        size: 16,
-                        color: Colors.white,
-                      ),
                     ),
-                    title: const Text(
-                      'Warna Aksen Aplikasi',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      '${themeProvider.activePreset.name} • ${themeProvider.activePreset.subtitle}',
-                      style: const TextStyle(fontSize: 11),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? themeProvider.activePreset.primaryDark
-                                : themeProvider.activePreset.primaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        const Icon(Icons.chevron_right_rounded),
-                      ],
-                    ),
-                    onTap: _showColorPresetDialog,
                   ),
                   const Divider(height: 1),
                   Consumer<BellProvider>(
                     builder: (context, bellProvider, _) {
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color:
-                                (isDark
-                                        ? AppColors.primaryDark
-                                        : AppColors.primaryLight)
-                                    .withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            bellProvider.isEnabled
-                                ? Icons.notifications_active_rounded
-                                : Icons.notifications_off_rounded,
-                            size: 16,
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
-                          ),
-                        ),
-                        title: const Text(
-                          'Pengingat Bel Masuk',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: Text(
-                          bellProvider.isEnabled
-                              ? 'Aktif • Jam 1 (${bellProvider.jam1Formatted}) & Jam 2 (${bellProvider.jam2Formatted})'
-                              : 'Dinonaktifkan',
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                        trailing: const Icon(Icons.chevron_right_rounded),
+                      return _buildMenuTile(
+                        icon: bellProvider.isEnabled
+                            ? Icons.notifications_active_rounded
+                            : Icons.notifications_off_rounded,
+                        color: const Color(0xFFEAB308),
+                        title: 'Pengingat Bel Masuk',
+                        subtitle: bellProvider.isEnabled
+                            ? 'Aktif • Jam 1 (${bellProvider.jam1Formatted}) & Jam 2 (${bellProvider.jam2Formatted})'
+                            : 'Dinonaktifkan',
                         onTap: () {
-                          HapticHelper.light();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -2226,44 +2113,17 @@ class _AkunTabState extends State<AkunTab> {
                             ),
                           );
                         },
+                        isDark: isDark,
                       );
                     },
                   ),
                   const Divider(height: 1),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color:
-                            (isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight)
-                                .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.security_rounded,
-                        size: 16,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                      ),
-                    ),
-                    title: const Text(
-                      'Izin Aplikasi',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: const Text(
-                      'Izin alarm, notifikasi, baterai & kamera',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                  _buildMenuTile(
+                    icon: Icons.security_rounded,
+                    color: const Color(0xFF8B5CF6),
+                    title: 'Izin Aplikasi',
+                    subtitle: 'Izin alarm, notifikasi, baterai & kamera',
                     onTap: () {
-                      HapticHelper.light();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -2271,6 +2131,7 @@ class _AkunTabState extends State<AkunTab> {
                         ),
                       );
                     },
+                    isDark: isDark,
                   ),
                 ],
               ),
@@ -2293,40 +2154,12 @@ class _AkunTabState extends State<AkunTab> {
                     horizontal: 16,
                     vertical: 4,
                   ),
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color:
-                            (isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight)
-                                .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.info_outline_rounded,
-                        size: 18,
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                      ),
-                    ),
-                    title: const Text(
-                      'Tentang Aplikasi',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Versi ${appVersion.version} • Ustadz MDTHS',
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                  child: _buildMenuTile(
+                    icon: Icons.info_outline_rounded,
+                    color: const Color(0xFF64748B),
+                    title: 'Tentang Aplikasi',
+                    subtitle: 'Versi ${appVersion.version} • Ustadz MDTHS',
                     onTap: () {
-                      HapticHelper.light();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -2334,6 +2167,7 @@ class _AkunTabState extends State<AkunTab> {
                         ),
                       );
                     },
+                    isDark: isDark,
                   ),
                 );
               },
@@ -2343,16 +2177,38 @@ class _AkunTabState extends State<AkunTab> {
             // =================================================================
             // 9. TOMBOL KELUAR
             // =================================================================
-            ElevatedButton.icon(
-              onPressed: _handleLogout,
-              icon: const Icon(Icons.logout_rounded, size: 18),
-              label: const Text('Keluar Akun'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isDark
-                    ? const Color(0xFF3B1212)
-                    : const Color(0xFFFEE2E2),
-                foregroundColor: AppColors.roseDanger,
-                elevation: 0,
+            M3ScaleOnPress(
+              onTap: _handleLogout,
+              pressedScale: 0.95,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF381010)
+                      : const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.logout_rounded,
+                      size: 19,
+                      color: AppColors.roseDanger,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Keluar Akun',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.roseDanger,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

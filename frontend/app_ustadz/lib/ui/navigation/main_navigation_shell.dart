@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/services/bell_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_motion.dart';
 import '../../core/utils/haptic_helper.dart';
 import '../../providers/akademik_provider.dart';
 import '../tabs/home/home_tab.dart';
@@ -84,10 +86,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 
   void _showBellModal(BellEvent event) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark
-        ? AppColors.primaryDark
-        : AppColors.primaryLight;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final isJam1 = event.jam == 1;
 
     showModalBottomSheet(
@@ -98,16 +99,24 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         return SafeArea(
           top: false,
           child: Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(20),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              color: isDark
+                  ? colorScheme.surfaceContainerHigh
+                  : colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: isDark
+                    ? colorScheme.outlineVariant.withValues(alpha: 0.3)
+                    : colorScheme.outlineVariant.withValues(alpha: 0.6),
+                width: 0.8,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -115,30 +124,29 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 40,
-                  height: 4,
+                  width: 36,
+                  height: 4.5,
                   decoration: BoxDecoration(
                     color: isDark ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color:
-                        (isJam1
-                                ? const Color(0xFF0284C7)
-                                : const Color(0xFFD97706))
-                            .withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
+                    color: (isJam1
+                            ? colorScheme.primary
+                            : AppColors.amberAccent)
+                        .withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Icon(
                     Icons.notifications_active_rounded,
                     color: isJam1
-                        ? const Color(0xFF0284C7)
-                        : const Color(0xFFD97706),
-                    size: 36,
+                        ? colorScheme.primary
+                        : AppColors.amberAccent,
+                    size: 32,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -163,7 +171,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton.icon(
+                      child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -174,16 +182,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                           BellService.instance.stopSound();
                           Navigator.pop(ctx);
                         },
-                        icon: const Icon(Icons.close_rounded, size: 18),
-                        label: const Text('Tutup'),
+                        child: const Text('Tutup'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -219,104 +224,103 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-    final isThreeButtonNav = bottomInset > 24;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      extendBody: true, // Content flows smoothly behind floating navigation
+      extendBody: true,
       body: IndexedStack(index: _currentIndex, children: _tabs),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        bottom: true,
+      bottomNavigationBar: _buildFloatingBottomBar(context, colorScheme, isDark),
+    );
+  }
+
+  Widget _buildFloatingBottomBar(
+    BuildContext context,
+    ColorScheme colorScheme,
+    bool isDark,
+  ) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    // Pada mobile web / device tanpa inset, 12dp agar melayang rapat & pas
+    // Pada device dengan gesture pill/3-button, float 8dp di atas inset sistem
+    final effectiveBottomMargin = math.max(12.0, bottomInset + 8.0);
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      heightFactor: 1.0,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, isThreeButtonNav ? 6 : 12),
+          padding: EdgeInsets.fromLTRB(16, 0, 16, effectiveBottomMargin),
           child: Container(
+            height: 64,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
+              color: isDark
+                  ? colorScheme.surfaceContainerHigh
+                  : colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isDark
+                    ? colorScheme.outlineVariant.withValues(alpha: 0.35)
+                    : colorScheme.outlineVariant.withValues(alpha: 0.30),
+                width: 1.0,
+              ),
               boxShadow: [
-                // 1. Ambient & bottom drop shadow
                 BoxShadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.65)
-                      : const Color(0xFF0F172A).withValues(alpha: 0.14),
-                  blurRadius: 24,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 8),
+                  color: Colors.black.withValues(alpha: isDark ? 0.38 : 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
                 ),
-                // 2. Top boundary shadow to separate clearly from scrolling content (like Menu Cepat)
                 BoxShadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.40)
-                      : const Color(0xFF0F172A).withValues(alpha: 0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, -2),
+                  color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  height: 66,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF121712).withValues(alpha: 0.95)
-                        : Colors.white.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.outlineDark.withValues(alpha: 0.6)
-                          : const Color(0xFFE2E8F0),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildNavItem(
-                        index: 0,
-                        activeIcon: Icons.home_rounded,
-                        inactiveIcon: Icons.home_outlined,
-                        label: 'Beranda',
-                        isDark: isDark,
-                      ),
-                      _buildNavItem(
-                        index: 1,
-                        activeIcon: Icons.how_to_reg_rounded,
-                        inactiveIcon: Icons.how_to_reg_outlined,
-                        label: 'Presensi',
-                        isDark: isDark,
-                      ),
-                      _buildNavItem(
-                        index: 2,
-                        activeIcon: Icons.warning_amber_rounded,
-                        inactiveIcon: Icons.warning_amber_outlined,
-                        label: 'Pelanggaran',
-                        isDark: isDark,
-                      ),
-                      _buildNavItem(
-                        index: 3,
-                        activeIcon: Icons.assignment_turned_in_rounded,
-                        inactiveIcon: Icons.assignment_outlined,
-                        label: 'Ujian',
-                        isDark: isDark,
-                      ),
-                      _buildNavItem(
-                        index: 4,
-                        activeIcon: Icons.person_rounded,
-                        inactiveIcon: Icons.person_outline_rounded,
-                        label: 'Akun',
-                        isDark: isDark,
-                      ),
-                    ],
-                  ),
+            child: Row(
+              children: [
+                _buildNavItem(
+                  index: 0,
+                  icon: Icons.home_outlined,
+                  selectedIcon: Icons.home_rounded,
+                  label: 'Beranda',
+                  colorScheme: colorScheme,
+                  isDark: isDark,
                 ),
-              ),
+                _buildNavItem(
+                  index: 1,
+                  icon: Icons.how_to_reg_outlined,
+                  selectedIcon: Icons.how_to_reg_rounded,
+                  label: 'Presensi',
+                  colorScheme: colorScheme,
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  index: 2,
+                  icon: Icons.warning_amber_outlined,
+                  selectedIcon: Icons.warning_amber_rounded,
+                  label: 'Pelanggaran',
+                  colorScheme: colorScheme,
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  index: 3,
+                  icon: Icons.assignment_outlined,
+                  selectedIcon: Icons.assignment_turned_in_rounded,
+                  label: 'Ujian',
+                  colorScheme: colorScheme,
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  index: 4,
+                  icon: Icons.person_outline_rounded,
+                  selectedIcon: Icons.person_rounded,
+                  label: 'Akun',
+                  colorScheme: colorScheme,
+                  isDark: isDark,
+                ),
+              ],
             ),
           ),
         ),
@@ -326,62 +330,63 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   Widget _buildNavItem({
     required int index,
-    required IconData activeIcon,
-    required IconData inactiveIcon,
+    required IconData icon,
+    required IconData selectedIcon,
     required String label,
+    required ColorScheme colorScheme,
     required bool isDark,
   }) {
     final isSelected = _currentIndex == index;
-    final primaryColor = isDark
-        ? AppColors.primaryDark
-        : AppColors.primaryLight;
     final inactiveColor = isDark
-        ? const Color(0xFF94A3B8)
-        : const Color(0xFF64748B);
-    final activeBgColor = isDark
-        ? AppColors.primaryDark.withValues(alpha: 0.15)
-        : AppColors.primaryLight.withValues(alpha: 0.10);
+        ? const Color(0xFF90968B)
+        : const Color(0xFF6B7265);
 
     return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _onTabSelected(index),
-          borderRadius: BorderRadius.circular(20),
-          splashColor: primaryColor.withValues(alpha: 0.12),
-          highlightColor: primaryColor.withValues(alpha: 0.06),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            decoration: BoxDecoration(
-              color: isSelected ? activeBgColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  isSelected ? activeIcon : inactiveIcon,
-                  size: 22,
-                  color: isSelected ? primaryColor : inactiveColor,
+      child: M3ScaleOnPress(
+        onTap: () => _onTabSelected(index),
+        pressedScale: 0.92,
+        borderRadius: BorderRadius.circular(20),
+        enableFeedback: false,
+        child: Container(
+          color: Colors.transparent,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: AppMotion.durationShort2,
+                curve: AppMotion.emphasized,
+                width: 44,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? colorScheme.primary.withValues(alpha: isDark ? 0.22 : 0.14)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? primaryColor : inactiveColor,
-                    letterSpacing: -0.2,
+                child: Center(
+                  child: Icon(
+                    isSelected ? selectedIcon : icon,
+                    size: 20,
+                    color: isSelected ? colorScheme.primary : inactiveColor,
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 3),
+              AnimatedDefaultTextStyle(
+                duration: AppMotion.durationShort2,
+                curve: AppMotion.emphasized,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  color: isSelected ? colorScheme.primary : inactiveColor,
+                  letterSpacing: -0.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                child: Text(label),
+              ),
+            ],
           ),
         ),
       ),

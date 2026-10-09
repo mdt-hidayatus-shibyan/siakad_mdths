@@ -68,7 +68,7 @@ class _TentangAplikasiScreenState extends State<TentangAplikasiScreen> {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(22),
                           color: isDark
                               ? const Color(0xFF1B231B)
                               : Colors.white,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Material 3 Expressive Typography System with Arabic Amiri Integration
 class AppTypography {
   AppTypography._();
 
@@ -18,33 +19,57 @@ class AppTypography {
     );
   }
 
-  // Latin Modern M3 Typography
+  // Latin Modern M3 Expressive Typography
   static TextTheme textTheme(Color textColor) {
     return GoogleFonts.plusJakartaSansTextTheme().copyWith(
       displayLarge: GoogleFonts.plusJakartaSans(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
+        fontSize: 32,
+        fontWeight: FontWeight.w800,
         color: textColor,
         letterSpacing: -0.5,
       ),
+      displayMedium: GoogleFonts.plusJakartaSans(
+        fontSize: 28,
+        fontWeight: FontWeight.w800,
+        color: textColor,
+        letterSpacing: -0.4,
+      ),
+      displaySmall: GoogleFonts.plusJakartaSans(
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+        color: textColor,
+        letterSpacing: -0.3,
+      ),
       headlineLarge: GoogleFonts.plusJakartaSans(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
         color: textColor,
         letterSpacing: -0.3,
       ),
       headlineMedium: GoogleFonts.plusJakartaSans(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: textColor,
+        letterSpacing: -0.2,
+      ),
+      headlineSmall: GoogleFonts.plusJakartaSans(
         fontSize: 18,
         fontWeight: FontWeight.w700,
         color: textColor,
       ),
       titleLarge: GoogleFonts.plusJakartaSans(
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: FontWeight.w700,
         color: textColor,
+        letterSpacing: -0.1,
       ),
       titleMedium: GoogleFonts.plusJakartaSans(
-        fontSize: 14,
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
+      titleSmall: GoogleFonts.plusJakartaSans(
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: textColor,
       ),
@@ -61,22 +86,25 @@ class AppTypography {
       bodySmall: GoogleFonts.plusJakartaSans(
         fontSize: 11,
         fontWeight: FontWeight.w400,
-        color: textColor.withValues(alpha: 0.7),
+        color: textColor.withValues(alpha: 0.75),
       ),
       labelLarge: GoogleFonts.plusJakartaSans(
         fontSize: 13,
         fontWeight: FontWeight.w700,
         color: textColor,
+        letterSpacing: 0.1,
       ),
       labelMedium: GoogleFonts.plusJakartaSans(
         fontSize: 11,
         fontWeight: FontWeight.w600,
         color: textColor,
+        letterSpacing: 0.3,
       ),
       labelSmall: GoogleFonts.plusJakartaSans(
         fontSize: 10,
-        fontWeight: FontWeight.w500,
-        color: textColor.withValues(alpha: 0.6),
+        fontWeight: FontWeight.w600,
+        color: textColor.withValues(alpha: 0.7),
+        letterSpacing: 0.4,
       ),
     );
   }

@@ -1,6 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_motion.dart';
 import '../../core/utils/haptic_helper.dart';
 
 class SegmentedTabItem {
@@ -19,12 +18,14 @@ class SegmentedTabItem {
   });
 }
 
+/// Material 3 Expressive Segmented Tab Control with Animated Jelly-Pill Motion
 class SegmentedTabBar extends StatelessWidget {
   final List<SegmentedTabItem> items;
   final int selectedIndex;
   final ValueChanged<int> onTabChanged;
   final EdgeInsetsGeometry margin;
   final Color? accentColor;
+  final double borderRadius;
 
   const SegmentedTabBar({
     super.key,
@@ -33,113 +34,103 @@ class SegmentedTabBar extends StatelessWidget {
     required this.onTabChanged,
     this.margin = const EdgeInsets.fromLTRB(16, 12, 16, 8),
     this.accentColor,
+    this.borderRadius = 20,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
+
     final defaultAccent =
         accentColor ??
-        (isDark ? AppColors.primaryDark : AppColors.primaryLight);
+        (isDark ? colorScheme.primary : colorScheme.primary);
+
+    final containerBg = isDark
+        ? colorScheme.surfaceContainerHigh
+        : colorScheme.surfaceContainer;
+
+    final innerRadius = (borderRadius - 4).clamp(10.0, 24.0);
 
     return Padding(
       padding: margin,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xE6101710) : const Color(0xF2FFFFFF),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isDark
-                    ? const Color(0xFF263326)
-                    : const Color(0xFFE2E8F0),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
-                  blurRadius: 16,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: List.generate(items.length, (index) {
-                final item = items[index];
-                final isSelected = selectedIndex == index;
-                final itemAccent = item.activeColor ?? defaultAccent;
-                final itemContainer =
-                    item.activeContainer ??
-                    (isDark
-                        ? itemAccent.withValues(alpha: 0.18)
-                        : itemAccent.withValues(alpha: 0.14));
-                final inactiveColor = isDark
-                    ? const Color(0xFF8D9387)
-                    : const Color(0xFF73796E);
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: containerBg,
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+        child: Row(
+          children: List.generate(items.length, (index) {
+            final item = items[index];
+            final isSelected = selectedIndex == index;
+            final itemAccent = item.activeColor ?? defaultAccent;
+            final itemContainer =
+                item.activeContainer ??
+                (isDark
+                    ? colorScheme.secondaryContainer
+                    : colorScheme.secondaryContainer);
+            final inactiveColor = isDark
+                ? colorScheme.onSurfaceVariant
+                : colorScheme.onSurfaceVariant;
 
-                return Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      if (selectedIndex != index) {
-                        HapticHelper.segmentTick();
-                        onTabChanged(index);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(18),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 240),
-                      curve: Curves.easeOutCubic,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected ? itemContainer : Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                        border: isSelected
-                            ? Border.all(
-                                color: itemAccent.withValues(
-                                  alpha: isDark ? 0.35 : 0.25,
-                                ),
-                                width: 0.8,
-                              )
-                            : null,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            isSelected ? item.activeIcon : item.inactiveIcon,
-                            size: 17,
-                            color: isSelected ? itemAccent : inactiveColor,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              item.label,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isSelected
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
-                                color: isSelected ? itemAccent : inactiveColor,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+            return Expanded(
+              child: M3ScaleOnPress(
+                onTap: () {
+                  if (selectedIndex != index) {
+                    HapticHelper.segmentTick();
+                    onTabChanged(index);
+                  }
+                },
+                pressedScale: 0.95,
+                borderRadius: BorderRadius.circular(innerRadius),
+                child: AnimatedContainer(
+                  duration: AppMotion.durationMedium1,
+                  curve: AppMotion.emphasized,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 9,
+                    horizontal: 6,
                   ),
-                );
-              }),
-            ),
-          ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? itemContainer : Colors.transparent,
+                    borderRadius: BorderRadius.circular(innerRadius),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedScale(
+                        duration: AppMotion.durationShort2,
+                        curve: AppMotion.expressiveSpring,
+                        scale: isSelected ? 1.05 : 0.95,
+                        child: Icon(
+                          isSelected ? item.activeIcon : item.inactiveIcon,
+                          size: 17,
+                          color: isSelected ? itemAccent : inactiveColor,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          item.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected
+                                ? FontWeight.w800
+                                : FontWeight.w600,
+                            color: isSelected ? itemAccent : inactiveColor,
+                            letterSpacing: -0.1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
         ),
       ),
     );

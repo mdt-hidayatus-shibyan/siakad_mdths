@@ -7,6 +7,7 @@ import '../../../providers/laporan_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
+import '../../widgets/app_avatar.dart';
 
 class LaporanUjianScreen extends StatefulWidget {
   final int? initialRuanganId;
@@ -761,26 +762,12 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      CircleAvatar(
+                      AppAvatar(
                         radius: 23,
-                        backgroundColor: primary.withValues(
-                          alpha: isDark ? 0.25 : 0.15,
-                        ),
-                        backgroundImage: santri.foto != null
-                            ? NetworkImage(santri.foto!)
-                            : null,
-                        child: santri.foto == null
-                            ? Text(
-                                santri.nama.isNotEmpty
-                                    ? santri.nama[0].toUpperCase()
-                                    : 'S',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: primary,
-                                ),
-                              )
-                            : null,
+                        name: santri.nama,
+                        imageUrl: santri.foto,
+                        shape: BoxShape.circle,
+                        cacheDimension: 110,
                       ),
                       Positioned(
                         right: -4,
@@ -1083,25 +1070,12 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
                   child: Row(
                     children: [
-                      CircleAvatar(
+                      AppAvatar(
                         radius: 20,
-                        backgroundColor: primary.withValues(
-                          alpha: isDark ? 0.25 : 0.15,
-                        ),
-                        backgroundImage: santri.foto != null
-                            ? NetworkImage(santri.foto!)
-                            : null,
-                        child: santri.foto == null
-                            ? Text(
-                                santri.nama.isNotEmpty
-                                    ? santri.nama[0].toUpperCase()
-                                    : 'S',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: primary,
-                                ),
-                              )
-                            : null,
+                        name: santri.nama,
+                        imageUrl: santri.foto,
+                        shape: BoxShape.circle,
+                        cacheDimension: 100,
                       ),
                       const SizedBox(width: 12),
                       Expanded(

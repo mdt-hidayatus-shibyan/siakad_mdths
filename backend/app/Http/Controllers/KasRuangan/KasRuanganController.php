@@ -4,6 +4,7 @@ namespace App\Http\Controllers\KasRuangan;
 
 use App\Http\Controllers\Controller;
 use App\Models\KasRuangan\PembayaranKasRuangan;
+use App\Models\KasRuangan\PengeluaranKasRuangan;
 use App\Models\Murid;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
@@ -37,6 +38,7 @@ class KasRuanganController extends Controller
             ->where('ruangans.tahun_pelajaran_id', $tahunPelajaranId)
             ->withSum('pembayaranKas as total_terkumpul', 'jumlah_bayar')
             ->withSum(['setoranKas as total_disetor' => fn($q) => $q->where('status', 'Diterima')], 'jumlah_setor')
+            ->withSum('pengeluaranKas as total_pengeluaran', 'nominal')
             ->withCount('murids');
 
         // 4. Terapkan filter ruangan jika user memilihnya
@@ -52,7 +54,8 @@ class KasRuanganController extends Controller
         // 6. Ringkasan Statistik Global untuk Banner Header
         $totalKasTerkumpul = $ruangans->sum('total_terkumpul');
         $totalKasDisetor = $ruangans->sum('total_disetor');
-        $totalSisaKas = $totalKasTerkumpul - $totalKasDisetor;
+        $totalKasPengeluaran = $ruangans->sum('total_pengeluaran');
+        $totalSisaKas = $totalKasTerkumpul - $totalKasDisetor - $totalKasPengeluaran;
         $totalMurid = $ruangans->sum('murids_count');
         $totalRuangan = $ruangans->count();
 
@@ -64,6 +67,7 @@ class KasRuanganController extends Controller
             'ruanganId',
             'totalKasTerkumpul',
             'totalKasDisetor',
+            'totalKasPengeluaran',
             'totalSisaKas',
             'totalMurid',
             'totalRuangan'
@@ -75,13 +79,20 @@ class KasRuanganController extends Controller
         $ruangan = Ruangan::with(['pengaturanKas', 'level', 'waliRuangan'])
             ->withSum('pembayaranKas as total_terkumpul', 'jumlah_bayar')
             ->withSum(['setoranKas as total_disetor' => fn($q) => $q->where('status', 'Diterima')], 'jumlah_setor')
+            ->withSum('pengeluaranKas as total_pengeluaran', 'nominal')
             ->findOrFail($ruangan_id);
 
         $murids = $ruangan->murids()->with(['pembayaranKas' => function ($query) use ($ruangan_id) {
             $query->where('ruangan_id', $ruangan_id);
         }])->get();
 
-        return view('kas-ruangan.kas-ruangan.show', compact('ruangan', 'murids'));
+        $pengeluarans = $ruangan->pengeluaranKas()
+            ->with('pencatat.ustadz')
+            ->latest('tanggal_pengeluaran')
+            ->latest('id')
+            ->get();
+
+        return view('kas-ruangan.kas-ruangan.show', compact('ruangan', 'murids', 'pengeluarans'));
     }
 
     public function simpanPembayaran(Request $request)

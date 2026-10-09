@@ -621,7 +621,7 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
               color: isDark
                   ? Colors.white10
                   : Colors.black.withValues(alpha: 0.05),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(9),
             ),
             child: Center(
               child: Text(
@@ -942,7 +942,7 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
                 height: 32,
                 decoration: BoxDecoration(
                   color: rankColor.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: rankColor, width: 1.5),
                 ),
                 child: Center(

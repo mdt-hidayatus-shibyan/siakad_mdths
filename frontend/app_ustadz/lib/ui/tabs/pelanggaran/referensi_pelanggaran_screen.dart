@@ -73,8 +73,8 @@ class _ReferensiPelanggaranScreenState
                     : null,
                 filled: true,
                 fillColor: isDark
-                    ? const Color(0xFF101710)
-                    : const Color(0xFFF1F5F0),
+                    ? AppColors.surfaceContainerDark
+                    : AppColors.surfaceContainerLight,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,

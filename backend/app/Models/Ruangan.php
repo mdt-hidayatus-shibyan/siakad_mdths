@@ -25,7 +25,7 @@ class Ruangan extends Model
             return $query->whereRaw('0 = 1');
         }
 
-        if ($user->hasAnyRole(['administrator', 'petugas-koperasi'])) {
+        if ($user->hasAnyRole(['administrator', 'petugas-koperasi', 'petugas-tabungan'])) {
             return $query;
         }
         if ($user->hasRole('staff')) {
@@ -107,6 +107,12 @@ class Ruangan extends Model
     public function setoranKas()
     {
         return $this->hasMany(SetoranKasRuangan::class);
+    }
+
+    // 1 Ruangan mencatat pengeluaran kas operasional / sarana kelas
+    public function pengeluaranKas()
+    {
+        return $this->hasMany(\App\Models\KasRuangan\PengeluaranKasRuangan::class);
     }
 
     public function tabungans()

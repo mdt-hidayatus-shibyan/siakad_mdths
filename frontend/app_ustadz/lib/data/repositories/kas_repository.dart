@@ -144,9 +144,12 @@ class KasRepository {
     }
   }
 
-  Future<PengaturanKasItem> getPengaturan() async {
+  Future<PengaturanKasItem> getPengaturan({int? ruanganId}) async {
     try {
-      final response = await _client.dio.get(ApiConstants.kasPengaturan);
+      final response = await _client.dio.get(
+        ApiConstants.kasPengaturan,
+        queryParameters: ruanganId != null ? {'ruangan_id': ruanganId} : null,
+      );
       if (response.statusCode == 200 && response.data['success'] == true) {
         return PengaturanKasItem.fromJson(response.data['data']);
       } else {
@@ -314,6 +317,144 @@ class KasRepository {
         throw Exception(e.response!.data['message']);
       }
       throw Exception('Gagal membatalkan setoran: ${e.message}');
+    }
+  }
+
+  Future<RiwayatPengeluaranModel> getRiwayatPengeluaran({int? ruanganId}) async {
+    try {
+      final response = await _client.dio.get(
+        ApiConstants.kasPengeluaranRiwayat,
+        queryParameters: ruanganId != null ? {'ruangan_id': ruanganId} : null,
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return RiwayatPengeluaranModel.fromJson(response.data['data']);
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal memuat riwayat pengeluaran kas',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal memuat riwayat pengeluaran: ${e.message}');
+    }
+  }
+
+  Future<bool> simpanPengeluaran({
+    required int ruanganId,
+    required String judul,
+    required num nominal,
+    required String tanggalPengeluaran,
+    String? kategori,
+    String? keterangan,
+    String? buktiNotaPath,
+  }) async {
+    try {
+      final mapData = <String, dynamic>{
+        'ruangan_id': ruanganId,
+        'judul': judul,
+        'nominal': nominal,
+        'tanggal_pengeluaran': tanggalPengeluaran,
+        if (kategori != null && kategori.isNotEmpty) 'kategori': kategori,
+        if (keterangan != null && keterangan.isNotEmpty) 'keterangan': keterangan,
+      };
+
+      dynamic body;
+      if (buktiNotaPath != null && buktiNotaPath.isNotEmpty) {
+        mapData['bukti_nota'] = await MultipartFile.fromFile(
+          buktiNotaPath,
+          filename: buktiNotaPath.split('/').last.split('\\').last,
+        );
+        body = FormData.fromMap(mapData);
+      } else {
+        body = mapData;
+      }
+
+      final response = await _client.dio.post(
+        ApiConstants.kasPengeluaranSimpan,
+        data: body,
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal mencatat pengeluaran kas',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal mencatat pengeluaran: ${e.message}');
+    }
+  }
+
+  Future<bool> updatePengeluaran({
+    required int id,
+    required String judul,
+    required num nominal,
+    required String tanggalPengeluaran,
+    String? kategori,
+    String? keterangan,
+    String? buktiNotaPath,
+  }) async {
+    try {
+      final mapData = <String, dynamic>{
+        'judul': judul,
+        'nominal': nominal,
+        'tanggal_pengeluaran': tanggalPengeluaran,
+        if (kategori != null && kategori.isNotEmpty) 'kategori': kategori,
+        if (keterangan != null) 'keterangan': keterangan,
+      };
+
+      dynamic body;
+      if (buktiNotaPath != null && buktiNotaPath.isNotEmpty) {
+        mapData['bukti_nota'] = await MultipartFile.fromFile(
+          buktiNotaPath,
+          filename: buktiNotaPath.split('/').last.split('\\').last,
+        );
+        body = FormData.fromMap(mapData);
+      } else {
+        body = mapData;
+      }
+
+      final response = await _client.dio.post(
+        '${ApiConstants.kasPengeluaranUpdate}/$id',
+        data: body,
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal memperbarui pengeluaran kas',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal memperbarui pengeluaran: ${e.message}');
+    }
+  }
+
+  Future<bool> hapusPengeluaran(int id) async {
+    try {
+      final response = await _client.dio.delete(
+        '${ApiConstants.kasPengeluaranHapus}/$id',
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Gagal menghapus pengeluaran kas',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data['message'] != null) {
+        throw Exception(e.response!.data['message']);
+      }
+      throw Exception('Gagal menghapus pengeluaran: ${e.message}');
     }
   }
 }

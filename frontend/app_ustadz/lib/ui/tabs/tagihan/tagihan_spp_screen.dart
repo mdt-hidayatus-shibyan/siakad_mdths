@@ -75,7 +75,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: isDark ? AppColors.surfaceContainerLowDark : AppColors.surfaceContainerLowLight,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
@@ -991,7 +991,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                                     height: 14,
                                     decoration: BoxDecoration(
                                       color: dotColor,
-                                      shape: BoxShape.circle,
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
                                   ),
                                 );

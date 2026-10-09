@@ -137,7 +137,7 @@ class _DirektoriMuridScreenState extends State<DirektoriMuridScreen> {
 
         return Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF101710) : Colors.white,
+            color: isDark ? AppColors.surfaceContainerLowDark : AppColors.surfaceContainerLowLight,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: EdgeInsets.fromLTRB(
@@ -202,7 +202,7 @@ class _DirektoriMuridScreenState extends State<DirektoriMuridScreen> {
                                             ? AppColors.primaryDark
                                             : AppColors.primaryLight)
                                         .withValues(alpha: 0.9),
-                                shape: BoxShape.circle,
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(
                                 Icons.fullscreen_rounded,
@@ -246,8 +246,8 @@ class _DirektoriMuridScreenState extends State<DirektoriMuridScreen> {
                               ),
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? const Color(0xFF101710)
-                                    : const Color(0xFFE8F5E9),
+                                    ? AppColors.surfaceContainerHighDark
+                                    : AppColors.surfaceContainerHighLight,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(

@@ -131,7 +131,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
             16,
             24,
             16,
-            120 + MediaQuery.of(context).padding.bottom,
+            MediaQuery.of(context).padding.bottom + 12,
           ),
           children: [
             _buildBelumAdaRuanganEmptyState(
@@ -156,7 +156,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
           16,
           12,
           16,
-          120 + MediaQuery.of(context).padding.bottom,
+          MediaQuery.of(context).padding.bottom + 12,
         ),
         children: [
           // ===================================================================
@@ -570,7 +570,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                             color: AppColors.violetAccent.withValues(
                               alpha: 0.15,
                             ),
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
                             Icons.person_pin_rounded,
@@ -761,8 +761,8 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
                 ),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF101710)
-                      : const Color(0xFFF3F4F1),
+                      ? AppColors.surfaceContainerLowDark
+                      : AppColors.surfaceContainerLowLight,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: isDark
@@ -1333,7 +1333,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: AppColors.amberAccent.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: const Icon(
                 Icons.event_busy_rounded,
@@ -1364,8 +1364,8 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF101710)
-                    : const Color(0xFFF3F4F1),
+                    ? AppColors.surfaceContainerLowDark
+                    : AppColors.surfaceContainerLowLight,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDark
@@ -1419,7 +1419,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 Icons.meeting_room_outlined,
@@ -1487,7 +1487,7 @@ class _PresensiUjianTabViewState extends State<PresensiUjianTabView> {
               decoration: BoxDecoration(
                 color: (isDark ? AppColors.primaryDark : AppColors.primaryLight)
                     .withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 Icons.pending_actions_rounded,

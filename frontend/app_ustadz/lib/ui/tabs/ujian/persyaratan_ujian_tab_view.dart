@@ -56,7 +56,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 Icons.verified_user_rounded,
@@ -237,7 +237,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
               decoration: BoxDecoration(
                 color: (isDark ? AppColors.alphaBgDark : AppColors.alphaBgLight)
                     .withValues(alpha: 0.5),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 Icons.cancel_outlined,
@@ -377,7 +377,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
             16,
             24,
             16,
-            120 + MediaQuery.of(context).padding.bottom,
+            MediaQuery.of(context).padding.bottom + 12,
           ),
           children: [
             _buildBelumAdaRuanganEmptyState(
@@ -407,7 +407,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
           16,
           12,
           16,
-          120 + MediaQuery.of(context).padding.bottom,
+          MediaQuery.of(context).padding.bottom + 12,
         ),
         children: [
           // ===================================================================
@@ -1077,7 +1077,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 Icons.meeting_room_outlined,
@@ -1147,7 +1147,7 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
               decoration: BoxDecoration(
                 color: (isDark ? AppColors.primaryDark : AppColors.primaryLight)
                     .withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 Icons.pending_actions_rounded,
@@ -1231,27 +1231,48 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
     Color chipColor,
     bool isDark,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isSelected = provider.filterStatus == label;
 
+    final bgColor = isSelected
+        ? chipColor.withValues(alpha: isDark ? 0.25 : 0.16)
+        : (isDark
+            ? colorScheme.surfaceContainerHigh
+            : colorScheme.surfaceContainerHigh);
+
+    final textColor = isSelected
+        ? chipColor
+        : (isDark
+            ? colorScheme.onSurfaceVariant
+            : colorScheme.onSurfaceVariant);
+
     return Padding(
-      padding: const EdgeInsets.only(right: 6),
+      padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
-        label: Text('$label ($count)', style: const TextStyle(fontSize: 11)),
+        showCheckmark: false,
+        label: Text(
+          '$label ($count)',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: textColor,
+          ),
+        ),
         selected: isSelected,
-        selectedColor: chipColor.withValues(alpha: 0.2),
-        labelStyle: TextStyle(
-          fontSize: 11,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: isSelected ? chipColor : null,
+        selectedColor: bgColor,
+        backgroundColor: bgColor,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: isSelected
+              ? BorderSide(color: chipColor.withValues(alpha: 0.35), width: 1)
+              : BorderSide.none,
         ),
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
-        side: BorderSide(
-          color: isSelected
-              ? chipColor
-              : (isDark ? AppColors.outlineDark : AppColors.outlineLight),
-        ),
-        onSelected: (_) => provider.setFilterStatus(label),
+        onSelected: (_) {
+          HapticHelper.light();
+          provider.setFilterStatus(label);
+        },
       ),
     );
   }

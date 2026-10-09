@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_motion.dart';
 import 'signal_indicator_widget.dart';
 
-/// Reusable Circular Icon Button for AppBars and Actions
+/// Reusable Material 3 Expressive Tonal Icon Button for AppBars and Actions
 class CircularIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
@@ -11,6 +11,7 @@ class CircularIconButton extends StatelessWidget {
   final String? tooltip;
   final Color? iconColor;
   final Color? backgroundColor;
+  final double borderRadius;
 
   const CircularIconButton({
     super.key,
@@ -21,49 +22,58 @@ class CircularIconButton extends StatelessWidget {
     this.tooltip,
     this.iconColor,
     this.backgroundColor,
+    this.borderRadius = 14,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
+
+    final effectiveBg = backgroundColor ??
+        (isDark
+            ? colorScheme.surfaceContainerHigh
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.65));
+
+    final effectiveIconColor = iconColor ??
+        (isDark ? colorScheme.primary : colorScheme.primary);
+
+    final buttonRadius = BorderRadius.circular(borderRadius);
 
     Widget button = Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        customBorder: const CircleBorder(),
+        borderRadius: buttonRadius,
+        splashColor: effectiveIconColor.withValues(alpha: 0.12),
+        highlightColor: effectiveIconColor.withValues(alpha: 0.06),
         child: Container(
           width: size,
           height: size,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color:
-                backgroundColor ??
-                (isDark ? const Color(0xFF1A211A) : Colors.white),
-            border: Border.all(
-              color: isDark ? AppColors.outlineDark : const Color(0xFFE2E8F0),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            borderRadius: buttonRadius,
+            color: effectiveBg,
           ),
           child: Center(
             child: Icon(
               icon,
               size: iconSize,
-              color:
-                  iconColor ??
-                  (isDark ? AppColors.primaryDark : AppColors.primaryLight),
+              color: effectiveIconColor,
             ),
           ),
         ),
       ),
     );
+
+    if (onPressed != null) {
+      button = M3ScaleOnPress(
+        onTap: onPressed,
+        pressedScale: 0.92,
+        borderRadius: buttonRadius,
+        child: button,
+      );
+    }
 
     if (tooltip != null) {
       button = Tooltip(message: tooltip!, child: button);
@@ -73,7 +83,7 @@ class CircularIconButton extends StatelessWidget {
   }
 }
 
-/// Floating modern AppBar with circular back and action buttons & centered title
+/// Floating modern M3 Expressive AppBar with tonal back and action buttons
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? titleText;
   final String? subtitleText;
@@ -108,7 +118,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final canPop = Navigator.canPop(context);
 
     Widget? leadingWidget = leading;
@@ -117,8 +128,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         padding: const EdgeInsets.only(left: 16),
         child: Center(
           child: CircularIconButton(
-            icon: Icons.chevron_left_rounded,
-            iconSize: 26,
+            icon: Icons.arrow_back_rounded,
+            iconSize: 22,
             onPressed: onBackPressed ?? () => Navigator.maybePop(context),
             tooltip: 'Kembali',
           ),
@@ -141,24 +152,25 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         children: [
           Text(
             titleText!,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.3,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+              color: isDark ? const Color(0xFFE2E3DD) : const Color(0xFF191C19),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           if (subtitleText != null && subtitleText!.isNotEmpty) ...[
-            const SizedBox(height: 2),
+            const SizedBox(height: 1.5),
             Text(
               subtitleText!,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: isDark
-                    ? const Color(0xFF8D9387)
-                    : const Color(0xFF73796E),
+                    ? const Color(0xFF8E918F)
+                    : const Color(0xFF79747E),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -189,7 +201,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: backgroundColor ?? Colors.transparent,
       elevation: 0,
-      scrolledUnderElevation: 0,
+      scrolledUnderElevation: 2.0,
       centerTitle: centerTitle,
       leadingWidth: 58,
       leading: leadingWidget,

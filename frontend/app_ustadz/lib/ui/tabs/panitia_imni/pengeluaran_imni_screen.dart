@@ -114,7 +114,7 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
               top: 20,
             ),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: isDark ? AppColors.surfaceContainerLowDark : AppColors.surfaceContainerLowLight,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
@@ -151,7 +151,7 @@ class _PengeluaranImniScreenState extends State<PengeluaranImniScreen> {
                                   ? AppColors.primaryDark
                                   : AppColors.primaryLight)
                               .withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Icon(
                           isEdit ? Icons.edit_note_rounded : Icons.add_shopping_cart_rounded,

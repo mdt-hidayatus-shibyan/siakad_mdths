@@ -41,41 +41,51 @@ class AppVersionConfig {
   // ---------------------------------------------------------------------------
   static const String appTitle = 'Ustadz - MDTHS';
   static const String appSubtitle = 'MDT Hidayatus Shibyan';
-  static const String version = '2.0.2';
-  static const String buildNumber = '2026.10.02';
+  static const String version = '3.2.2';
+  static const String buildNumber = '2026.10.04';
   static const String releaseDate = 'Oktober 2026';
-  static const String statusBadge = 'Versi Rilis';
+  static const String statusBadge = 'Versi Stabil';
   static const bool isLatest = true;
 
   // ---------------------------------------------------------------------------
   // 2. CATATAN RILIS (CHANGELOG)
   // ---------------------------------------------------------------------------
-  static const String releaseSubtitle = 'Stabil Release - Oktober 2026';
-  static const String releaseBadge = 'Release Version';
+  static const String releaseSubtitle = 'Stable Release - Oktober 2026';
+  static const String releaseBadge = 'Stable Version';
 
   /// 🌟 DAFTAR PENAMBAHAN FITUR BARU
   /// Ubah / tambahkan fitur baru di sini:
   static const List<ChangelogEntry> newFeatures = [
     ChangelogEntry(
-      title: 'Presensi Event',
+      title: 'Penyegaran Tampilan',
       description:
-          'Menambahkan fitur presensi untuk event khusus, memungkinkan ustadz dan murid untuk melakukan presensi secara digital pada kegiatan tertentu di madrasah.',
+          'Penyegaran tampilan antarmuka aplikasi untuk meningkatkan pengalaman pengguna, termasuk perbaikan desain visual dan navigasi yang lebih intuitif ala Material 3 Expressive Design System (M3).',
     ),
     ChangelogEntry(
-      title: 'Signal Indikator Koneksi',
+      title: 'Atur Tata Letak Menu Cepat di Home Screen',
       description:
-          'Menambahkan indikator sinyal koneksi di App_Bar aplikasi, sehingga pengguna dapat melihat kualitas koneksi internet mereka saat menggunakan aplikasi.',
+          'Fitur baru untuk memungkinkan pengguna mengatur tata letak menu sesuai kebutuhan.',
     ),
     ChangelogEntry(
-      title: 'Panitia IMNI',
+      title: 'Pengeluaran Kas Ruangan',
       description:
-          'Menambahkan fitur untuk mengelola panitia dalam kegiatan IMNI, memungkinkan koordinasi yang lebih efektif dan transparansi dalam pengelolaan acara.',
+          'Fitur baru untuk mencatat pengeluaran kas ruangan secara lebih efisien dan transparan.',
+    ),
+    ChangelogEntry(
+      title: 'Kepanitiaan IMNI',
+      description:
+          'Fitur baru khusus Kepanitiaan IMNI untuk mempermudah pengelolaan kegiatan dan administrasi panitia.',
     ),
   ];
 
   /// 🛠️ DAFTAR PERBAIKAN & PENINGKATAN SISTEM
   /// Ubah / tambahkan perbaikan bug atau peningkatan sistem di sini:
   static const List<ChangelogEntry> improvements = [
+    ChangelogEntry(
+      title: 'Perbaikan Sistem',
+      description:
+          'Perbaikan sistem internal dari pemborosan RAM, Paket Data, Baterai dan Penyimpanan Internal untuk meningkatkan kinerja aplikasi secara keseluruhan.',
+    ),
     ChangelogEntry(
       title: 'Perbaikan Bug',
       description:

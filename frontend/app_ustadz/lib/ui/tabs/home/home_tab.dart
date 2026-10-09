@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/dashboard_model.dart';
 import '../../../providers/auth_provider.dart';
@@ -33,6 +34,8 @@ import '../panitia_imni/pembayaran_imni_screen.dart';
 import '../panitia_imni/pengeluaran_imni_screen.dart';
 import '../panitia_imni/presensi_imni_screen.dart';
 import '../panitia_imni/nilai_imni_screen.dart';
+import '../../../core/storage/storage_service.dart';
+import 'widgets/customizable_menu_grid.dart';
 
 class HomeTab extends StatefulWidget {
   final VoidCallback? onNavigateToPresensiGuru;
@@ -50,12 +53,179 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   bool _isRefreshing = false;
+  bool _isCustomizingMenu = false;
+  Map<String, QuickMenuSize> _menuSizes = {};
+  List<String> _pinnedMenuIds = [];
+
+  static const List<String> _defaultMenuCepatOrder = [
+    'kalender',
+    'jadwal',
+    'mapel',
+    'pelanggaran',
+    'catatan',
+    'pengumuman',
+    'laporan',
+    'tabungan',
+    'badal',
+    'pengingat_bel',
+  ];
+
+  static const List<String> _defaultWaliRuanganOrder = [
+    'wali_kas',
+    'wali_tagihan',
+    'wali_murid',
+    'wali_laporan',
+  ];
+
+  static const List<String> _defaultPanitiaImniOrder = [
+    'imni_tagihan',
+    'imni_pengeluaran',
+    'imni_presensi',
+    'imni_nilai',
+  ];
+
+  List<String> _menuCepatOrder = List.from(_defaultMenuCepatOrder);
+  List<String> _waliRuanganOrder = List.from(_defaultWaliRuanganOrder);
+  List<String> _panitiaImniOrder = List.from(_defaultPanitiaImniOrder);
 
   @override
   void initState() {
     super.initState();
+    _loadMenuPreferences();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DashboardProvider>().fetchDashboard();
+    });
+  }
+
+  void _loadMenuPreferences() {
+    final rawMap = StorageService.getMenuSizes();
+    if (rawMap.isNotEmpty) {
+      _menuSizes = rawMap.map(
+        (key, value) => MapEntry(key, QuickMenuSizeExt.fromCode(value)),
+      );
+    }
+
+    _pinnedMenuIds = StorageService.getPinnedMenus();
+
+    final savedCepat = StorageService.getMenuOrder('cepat');
+    if (savedCepat != null && savedCepat.isNotEmpty) {
+      _menuCepatOrder = List.from(savedCepat);
+      for (final id in _defaultMenuCepatOrder) {
+        if (!_menuCepatOrder.contains(id)) _menuCepatOrder.add(id);
+      }
+    }
+
+    final savedWali = StorageService.getMenuOrder('wali');
+    if (savedWali != null && savedWali.isNotEmpty) {
+      _waliRuanganOrder = List.from(savedWali);
+      for (final id in _defaultWaliRuanganOrder) {
+        if (!_waliRuanganOrder.contains(id)) _waliRuanganOrder.add(id);
+      }
+    }
+
+    final savedImni = StorageService.getMenuOrder('imni');
+    if (savedImni != null && savedImni.isNotEmpty) {
+      _panitiaImniOrder = List.from(savedImni);
+      for (final id in _defaultPanitiaImniOrder) {
+        if (!_panitiaImniOrder.contains(id)) _panitiaImniOrder.add(id);
+      }
+    }
+  }
+
+  void _handleResizeMenu(String id, QuickMenuSize newSize) {
+    setState(() {
+      _menuSizes[id] = newSize;
+    });
+    final rawMap = _menuSizes.map((k, v) => MapEntry(k, v.code));
+    StorageService.saveMenuSizes(rawMap);
+  }
+
+  void _handleTogglePin(String id) {
+    HapticHelper.medium();
+    setState(() {
+      if (_pinnedMenuIds.contains(id)) {
+        _pinnedMenuIds.remove(id);
+      } else {
+        _pinnedMenuIds.add(id);
+      }
+    });
+    StorageService.savePinnedMenus(_pinnedMenuIds);
+  }
+
+  void _handleReorderPinnedMenu(String fromId, String toId) {
+    setState(() {
+      final oldIndex = _pinnedMenuIds.indexOf(fromId);
+      final newIndex = _pinnedMenuIds.indexOf(toId);
+      if (oldIndex != -1 && newIndex != -1) {
+        final item = _pinnedMenuIds.removeAt(oldIndex);
+        _pinnedMenuIds.insert(newIndex, item);
+      }
+    });
+    StorageService.savePinnedMenus(_pinnedMenuIds);
+  }
+
+  void _handleReorderMenuCepat(String fromId, String toId) {
+    setState(() {
+      final oldIndex = _menuCepatOrder.indexOf(fromId);
+      final newIndex = _menuCepatOrder.indexOf(toId);
+      if (oldIndex != -1 && newIndex != -1) {
+        final item = _menuCepatOrder.removeAt(oldIndex);
+        _menuCepatOrder.insert(newIndex, item);
+      }
+    });
+    StorageService.saveMenuOrder('cepat', _menuCepatOrder);
+  }
+
+  void _handleReorderWaliRuangan(String fromId, String toId) {
+    setState(() {
+      final oldIndex = _waliRuanganOrder.indexOf(fromId);
+      final newIndex = _waliRuanganOrder.indexOf(toId);
+      if (oldIndex != -1 && newIndex != -1) {
+        final item = _waliRuanganOrder.removeAt(oldIndex);
+        _waliRuanganOrder.insert(newIndex, item);
+      }
+    });
+    StorageService.saveMenuOrder('wali', _waliRuanganOrder);
+  }
+
+  void _handleReorderPanitiaImni(String fromId, String toId) {
+    setState(() {
+      final oldIndex = _panitiaImniOrder.indexOf(fromId);
+      final newIndex = _panitiaImniOrder.indexOf(toId);
+      if (oldIndex != -1 && newIndex != -1) {
+        final item = _panitiaImniOrder.removeAt(oldIndex);
+        _panitiaImniOrder.insert(newIndex, item);
+      }
+    });
+    StorageService.saveMenuOrder('imni', _panitiaImniOrder);
+  }
+
+  void _handleResetMenuPreferences() {
+    HapticHelper.medium();
+    setState(() {
+      _menuSizes.clear();
+      _pinnedMenuIds.clear();
+      _menuCepatOrder = List.from(_defaultMenuCepatOrder);
+      _waliRuanganOrder = List.from(_defaultWaliRuanganOrder);
+      _panitiaImniOrder = List.from(_defaultPanitiaImniOrder);
+    });
+    StorageService.clearMenuSizes();
+    StorageService.clearPinnedMenus();
+    StorageService.clearMenuOrder();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Tata letak, pin, dan ukuran menu dikembalikan ke default'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  void _toggleCustomizingMenu() {
+    HapticHelper.selection();
+    setState(() {
+      _isCustomizingMenu = !_isCustomizingMenu;
     });
   }
 
@@ -161,24 +331,25 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user;
     final dashboard = context.watch<DashboardProvider>();
 
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          onRefresh: _refreshData,
-          color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              18,
-              12,
-              18,
-              120 + MediaQuery.of(context).padding.bottom,
-            ),
+    return SafeArea(
+      bottom: false,
+      child: RefreshIndicator(
+        onRefresh: _refreshData,
+        color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            18,
+            12,
+            18,
+            MediaQuery.of(context).padding.bottom + 12,
+          ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -212,8 +383,8 @@ class _HomeTabState extends State<HomeTab> {
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
+                                  horizontal: 8,
+                                  vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
                                   color:
@@ -221,13 +392,13 @@ class _HomeTabState extends State<HomeTab> {
                                               ? AppColors.primaryDark
                                               : AppColors.primaryLight)
                                           .withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   (user?.isWaliRuangan == true &&
                                           (user?.ruanganWali?.isNotEmpty ??
                                               false))
-                                      ? 'Wali Ruangan : ${user!.ruanganWali}'
+                                      ? 'Wali Ruangan : ${user?.ruanganWali}'
                                       : 'Ustadz',
                                   style: TextStyle(
                                     fontSize: 10,
@@ -238,21 +409,6 @@ class _HomeTabState extends State<HomeTab> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              // Expanded(
-                              //   child: Text(
-                              //     user?.tahunPelajaran ?? '1447/1448 H',
-                              //     style: TextStyle(
-                              //       fontSize: 10.5,
-                              //       fontWeight: FontWeight.w500,
-                              //       color: isDark
-                              //           ? const Color(0xFF94A3B8)
-                              //           : const Color(0xFF64748B),
-                              //     ),
-                              //     maxLines: 1,
-                              //     overflow: TextOverflow.ellipsis,
-                              //   ),
-                              // ),
                             ],
                           ),
                         ],
@@ -263,44 +419,42 @@ class _HomeTabState extends State<HomeTab> {
                     const SizedBox(width: 6),
                     Tooltip(
                       message: 'Perbarui & Sinkronisasi Data',
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: (_isRefreshing || dashboard.isLoading)
-                              ? null
-                              : _refreshData,
-                          borderRadius: BorderRadius.circular(17),
-                          child: Container(
-                            width: 34,
-                            height: 34,
-                            decoration: BoxDecoration(
-                              color:
-                                  (isDark
-                                          ? AppColors.primaryDark
-                                          : AppColors.primaryLight)
-                                      .withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: _isRefreshing || dashboard.isLoading
-                                  ? SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: isDark
-                                            ? AppColors.primaryDark
-                                            : AppColors.primaryLight,
-                                      ),
-                                    )
-                                  : Icon(
-                                      Icons.refresh_rounded,
-                                      size: 18,
+                      child: M3ScaleOnPress(
+                        onTap: (_isRefreshing || dashboard.isLoading)
+                            ? null
+                            : _refreshData,
+                        pressedScale: 0.90,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Center(
+                            child: _isRefreshing || dashboard.isLoading
+                                ? SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
                                       color: isDark
                                           ? AppColors.primaryDark
                                           : AppColors.primaryLight,
                                     ),
-                            ),
+                                  )
+                                : Icon(
+                                    Icons.refresh_rounded,
+                                    size: 18,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
+                                  ),
                           ),
                         ),
                       ),
@@ -308,38 +462,36 @@ class _HomeTabState extends State<HomeTab> {
                     const SizedBox(width: 6),
                     Tooltip(
                       message: 'Hubungi Admin & Pusat Bantuan',
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            HapticHelper.light();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const HubungiAdminScreen(),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(17),
-                          child: Container(
-                            width: 34,
-                            height: 34,
-                            decoration: BoxDecoration(
-                              color:
-                                  (isDark
-                                          ? AppColors.primaryDark
-                                          : AppColors.primaryLight)
-                                      .withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
+                      child: M3ScaleOnPress(
+                        onTap: () {
+                          HapticHelper.light();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const HubungiAdminScreen(),
                             ),
-                            child: Center(
-                              child: Icon(
-                                Icons.support_agent_rounded,
-                                size: 18,
-                                color: isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight,
-                              ),
+                          );
+                        },
+                        pressedScale: 0.90,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.support_agent_rounded,
+                              size: 18,
+                              color: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
                             ),
                           ),
                         ),
@@ -370,24 +522,6 @@ class _HomeTabState extends State<HomeTab> {
                           ),
                         ),
                       ],
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        HapticHelper.light();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const PengumumanScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Lihat Semua',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -455,38 +589,6 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            (dashboard.dashboardData?.isLiburHariIni ?? false)
-                            ? (isDark
-                                  ? const Color(0xFF382305)
-                                  : const Color(0xFFFEF3C7))
-                            : (isDark
-                                  ? AppColors.primaryContainerDark
-                                  : AppColors.primaryContainerLight),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        (dashboard.dashboardData?.isLiburHariIni ?? false)
-                            ? '🏖️ Libur KBM'
-                            : '${dashboard.dashboardData?.jadwalHariIniList.length ?? 0} Sesi KBM',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color:
-                              (dashboard.dashboardData?.isLiburHariIni ?? false)
-                              ? AppColors.amberAccent
-                              : (isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -507,7 +609,7 @@ class _HomeTabState extends State<HomeTab> {
                             color: isDark
                                 ? const Color(0xFF382305)
                                 : const Color(0xFFFEF3C7),
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: const Icon(
                             Icons.beach_access_rounded,
@@ -570,195 +672,206 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                 const SizedBox(height: 22),
 
-                // 3. Menu Cepat (Ustadz Umum & Wali Ruangan)
-                Row(
-                  children: [
-                    Icon(
-                      Icons.widgets_rounded,
-                      size: 19,
-                      color: isDark
-                          ? AppColors.primaryDark
-                          : AppColors.primaryLight,
-                    ),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'Menu Cepat',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                GlassCard(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 14,
-                  ),
-                  child: Column(
+                // 2.5 Menu Tersemat (Hanya tampil saat ada menu yang terpin)
+                if (_pinnedMenuIds.isNotEmpty) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          _buildQuickAction(
-                            icon: Icons.calendar_month_rounded,
-                            label: 'Kalender',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const KalendarScreen(),
-                                ),
-                              );
-                            },
+                          Icon(
+                            Icons.push_pin_rounded,
+                            size: 19,
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
                           ),
-                          _buildQuickAction(
-                            icon: Icons.gavel_rounded,
-                            label: 'Ref. Pelanggaran',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const ReferensiPelanggaranScreen(),
-                                ),
-                              );
-                            },
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Menu Tersemat',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          _buildQuickAction(
-                            icon: Icons.menu_book_rounded,
-                            label: 'Mapel',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const MataPelajaranScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildQuickAction(
-                            icon: Icons.schedule_rounded,
-                            label: 'Jadwal',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const JadwalPelajaranScreen(),
-                                ),
-                              );
-                            },
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 1.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  .withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${_pinnedMenuIds.length}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          _buildQuickAction(
-                            icon: Icons.edit_note_rounded,
-                            label: 'Catatan',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const CatatanUstadzScreen(),
-                                ),
-                              );
-                            },
+                      if (_isCustomizingMenu)
+                        TextButton(
+                          onPressed: () {
+                            HapticHelper.medium();
+                            setState(() {
+                              _pinnedMenuIds.clear();
+                            });
+                            StorageService.savePinnedMenus([]);
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.roseDanger,
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                           ),
-                          _buildQuickAction(
-                            icon: Icons.campaign_rounded,
-                            label: 'Pengumuman',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const PengumumanScreen(),
-                                ),
-                              );
-                            },
+                          child: const Text(
+                            'Lepas Semua',
+                            style: TextStyle(fontSize: 12),
                           ),
-                          _buildQuickAction(
-                            icon: Icons.assessment_rounded,
-                            label: 'Laporan',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const LaporanPengampuScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildQuickAction(
-                            icon: Icons.account_balance_wallet_rounded,
-                            label: 'Tabungan',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const TabunganScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          _buildQuickAction(
-                            icon: Icons.swap_horiz_rounded,
-                            label: 'Ustadz Pengganti',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const BadalPresensiScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildQuickAction(
-                            icon: Icons.notifications_active_rounded,
-                            label: 'Pengingat Bel',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const PengingatBelScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          _buildQuickAction(
-                            icon: Icons.headset_mic_rounded,
-                            label: 'Bantuan',
-                            isDark: isDark,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const HubungiAdminScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const Expanded(child: SizedBox.shrink()),
-                        ],
-                      ),
+                        ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  CustomizableMenuGrid(
+                    items: _buildPinnedMenuItems(user),
+                    sizes: _menuSizes,
+                    isEditing: _isCustomizingMenu,
+                    pinnedIds: _pinnedMenuIds,
+                    onTogglePin: _handleTogglePin,
+                    onResize: _handleResizeMenu,
+                    onLongPressTile: _toggleCustomizingMenu,
+                    onReorder: _handleReorderPinnedMenu,
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
+                // 3. Menu Cepat (Ustadz Umum & Wali Ruangan)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.widgets_rounded,
+                          size: 19,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Menu Cepat',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_isCustomizingMenu)
+                      Row(
+                        children: [
+                          TextButton.icon(
+                            onPressed: _handleResetMenuPreferences,
+                            icon: const Icon(
+                              Icons.restart_alt_rounded,
+                              size: 16,
+                            ),
+                            label: const Text(
+                              'Reset',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.roseDanger,
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          FilledButton.icon(
+                            onPressed: _toggleCustomizingMenu,
+                            icon: const Icon(Icons.check_rounded, size: 16),
+                            label: const Text(
+                              'Selesai',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            style: FilledButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              backgroundColor: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      InkWell(
+                        onTap: _toggleCustomizingMenu,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? colorScheme.surfaceContainerHigh
+                                : colorScheme.surfaceContainerHighest
+                                      .withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.tune_rounded,
+                                size: 14,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Atur Menu',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                CustomizableMenuGrid(
+                  items: _buildMenuCepatItems(),
+                  sizes: _menuSizes,
+                  isEditing: _isCustomizingMenu,
+                  pinnedIds: _pinnedMenuIds,
+                  onTogglePin: _handleTogglePin,
+                  onResize: _handleResizeMenu,
+                  onLongPressTile: _toggleCustomizingMenu,
+                  onReorder: _handleReorderMenuCepat,
                 ),
                 const SizedBox(height: 18),
 
@@ -810,74 +923,18 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  GlassCard(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 14,
-                    ),
-                    child: Row(
-                      children: [
-                        _buildQuickAction(
-                          icon: Icons.money_rounded,
-                          label: 'Kas Ruangan',
-                          isDark: isDark,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const KasRuanganScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildQuickAction(
-                          icon: Icons.receipt_long_rounded,
-                          label: 'Tagihan',
-                          isDark: isDark,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => TagihanScreen(
-                                  initialRuanganId: user?.ruanganWaliId,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildQuickAction(
-                          icon: Icons.people_alt_rounded,
-                          label: 'Anggota Murid',
-                          isDark: isDark,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => DirektoriMuridScreen(
-                                  ruanganId: user?.ruanganWaliId,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildQuickAction(
-                          icon: Icons.admin_panel_settings_rounded,
-                          label: 'Laporan ${user?.ruanganWali ?? "Ruangan"}',
-                          isDark: isDark,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const LaporanRuanganScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 14),
+                  CustomizableMenuGrid(
+                    items: _buildWaliRuanganItems(user),
+                    sizes: _menuSizes,
+                    isEditing: _isCustomizingMenu,
+                    pinnedIds: _pinnedMenuIds,
+                    onTogglePin: _handleTogglePin,
+                    onResize: _handleResizeMenu,
+                    onLongPressTile: _toggleCustomizingMenu,
+                    onReorder: _handleReorderWaliRuangan,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                 ],
 
                 // Menu Tambahan Khusus Kepanitiaan IMNI
@@ -894,7 +951,7 @@ class _HomeTabState extends State<HomeTab> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Kepanitiaan IMNI (${user?.jabatanPanitiaImni ?? "Panitia"})',
+                            'Kepanitiaan IMNI (${user?.jabatanPanitiaImni ?? "-"})',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -924,148 +981,357 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  GlassCard(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 14,
-                    ),
-                    child: Row(
-                      children: [
-                        _buildQuickAction(
-                          icon: Icons.payments_rounded,
-                          label: 'Tagihan IMNI',
-                          isDark: isDark,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const PembayaranImniScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildQuickAction(
-                          icon: Icons.shopping_cart_checkout_rounded,
-                          label: 'Pengeluaran',
-                          isDark: isDark,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const PengeluaranImniScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildQuickAction(
-                          icon: Icons.fact_check_rounded,
-                          label: 'Presensi IMNI',
-                          isDark: isDark,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const PresensiImniScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildQuickAction(
-                          icon: Icons.grade_rounded,
-                          label: 'Nilai & Leger',
-                          isDark: isDark,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const NilaiImniScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 14),
+                  CustomizableMenuGrid(
+                    items: _buildPanitiaImniItems(),
+                    sizes: _menuSizes,
+                    isEditing: _isCustomizingMenu,
+                    pinnedIds: _pinnedMenuIds,
+                    onTogglePin: _handleTogglePin,
+                    onResize: _handleResizeMenu,
+                    onLongPressTile: _toggleCustomizingMenu,
+                    onReorder: _handleReorderPanitiaImni,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                 ],
-
-                const SizedBox(height: 20),
               ],
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
-  Widget _buildQuickAction({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    final primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
-    final containerBg = isDark
-        ? AppColors.primaryContainerDark.withValues(alpha: 0.55)
-        : AppColors.primaryContainerLight.withValues(alpha: 0.85);
-    final borderColor = isDark
-        ? AppColors.primaryDark.withValues(alpha: 0.22)
-        : AppColors.primaryLight.withValues(alpha: 0.25);
-    final textColor = isDark
-        ? const Color(0xFFE2E8F0)
-        : const Color(0xFF1E293B);
+  List<QuickMenuItemData> _sortItemsByOrder(
+    List<QuickMenuItemData> items,
+    List<String> order,
+  ) {
+    final itemMap = {for (final item in items) item.id: item};
+    final sorted = <QuickMenuItemData>[];
+    for (final id in order) {
+      if (itemMap.containsKey(id)) {
+        sorted.add(itemMap[id]!);
+      }
+    }
+    for (final item in items) {
+      if (!sorted.any((e) => e.id == item.id)) {
+        sorted.add(item);
+      }
+    }
+    return sorted;
+  }
 
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticHelper.light();
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: containerBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: borderColor, width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primary.withValues(alpha: isDark ? 0.08 : 0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Center(child: Icon(icon, size: 23, color: primary)),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+  List<QuickMenuItemData> _getAllMenuCepatItems() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark
+        ? AppColors.primaryDark
+        : AppColors.primaryLight;
+
+    return _sortItemsByOrder([
+      QuickMenuItemData(
+        id: 'kalender',
+        icon: Icons.calendar_month_rounded,
+        title: 'Kalender',
+        shortTitle: 'Kalender',
+        subtitle: 'Agenda & Libur',
+        accentColor: AppColors.amberAccent,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const KalendarScreen()),
+          );
+        },
       ),
-    );
+      QuickMenuItemData(
+        id: 'jadwal',
+        icon: Icons.schedule_rounded,
+        title: 'Jadwal Mengajar',
+        shortTitle: 'Jadwal',
+        subtitle: 'Sesi Pelajaran',
+        accentColor: primaryColor,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const JadwalPelajaranScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'mapel',
+        icon: Icons.menu_book_rounded,
+        title: 'Mata pelajaran',
+        shortTitle: 'Mapel',
+        subtitle: 'Daftar Kurikulum',
+        accentColor: AppColors.skyBlueAccent,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const MataPelajaranScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'pelanggaran',
+        icon: Icons.gavel_rounded,
+        title: 'Ref. Pelanggaran',
+        shortTitle: 'Pelanggaran',
+        subtitle: 'Poin Pelanggaran Murid',
+        accentColor: AppColors.roseDanger,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const ReferensiPelanggaranScreen(),
+            ),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'catatan',
+        icon: Icons.edit_note_rounded,
+        title: 'Catatan Ustadz',
+        shortTitle: 'Catatan',
+        subtitle: 'Jurnal Harian',
+        accentColor: const Color(0xFF8B5CF6),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CatatanUstadzScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'pengumuman',
+        icon: Icons.campaign_rounded,
+        title: 'Pengumuman',
+        shortTitle: 'Info',
+        subtitle: 'Informasi Madrasah',
+        accentColor: const Color(0xFFF97316),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PengumumanScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'laporan',
+        icon: Icons.assessment_rounded,
+        title: 'Rekap Laporan',
+        shortTitle: 'Laporan',
+        subtitle: 'Presensi & Nilai',
+        accentColor: const Color(0xFF6366F1),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LaporanPengampuScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'tabungan',
+        icon: Icons.account_balance_wallet_rounded,
+        title: 'Buku Tabungan',
+        shortTitle: 'Tabungan',
+        subtitle: 'Tabungan Madrasah',
+        accentColor: const Color(0xFF0D9488),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const TabunganScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'badal',
+        icon: Icons.swap_horiz_rounded,
+        title: 'Ustadz Pengganti',
+        shortTitle: 'Badal',
+        subtitle: 'Tukar Jadwal / Piket',
+        accentColor: const Color(0xFFD946EF),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BadalPresensiScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'pengingat_bel',
+        icon: Icons.notifications_active_rounded,
+        title: 'Pengingat Bel',
+        shortTitle: 'Alarm Bel',
+        subtitle: 'Alarm Jam KBM',
+        accentColor: const Color(0xFFEAB308),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PengingatBelScreen()),
+          );
+        },
+      ),
+    ], _menuCepatOrder);
+  }
+
+  List<QuickMenuItemData> _getAllWaliRuanganItems(dynamic user) {
+    return _sortItemsByOrder([
+      QuickMenuItemData(
+        id: 'wali_kas',
+        icon: Icons.money_rounded,
+        title: 'Kas Ruangan',
+        shortTitle: 'Kas Ruang',
+        subtitle: 'Saldo & Mutasi',
+        accentColor: const Color(0xFF10B981),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const KasRuanganScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'wali_tagihan',
+        icon: Icons.receipt_long_rounded,
+        title: 'Tagihan',
+        shortTitle: 'Tagihan',
+        subtitle: 'Iuran Ruangan',
+        accentColor: const Color(0xFFF43F5E),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  TagihanScreen(initialRuanganId: user?.ruanganWaliId),
+            ),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'wali_murid',
+        icon: Icons.people_alt_rounded,
+        title: 'Anggota Murid',
+        shortTitle: 'Murid',
+        subtitle: 'Rombongan Belajar',
+        accentColor: const Color(0xFF6366F1),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  DirektoriMuridScreen(ruanganId: user?.ruanganWaliId),
+            ),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'wali_laporan',
+        icon: Icons.admin_panel_settings_rounded,
+        title: 'Laporan ${user?.ruanganWali ?? "Ruangan"}',
+        shortTitle: 'Laporan',
+        subtitle: 'Presensi & Nilai',
+        accentColor: const Color(0xFF8B5CF6),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LaporanRuanganScreen()),
+          );
+        },
+      ),
+    ], _waliRuanganOrder);
+  }
+
+  List<QuickMenuItemData> _getAllPanitiaImniItems() {
+    return _sortItemsByOrder([
+      QuickMenuItemData(
+        id: 'imni_tagihan',
+        icon: Icons.payments_rounded,
+        title: 'Tagihan IMNI',
+        shortTitle: 'Tagihan',
+        subtitle: 'Iuran Santri',
+        accentColor: AppColors.amberAccent,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PembayaranImniScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'imni_pengeluaran',
+        icon: Icons.shopping_cart_checkout_rounded,
+        title: 'Pengeluaran',
+        shortTitle: 'Belanja',
+        subtitle: 'Arus Kas Keluar',
+        accentColor: AppColors.roseDanger,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PengeluaranImniScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'imni_presensi',
+        icon: Icons.fact_check_rounded,
+        title: 'Presensi IMNI',
+        shortTitle: 'Presensi',
+        subtitle: 'Absensi Acara',
+        accentColor: AppColors.skyBlueAccent,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PresensiImniScreen()),
+          );
+        },
+      ),
+      QuickMenuItemData(
+        id: 'imni_nilai',
+        icon: Icons.grade_rounded,
+        title: 'Nilai & Leger',
+        shortTitle: 'Nilai Leger',
+        subtitle: 'Rekapitulasi Nilai',
+        accentColor: const Color(0xFF10B981),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NilaiImniScreen()),
+          );
+        },
+      ),
+    ], _panitiaImniOrder);
+  }
+
+  List<QuickMenuItemData> _buildPinnedMenuItems(dynamic user) {
+    final all = <QuickMenuItemData>[
+      ..._getAllMenuCepatItems(),
+      if (user?.isWaliRuangan ?? false) ..._getAllWaliRuanganItems(user),
+      if (user?.isPanitiaImni ?? false) ..._getAllPanitiaImniItems(),
+    ];
+    final map = {for (final item in all) item.id: item};
+    return _pinnedMenuIds
+        .where((id) => map.containsKey(id))
+        .map((id) => map[id]!)
+        .toList();
+  }
+
+  List<QuickMenuItemData> _buildMenuCepatItems() {
+    // Saring item yang sedang tersemat di atas agar tidak tampil dobel
+    return _getAllMenuCepatItems()
+        .where((item) => !_pinnedMenuIds.contains(item.id))
+        .toList();
+  }
+
+  List<QuickMenuItemData> _buildWaliRuanganItems(dynamic user) {
+    // Saring item yang sedang tersemat di atas agar tidak tampil dobel
+    return _getAllWaliRuanganItems(user)
+        .where((item) => !_pinnedMenuIds.contains(item.id))
+        .toList();
+  }
+
+  List<QuickMenuItemData> _buildPanitiaImniItems() {
+    // Saring item yang sedang tersemat di atas agar tidak tampil dobel
+    return _getAllPanitiaImniItems()
+        .where((item) => !_pinnedMenuIds.contains(item.id))
+        .toList();
   }
 
   Widget _buildPengumumanCard(

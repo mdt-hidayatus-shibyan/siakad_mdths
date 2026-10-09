@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_helper.dart';
@@ -25,11 +27,13 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
   String _searchQuery = '';
   int? _selectedRuanganId;
   int _riwayatTabType = 0;
+  String _filterKategoriPengeluaran = 'Semua';
+  String _searchPengeluaranQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {});
@@ -51,7 +55,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
     final kas = context.read<KasProvider>();
     kas.fetchRingkasan(ruanganId: _selectedRuanganId);
     kas.fetchRiwayatSetoran(ruanganId: _selectedRuanganId);
-    kas.fetchPengaturan();
+    kas.fetchRiwayatPengeluaran(ruanganId: _selectedRuanganId);
+    kas.fetchPengaturan(ruanganId: _selectedRuanganId);
     kas.fetchPenerimaList();
   }
 
@@ -75,6 +80,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
   void _openPengaturanSheet() {
     HapticHelper.light();
     final kas = context.read<KasProvider>();
+    final selectedId = _selectedRuanganId ?? kas.ringkasan?.ruanganId;
     final pengaturan = kas.pengaturan;
     final nominalLakiCtrl = TextEditingController(
       text: (pengaturan?.nominalLaki ?? 0).toString(),
@@ -90,24 +96,22 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
           final systemBottom = MediaQuery.of(context).padding.bottom;
-          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
+          final bottomPadding = bottomInset > 0
+              ? (bottomInset + 20)
+              : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
             ),
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              bottomPadding,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, bottomPadding),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,9 +121,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF43483E)
-                          : const Color(0xFFC3C8BC),
+                      color: colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -130,12 +132,12 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryLight.withValues(alpha: 0.12),
+                        color: colorScheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.tune_rounded,
-                        color: AppColors.primaryLight,
+                        color: colorScheme.primary,
                         size: 20,
                       ),
                     ),
@@ -155,9 +157,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                             kas.ringkasan?.namaRuangan ?? 'Kelas Binaan',
                             style: TextStyle(
                               fontSize: 11,
-                              color: isDark
-                                  ? const Color(0xFF8D9387)
-                                  : const Color(0xFF73796E),
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -170,9 +170,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                   'Tentukan target iuran kas per semester/tahun untuk murid putra dan putri di kelas ini.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark
-                        ? const Color(0xFF8D9387)
-                        : const Color(0xFF73796E),
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -213,7 +211,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           final success = await context
                               .read<KasProvider>()
                               .updatePengaturan(
-                                ruanganId: kas.ringkasan?.ruanganId,
+                                ruanganId: selectedId,
                                 nominalLaki: laki,
                                 nominalPerempuan: perempuan,
                               );
@@ -228,8 +226,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                       : 'Gagal memperbarui target kas.',
                                 ),
                                 backgroundColor: success
-                                    ? AppColors.primaryLight
-                                    : AppColors.roseDanger,
+                                    ? colorScheme.primary
+                                    : colorScheme.error,
                               ),
                             );
                           }
@@ -273,24 +271,22 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
           final systemBottom = MediaQuery.of(context).padding.bottom;
-          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
+          final bottomPadding = bottomInset > 0
+              ? (bottomInset + 20)
+              : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
             ),
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              bottomPadding,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, bottomPadding),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,9 +296,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF43483E)
-                          : const Color(0xFFC3C8BC),
+                      color: colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -319,9 +313,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                   '${murid.nama} (NISM: ${murid.nism})',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark
-                        ? const Color(0xFF8D9387)
-                        : const Color(0xFF73796E),
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -331,9 +323,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1C241D)
-                        : const Color(0xFFF1F5F9),
+                    color: colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -344,9 +334,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? const Color(0xFF8D9387)
-                              : const Color(0xFF64748B),
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -357,7 +345,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           fontWeight: FontWeight.bold,
                           color: sisa > 0
                               ? AppColors.amberAccent
-                              : AppColors.hadirTextLight,
+                              : colorScheme.primary,
                         ),
                       ),
                     ],
@@ -387,13 +375,13 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     }),
                     if (sisa > 0)
                       ActionChip(
-                        backgroundColor: AppColors.primaryLight.withValues(
+                        backgroundColor: colorScheme.primary.withValues(
                           alpha: 0.15,
                         ),
                         label: Text(
                           'Lunasi Sisa (${_formatRupiah(sisa)})',
                           style: TextStyle(
-                            color: AppColors.primaryLight,
+                            color: colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -474,8 +462,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                       : 'Gagal mencatat kas santri.',
                                 ),
                                 backgroundColor: success
-                                    ? AppColors.primaryLight
-                                    : AppColors.roseDanger,
+                                    ? colorScheme.primary
+                                    : colorScheme.error,
                               ),
                             );
                           }
@@ -516,24 +504,22 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
           final systemBottom = MediaQuery.of(context).padding.bottom;
-          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
+          final bottomPadding = bottomInset > 0
+              ? (bottomInset + 20)
+              : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
             ),
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              bottomPadding,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, bottomPadding),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -543,9 +529,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF43483E)
-                          : const Color(0xFFC3C8BC),
+                      color: colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -556,12 +540,12 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.skyBlueAccent.withValues(alpha: 0.12),
+                        color: colorScheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.edit_note_rounded,
-                        color: AppColors.skyBlueAccent,
+                        color: colorScheme.primary,
                         size: 20,
                       ),
                     ),
@@ -581,9 +565,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                             '${murid.nama} (NISM: ${murid.nism})',
                             style: TextStyle(
                               fontSize: 11,
-                              color: isDark
-                                  ? const Color(0xFF8D9387)
-                                  : const Color(0xFF73796E),
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -686,8 +668,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                       : 'Gagal memperbarui pembayaran kas.',
                                 ),
                                 backgroundColor: success
-                                    ? AppColors.primaryLight
-                                    : AppColors.roseDanger,
+                                    ? colorScheme.primary
+                                    : colorScheme.error,
                               ),
                             );
                           }
@@ -724,12 +706,13 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => Consumer<KasProvider>(
         builder: (context, provider, _) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
           final systemBottom = MediaQuery.of(context).padding.bottom;
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
@@ -746,9 +729,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF43483E)
-                          : const Color(0xFFC3C8BC),
+                      color: colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -765,9 +746,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                   '${murid.nama} (Total Masuk: ${_formatRupiah(murid.totalDibayar)} / Target: ${_formatRupiah(murid.targetKas)})',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark
-                        ? const Color(0xFF8D9387)
-                        : const Color(0xFF73796E),
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -806,9 +785,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                           r.hariTanggal ?? r.tanggalBayar,
                                           style: TextStyle(
                                             fontSize: 11,
-                                            color: isDark
-                                                ? const Color(0xFF8D9387)
-                                                : const Color(0xFF73796E),
+                                            color: colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -823,12 +800,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                         ),
                                         decoration: BoxDecoration(
                                           color: r.isDisetor
-                                              ? (isDark
-                                                    ? const Color(0xFF0F2313)
-                                                    : const Color(0xFFE8F5E9))
-                                              : (isDark
-                                                    ? const Color(0xFF382305)
-                                                    : const Color(0xFFFEF3C7)),
+                                              ? colorScheme.primaryContainer
+                                              : AppColors.amberAccent
+                                                    .withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
@@ -841,7 +815,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
                                             color: r.isDisetor
-                                                ? AppColors.hadirTextLight
+                                                ? colorScheme.onPrimaryContainer
                                                 : AppColors.amberAccent,
                                           ),
                                         ),
@@ -849,10 +823,10 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                       if (!r.isDisetor) ...[
                                         const SizedBox(width: 4),
                                         IconButton(
-                                          icon: const Icon(
+                                          icon: Icon(
                                             Icons.edit_outlined,
                                             size: 18,
-                                            color: AppColors.skyBlueAccent,
+                                            color: colorScheme.primary,
                                           ),
                                           tooltip: 'Edit Pembayaran',
                                           onPressed: () {
@@ -964,24 +938,23 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
+          final isDark = theme.brightness == Brightness.dark;
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
           final systemBottom = MediaQuery.of(context).padding.bottom;
-          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
+          final bottomPadding = bottomInset > 0
+              ? (bottomInset + 20)
+              : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
             ),
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              bottomPadding,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, bottomPadding),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -992,9 +965,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       width: 36,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF43483E)
-                            : const Color(0xFFC3C8BC),
+                        color: colorScheme.outlineVariant,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1005,14 +976,12 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.skyBlueAccent.withValues(
-                            alpha: 0.12,
-                          ),
+                          color: colorScheme.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.account_balance_rounded,
-                          color: AppColors.skyBlueAccent,
+                          color: colorScheme.primary,
                           size: 20,
                         ),
                       ),
@@ -1032,9 +1001,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               'Ruangan ${ringkasan.namaRuangan} (${ringkasan.levelNama})',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: isDark
-                                    ? const Color(0xFF8D9387)
-                                    : const Color(0xFF73796E),
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -1049,12 +1016,14 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF1E281F)
-                          : const Color(0xFFF0FDF4),
+                      color: colorScheme.primary.withValues(
+                        alpha: isDark ? 0.12 : 0.08,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.primaryLight.withValues(alpha: 0.3),
+                        color: colorScheme.primary.withValues(
+                          alpha: isDark ? 0.25 : 0.20,
+                        ),
                       ),
                     ),
                     child: Column(
@@ -1064,7 +1033,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           children: [
                             Icon(
                               Icons.info_outline_rounded,
-                              color: AppColors.primaryLight,
+                              color: colorScheme.primary,
                               size: 18,
                             ),
                             const SizedBox(width: 8),
@@ -1074,7 +1043,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.primaryLight,
+                                  color: colorScheme.primary,
                                 ),
                               ),
                             ),
@@ -1083,7 +1052,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w900,
-                                color: AppColors.primaryLight,
+                                color: colorScheme.primary,
                               ),
                             ),
                           ],
@@ -1109,9 +1078,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                 style: TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.bold,
-                                  color: isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight,
+                                  color: colorScheme.primary,
                                 ),
                               ),
                             ],
@@ -1126,9 +1093,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF2C2411)
-                          : const Color(0xFFFFFBEB),
+                      color: AppColors.amberAccent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: AppColors.amberAccent.withValues(alpha: 0.3),
@@ -1143,14 +1108,12 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           color: AppColors.amberAccent,
                         ),
                         const SizedBox(width: 8),
-                        Expanded(
+                        const Expanded(
                           child: Text(
                             'Pengajuan setoran akan berstatus "Menunggu Verifikasi" hingga fisik uang diterima & disetujui Admin/Petugas Tabungan di Web Backend.',
                             style: TextStyle(
                               fontSize: 10.5,
-                              color: isDark
-                                  ? const Color(0xFFFDE68A)
-                                  : const Color(0xFF92400E),
+                              color: AppColors.amberAccent,
                             ),
                           ),
                         ),
@@ -1184,13 +1147,13 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                         );
                       }),
                       ActionChip(
-                        backgroundColor: AppColors.primaryLight.withValues(
+                        backgroundColor: colorScheme.primary.withValues(
                           alpha: 0.15,
                         ),
                         label: Text(
                           'Setor Semua (${_formatRupiah(sisaDiWali)})',
                           style: TextStyle(
-                            color: AppColors.primaryLight,
+                            color: colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -1323,8 +1286,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                         : 'Gagal mengajukan setoran kas.',
                                   ),
                                   backgroundColor: success
-                                      ? AppColors.primaryLight
-                                      : AppColors.roseDanger,
+                                      ? colorScheme.primary
+                                      : colorScheme.error,
                                 ),
                               );
                             }
@@ -1370,25 +1333,23 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
           final kas = context.watch<KasProvider>();
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
           final systemBottom = MediaQuery.of(context).padding.bottom;
-          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
+          final bottomPadding = bottomInset > 0
+              ? (bottomInset + 20)
+              : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF101710) : Colors.white,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
             ),
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              bottomPadding,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, bottomPadding),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1399,9 +1360,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       width: 36,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF43483E)
-                            : const Color(0xFFC3C8BC),
+                        color: colorScheme.outlineVariant,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1412,14 +1371,12 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.skyBlueAccent.withValues(
-                            alpha: 0.12,
-                          ),
+                          color: colorScheme.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.edit_note_rounded,
-                          color: AppColors.skyBlueAccent,
+                          color: colorScheme.primary,
                           size: 20,
                         ),
                       ),
@@ -1539,8 +1496,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                         : 'Gagal memperbarui setoran kas.',
                                   ),
                                   backgroundColor: success
-                                      ? AppColors.primaryLight
-                                      : AppColors.roseDanger,
+                                      ? colorScheme.primary
+                                      : colorScheme.error,
                                 ),
                               );
                             }
@@ -1565,9 +1522,816 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
     );
   }
 
+  // =========================================================================
+  // 6. MODAL CATAT / EDIT PENGELUARAN KAS RUANGAN
+  // =========================================================================
+  void _openFormPengeluaranSheet({PengeluaranKasItem? item}) {
+    HapticHelper.light();
+    final kas = context.read<KasProvider>();
+    final ringkasan = kas.ringkasan;
+    if (ringkasan == null) return;
+
+    final isEdit = item != null;
+    final sisaDiWali = ringkasan.sisaDiTanganWali;
+    final maxTersedia = isEdit ? (sisaDiWali + item.nominal) : sisaDiWali;
+
+    final judulController = TextEditingController(text: item?.judul ?? '');
+    final nominalController = TextEditingController(
+      text: item != null ? item.nominal.toInt().toString() : '',
+    );
+    final tanggalController = TextEditingController(
+      text: item?.tanggalPengeluaran ?? DateHelper.toYmd(DateTime.now()),
+    );
+    final keteranganController = TextEditingController(
+      text: (item?.keterangan != null && item!.keterangan != '-')
+          ? item.keterangan
+          : '',
+    );
+    String selectedKategori = item?.kategori ?? 'Alat Kebersihan';
+    File? pickedNotaFile;
+    final picker = ImagePicker();
+    bool isSaving = false;
+
+    const kategoriList = [
+      'Alat Kebersihan',
+      'ATK & Perlengkapan',
+      'Kegiatan Kelas',
+      'Konsumsi',
+      'Sosial / Menjenguk',
+      'Lain-lain',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
+          final isDark = theme.brightness == Brightness.dark;
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0
+              ? (bottomInset + 20)
+              : (systemBottom + 24);
+
+          Future<void> pickImage(ImageSource source) async {
+            try {
+              final XFile? file = await picker.pickImage(
+                source: source,
+                maxWidth: 1600,
+                maxHeight: 1600,
+                imageQuality: 85,
+              );
+              if (file != null) {
+                setModalState(() {
+                  pickedNotaFile = File(file.path);
+                });
+              }
+            } catch (e) {
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Gagal mengambil foto nota: $e')),
+                );
+              }
+            }
+          }
+
+          void showImageSourceModal() {
+            HapticHelper.light();
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: colorScheme.surfaceContainerLow,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              builder: (sourceCtx) => SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Pilih Sumber Foto Nota / Kwitansi',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ListTile(
+                        leading: const Icon(Icons.camera_alt_rounded),
+                        title: const Text('Kamera Langsung'),
+                        onTap: () {
+                          Navigator.pop(sourceCtx);
+                          pickImage(ImageSource.camera);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.photo_library_rounded),
+                        title: const Text('Galeri HP'),
+                        onTap: () {
+                          Navigator.pop(sourceCtx);
+                          pickImage(ImageSource.gallery);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Container(
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+            ),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, bottomPadding),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.roseDanger.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.receipt_long_rounded,
+                          color: AppColors.roseDanger,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isEdit
+                                  ? 'Edit Pengeluaran Kas'
+                                  : 'Catat Pengeluaran Kas',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Ruangan ${ringkasan.namaRuangan} (${ringkasan.levelNama})',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Info Sisa Kas di Tangan
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.roseDanger.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.roseDanger.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.wallet_rounded,
+                              color: AppColors.roseDanger,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                'Saldo Fisik di Tangan Wali:',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.roseDanger,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              _formatRupiah(maxTersedia),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.roseDanger,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Pengeluaran kas ruangan langsung mengurangi saldo fisik yang Anda pegang.',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.roseDanger,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Dropdown Kategori
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedKategori,
+                    decoration: const InputDecoration(
+                      labelText: 'Kategori Pengeluaran',
+                      prefixIcon: Icon(Icons.category_rounded),
+                    ),
+                    items: kategoriList.map((k) {
+                      return DropdownMenuItem<String>(value: k, child: Text(k));
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setModalState(() => selectedKategori = val);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Judul Pengeluaran
+                  TextField(
+                    controller: judulController,
+                    decoration: const InputDecoration(
+                      labelText: 'Judul / Keperluan Pengeluaran',
+                      hintText:
+                          'Cth: Beli Sapu & Pel Kelas / Spidol Whiteboard',
+                      prefixIcon: Icon(Icons.edit_note_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Nominal Pengeluaran
+                  TextField(
+                    controller: nominalController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Nominal Pengeluaran (Rp)',
+                      prefixIcon: Icon(Icons.payments_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Pilihan Cepat Nominal
+                  if (maxTersedia > 0) ...[
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        ...[
+                          5000,
+                          10000,
+                          20000,
+                          50000,
+                        ].where((n) => n <= maxTersedia).map((nom) {
+                          return ActionChip(
+                            label: Text(_formatRupiah(nom)),
+                            onPressed: () {
+                              setModalState(() {
+                                nominalController.text = nom.toString();
+                              });
+                            },
+                          );
+                        }),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // Tanggal Pengeluaran
+                  TextField(
+                    controller: tanggalController,
+                    decoration: InputDecoration(
+                      labelText: 'Tanggal Pengeluaran (YYYY-MM-DD)',
+                      prefixIcon: const Icon(Icons.calendar_today_rounded),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.edit_calendar_rounded),
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime.now().subtract(
+                              const Duration(days: 90),
+                            ),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) {
+                            setModalState(() {
+                              tanggalController.text = DateHelper.toYmd(picked);
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Keterangan Pengeluaran
+                  TextField(
+                    controller: keteranganController,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Keterangan Tambahan (Opsional)',
+                      hintText: 'Rincian toko, rincian barang, dsb.',
+                      prefixIcon: Icon(Icons.notes_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Lampiran Bukti Nota / Kwitansi
+                  Text(
+                    'Foto Bukti Nota / Kwitansi (Opsional)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  if (pickedNotaFile != null)
+                    Stack(
+                      children: [
+                        Container(
+                          height: 160,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                            ),
+                            image: DecorationImage(
+                              image: FileImage(pickedNotaFile!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: InkWell(
+                            onTap: () {
+                              setModalState(() => pickedNotaFile = null);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (isEdit && item.buktiNotaUrl != null)
+                    Stack(
+                      children: [
+                        Container(
+                          height: 160,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                            ),
+                            image: DecorationImage(
+                              image: ResizeImage(
+                                NetworkImage(item.buktiNotaUrl!),
+                                width: 600,
+                              ),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          right: 8,
+                          child: ElevatedButton.icon(
+                            onPressed: showImageSourceModal,
+                            icon: const Icon(Icons.edit_rounded, size: 16),
+                            label: const Text(
+                              'Ganti Nota',
+                              style: TextStyle(fontSize: 11),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black54,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    InkWell(
+                      onTap: showImageSourceModal,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        height: 90,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colorScheme.surfaceContainerHigh
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: colorScheme.outlineVariant),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_a_photo_outlined,
+                              size: 24,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Ketuk untuk melampirkan foto nota / struk',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white60 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+
+                  // Tombol Simpan
+                  ElevatedButton(
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            final judul = judulController.text.trim();
+                            if (judul.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Judul / keperluan pengeluaran wajib diisi.',
+                                  ),
+                                  backgroundColor: AppColors.roseDanger,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final nominal = num.tryParse(
+                              nominalController.text.trim(),
+                            );
+                            if (nominal == null || nominal <= 0) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Nominal pengeluaran tidak valid.',
+                                  ),
+                                  backgroundColor: AppColors.roseDanger,
+                                ),
+                              );
+                              return;
+                            }
+
+                            if (nominal > maxTersedia) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Nominal melebihi sisa kas di tangan wali (${_formatRupiah(maxTersedia)}).',
+                                  ),
+                                  backgroundColor: AppColors.roseDanger,
+                                ),
+                              );
+                              return;
+                            }
+
+                            setModalState(() => isSaving = true);
+                            HapticHelper.medium();
+
+                            bool success = false;
+                            if (isEdit) {
+                              success = await context
+                                  .read<KasProvider>()
+                                  .updatePengeluaran(
+                                    id: item.id,
+                                    ruanganId: ringkasan.ruanganId,
+                                    judul: judul,
+                                    nominal: nominal,
+                                    tanggalPengeluaran: tanggalController.text
+                                        .trim(),
+                                    kategori: selectedKategori,
+                                    keterangan: keteranganController.text
+                                        .trim(),
+                                    buktiNotaPath: pickedNotaFile?.path,
+                                  );
+                            } else {
+                              success = await context
+                                  .read<KasProvider>()
+                                  .simpanPengeluaran(
+                                    ruanganId: ringkasan.ruanganId,
+                                    judul: judul,
+                                    nominal: nominal,
+                                    tanggalPengeluaran: tanggalController.text
+                                        .trim(),
+                                    kategori: selectedKategori,
+                                    keterangan: keteranganController.text
+                                        .trim(),
+                                    buktiNotaPath: pickedNotaFile?.path,
+                                  );
+                            }
+
+                            if (ctx.mounted) {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    success
+                                        ? (isEdit
+                                              ? 'Pengeluaran kas berhasil diperbarui.'
+                                              : 'Alhamdulillah, pengeluaran kas ${_formatRupiah(nominal)} berhasil dicatat.')
+                                        : 'Gagal menyimpan pengeluaran kas.',
+                                  ),
+                                  backgroundColor: success
+                                      ? colorScheme.primary
+                                      : AppColors.roseDanger,
+                                ),
+                              );
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.roseDanger,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            isEdit
+                                ? 'Simpan Perubahan Pengeluaran'
+                                : 'Catat Pengeluaran Kas',
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // =========================================================================
+  // 7. DIALOG KONFIRMASI HAPUS PENGELUARAN
+  // =========================================================================
+  void _confirmHapusPengeluaran(PengeluaranKasItem item) {
+    HapticHelper.warning();
+    final kas = context.read<KasProvider>();
+    final ringkasan = kas.ringkasan;
+    if (ringkasan == null) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.delete_outline_rounded, color: AppColors.roseDanger),
+            SizedBox(width: 8),
+            Text('Hapus Pengeluaran?'),
+          ],
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus catatan pengeluaran "${item.judul}" senilai ${_formatRupiah(item.nominal)}?\n\nSaldo kas di tangan Wali Ruangan akan dikembalikan secara otomatis.',
+          style: const TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.roseDanger,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await kas.hapusPengeluaran(
+                id: item.id,
+                ruanganId: ringkasan.ruanganId,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? 'Pengeluaran kas berhasil dihapus. Saldo kas dikembalikan.'
+                          : 'Gagal menghapus pengeluaran kas.',
+                    ),
+                    backgroundColor: success
+                        ? Theme.of(context).colorScheme.primary
+                        : AppColors.roseDanger,
+                  ),
+                );
+              }
+            },
+            child: const Text('Hapus Pengeluaran'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // 8. DIALOG LIHAT BUKTI NOTA
+  // =========================================================================
+  void _showBuktiNotaDialog(PengeluaranKasItem item) {
+    HapticHelper.light();
+    if (item.buktiNotaUrl == null) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.judul,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${item.kategori} • ${_formatRupiah(item.nominal)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.roseDanger,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 400),
+              color: Colors.black12,
+              child: InteractiveViewer(
+                panEnabled: true,
+                boundaryMargin: const EdgeInsets.all(20),
+                minScale: 0.5,
+                maxScale: 3.5,
+                child: Image.network(
+                  item.buktiNotaUrl!,
+                  fit: BoxFit.contain,
+                  cacheWidth: 1080,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Center(
+                      child: Text('Gagal memuat gambar bukti nota.'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                'Tanggal: ${item.hariTanggal ?? item.tanggalPengeluaran} | Oleh: ${item.pencatatNama}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getKategoriIcon(String kategori) {
+    switch (kategori) {
+      case 'Alat Kebersihan':
+        return Icons.cleaning_services_rounded;
+      case 'ATK & Perlengkapan':
+        return Icons.edit_note_rounded;
+      case 'Kegiatan Kelas':
+        return Icons.groups_rounded;
+      case 'Konsumsi':
+        return Icons.restaurant_rounded;
+      case 'Sosial / Menjenguk':
+        return Icons.volunteer_activism_rounded;
+      default:
+        return Icons.receipt_long_rounded;
+    }
+  }
+
+  Color _getKategoriColor(String kategori) {
+    switch (kategori) {
+      case 'Alat Kebersihan':
+        return const Color(0xFF0284C7);
+      case 'ATK & Perlengkapan':
+        return const Color(0xFF6366F1);
+      case 'Kegiatan Kelas':
+        return const Color(0xFF8B5CF6);
+      case 'Konsumsi':
+        return const Color(0xFFF59E0B);
+      case 'Sosial / Menjenguk':
+        return const Color(0xFFEC4899);
+      default:
+        return const Color(0xFF10B981);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final kas = context.watch<KasProvider>();
     final roomList = kas.ringkasan?.ruanganList ?? [];
 
@@ -1579,7 +2343,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
           CircularIconButton(
             icon: Icons.tune_rounded,
             tooltip: 'Pengaturan Target Kas',
-            iconColor: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+            iconColor: colorScheme.primary,
             onPressed: _openPengaturanSheet,
           ),
         ],
@@ -1596,9 +2360,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E293B)
-                      : const Color(0xFFF1F5F9),
+                  color: colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1633,6 +2395,12 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               context.read<KasProvider>().fetchRiwayatSetoran(
                                 ruanganId: newId,
                               );
+                              context
+                                  .read<KasProvider>()
+                                  .fetchRiwayatPengeluaran(ruanganId: newId);
+                              context.read<KasProvider>().fetchPengaturan(
+                                ruanganId: newId,
+                              );
                             }
                           },
                         ),
@@ -1644,7 +2412,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
             ),
           ],
 
-          // 1. Navigation Segmented Tab Bar (Bayar vs Setor)
+          // 1. Navigation Segmented Tab Bar (Bayar vs Pengeluaran vs Setor)
           SegmentedTabBar(
             selectedIndex: _tabController.index,
             onTabChanged: (idx) {
@@ -1656,17 +2424,19 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                 activeIcon: Icons.payments_rounded,
                 inactiveIcon: Icons.payments_outlined,
                 label: 'Bayar Kas',
-                activeColor: isDark
-                    ? AppColors.primaryDark
-                    : AppColors.primaryLight,
+                activeColor: colorScheme.primary,
+              ),
+              SegmentedTabItem(
+                activeIcon: Icons.receipt_long_rounded,
+                inactiveIcon: Icons.receipt_long_outlined,
+                label: 'Pengeluaran',
+                activeColor: colorScheme.primary,
               ),
               SegmentedTabItem(
                 activeIcon: Icons.account_balance_rounded,
                 inactiveIcon: Icons.account_balance_outlined,
                 label: 'Setor ke Tabungan',
-                activeColor: isDark
-                    ? AppColors.primaryDark
-                    : AppColors.primaryLight,
+                activeColor: colorScheme.primary,
               ),
             ],
           ),
@@ -1677,6 +2447,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
               controller: _tabController,
               children: [
                 _buildBayarTabView(isDark, kas),
+                _buildPengeluaranTabView(isDark, kas),
                 _buildSetorTabView(isDark, kas),
               ],
             ),
@@ -1690,6 +2461,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
   // TAB VIEW 1: BAYAR KAS SANTRI
   // =========================================================================
   Widget _buildBayarTabView(bool isDark, KasProvider kas) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final filteredList = kas.muridList.where((m) {
       final matchQuery =
           m.nama.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -1727,14 +2501,14 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryLight.withValues(
+                              color: colorScheme.primary.withValues(
                                 alpha: 0.12,
                               ),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.account_balance_wallet_rounded,
-                              color: AppColors.primaryLight,
+                              color: colorScheme.primary,
                               size: 20,
                             ),
                           ),
@@ -1753,9 +2527,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                 kas.ringkasan!.levelNama,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E),
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -1768,9 +2540,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.primaryContainerDark
-                              : AppColors.primaryContainerLight,
+                          color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -1778,13 +2548,164 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
+                            color: colorScheme.onPrimaryContainer,
                           ),
                         ),
                       ),
                     ],
+                  ),
+
+                  // Target Kas Ruangan Progress Section
+                  const SizedBox(height: 14),
+                  Builder(
+                    builder: (context) {
+                      final targetKas = kas.ringkasan!.totalTargetKas;
+                      final terkumpul = kas.ringkasan!.totalTerkumpul;
+                      final progress = targetKas > 0
+                          ? (terkumpul / targetKas).clamp(0.0, 1.0)
+                          : 0.0;
+                      final persen = targetKas > 0
+                          ? (terkumpul / targetKas * 100)
+                          : 0.0;
+                      final isLengkap = targetKas > 0 && terkumpul >= targetKas;
+                      final sisaTarget = targetKas > terkumpul
+                          ? (targetKas - terkumpul)
+                          : 0;
+
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _openPengaturanSheet,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isLengkap
+                                  ? (isDark
+                                        ? AppColors.hadirBgDark
+                                        : AppColors.hadirBgLight)
+                                  : colorScheme.primary.withValues(
+                                      alpha: isDark ? 0.12 : 0.08,
+                                    ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isLengkap
+                                    ? (isDark
+                                          ? AppColors.hadirBorderDark
+                                          : AppColors.hadirBorderLight)
+                                    : colorScheme.primary.withValues(
+                                        alpha: isDark ? 0.25 : 0.20,
+                                      ),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.flag_circle_rounded,
+                                          size: 16,
+                                          color: colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Target Kas Ruangan',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark
+                                                ? Colors.white.withValues(
+                                                    alpha: 0.85,
+                                                  )
+                                                : Colors.black87,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          targetKas > 0
+                                              ? _formatRupiah(targetKas)
+                                              : 'Belum Diatur',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w900,
+                                            color: targetKas > 0
+                                                ? colorScheme.primary
+                                                : AppColors.amberAccent,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.tune_rounded,
+                                          size: 13,
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(5),
+                                  child: LinearProgressIndicator(
+                                    value: progress.toDouble(),
+                                    minHeight: 6,
+                                    backgroundColor: colorScheme.primary
+                                        .withValues(alpha: 0.15),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      targetKas > 0
+                                          ? '${persen.toStringAsFixed(1)}% terkumpul'
+                                          : 'Ketuk untuk atur target',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                    Text(
+                                      targetKas > 0
+                                          ? (isLengkap
+                                                ? 'Target Terpenuhi ✓'
+                                                : 'Kekurangan: ${_formatRupiah(sisaTarget)}')
+                                          : 'Atur nominal per murid',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: isLengkap
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                        color: isLengkap
+                                            ? colorScheme.primary
+                                            : colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
 
                   // Tabungan Kas Ruangan Account Chip
@@ -1796,14 +2717,14 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF0F2313)
-                            : const Color(0xFFE8F5E9),
+                        color: colorScheme.primary.withValues(
+                          alpha: isDark ? 0.12 : 0.08,
+                        ),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF1E3A20)
-                              : const Color(0xFFC8E6C9),
+                          color: colorScheme.primary.withValues(
+                            alpha: isDark ? 0.25 : 0.20,
+                          ),
                         ),
                       ),
                       child: Row(
@@ -1811,9 +2732,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           Icon(
                             Icons.account_balance_rounded,
                             size: 16,
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
+                            color: colorScheme.primary,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -1822,9 +2741,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight,
+                                color: colorScheme.primary,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1835,17 +2752,17 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.hadirTextLight.withValues(
+                              color: colorScheme.primary.withValues(
                                 alpha: 0.15,
                               ),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               kas.ringkasan!.tabungan!.status,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.hadirTextLight,
+                                color: colorScheme.primary,
                               ),
                             ),
                           ),
@@ -1860,15 +2777,27 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       _buildSummaryItem(
                         'Terkumpul',
                         _formatRupiah(kas.ringkasan!.totalTerkumpul),
-                        AppColors.primaryLight,
+                        colorScheme.primary,
                         isDark,
                       ),
                       Container(
                         height: 36,
                         width: 1,
-                        color: isDark
-                            ? AppColors.outlineDark
-                            : AppColors.outlineLight,
+                        color: colorScheme.outlineVariant,
+                      ),
+                      _buildSummaryItem(
+                        'Pengeluaran',
+                        _formatRupiah(kas.ringkasan!.totalPengeluaran),
+                        AppColors.roseDanger,
+                        isDark,
+                        onTap: () {
+                          _tabController.animateTo(1);
+                        },
+                      ),
+                      Container(
+                        height: 36,
+                        width: 1,
+                        color: colorScheme.outlineVariant,
                       ),
                       _buildSummaryItem(
                         'Di Tabungan',
@@ -1876,43 +2805,73 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                         AppColors.skyBlueAccent,
                         isDark,
                         onTap: () {
-                          _tabController.animateTo(1);
+                          _tabController.animateTo(2);
                         },
                       ),
                       Container(
                         height: 36,
                         width: 1,
-                        color: isDark
-                            ? AppColors.outlineDark
-                            : AppColors.outlineLight,
-                      ),
-                      _buildSummaryItem(
-                        'Menunggu Verif',
-                        _formatRupiah(kas.ringkasan!.totalMenungguVerifikasi),
-                        AppColors.amberAccent,
-                        isDark,
-                        onTap: () {
-                          _tabController.animateTo(1);
-                        },
-                      ),
-                      Container(
-                        height: 36,
-                        width: 1,
-                        color: isDark
-                            ? AppColors.outlineDark
-                            : AppColors.outlineLight,
+                        color: colorScheme.outlineVariant,
                       ),
                       _buildSummaryItem(
                         'Di Tangan Wali',
                         _formatRupiah(kas.ringkasan!.sisaDiTanganWali),
                         kas.ringkasan!.sisaDiTanganWali > 0
-                            ? AppColors.roseDanger
+                            ? AppColors.amberAccent
                             : Colors.grey,
                         isDark,
                         onTap: _openSetorSheet,
                       ),
                     ],
                   ),
+                  if (kas.ringkasan!.totalMenungguVerifikasi > 0) ...[
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () => _tabController.animateTo(2),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.amberAccent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.amberAccent.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.hourglass_top_rounded,
+                              size: 14,
+                              color: AppColors.amberAccent,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Menunggu Verifikasi Setoran: ${_formatRupiah(kas.ringkasan!.totalMenungguVerifikasi)}',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.amberAccent,
+                                ),
+                              ),
+                            ),
+                            const Text(
+                              'Lihat >',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.amberAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -2013,9 +2972,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                       'NISM: ${m.nism} • ${isPutra ? "Putra" : "Putri"}',
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: isDark
-                                            ? const Color(0xFF8D9387)
-                                            : const Color(0xFF73796E),
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -2031,12 +2988,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           ),
                           decoration: BoxDecoration(
                             color: isLunas
-                                ? (isDark
-                                      ? AppColors.hadirBgDark
-                                      : AppColors.hadirBgLight)
-                                : (isDark
-                                      ? const Color(0xFF382305)
-                                      : const Color(0xFFFEF3C7)),
+                                ? colorScheme.primaryContainer
+                                : AppColors.amberAccent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -2045,7 +2998,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               color: isLunas
-                                  ? AppColors.hadirTextLight
+                                  ? colorScheme.onPrimaryContainer
                                   : AppColors.amberAccent,
                             ),
                           ),
@@ -2060,13 +3013,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 6,
-                        backgroundColor: isDark
-                            ? const Color(0xFF202720)
-                            : const Color(0xFFE5E7EB),
+                        backgroundColor: colorScheme.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation(
-                          isLunas
-                              ? AppColors.hadirTextLight
-                              : AppColors.amberAccent,
+                          isLunas ? colorScheme.primary : AppColors.amberAccent,
                         ),
                       ),
                     ),
@@ -2146,9 +3095,443 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
   }
 
   // =========================================================================
-  // TAB VIEW 2: SETORAN KE TABUNGAN MADRASAH
+  // TAB VIEW 2: PENGELUARAN KAS RUANGAN
+  // =========================================================================
+  Widget _buildPengeluaranTabView(bool isDark, KasProvider kas) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final riwayat = kas.riwayatPengeluaran;
+    final ringkasan = kas.ringkasan;
+    final sisaDiWali = ringkasan?.sisaDiTanganWali ?? 0;
+    final rawList = riwayat?.list ?? [];
+
+    final filteredList = rawList.where((item) {
+      final matchKategori =
+          _filterKategoriPengeluaran == 'Semua' ||
+          item.kategori == _filterKategoriPengeluaran;
+      final query = _searchPengeluaranQuery.toLowerCase();
+      final matchQuery =
+          query.isEmpty ||
+          item.judul.toLowerCase().contains(query) ||
+          item.keterangan.toLowerCase().contains(query) ||
+          item.pencatatNama.toLowerCase().contains(query);
+      return matchKategori && matchQuery;
+    }).toList();
+
+    return RefreshIndicator(
+      onRefresh: () async => _loadData(),
+      child: ListView(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          6,
+          16,
+          40 + MediaQuery.of(context).padding.bottom,
+        ),
+        children: [
+          // Pengeluaran Summary Card
+          GlassCard(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.roseDanger.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.receipt_long_rounded,
+                            color: AppColors.roseDanger,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Buku Pengeluaran Kas',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              ringkasan?.namaRuangan ?? 'Kelas Binaan',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.roseDanger.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${rawList.length} Transaksi',
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.roseDanger,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _buildSummaryItem(
+                      'Total Keluar',
+                      _formatRupiah(
+                        riwayat?.totalPengeluaran ??
+                            ringkasan?.totalPengeluaran ??
+                            0,
+                      ),
+                      AppColors.roseDanger,
+                      isDark,
+                    ),
+                    Container(
+                      height: 36,
+                      width: 1,
+                      color: colorScheme.outlineVariant,
+                    ),
+                    _buildSummaryItem(
+                      'Sisa di Tangan',
+                      _formatRupiah(sisaDiWali),
+                      AppColors.amberAccent,
+                      isDark,
+                      onTap: _openSetorSheet,
+                    ),
+                    Container(
+                      height: 36,
+                      width: 1,
+                      color: colorScheme.outlineVariant,
+                    ),
+                    _buildSummaryItem(
+                      'Kas Terkumpul',
+                      _formatRupiah(ringkasan?.totalTerkumpul ?? 0),
+                      colorScheme.primary,
+                      isDark,
+                      onTap: () => _tabController.animateTo(0),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Tombol Catat Pengeluaran Baru
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openFormPengeluaranSheet(),
+                    icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
+                    label: const Text(
+                      'Catat Pengeluaran Kas',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.roseDanger,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Search Bar
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'Cari keperluan pengeluaran...',
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 8,
+                horizontal: 12,
+              ),
+              isDense: true,
+            ),
+            onChanged: (val) {
+              setState(() => _searchPengeluaranQuery = val);
+            },
+          ),
+          const SizedBox(height: 10),
+
+          // Filter Kategori Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children:
+                  [
+                    'Semua',
+                    'Alat Kebersihan',
+                    'ATK & Perlengkapan',
+                    'Kegiatan Kelas',
+                    'Konsumsi',
+                    'Sosial / Menjenguk',
+                    'Lain-lain',
+                  ].map((kategori) {
+                    final isSelected = _filterKategoriPengeluaran == kategori;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: FilterChip(
+                        label: Text(kategori),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          HapticHelper.selection();
+                          setState(() => _filterKategoriPengeluaran = kategori);
+                        },
+                        selectedColor: AppColors.roseDanger.withValues(
+                          alpha: 0.15,
+                        ),
+                        checkmarkColor: AppColors.roseDanger,
+                        labelStyle: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: isSelected
+                              ? AppColors.roseDanger
+                              : (isDark ? Colors.white70 : Colors.black87),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // List Pengeluaran
+          if (kas.isLoading)
+            const ShimmerLoadingList(count: 3, height: 90)
+          else if (filteredList.isEmpty)
+            GlassCard(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.receipt_long_outlined,
+                      size: 48,
+                      color: isDark ? Colors.white24 : Colors.black26,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Belum ada catatan pengeluaran kas.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Pengeluaran kas ruangan dapat dicatat untuk perlengkapan kelas atau operasional harian.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...filteredList.map((item) {
+              final catColor = _getKategoriColor(item.kategori);
+              final catIcon = _getKategoriIcon(item.kategori);
+
+              return GlassCard(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Kategori & Tanggal
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: catColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(catIcon, size: 12, color: catColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                item.kategori,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: catColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          item.hariTanggal ?? item.tanggalPengeluaran,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Judul & Nominal
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.judul,
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '- ${_formatRupiah(item.nominal)}',
+                          style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.roseDanger,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Pencatat
+                    Text(
+                      'Dicatat oleh: ${item.pencatatNama}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+
+                    if (item.keterangan.isNotEmpty &&
+                        item.keterangan != '-') ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Catatan: ${item.keterangan}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    const SizedBox(height: 4),
+
+                    // Action buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (item.buktiNotaUrl != null)
+                          InkWell(
+                            onTap: () => _showBuktiNotaDialog(item),
+                            borderRadius: BorderRadius.circular(6),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 4,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.receipt_rounded,
+                                    size: 14,
+                                    color: colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Lihat Nota',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox.shrink(),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 18),
+                              tooltip: 'Edit Pengeluaran',
+                              onPressed: () =>
+                                  _openFormPengeluaranSheet(item: item),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                size: 18,
+                                color: AppColors.roseDanger,
+                              ),
+                              tooltip: 'Hapus Pengeluaran',
+                              onPressed: () => _confirmHapusPengeluaran(item),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // TAB VIEW 3: SETORAN KE TABUNGAN MADRASAH
   // =========================================================================
   Widget _buildSetorTabView(bool isDark, KasProvider kas) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final riwayat = kas.riwayatSetoran;
     final ringkasan = kas.ringkasan;
     final sisaDiWali = ringkasan?.sisaDiTanganWali ?? 0;
@@ -2204,9 +3587,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               ringkasan?.namaRuangan ?? 'Kelas Binaan',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: isDark
-                                    ? const Color(0xFF8D9387)
-                                    : const Color(0xFF73796E),
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -2220,9 +3601,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF0F2313)
-                              : const Color(0xFFE8F5E9),
+                          color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -2230,9 +3609,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
+                            color: colorScheme.onPrimaryContainer,
                           ),
                         ),
                       ),
@@ -2247,8 +3624,26 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: isDark
-                            ? const [Color(0xFF1B381E), Color(0xFF0F2313)]
-                            : [AppColors.primaryLight, const Color(0xFF1B6A35)],
+                            ? [
+                                Color.lerp(
+                                  colorScheme.primary,
+                                  Colors.black,
+                                  0.65,
+                                )!,
+                                Color.lerp(
+                                  colorScheme.primary,
+                                  Colors.black,
+                                  0.85,
+                                )!,
+                              ]
+                            : [
+                                colorScheme.primary,
+                                Color.lerp(
+                                  colorScheme.primary,
+                                  Colors.black,
+                                  0.25,
+                                )!,
+                              ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -2352,15 +3747,13 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       _formatRupiah(sisaDiWali),
                       sisaDiWali > 0
                           ? AppColors.roseDanger
-                          : AppColors.primaryLight,
+                          : colorScheme.primary,
                       isDark,
                     ),
                     Container(
                       height: 36,
                       width: 1,
-                      color: isDark
-                          ? AppColors.outlineDark
-                          : AppColors.outlineLight,
+                      color: colorScheme.outlineVariant,
                     ),
                     _buildSummaryItem(
                       'Menunggu Verif',
@@ -2371,14 +3764,12 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                     Container(
                       height: 36,
                       width: 1,
-                      color: isDark
-                          ? AppColors.outlineDark
-                          : AppColors.outlineLight,
+                      color: colorScheme.outlineVariant,
                     ),
                     _buildSummaryItem(
                       'Masuk Tabungan',
                       _formatRupiah(riwayat?.totalDisetor ?? 0),
-                      AppColors.primaryLight,
+                      colorScheme.primary,
                       isDark,
                     ),
                   ],
@@ -2401,7 +3792,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.skyBlueAccent,
+                      backgroundColor: colorScheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -2416,7 +3807,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              color: isDark
+                  ? colorScheme.surfaceContainerHigh
+                  : colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -2431,7 +3824,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
                         color: _riwayatTabType == 0
-                            ? (isDark ? const Color(0xFF334155) : Colors.white)
+                            ? (isDark
+                                  ? colorScheme.surfaceContainerHighest
+                                  : colorScheme.surface)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(9),
                         boxShadow: _riwayatTabType == 0
@@ -2451,10 +3846,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                             Icons.arrow_downward_rounded,
                             size: 15,
                             color: _riwayatTabType == 0
-                                ? AppColors.skyBlueAccent
-                                : (isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E)),
+                                ? colorScheme.primary
+                                : colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -2467,10 +3860,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               color: _riwayatTabType == 0
                                   ? (isDark
                                         ? Colors.white
-                                        : const Color(0xFF1E293B))
-                                  : (isDark
-                                        ? const Color(0xFF8D9387)
-                                        : const Color(0xFF73796E)),
+                                        : colorScheme.onSurface)
+                                  : colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -2489,7 +3880,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
                         color: _riwayatTabType == 1
-                            ? (isDark ? const Color(0xFF334155) : Colors.white)
+                            ? (isDark
+                                  ? colorScheme.surfaceContainerHighest
+                                  : colorScheme.surface)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(9),
                         boxShadow: _riwayatTabType == 1
@@ -2510,9 +3903,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                             size: 15,
                             color: _riwayatTabType == 1
                                 ? AppColors.amberAccent
-                                : (isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E)),
+                                : colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -2525,10 +3916,8 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               color: _riwayatTabType == 1
                                   ? (isDark
                                         ? Colors.white
-                                        : const Color(0xFF1E293B))
-                                  : (isDark
-                                        ? const Color(0xFF8D9387)
-                                        : const Color(0xFF73796E)),
+                                        : colorScheme.onSurface)
+                                  : colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -2574,7 +3963,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               fontSize: 15,
                               fontWeight: FontWeight.w900,
                               color: isDiterima
-                                  ? AppColors.primaryLight
+                                  ? colorScheme.primary
                                   : (isMenunggu
                                         ? AppColors.amberAccent
                                         : AppColors.roseDanger),
@@ -2588,16 +3977,14 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                             ),
                             decoration: BoxDecoration(
                               color: isDiterima
-                                  ? (isDark
-                                        ? const Color(0xFF0F2313)
-                                        : const Color(0xFFE8F5E9))
+                                  ? colorScheme.primaryContainer
                                   : (isMenunggu
-                                        ? (isDark
-                                              ? const Color(0xFF382305)
-                                              : const Color(0xFFFEF3C7))
-                                        : (isDark
-                                              ? const Color(0xFF380C14)
-                                              : const Color(0xFFFFE4E6))),
+                                        ? AppColors.amberAccent.withValues(
+                                            alpha: 0.12,
+                                          )
+                                        : AppColors.roseDanger.withValues(
+                                            alpha: 0.12,
+                                          )),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -2610,7 +3997,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 color: isDiterima
-                                    ? AppColors.hadirTextLight
+                                    ? colorScheme.onPrimaryContainer
                                     : (isMenunggu
                                           ? AppColors.amberAccent
                                           : AppColors.roseDanger),
@@ -2624,9 +4011,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                         'Tanggal Pengajuan: ${s.hariTanggal ?? s.tanggalSetor}',
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark
-                              ? const Color(0xFF8D9387)
-                              : const Color(0xFF73796E),
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
 
@@ -2636,9 +4021,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? const Color(0xFF86EFAC)
-                                : const Color(0xFF1B6A35),
+                            color: colorScheme.primary,
                           ),
                         )
                       else if (isMenunggu)
@@ -2647,9 +4030,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? const Color(0xFFC3C8BC)
-                                : const Color(0xFF43483E),
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         )
                       else if (isDitolak)
@@ -2671,9 +4052,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF380C14)
-                                : const Color(0xFFFFE4E6),
+                            color: AppColors.roseDanger.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -2694,9 +4073,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                             style: TextStyle(
                               fontSize: 10.5,
                               fontStyle: FontStyle.italic,
-                              color: isDark
-                                  ? const Color(0xFF8D9387)
-                                  : const Color(0xFF73796E),
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -2704,23 +4081,23 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                       // Action buttons (only when Menunggu Verifikasi)
                       if (s.canEdit || s.canDelete) ...[
                         const SizedBox(height: 8),
-                        const Divider(height: 1),
+                        Divider(height: 1, color: colorScheme.outlineVariant),
                         const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             if (s.canEdit)
                               TextButton.icon(
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.edit_outlined,
                                   size: 15,
-                                  color: AppColors.skyBlueAccent,
+                                  color: colorScheme.primary,
                                 ),
-                                label: const Text(
+                                label: Text(
                                   'Edit',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: AppColors.skyBlueAccent,
+                                    color: colorScheme.primary,
                                   ),
                                 ),
                                 onPressed: () {
@@ -2846,9 +4223,9 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF382305)
-                                  : const Color(0xFFFEF3C7),
+                              color: AppColors.amberAccent.withValues(
+                                alpha: 0.12,
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -2871,9 +4248,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               fontFamily: 'monospace',
-                              color: isDark
-                                  ? const Color(0xFFC3C8BC)
-                                  : const Color(0xFF43483E),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const Text(
@@ -2885,9 +4260,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                               p.hariTanggal ?? p.tanggal,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: isDark
-                                    ? const Color(0xFF8D9387)
-                                    : const Color(0xFF73796E),
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -2899,9 +4272,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? const Color(0xFF8D9387)
-                              : const Color(0xFF73796E),
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       if (p.keterangan.isNotEmpty && p.keterangan != '-')
@@ -2912,9 +4283,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                             style: TextStyle(
                               fontSize: 10.5,
                               fontStyle: FontStyle.italic,
-                              color: isDark
-                                  ? const Color(0xFF8D9387)
-                                  : const Color(0xFF73796E),
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -2925,26 +4294,24 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF0F2313)
-                              : const Color(0xFFE8F5E9),
+                          color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.check_circle_outline_rounded,
                               size: 13,
-                              color: AppColors.hadirTextLight,
+                              color: colorScheme.onPrimaryContainer,
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
                               'Uang fisik kembali ke tangan Wali Ruangan',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.hadirTextLight,
+                                color: colorScheme.onPrimaryContainer,
                               ),
                             ),
                           ],
@@ -2967,6 +4334,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
     bool isDark, {
     VoidCallback? onTap,
   }) {
+    final theme = Theme.of(context);
     final content = Column(
       children: [
         Text(
@@ -2985,7 +4353,7 @@ class _KasRuanganScreenState extends State<KasRuanganScreen>
           style: TextStyle(
             fontSize: 9,
             fontWeight: FontWeight.w500,
-            color: isDark ? const Color(0xFF8D9387) : const Color(0xFF73796E),
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],

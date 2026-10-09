@@ -26,8 +26,8 @@ class SignalProvider extends ChangeNotifier {
   SignalProvider() {
     // Jalankan pengecekan pertama kali
     checkSignal();
-    // Pengecekan otomatis setiap 15 detik secara background
-    _periodicTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+    // Pengecekan otomatis berkala setiap 90 detik secara background (hemat kuota & baterai)
+    _periodicTimer = Timer.periodic(const Duration(seconds: 90), (_) {
       checkSignal();
     });
   }

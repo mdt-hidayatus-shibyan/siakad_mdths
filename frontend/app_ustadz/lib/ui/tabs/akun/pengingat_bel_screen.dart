@@ -113,10 +113,10 @@ class _PengingatBelScreenState extends State<PengingatBelScreen> {
               const SizedBox(height: 8),
               _buildAudioSettingsCard(bell, isDark, primary),
               const SizedBox(height: 20),
-              _buildSectionTitle('Solusi Jika Bel Tidak Berbunyi di HP'),
-              const SizedBox(height: 8),
-              _buildTroubleshootingCard(isDark, primary),
-              const SizedBox(height: 24),
+              // _buildSectionTitle('Solusi Jika Bel Tidak Berbunyi di HP'),
+              // const SizedBox(height: 8),
+              // _buildTroubleshootingCard(isDark, primary),
+              // const SizedBox(height: 24),
               _buildResetButton(bell, isDark),
               const SizedBox(height: 20),
             ],
@@ -168,7 +168,7 @@ class _PengingatBelScreenState extends State<PengingatBelScreen> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
                   bell.isEnabled
@@ -280,7 +280,7 @@ class _PengingatBelScreenState extends State<PengingatBelScreen> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: const Color(0xFFD97706).withValues(alpha: 0.2),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.bolt_rounded,
@@ -815,86 +815,86 @@ class _PengingatBelScreenState extends State<PengingatBelScreen> {
     );
   }
 
-  Widget _buildTroubleshootingCard(bool isDark, Color primary) {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.lightbulb_outline_rounded,
-                  color: Colors.amber,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Penyebab & Solusi Bel Tidak Bersuara:',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1),
-          const SizedBox(height: 12),
-          _buildGuideItem(
-            number: '1',
-            title: 'Izin Notifikasi & Alarm',
-            desc:
-                'Pastikan izin Notifikasi dan izin Alarm & Pengingat (Alarms & Reminders) sudah diaktifkan di Pengaturan HP Anda.',
-            isDark: isDark,
-            primary: primary,
-          ),
-          const SizedBox(height: 10),
-          _buildGuideItem(
-            number: '2',
-            title: 'Penghemat Baterai (Xiaomi, Oppo, Vivo, Samsung)',
-            desc:
-                'Sistem Android sering mematikan alarm latar belakang jika fitur penghemat baterai aktif. Buka Info Aplikasi MDTHS Ustadz > Penggunaan Baterai > Pilih "Tanpa Pembatasan" (No Restrictions / Don\'t optimize).',
-            isDark: isDark,
-            primary: primary,
-          ),
-          const SizedBox(height: 10),
-          _buildGuideItem(
-            number: '3',
-            title: 'Mulai Otomatis (Autostart)',
-            desc:
-                'Pada HP Xiaomi (HyperOS/MIUI) atau Oppo/Realme, aktifkan opsi "Mulai Otomatis" (Autostart) agar alarm tetap berjalan saat HP di-restart.',
-            isDark: isDark,
-            primary: primary,
-          ),
-          const SizedBox(height: 10),
-          _buildGuideItem(
-            number: '4',
-            title: 'Volume Alarm HP',
-            desc:
-                'Pastikan volume Nada Dering / Alarm di HP Anda tidak dalam posisi senyap (0%).',
-            isDark: isDark,
-            primary: primary,
-          ),
-          const SizedBox(height: 10),
-          _buildGuideItem(
-            number: '5',
-            title: 'Opsi "Hanya Saat Ada Jadwal Mengajar"',
-            desc:
-                'Opsi ini aktif secara default. Bel HANYA berbunyi saat Anda memiliki jadwal mengajar di database. Jika jadwal belum tersinkronisasi atau Anda tidak mengajar hari ini, alarm tidak akan dijadwalkan.',
-            isDark: isDark,
-            primary: primary,
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildTroubleshootingCard(bool isDark, Color primary) {
+  //   return GlassCard(
+  //     padding: const EdgeInsets.all(16),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(6),
+  //               decoration: BoxDecoration(
+  //                 color: Colors.amber.withValues(alpha: 0.2),
+  //                 borderRadius: BorderRadius.circular(8),
+  //               ),
+  //               child: const Icon(
+  //                 Icons.lightbulb_outline_rounded,
+  //                 color: Colors.amber,
+  //                 size: 20,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 10),
+  //             const Expanded(
+  //               child: Text(
+  //                 'Penyebab & Solusi Bel Tidak Bersuara:',
+  //                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         const SizedBox(height: 12),
+  //         const Divider(height: 1),
+  //         const SizedBox(height: 12),
+  //         _buildGuideItem(
+  //           number: '1',
+  //           title: 'Izin Notifikasi & Alarm',
+  //           desc:
+  //               'Pastikan izin Notifikasi dan izin Alarm & Pengingat (Alarms & Reminders) sudah diaktifkan di Pengaturan HP Anda.',
+  //           isDark: isDark,
+  //           primary: primary,
+  //         ),
+  //         const SizedBox(height: 10),
+  //         _buildGuideItem(
+  //           number: '2',
+  //           title: 'Penghemat Baterai (Xiaomi, Oppo, Vivo, Samsung)',
+  //           desc:
+  //               'Sistem Android sering mematikan alarm latar belakang jika fitur penghemat baterai aktif. Buka Info Aplikasi MDTHS Ustadz > Penggunaan Baterai > Pilih "Tanpa Pembatasan" (No Restrictions / Don\'t optimize).',
+  //           isDark: isDark,
+  //           primary: primary,
+  //         ),
+  //         const SizedBox(height: 10),
+  //         _buildGuideItem(
+  //           number: '3',
+  //           title: 'Mulai Otomatis (Autostart)',
+  //           desc:
+  //               'Pada HP Xiaomi (HyperOS/MIUI) atau Oppo/Realme, aktifkan opsi "Mulai Otomatis" (Autostart) agar alarm tetap berjalan saat HP di-restart.',
+  //           isDark: isDark,
+  //           primary: primary,
+  //         ),
+  //         const SizedBox(height: 10),
+  //         _buildGuideItem(
+  //           number: '4',
+  //           title: 'Volume Alarm HP',
+  //           desc:
+  //               'Pastikan volume Nada Dering / Alarm di HP Anda tidak dalam posisi senyap (0%).',
+  //           isDark: isDark,
+  //           primary: primary,
+  //         ),
+  //         const SizedBox(height: 10),
+  //         _buildGuideItem(
+  //           number: '5',
+  //           title: 'Opsi "Hanya Saat Ada Jadwal Mengajar"',
+  //           desc:
+  //               'Opsi ini aktif secara default. Bel HANYA berbunyi saat Anda memiliki jadwal mengajar di database. Jika jadwal belum tersinkronisasi atau Anda tidak mengajar hari ini, alarm tidak akan dijadwalkan.',
+  //           isDark: isDark,
+  //           primary: primary,
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildResetButton(BellProvider bell, bool isDark) {
     return Center(
@@ -951,61 +951,61 @@ class _PengingatBelScreenState extends State<PengingatBelScreen> {
     );
   }
 
-  Widget _buildGuideItem({
-    required String number,
-    required String title,
-    required String desc,
-    required bool isDark,
-    required Color primary,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: primary.withValues(alpha: 0.15),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              number,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: primary,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                desc,
-                style: TextStyle(
-                  fontSize: 11,
-                  height: 1.35,
-                  color: isDark ? Colors.white70 : Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildGuideItem({
+  //   required String number,
+  //   required String title,
+  //   required String desc,
+  //   required bool isDark,
+  //   required Color primary,
+  // }) {
+  //   return Row(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Container(
+  //         width: 22,
+  //         height: 22,
+  //         decoration: BoxDecoration(
+  //           color: primary.withValues(alpha: 0.15),
+  //           borderRadius: BorderRadius.circular(7),
+  //         ),
+  //         child: Center(
+  //           child: Text(
+  //             number,
+  //             style: TextStyle(
+  //               fontSize: 11,
+  //               fontWeight: FontWeight.bold,
+  //               color: primary,
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(width: 10),
+  //       Expanded(
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Text(
+  //               title,
+  //               style: const TextStyle(
+  //                 fontSize: 12,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 2),
+  //             Text(
+  //               desc,
+  //               style: TextStyle(
+  //                 fontSize: 11,
+  //                 height: 1.35,
+  //                 color: isDark ? Colors.white70 : Colors.black87,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   String _mapWeekdayToDayName(int weekday) {
     switch (weekday) {

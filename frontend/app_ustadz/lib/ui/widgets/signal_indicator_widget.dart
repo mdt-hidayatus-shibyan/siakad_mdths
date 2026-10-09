@@ -65,7 +65,7 @@ class SignalIndicatorWidget extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(14),
               color: color.withValues(alpha: isDark ? 0.18 : 0.12),
               border: Border.all(
                 color: color.withValues(alpha: isDark ? 0.35 : 0.22),
@@ -96,11 +96,9 @@ class SignalIndicatorWidget extends StatelessWidget {
                 HapticHelper.light();
                 SignalDetailSheet.show(context);
               },
-              customBorder: showText
-                  ? RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    )
-                  : const CircleBorder(),
+              customBorder: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(showText ? 20 : 14),
+              ),
               child: content,
             ),
           ),

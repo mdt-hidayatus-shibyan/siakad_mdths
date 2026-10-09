@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/presensi_model.dart';
@@ -121,26 +122,43 @@ class _PresensiTabState extends State<PresensiTab>
   }
 
   Widget _buildMiniStat(String label, int count, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: 0.25),
+          width: 0.8,
         ),
-        const SizedBox(width: 4),
-        Text(
-          '$label: $count',
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-        ),
-      ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '$label $count',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final presensi = context.watch<PresensiProvider>();
 
     return Scaffold(
@@ -189,25 +207,20 @@ class _PresensiTabState extends State<PresensiTab>
                       16,
                       16,
                       16,
-                      120 + MediaQuery.of(context).padding.bottom,
+                      MediaQuery.of(context).padding.bottom + 12,
                     ),
                     children: [
                       // 1. DATE PICKER SELECTOR BAR
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 4,
+                          horizontal: 8,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? AppColors.surfaceContainerLowDark
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.outlineDark
-                                : const Color(0xFFE2E8F0),
-                          ),
+                              ? colorScheme.surfaceContainerHigh
+                              : colorScheme.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -224,7 +237,7 @@ class _PresensiTabState extends State<PresensiTab>
                                 children: [
                                   Icon(
                                     Icons.calendar_today_rounded,
-                                    size: 14,
+                                    size: 15,
                                     color: isDark
                                         ? AppColors.primaryDark
                                         : AppColors.primaryLight,
@@ -254,7 +267,7 @@ class _PresensiTabState extends State<PresensiTab>
 
                       // BANNER GURU PENGGANTI (BADAL) - Hanya tampil jika KBM Reguler
                       if (!presensi.isEvent) ...[
-                        InkWell(
+                        M3ScaleOnPress(
                           onTap: () {
                             HapticHelper.medium();
                             Navigator.push(
@@ -264,7 +277,8 @@ class _PresensiTabState extends State<PresensiTab>
                               ),
                             );
                           },
-                          borderRadius: BorderRadius.circular(16),
+                          pressedScale: 0.96,
+                          borderRadius: BorderRadius.circular(20),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
@@ -272,22 +286,9 @@ class _PresensiTabState extends State<PresensiTab>
                             ),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? AppColors.primaryContainerDark.withValues(
-                                      alpha: 0.25,
-                                    )
-                                  : AppColors.primaryContainerLight.withValues(
-                                      alpha: 0.5,
-                                    ),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isDark
-                                    ? AppColors.primaryDark.withValues(
-                                        alpha: 0.35,
-                                      )
-                                    : AppColors.primaryLight.withValues(
-                                        alpha: 0.35,
-                                      ),
-                              ),
+                                  ? colorScheme.surfaceContainerHigh
+                                  : colorScheme.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               children: [
@@ -301,7 +302,7 @@ class _PresensiTabState extends State<PresensiTab>
                                         : AppColors.primaryLight.withValues(
                                             alpha: 0.2,
                                           ),
-                                    shape: BoxShape.circle,
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Icon(
                                     Icons.swap_horiz_rounded,
@@ -365,7 +366,7 @@ class _PresensiTabState extends State<PresensiTab>
                                 : AppColors.primaryContainerLight.withValues(
                                     alpha: 0.6,
                                   ),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isDark
                                   ? AppColors.primaryDark.withValues(alpha: 0.4)
@@ -386,7 +387,7 @@ class _PresensiTabState extends State<PresensiTab>
                                       : AppColors.primaryLight.withValues(
                                           alpha: 0.2,
                                         ),
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Icon(
                                   Icons.celebration_rounded,
@@ -488,6 +489,10 @@ class _PresensiTabState extends State<PresensiTab>
                                     selectedColor: isDark
                                         ? AppColors.primaryContainerDark
                                         : AppColors.primaryContainerLight,
+                                    side: BorderSide.none,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
                                 ...presensi.eventInfo!.sesiList.map((s) {
@@ -505,6 +510,11 @@ class _PresensiTabState extends State<PresensiTab>
                                       selectedColor: isDark
                                           ? AppColors.primaryContainerDark
                                           : AppColors.primaryContainerLight,
+                                      side: BorderSide.none,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                      ),
                                     ),
                                   );
                                 }),
@@ -532,7 +542,7 @@ class _PresensiTabState extends State<PresensiTab>
                                   color: isDark
                                       ? const Color(0xFF2E1065)
                                       : const Color(0xFFF3E8FF),
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(22),
                                   border: Border.all(
                                     color: AppColors.violetAccent.withValues(
                                       alpha: 0.5,
@@ -567,7 +577,7 @@ class _PresensiTabState extends State<PresensiTab>
                                   color: isDark
                                       ? const Color(0xFF1E0A3C)
                                       : const Color(0xFFE9D5FF),
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   presensi.namaUjian ??
@@ -614,7 +624,7 @@ class _PresensiTabState extends State<PresensiTab>
                                     vertical: 12,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
                               ),
@@ -637,7 +647,7 @@ class _PresensiTabState extends State<PresensiTab>
                                   color: isDark
                                       ? const Color(0xFF382305)
                                       : const Color(0xFFFEF3C7),
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(22),
                                   border: Border.all(
                                     color: AppColors.amberAccent.withValues(
                                       alpha: 0.5,
@@ -672,7 +682,7 @@ class _PresensiTabState extends State<PresensiTab>
                                   color: isDark
                                       ? const Color(0xFF241505)
                                       : const Color(0xFFFDE68A),
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   presensi.keteranganLibur ??
@@ -712,7 +722,7 @@ class _PresensiTabState extends State<PresensiTab>
                                     vertical: 8,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
                               ),
@@ -1050,7 +1060,7 @@ class _PresensiTabState extends State<PresensiTab>
                                                             alpha: 0.6,
                                                           ),
                                                 borderRadius:
-                                                    BorderRadius.circular(6),
+                                                    BorderRadius.circular(8),
                                                 border: Border.all(
                                                   color: isDark
                                                       ? AppColors.primaryDark
@@ -1166,25 +1176,20 @@ class _PresensiTabState extends State<PresensiTab>
                       16,
                       16,
                       16,
-                      120 + MediaQuery.of(context).padding.bottom,
+                      MediaQuery.of(context).padding.bottom + 12,
                     ),
                     children: [
                       // 1. DATE PICKER SELECTOR BAR
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 4,
+                          horizontal: 8,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? AppColors.surfaceContainerLowDark
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.outlineDark
-                                : const Color(0xFFE2E8F0),
-                          ),
+                              ? colorScheme.surfaceContainerHigh
+                              : colorScheme.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1201,7 +1206,7 @@ class _PresensiTabState extends State<PresensiTab>
                                 children: [
                                   Icon(
                                     Icons.calendar_today_rounded,
-                                    size: 14,
+                                    size: 15,
                                     color: isDark
                                         ? AppColors.primaryDark
                                         : AppColors.primaryLight,
@@ -1231,7 +1236,7 @@ class _PresensiTabState extends State<PresensiTab>
 
                       // BANNER GURU PENGGANTI (BADAL) - Hanya jika KBM Reguler
                       if (!presensi.isEventUstadz) ...[
-                        InkWell(
+                        M3ScaleOnPress(
                           onTap: () {
                             HapticHelper.medium();
                             Navigator.push(
@@ -1241,7 +1246,8 @@ class _PresensiTabState extends State<PresensiTab>
                               ),
                             );
                           },
-                          borderRadius: BorderRadius.circular(16),
+                          pressedScale: 0.96,
+                          borderRadius: BorderRadius.circular(20),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
@@ -1249,22 +1255,9 @@ class _PresensiTabState extends State<PresensiTab>
                             ),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? AppColors.primaryContainerDark.withValues(
-                                      alpha: 0.25,
-                                    )
-                                  : AppColors.primaryContainerLight.withValues(
-                                      alpha: 0.5,
-                                    ),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isDark
-                                    ? AppColors.primaryDark.withValues(
-                                        alpha: 0.35,
-                                      )
-                                    : AppColors.primaryLight.withValues(
-                                        alpha: 0.35,
-                                      ),
-                              ),
+                                  ? colorScheme.surfaceContainerHigh
+                                  : colorScheme.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               children: [
@@ -1278,7 +1271,7 @@ class _PresensiTabState extends State<PresensiTab>
                                         : AppColors.primaryLight.withValues(
                                             alpha: 0.2,
                                           ),
-                                    shape: BoxShape.circle,
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Icon(
                                     Icons.swap_horiz_rounded,
@@ -1342,7 +1335,7 @@ class _PresensiTabState extends State<PresensiTab>
                                 : AppColors.primaryContainerLight.withValues(
                                     alpha: 0.6,
                                   ),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isDark
                                   ? AppColors.primaryDark.withValues(alpha: 0.4)
@@ -1363,7 +1356,7 @@ class _PresensiTabState extends State<PresensiTab>
                                       : AppColors.primaryLight.withValues(
                                           alpha: 0.2,
                                         ),
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Icon(
                                   Icons.badge_rounded,
@@ -1470,6 +1463,10 @@ class _PresensiTabState extends State<PresensiTab>
                                     selectedColor: isDark
                                         ? AppColors.primaryContainerDark
                                         : AppColors.primaryContainerLight,
+                                    side: BorderSide.none,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
                                 ...presensi.eventInfoUstadz!.sesiList.map((s) {
@@ -1487,6 +1484,11 @@ class _PresensiTabState extends State<PresensiTab>
                                       selectedColor: isDark
                                           ? AppColors.primaryContainerDark
                                           : AppColors.primaryContainerLight,
+                                      side: BorderSide.none,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                      ),
                                     ),
                                   );
                                 }),
@@ -1514,7 +1516,7 @@ class _PresensiTabState extends State<PresensiTab>
                                   color: isDark
                                       ? const Color(0xFF2E1065)
                                       : const Color(0xFFF3E8FF),
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(22),
                                   border: Border.all(
                                     color: AppColors.violetAccent.withValues(
                                       alpha: 0.5,
@@ -1549,7 +1551,7 @@ class _PresensiTabState extends State<PresensiTab>
                                   color: isDark
                                       ? const Color(0xFF1E0A3C)
                                       : const Color(0xFFE9D5FF),
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   presensi.namaUjianUstadz ??
@@ -1596,7 +1598,7 @@ class _PresensiTabState extends State<PresensiTab>
                                     vertical: 12,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
                               ),
@@ -1619,7 +1621,7 @@ class _PresensiTabState extends State<PresensiTab>
                                   color: isDark
                                       ? const Color(0xFF382305)
                                       : const Color(0xFFFEF3C7),
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(22),
                                   border: Border.all(
                                     color: AppColors.amberAccent.withValues(
                                       alpha: 0.5,
@@ -1654,7 +1656,7 @@ class _PresensiTabState extends State<PresensiTab>
                                   color: isDark
                                       ? const Color(0xFF241505)
                                       : const Color(0xFFFDE68A),
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   presensi.keteranganLiburUstadz ??
@@ -1996,7 +1998,7 @@ class _PresensiTabState extends State<PresensiTab>
                                                             alpha: 0.6,
                                                           ),
                                                 borderRadius:
-                                                    BorderRadius.circular(6),
+                                                    BorderRadius.circular(8),
                                                 border: Border.all(
                                                   color: isDark
                                                       ? AppColors.primaryDark

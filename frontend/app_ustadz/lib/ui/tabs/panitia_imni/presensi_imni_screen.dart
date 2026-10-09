@@ -407,7 +407,7 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
                                 color: AppColors.violetAccent.withValues(
                                   alpha: 0.15,
                                 ),
-                                shape: BoxShape.circle,
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
                                 Icons.person_pin_rounded,
@@ -992,7 +992,8 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
                                 color: AppColors.violetAccent.withValues(
                                   alpha: 0.15,
                                 ),
-                                shape: BoxShape.circle,
+                                shape: BoxShape.rectangle,
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
                                 Icons.person_pin_rounded,
@@ -1295,7 +1296,7 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF101710) : const Color(0xFFF3F4F1),
+        color: isDark ? AppColors.surfaceContainerLowDark : AppColors.surfaceContainerLowLight,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isDark ? AppColors.outlineDark : AppColors.outlineLight,
@@ -1647,7 +1648,7 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 Icons.meeting_room_outlined,
@@ -1722,7 +1723,7 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
               decoration: BoxDecoration(
                 color: (isDark ? AppColors.primaryDark : AppColors.primaryLight)
                     .withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 Icons.pending_actions_rounded,
@@ -1771,7 +1772,7 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
               decoration: BoxDecoration(
                 color: (isDark ? AppColors.primaryDark : AppColors.primaryLight)
                     .withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 isTpq ? Icons.school_outlined : Icons.meeting_room_outlined,

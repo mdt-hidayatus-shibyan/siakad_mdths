@@ -138,7 +138,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                       color: isDark
                           ? const Color(0xFF1B261D)
                           : AppColors.primaryContainerLight,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(22),
                     ),
                     child: Icon(
                       Icons.lock_reset_rounded,

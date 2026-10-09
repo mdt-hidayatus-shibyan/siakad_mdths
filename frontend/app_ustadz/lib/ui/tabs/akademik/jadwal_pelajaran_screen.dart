@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/akademik_model.dart';
 import '../../../providers/akademik_provider.dart';
@@ -86,16 +87,26 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                 ],
               ),
 
-            // 2. Ringkasan Beban Mengajar / Jadwal Kelas
-            GlassCard(
+            // 2. Ringkasan Beban Mengajar / Jadwal Kelas M3E Hero Card
+            Container(
               padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.surfaceContainerHighDark
+                    : AppColors.surfaceContainerHighLight,
+                borderRadius: BorderRadius.circular(24),
+              ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: isDark
-                        ? AppColors.primaryDark.withValues(alpha: 0.15)
-                        : AppColors.primaryContainerLight,
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.primaryContainerDark
+                          : AppColors.primaryContainerLight,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: Icon(
                       isWaliMode
                           ? Icons.meeting_room_rounded
@@ -103,6 +114,7 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                       color: isDark
                           ? AppColors.primaryDark
                           : AppColors.primaryLight,
+                      size: 24,
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -118,8 +130,9 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                                     ? 'Ruangan ${jadwalData?.ruanganWaliNama ?? '-'}'
                                     : (jadwalData?.ustadzNama ?? 'Pengajar'),
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.2,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -128,24 +141,18 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2.5,
+                                horizontal: 8,
+                                vertical: 3,
                               ),
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? AppColors.primaryDark.withValues(
-                                        alpha: 0.15,
-                                      )
-                                    : AppColors.primaryContainerLight,
-                                borderRadius: BorderRadius.circular(6),
+                                    ? AppColors.primaryDark.withValues(alpha: 0.15)
+                                    : AppColors.primaryLight.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: isDark
-                                      ? AppColors.primaryDark.withValues(
-                                          alpha: 0.25,
-                                        )
-                                      : AppColors.primaryLight.withValues(
-                                          alpha: 0.15,
-                                        ),
+                                      ? AppColors.primaryDark.withValues(alpha: 0.3)
+                                      : AppColors.primaryLight.withValues(alpha: 0.25),
                                   width: 0.8,
                                 ),
                               ),
@@ -164,16 +171,17 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
                         Text(
                           isWaliMode
                               ? 'Total: ${jadwalData?.totalJadwalRuanganMingguan ?? 0} Sesi Pelajaran / Minggu'
                               : 'Total: ${jadwalData?.totalJadwalMingguan ?? 0} Sesi Mengajar / Minggu',
                           style: TextStyle(
                             fontSize: 12,
+                            fontWeight: FontWeight.w500,
                             color: isDark
-                                ? const Color(0xFF8D9387)
-                                : const Color(0xFF73796E),
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                           ),
                         ),
                       ],
@@ -184,7 +192,7 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 3. Day Selector Horizontal Chips
+            // 3. Day Selector M3E Horizontal Chips
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -200,16 +208,17 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: InkWell(
+                    child: M3ScaleOnPress(
                       onTap: () {
                         HapticHelper.light();
                         akademik.setSelectedHari(hari);
                       },
+                      pressedScale: 0.94,
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
-                          vertical: 8,
+                          vertical: 9,
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
@@ -217,9 +226,17 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                                     ? AppColors.primaryDark
                                     : AppColors.primaryLight)
                               : (isDark
-                                    ? const Color(0xFF101710)
-                                    : const Color(0xFFF1F5F0)),
+                                    ? AppColors.surfaceContainerHighDark
+                                    : AppColors.surfaceContainerHighLight),
                           borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.transparent
+                                : (isDark
+                                    ? AppColors.outlineDark
+                                    : AppColors.outlineLight),
+                            width: 0.8,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -227,15 +244,15 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                             Text(
                               hari,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 12.5,
                                 fontWeight: isSelected
                                     ? FontWeight.bold
-                                    : FontWeight.normal,
+                                    : FontWeight.w600,
                                 color: isSelected
                                     ? (isDark ? Colors.black : Colors.white)
                                     : (isDark
-                                          ? const Color(0xFF8D9387)
-                                          : const Color(0xFF555D50)),
+                                          ? const Color(0xFFCBD5E1)
+                                          : const Color(0xFF475569)),
                               ),
                             ),
                             if (totalSesiHari > 0) ...[
@@ -243,7 +260,7 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 6,
-                                  vertical: 1,
+                                  vertical: 1.5,
                                 ),
                                 decoration: BoxDecoration(
                                   color: isSelected
@@ -251,8 +268,8 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                                             ? Colors.black26
                                             : Colors.white24)
                                       : (isDark
-                                            ? const Color(0xFF1D281D)
-                                            : const Color(0xFFE2E8F0)),
+                                            ? Colors.white.withValues(alpha: 0.1)
+                                            : Colors.black.withValues(alpha: 0.06)),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -319,30 +336,43 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
+                              horizontal: 10,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? const Color(0xFF101710)
-                                  : const Color(0xFFF1F5F0),
-                              borderRadius: BorderRadius.circular(8),
+                                  ? AppColors.surfaceContainerHighestDark
+                                  : AppColors.surfaceContainerHighestLight,
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isDark
-                                    ? const Color(0xFF263326)
-                                    : const Color(0xFFE2E8F0),
+                                    ? AppColors.outlineDark
+                                    : AppColors.outlineLight,
                                 width: 0.8,
                               ),
                             ),
-                            child: Text(
-                              s.jam,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? const Color(0xFF8D9387)
-                                    : const Color(0xFF555D50),
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.access_time_rounded,
+                                  size: 13,
+                                  color: isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  s.jam,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? const Color(0xFFCBD5E1)
+                                        : const Color(0xFF334155),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           Wrap(
@@ -479,13 +509,13 @@ class _JadwalPelajaranScreenState extends State<JadwalPelajaranScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF131B13)
-                                : const Color(0xFFF6F8F5),
+                                ? AppColors.surfaceContainerHighDark
+                                : AppColors.surfaceContainerHighLight,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isDark
-                                  ? const Color(0xFF263326)
-                                  : const Color(0xFFE2E8F0),
+                                  ? AppColors.outlineDark
+                                  : AppColors.outlineLight,
                               width: 0.8,
                             ),
                           ),

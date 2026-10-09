@@ -95,6 +95,7 @@ class _MassalTabViewState extends State<MassalTabView> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      showDragHandle: false,
       builder: (ctx) {
         String searchQuery = '';
         return StatefulBuilder(
@@ -346,7 +347,7 @@ class _MassalTabViewState extends State<MassalTabView> {
         16,
         16,
         16,
-        120 + MediaQuery.of(context).padding.bottom,
+        MediaQuery.of(context).padding.bottom + 12,
       ),
       children: [
         // CARD INFORMASI CARA KERJA

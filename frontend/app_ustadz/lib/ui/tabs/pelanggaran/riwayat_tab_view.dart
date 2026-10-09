@@ -51,7 +51,9 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final provider = context.watch<PelanggaranProvider>();
     final riwayatList = provider.riwayatList;
     final ruanganList = provider.ruanganList;
@@ -67,14 +69,14 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
           16,
           14,
           16,
-          120 + MediaQuery.of(context).padding.bottom,
+          MediaQuery.of(context).padding.bottom + 12,
         ),
         children: [
           // 1. SEARCH BAR
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Cari nama santri, NISM, pelanggaran...',
+              hintText: 'Cari nama, NISM, pelanggaran...',
               prefixIcon: const Icon(Icons.search_rounded, size: 20),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
@@ -86,17 +88,28 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
                     )
                   : null,
               filled: true,
-              fillColor: isDark ? const Color(0xFF162016) : Colors.white,
+              fillColor: isDark
+                  ? colorScheme.surfaceContainerHigh
+                  : colorScheme.surfaceContainerHigh,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
+                horizontal: 16,
+                vertical: 12,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
                 borderSide: BorderSide(
                   color: isDark
-                      ? const Color(0xFF263326)
-                      : const Color(0xFFE2E8F0),
+                      ? AppColors.primaryDark
+                      : AppColors.primaryLight,
+                  width: 2,
                 ),
               ),
             ),
@@ -114,41 +127,33 @@ class _RiwayatTabViewState extends State<RiwayatTabView> {
               children: [
                 ...['Semua', 'Ringan', 'Sedang', 'Berat'].map((k) {
                   final isSelected = _selectedKategori == k;
-                  final primary = isDark
-                      ? AppColors.primaryDark
-                      : AppColors.primaryLight;
                   return Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: ChoiceChip(
                       label: Text(k),
                       selected: isSelected,
                       selectedColor: isDark
-                          ? AppColors.primaryContainerDark
-                              .withValues(alpha: 0.6)
-                          : AppColors.primaryContainerLight,
+                          ? colorScheme.secondaryContainer
+                          : colorScheme.secondaryContainer,
                       backgroundColor: isDark
-                          ? const Color(0xFF162016)
-                          : Colors.white,
+                          ? colorScheme.surfaceContainerHigh
+                          : colorScheme.surfaceContainerHigh,
                       labelStyle: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        fontSize: 12,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
                         color: isSelected
-                            ? primary
+                            ? (isDark
+                                  ? colorScheme.onSecondaryContainer
+                                  : colorScheme.onSecondaryContainer)
                             : (isDark
-                                ? const Color(0xFF94A3B8)
-                                : const Color(0xFF64748B)),
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFF64748B)),
                       ),
-                      side: BorderSide(
-                        color: isSelected
-                            ? primary.withValues(alpha: 0.6)
-                            : (isDark
-                                ? AppColors.outlineDark
-                                : const Color(0xFFE2E8F0)),
-                        width: 1,
-                      ),
+                      side: BorderSide.none,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       showCheckmark: false,
                       visualDensity: VisualDensity.compact,

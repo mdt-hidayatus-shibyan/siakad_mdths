@@ -126,7 +126,7 @@ class _FormNilaiScreenState extends State<FormNilaiScreen> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 Icons.verified_user_rounded,
@@ -593,8 +593,8 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
           CircleAvatar(
             radius: 18,
             backgroundColor: isDark
-                ? const Color(0xFF101710)
-                : const Color(0xFFE8F5E9),
+                ? AppColors.surfaceContainerHighDark
+                : AppColors.surfaceContainerHighLight,
             child: Text(
               '${widget.index + 1}',
               style: TextStyle(

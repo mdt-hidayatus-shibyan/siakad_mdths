@@ -66,6 +66,7 @@ class _HarianTabViewState extends State<HarianTabView> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      showDragHandle: false,
       builder: (_) =>
           CatatPelanggaranSheet(initialRuanganId: _selectedRuanganId),
     );
@@ -73,7 +74,9 @@ class _HarianTabViewState extends State<HarianTabView> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final provider = context.watch<PelanggaranProvider>();
     final harianData = provider.harianData;
     final ruanganList = provider.ruanganList;
@@ -83,27 +86,29 @@ class _HarianTabViewState extends State<HarianTabView> {
       _selectedRuanganId = ruanganList.first.id;
     }
 
-    return RefreshIndicator(
-      onRefresh: () async => _loadData(),
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final fabBottomOffset = 14 + (bottomPadding >= 70 ? bottomPadding : 92 + bottomPadding);
+
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: () async => _loadData(),
       child: ListView(
         padding: EdgeInsets.fromLTRB(
           16,
           14,
           16,
-          120 + MediaQuery.of(context).padding.bottom,
+          MediaQuery.of(context).padding.bottom + 12,
         ),
         children: [
           // 1. DATE PICKER SELECTOR BAR
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF162016) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark
-                    ? const Color(0xFF263326)
-                    : const Color(0xFFE2E8F0),
-              ),
+              color: isDark
+                  ? colorScheme.surfaceContainerHigh
+                  : colorScheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -120,7 +125,7 @@ class _HarianTabViewState extends State<HarianTabView> {
                     children: [
                       Icon(
                         Icons.calendar_today_rounded,
-                        size: 14,
+                        size: 15,
                         color: isDark
                             ? AppColors.primaryDark
                             : AppColors.primaryLight,
@@ -153,41 +158,32 @@ class _HarianTabViewState extends State<HarianTabView> {
               child: Row(
                 children: ruanganList.map((r) {
                   final isSelected = _selectedRuanganId == r.id;
-                  final primary = isDark
-                      ? AppColors.primaryDark
-                      : AppColors.primaryLight;
                   return Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: ChoiceChip(
                       label: Text(r.namaRuangan),
                       selected: isSelected,
                       selectedColor: isDark
-                          ? AppColors.primaryContainerDark
-                              .withValues(alpha: 0.6)
-                          : AppColors.primaryContainerLight,
+                          ? colorScheme.secondaryContainer
+                          : colorScheme.secondaryContainer,
                       backgroundColor: isDark
-                          ? const Color(0xFF162016)
-                          : Colors.white,
+                          ? colorScheme.surfaceContainerHigh
+                          : colorScheme.surfaceContainerHigh,
                       labelStyle: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 12,
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.w500,
                         color: isSelected
-                            ? primary
+                            ? (isDark
+                                ? colorScheme.onSecondaryContainer
+                                : colorScheme.onSecondaryContainer)
                             : (isDark
                                 ? const Color(0xFF94A3B8)
                                 : const Color(0xFF64748B)),
                       ),
-                      side: BorderSide(
-                        color: isSelected
-                            ? primary.withValues(alpha: 0.6)
-                            : (isDark
-                                ? AppColors.outlineDark
-                                : const Color(0xFFE2E8F0)),
-                        width: 1,
-                      ),
+                      side: BorderSide.none,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       showCheckmark: false,
                       visualDensity: VisualDensity.compact,
@@ -309,32 +305,16 @@ class _HarianTabViewState extends State<HarianTabView> {
           ),
           const SizedBox(height: 18),
 
-          // 4. HEADER DAFTAR KASUS & TOMBOL TAMBAH
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Catatan Kasus (${list.length})',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+          // 4. HEADER DAFTAR KASUS
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              'Catatan Kasus (${list.length})',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
               ),
-              TextButton.icon(
-                onPressed: _openCatatSheet,
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text(
-                  'Catat Kasus',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                ),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  foregroundColor: isDark
-                      ? AppColors.primaryDark
-                      : AppColors.primaryLight,
-                ),
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 6),
 
@@ -402,11 +382,10 @@ class _HarianTabViewState extends State<HarianTabView> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: katColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: katColor.withValues(alpha: 0.4),
+                            color: katColor.withValues(
+                              alpha: isDark ? 0.20 : 0.14,
                             ),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '+${item.poinFormatted} Poin',
@@ -593,6 +572,29 @@ class _HarianTabViewState extends State<HarianTabView> {
             }),
         ],
       ),
+    ),
+        Positioned(
+          right: 16,
+          bottom: fabBottomOffset,
+          child: FloatingActionButton.extended(
+            heroTag: 'fab_catat_kasus_harian',
+            onPressed: _openCatatSheet,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            elevation: 3,
+            icon: const Icon(Icons.add_rounded, size: 22),
+            label: const Text(
+              'Catat Kasus',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            backgroundColor: isDark
+                ? AppColors.primaryDark
+                : AppColors.primaryLight,
+            foregroundColor: isDark ? Colors.black : Colors.white,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -9,12 +9,14 @@ class KasProvider extends ChangeNotifier {
   KasRingkasanModel? _ringkasan;
   List<MuridKasItem> _muridList = [];
   List<RiwayatBayarKasItem> _riwayatSantri = [];
+  RiwayatPengeluaranModel? _riwayatPengeluaran;
   bool _isLoading = false;
   String? _errorMessage;
 
   KasRingkasanModel? get ringkasan => _ringkasan;
   List<MuridKasItem> get muridList => _muridList;
   List<RiwayatBayarKasItem> get riwayatSantri => _riwayatSantri;
+  RiwayatPengeluaranModel? get riwayatPengeluaran => _riwayatPengeluaran;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -106,13 +108,13 @@ class KasProvider extends ChangeNotifier {
   PengaturanKasItem? _pengaturan;
   PengaturanKasItem? get pengaturan => _pengaturan;
 
-  Future<void> fetchPengaturan() async {
+  Future<void> fetchPengaturan({int? ruanganId}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _pengaturan = await _repo.getPengaturan();
+      _pengaturan = await _repo.getPengaturan(ruanganId: ruanganId);
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
     } finally {
@@ -285,11 +287,132 @@ class KasProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> fetchRiwayatPengeluaran({int? ruanganId}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _riwayatPengeluaran = await _repo.getRiwayatPengeluaran(ruanganId: ruanganId);
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> simpanPengeluaran({
+    required int ruanganId,
+    required String judul,
+    required num nominal,
+    required String tanggalPengeluaran,
+    String? kategori,
+    String? keterangan,
+    String? buktiNotaPath,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await _repo.simpanPengeluaran(
+        ruanganId: ruanganId,
+        judul: judul,
+        nominal: nominal,
+        tanggalPengeluaran: tanggalPengeluaran,
+        kategori: kategori,
+        keterangan: keterangan,
+        buktiNotaPath: buktiNotaPath,
+      );
+      if (success) {
+        HapticHelper.confirmSuccess();
+        await fetchRingkasan(ruanganId: ruanganId);
+        await fetchRiwayatPengeluaran(ruanganId: ruanganId);
+      }
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updatePengeluaran({
+    required int id,
+    required int ruanganId,
+    required String judul,
+    required num nominal,
+    required String tanggalPengeluaran,
+    String? kategori,
+    String? keterangan,
+    String? buktiNotaPath,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await _repo.updatePengeluaran(
+        id: id,
+        judul: judul,
+        nominal: nominal,
+        tanggalPengeluaran: tanggalPengeluaran,
+        kategori: kategori,
+        keterangan: keterangan,
+        buktiNotaPath: buktiNotaPath,
+      );
+      if (success) {
+        HapticHelper.confirmSuccess();
+        await fetchRingkasan(ruanganId: ruanganId);
+        await fetchRiwayatPengeluaran(ruanganId: ruanganId);
+      }
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> hapusPengeluaran({
+    required int id,
+    required int ruanganId,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await _repo.hapusPengeluaran(id);
+      if (success) {
+        HapticHelper.confirmSuccess();
+        await fetchRingkasan(ruanganId: ruanganId);
+        await fetchRiwayatPengeluaran(ruanganId: ruanganId);
+      }
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   void reset() {
     _ringkasan = null;
     _muridList = [];
     _riwayatSantri = [];
     _riwayatSetoran = null;
+    _riwayatPengeluaran = null;
     _penerimaList = [];
     _pengaturan = null;
     _isLoading = false;

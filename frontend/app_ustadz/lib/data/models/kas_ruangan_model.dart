@@ -57,9 +57,11 @@ class KasRingkasanModel {
   final String namaRuangan;
   final String levelNama;
   final int totalMurid;
+  final num totalTargetKas;
   final num totalTerkumpul;
   final num totalSudahDisetor;
   final num totalMenungguVerifikasi;
+  final num totalPengeluaran;
   final num totalDitarik;
   final num sisaDiTanganWali;
   final List<RuanganKasItem> ruanganList;
@@ -70,9 +72,11 @@ class KasRingkasanModel {
     required this.namaRuangan,
     this.levelNama = '-',
     required this.totalMurid,
+    this.totalTargetKas = 0,
     required this.totalTerkumpul,
     required this.totalSudahDisetor,
     this.totalMenungguVerifikasi = 0,
+    this.totalPengeluaran = 0,
     this.totalDitarik = 0,
     required this.sisaDiTanganWali,
     this.ruanganList = const [],
@@ -85,9 +89,11 @@ class KasRingkasanModel {
       namaRuangan: json['nama_ruangan'] ?? '',
       levelNama: json['level_nama'] ?? '-',
       totalMurid: json['total_murid'] ?? json['total_Murid'] ?? 0,
+      totalTargetKas: json['total_target_kas'] ?? 0,
       totalTerkumpul: json['total_terkumpul'] ?? 0,
       totalSudahDisetor: json['total_sudah_disetor'] ?? 0,
       totalMenungguVerifikasi: json['total_menunggu_verifikasi'] ?? 0,
+      totalPengeluaran: json['total_pengeluaran'] ?? 0,
       totalDitarik: json['total_ditarik'] ?? 0,
       sisaDiTanganWali: json['sisa_di_tangan_wali'] ?? 0,
       ruanganList: (json['ruangan_list'] as List? ?? [])
@@ -316,6 +322,7 @@ class RiwayatSetoranModel {
   final num totalTerkumpul;
   final num totalDisetor;
   final num totalMenungguVerifikasi;
+  final num totalPengeluaran;
   final num sisaDiTanganWali;
   final TabunganKasModel? tabungan;
   final List<SetoranKasItem> list;
@@ -328,6 +335,7 @@ class RiwayatSetoranModel {
     required this.totalTerkumpul,
     required this.totalDisetor,
     this.totalMenungguVerifikasi = 0,
+    this.totalPengeluaran = 0,
     required this.sisaDiTanganWali,
     this.tabungan,
     required this.list,
@@ -342,6 +350,7 @@ class RiwayatSetoranModel {
       totalTerkumpul: json['total_terkumpul'] ?? 0,
       totalDisetor: json['total_disetor'] ?? 0,
       totalMenungguVerifikasi: json['total_menunggu_verifikasi'] ?? 0,
+      totalPengeluaran: json['total_pengeluaran'] ?? 0,
       sisaDiTanganWali: json['sisa_di_tangan_wali'] ?? 0,
       tabungan: json['tabungan'] != null
           ? TabunganKasModel.fromJson(json['tabungan'])
@@ -351,6 +360,99 @@ class RiwayatSetoranModel {
           .toList(),
       penarikanList: (json['penarikan_list'] as List? ?? [])
           .map((e) => PenarikanKasItem.fromJson(e))
+          .toList(),
+    );
+  }
+}
+
+class PengeluaranKasItem {
+  final int id;
+  final int ruanganId;
+  final String judul;
+  final String kategori;
+  final num nominal;
+  final String tanggalPengeluaran;
+  final String? hariTanggal;
+  final String keterangan;
+  final String? buktiNota;
+  final String diinputOlehNama;
+  final bool canEdit;
+  final bool canDelete;
+
+  PengeluaranKasItem({
+    required this.id,
+    required this.ruanganId,
+    required this.judul,
+    this.kategori = 'Operasional',
+    required this.nominal,
+    required this.tanggalPengeluaran,
+    this.hariTanggal,
+    this.keterangan = '-',
+    this.buktiNota,
+    this.diinputOlehNama = 'Wali Ruangan',
+    this.canEdit = true,
+    this.canDelete = true,
+  });
+
+  String? get buktiNotaUrl => buktiNota;
+  String get pencatatNama => diinputOlehNama;
+
+  factory PengeluaranKasItem.fromJson(Map<String, dynamic> json) {
+    return PengeluaranKasItem(
+      id: json['id'] ?? 0,
+      ruanganId: json['ruangan_id'] ?? 0,
+      judul: json['judul'] ?? '',
+      kategori: json['kategori'] ?? 'Operasional',
+      nominal: json['nominal'] ?? 0,
+      tanggalPengeluaran: json['tanggal_pengeluaran'] ?? '',
+      hariTanggal: json['hari_tanggal'],
+      keterangan: json['keterangan'] ?? '-',
+      buktiNota: ApiClient.resolveImageUrl(json['bukti_nota']),
+      diinputOlehNama: json['diinput_oleh_nama'] ?? 'Wali Ruangan',
+      canEdit: json['can_edit'] ?? true,
+      canDelete: json['can_delete'] ?? true,
+    );
+  }
+}
+
+class RiwayatPengeluaranModel {
+  final int ruanganId;
+  final String namaRuangan;
+  final String levelNama;
+  final num totalTerkumpul;
+  final num totalDisetor;
+  final num totalMenungguVerifikasi;
+  final num totalPengeluaran;
+  final num totalDitarik;
+  final num sisaDiTanganWali;
+  final List<PengeluaranKasItem> list;
+
+  RiwayatPengeluaranModel({
+    required this.ruanganId,
+    required this.namaRuangan,
+    required this.levelNama,
+    required this.totalTerkumpul,
+    required this.totalDisetor,
+    this.totalMenungguVerifikasi = 0,
+    required this.totalPengeluaran,
+    this.totalDitarik = 0,
+    required this.sisaDiTanganWali,
+    required this.list,
+  });
+
+  factory RiwayatPengeluaranModel.fromJson(Map<String, dynamic> json) {
+    return RiwayatPengeluaranModel(
+      ruanganId: json['ruangan_id'] ?? 0,
+      namaRuangan: json['nama_ruangan'] ?? '',
+      levelNama: json['level_nama'] ?? '-',
+      totalTerkumpul: json['total_terkumpul'] ?? 0,
+      totalDisetor: json['total_disetor'] ?? 0,
+      totalMenungguVerifikasi: json['total_menunggu_verifikasi'] ?? 0,
+      totalPengeluaran: json['total_pengeluaran'] ?? 0,
+      totalDitarik: json['total_ditarik'] ?? 0,
+      sisaDiTanganWali: json['sisa_di_tangan_wali'] ?? 0,
+      list: (json['list'] as List? ?? [])
+          .map((e) => PengeluaranKasItem.fromJson(e))
           .toList(),
     );
   }

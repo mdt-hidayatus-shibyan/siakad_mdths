@@ -8,13 +8,7 @@
 
         <!-- Sisi Kiri: Judul Halaman -->
         <div>
-            <div class="flex items-center gap-2 mb-1.5">
-                <span
-                    class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5 shadow-2xs">
-                    <i class="bi bi-wallet2 text-xs"></i>
-                    <span>Administrasi Kas Kelas</span>
-                </span>
-            </div>
+
             <h2 class="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
                 Kas Ruangan
             </h2>
@@ -25,24 +19,6 @@
 
         <!-- Sisi Kanan: Quick Actions & Filter -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full xl:w-auto shrink-0">
-
-            <!-- Quick Action Links -->
-            <div class="flex items-center gap-2">
-                <a href="{{ route('setoran-kas-ruangan.index') }}"
-                    class="h-10 px-4 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs flex items-center justify-center gap-2 border border-zinc-200/80 dark:border-zinc-700 shadow-2xs transition-all active:scale-95">
-                    <i class="bi bi-bank2 text-emerald-500"></i>
-                    <span>Setoran Kas</span>
-                </a>
-
-                @can('update pengaturan kas')
-                    <a href="{{ route('pengaturan-kas-ruangan.index') }}"
-                        class="h-10 px-3.5 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-zinc-200/80 dark:border-zinc-700 shadow-2xs transition-all active:scale-95"
-                        title="Atur Target Iuran Per Ruangan">
-                        <i class="bi bi-gear-fill text-zinc-400"></i>
-                        <span>Target</span>
-                    </a>
-                @endcan
-            </div>
 
             <!-- Server Filter Form -->
             <form action="{{ request()->url() }}" method="GET" id="formFilter" class="flex items-center gap-2">
@@ -89,8 +65,8 @@
         </div>
     </div>
 
-    <!-- 2. STATISTIK GLOBAL (4 KARTU ATAS) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 md:gap-4 mb-6 relative z-10">
+    <!-- 2. STATISTIK GLOBAL (5 KARTU ATAS) -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 md:gap-4 mb-6 relative z-10">
 
         <!-- 1. Total Kas Terkumpul -->
         <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
@@ -101,7 +77,7 @@
             <div class="min-w-0 flex-1">
                 <p
                     class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5 truncate">
-                    Total Kas Terkumpul
+                    Kas Terkumpul
                 </p>
                 <h4
                     class="text-base md:text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight font-mono">
@@ -110,7 +86,24 @@
             </div>
         </div>
 
-        <!-- 2. Disetor ke Madrasah -->
+        <!-- 2. Pengeluaran Kas -->
+        <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
+            <div
+                class="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl shrink-0 border border-rose-500/20 shadow-2xs">
+                <i class="bi bi-receipt"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p
+                    class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5 truncate">
+                    Pengeluaran Kas
+                </p>
+                <h4 class="text-base md:text-xl font-black text-rose-600 dark:text-rose-400 tracking-tight font-mono">
+                    Rp {{ number_format($totalKasPengeluaran ?? 0, 0, ',', '.') }}
+                </h4>
+            </div>
+        </div>
+
+        <!-- 3. Disetor ke Madrasah -->
         <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
             <div
                 class="w-11 h-11 rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xl shrink-0 border border-sky-500/20 shadow-2xs">
@@ -119,7 +112,7 @@
             <div class="min-w-0 flex-1">
                 <p
                     class="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5 truncate">
-                    Disetor ke Madrasah
+                    Disetor Madrasah
                 </p>
                 <h4 class="text-base md:text-xl font-black text-sky-600 dark:text-sky-400 tracking-tight font-mono">
                     Rp {{ number_format($totalKasDisetor ?? 0, 0, ',', '.') }}
@@ -127,7 +120,7 @@
             </div>
         </div>
 
-        <!-- 3. Sisa Kas di Ruangan -->
+        <!-- 4. Sisa Kas di Ruangan -->
         <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
             <div
                 class="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0 border border-amber-500/20 shadow-2xs">
@@ -144,7 +137,7 @@
             </div>
         </div>
 
-        <!-- 4. Total Ruangan & Murid -->
+        <!-- 5. Total Ruangan & Murid -->
         <div class="m3-glass-card p-4 md:p-5 flex items-center gap-3.5 shadow-2xs">
             <div
                 class="w-11 h-11 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl shrink-0 border border-indigo-500/20 shadow-2xs">
@@ -212,8 +205,9 @@
                         <th class="py-3.5 pl-5 pr-2 w-12 text-center">No</th>
                         <th class="py-3.5 px-4 min-w-[200px]">Ruangan & Jenjang</th>
                         <th class="py-3.5 px-4 min-w-[180px]">Wali Kelas</th>
-                        <th class="py-3.5 px-3 text-center min-w-[90px]">Santri</th>
+                        <th class="py-3.5 px-3 text-center min-w-[90px]">Jum Murid</th>
                         <th class="py-3.5 px-4 text-right min-w-[130px]">Kas Terkumpul</th>
+                        <th class="py-3.5 px-4 text-right min-w-[130px]">Pengeluaran</th>
                         <th class="py-3.5 px-4 text-right min-w-[130px]">Disetorkan</th>
                         <th class="py-3.5 px-4 text-right min-w-[130px]">Sisa di Wali</th>
                         <th class="py-3.5 px-3 text-center min-w-[120px]">Target (L/P)</th>
@@ -225,7 +219,8 @@
                         @php
                             $terkumpul = $ruang->total_terkumpul ?? ($ruang->pembayaran_kas_sum_jumlah_bayar ?? 0);
                             $disetor = $ruang->total_disetor ?? 0;
-                            $sisaKas = max(0, $terkumpul - $disetor);
+                            $pengeluaran = $ruang->total_pengeluaran ?? 0;
+                            $sisaKas = max(0, $terkumpul - $disetor - $pengeluaran);
                             $targetLaki = $ruang->pengaturanKas->nominal_laki ?? 0;
                             $targetPerempuan = $ruang->pengaturanKas->nominal_perempuan ?? 0;
                             $waliNama = $ruang->waliRuangan->nama ?? 'Belum Ditentukan';
@@ -260,7 +255,7 @@
                                 </div>
                             </td>
 
-                            <!-- 3. Wali Kelas -->
+                            <!-- 3. Wali Ruangan -->
                             <td class="py-3.5 px-4 font-sans text-xs font-bold text-zinc-700 dark:text-zinc-300">
                                 <div class="flex items-center gap-1.5 truncate">
                                     <i class="bi bi-person-badge text-emerald-500 text-xs"></i>
@@ -268,7 +263,7 @@
                                 </div>
                             </td>
 
-                            <!-- 4. Jumlah Santri -->
+                            <!-- 4. Jumlah Murid -->
                             <td class="py-3.5 px-3 text-center">
                                 <span
                                     class="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-xs border border-zinc-200/80 dark:border-zinc-700 shadow-2xs">
@@ -282,17 +277,22 @@
                                 Rp {{ number_format($terkumpul, 0, ',', '.') }}
                             </td>
 
-                            <!-- 6. Disetorkan -->
+                            <!-- 6. Pengeluaran -->
+                            <td class="py-3.5 px-4 text-right font-black text-rose-600 dark:text-rose-400 text-xs">
+                                Rp {{ number_format($pengeluaran, 0, ',', '.') }}
+                            </td>
+
+                            <!-- 7. Disetorkan -->
                             <td class="py-3.5 px-4 text-right font-black text-sky-600 dark:text-sky-400 text-xs">
                                 Rp {{ number_format($disetor, 0, ',', '.') }}
                             </td>
 
-                            <!-- 7. Sisa di Wali -->
+                            <!-- 8. Sisa di Wali -->
                             <td class="py-3.5 px-4 text-right font-black text-amber-600 dark:text-amber-400 text-xs">
                                 Rp {{ number_format($sisaKas, 0, ',', '.') }}
                             </td>
 
-                            <!-- 8. Target (L/P) -->
+                            <!-- 9. Target (L/P) -->
                             <td class="py-3.5 px-3 text-center text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
                                 {{ number_format($targetLaki, 0, ',', '.') }} /
                                 {{ number_format($targetPerempuan, 0, ',', '.') }}
@@ -329,6 +329,9 @@
                             <td class="py-4 px-4 text-right text-emerald-600 dark:text-emerald-400">
                                 Rp {{ number_format($totalKasTerkumpul ?? 0, 0, ',', '.') }}
                             </td>
+                            <td class="py-4 px-4 text-right text-rose-600 dark:text-rose-400">
+                                Rp {{ number_format($totalKasPengeluaran ?? 0, 0, ',', '.') }}
+                            </td>
                             <td class="py-4 px-4 text-right text-sky-600 dark:text-sky-400">
                                 Rp {{ number_format($totalKasDisetor ?? 0, 0, ',', '.') }}
                             </td>
@@ -352,7 +355,8 @@
             @php
                 $terkumpul = $ruang->total_terkumpul ?? ($ruang->pembayaran_kas_sum_jumlah_bayar ?? 0);
                 $disetor = $ruang->total_disetor ?? 0;
-                $sisaKas = max(0, $terkumpul - $disetor);
+                $pengeluaran = $ruang->total_pengeluaran ?? 0;
+                $sisaKas = max(0, $terkumpul - $disetor - $pengeluaran);
                 $targetLaki = $ruang->pengaturanKas->nominal_laki ?? 0;
                 $targetPerempuan = $ruang->pengaturanKas->nominal_perempuan ?? 0;
                 $waliNama = $ruang->waliRuangan->nama ?? 'Belum Ditentukan';
@@ -405,22 +409,33 @@
                             Rp {{ number_format($terkumpul, 0, ',', '.') }}
                         </div>
 
-                        <!-- Mini Stats Row: Disetor & Sisa -->
+                        <!-- Mini Stats Row: Pengeluaran, Disetor & Sisa -->
                         <div
-                            class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-dashed border-zinc-200/80 dark:border-zinc-800 text-xs">
+                            class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-dashed border-zinc-200/80 dark:border-zinc-800 text-xs">
                             <div
-                                class="bg-zinc-50/80 dark:bg-zinc-950/50 p-2.5 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70">
+                                class="bg-zinc-50/80 dark:bg-zinc-950/50 p-2 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70">
                                 <span
-                                    class="text-[9px] font-bold uppercase text-zinc-400 block mb-0.5">Disetorkan</span>
-                                <span class="font-black text-sky-600 dark:text-sky-400 font-mono text-xs">
+                                    class="text-[9px] font-bold uppercase text-zinc-400 block mb-0.5 truncate">Keluar</span>
+                                <span
+                                    class="font-black text-rose-600 dark:text-rose-400 font-mono text-[11px] truncate block">
+                                    Rp {{ number_format($pengeluaran, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            <div
+                                class="bg-zinc-50/80 dark:bg-zinc-950/50 p-2 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70">
+                                <span
+                                    class="text-[9px] font-bold uppercase text-zinc-400 block mb-0.5 truncate">Disetor</span>
+                                <span
+                                    class="font-black text-sky-600 dark:text-sky-400 font-mono text-[11px] truncate block">
                                     Rp {{ number_format($disetor, 0, ',', '.') }}
                                 </span>
                             </div>
                             <div
-                                class="bg-zinc-50/80 dark:bg-zinc-950/50 p-2.5 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70">
-                                <span class="text-[9px] font-bold uppercase text-zinc-400 block mb-0.5">Sisa di
-                                    Kelas</span>
-                                <span class="font-black text-amber-600 dark:text-amber-400 font-mono text-xs">
+                                class="bg-zinc-50/80 dark:bg-zinc-950/50 p-2 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/70">
+                                <span class="text-[9px] font-bold uppercase text-zinc-400 block mb-0.5 truncate">Sisa
+                                    Fisik</span>
+                                <span
+                                    class="font-black text-amber-600 dark:text-amber-400 font-mono text-[11px] truncate block">
                                     Rp {{ number_format($sisaKas, 0, ',', '.') }}
                                 </span>
                             </div>

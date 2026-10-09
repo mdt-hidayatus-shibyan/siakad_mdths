@@ -510,7 +510,7 @@ class DetailPengumumanScreen extends StatelessWidget {
                                       ? AppColors.primaryDark
                                       : AppColors.primaryLight)
                                   .withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Icon(
                           Icons.person_rounded,

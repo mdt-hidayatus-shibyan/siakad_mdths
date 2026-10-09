@@ -106,6 +106,7 @@ class _DetailCatatanUstadzScreenState extends State<DetailCatatanUstadzScreen> {
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.contain,
+                  cacheWidth: 1080,
                   errorBuilder: (_, __, ___) => const Center(
                     child: Text(
                       'Gagal memuat gambar',
@@ -119,9 +120,9 @@ class _DetailCatatanUstadzScreenState extends State<DetailCatatanUstadzScreen> {
               onPressed: () => Navigator.pop(ctx),
               icon: Container(
                 padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Colors.black54,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
                   Icons.close_rounded,
@@ -352,7 +353,7 @@ class _DetailCatatanUstadzScreenState extends State<DetailCatatanUstadzScreen> {
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.amber.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
                         Icons.person_rounded,
@@ -404,7 +405,7 @@ class _DetailCatatanUstadzScreenState extends State<DetailCatatanUstadzScreen> {
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.blue.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
                         Icons.school_rounded,
@@ -524,6 +525,7 @@ class _DetailCatatanUstadzScreenState extends State<DetailCatatanUstadzScreen> {
                           width: double.infinity,
                           height: 220,
                           fit: BoxFit.cover,
+                          cacheWidth: 800,
                           errorBuilder: (_, __, ___) => Container(
                             height: 100,
                             color: isDark ? Colors.white10 : Colors.black12,

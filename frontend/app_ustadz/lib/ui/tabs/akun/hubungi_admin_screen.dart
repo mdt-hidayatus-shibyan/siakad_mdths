@@ -259,7 +259,7 @@ class _HubungiAdminScreenState extends State<HubungiAdminScreen>
                                 ? AppColors.primaryDark
                                 : AppColors.primaryLight)
                             .withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
                     Icons.campaign_rounded,
@@ -555,9 +555,9 @@ class _HubungiAdminScreenState extends State<HubungiAdminScreen>
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Colors.white,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.chat_rounded,

@@ -629,9 +629,9 @@ class _FormCatatanUstadzScreenState extends State<FormCatatanUstadzScreen> {
                         },
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Colors.black54,
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
                             Icons.close_rounded,

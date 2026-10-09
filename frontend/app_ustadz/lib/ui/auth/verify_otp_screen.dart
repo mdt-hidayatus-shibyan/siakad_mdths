@@ -193,7 +193,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                       color: isDark
                           ? const Color(0xFF1B261D)
                           : AppColors.primaryContainerLight,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(22),
                     ),
                     child: Icon(
                       Icons.mark_email_read_rounded,

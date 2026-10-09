@@ -41,77 +41,77 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
     }
   }
 
-  void _showInfoDialog(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: isDark ? AppColors.surfaceContainerDark : Colors.white,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.primaryDark.withValues(alpha: 0.2)
-                    : AppColors.primaryLight.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.swap_horiz_rounded,
-                color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'Guru Pengganti (Badal)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Fitur ini memungkinkan setiap Ustadz/Pengajar menjadi Guru Pengganti (Badal) untuk kelas yang pengajarnya berhalangan hadir.',
-              style: TextStyle(fontSize: 13, height: 1.4),
-            ),
-            SizedBox(height: 12),
-            Text(
-              'Langkah Penggunaan:\n'
-              '1. Pilih Ruangan / Kelas yang ingin digantikan.\n'
-              '2. Tentukan Tanggal KBM yang dituju.\n'
-              '3. Tinjau jadwal pelajaran pada ruangan tersebut.\n'
-              '4. Tekan "Gantikan & Isi Presensi" untuk mencatat presensi murid secara otomatis atas nama Anda.',
-              style: TextStyle(fontSize: 12, height: 1.5),
-            ),
-          ],
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: FilledButton.styleFrom(
-              backgroundColor: isDark
-                  ? AppColors.primaryDark
-                  : AppColors.primaryLight,
-              foregroundColor: isDark
-                  ? AppColors.onPrimaryDark
-                  : AppColors.onPrimaryLight,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Mengerti'),
-          ),
-        ],
-      ),
-    );
-  }
+  // void _showInfoDialog(BuildContext context) {
+  //   final isDark = Theme.of(context).brightness == Brightness.dark;
+  //   showDialog(
+  //     context: context,
+  //     builder: (ctx) => AlertDialog(
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+  //       backgroundColor: isDark ? AppColors.surfaceContainerDark : Colors.white,
+  //       title: Row(
+  //         children: [
+  //           Container(
+  //             padding: const EdgeInsets.all(8),
+  //             decoration: BoxDecoration(
+  //               color: isDark
+  //                   ? AppColors.primaryDark.withValues(alpha: 0.2)
+  //                   : AppColors.primaryLight.withValues(alpha: 0.15),
+  //               borderRadius: BorderRadius.circular(14),
+  //             ),
+  //             child: Icon(
+  //               Icons.swap_horiz_rounded,
+  //               color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+  //               size: 24,
+  //             ),
+  //           ),
+  //           const SizedBox(width: 12),
+  //           const Expanded(
+  //             child: Text(
+  //               'Guru Pengganti (Badal)',
+  //               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //       content: const Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Text(
+  //             'Fitur ini memungkinkan setiap Ustadz/Pengajar menjadi Guru Pengganti (Badal) untuk kelas yang pengajarnya berhalangan hadir.',
+  //             style: TextStyle(fontSize: 13, height: 1.4),
+  //           ),
+  //           SizedBox(height: 12),
+  //           Text(
+  //             'Langkah Penggunaan:\n'
+  //             '1. Pilih Ruangan / Kelas yang ingin digantikan.\n'
+  //             '2. Tentukan Tanggal KBM yang dituju.\n'
+  //             '3. Tinjau jadwal pelajaran pada ruangan tersebut.\n'
+  //             '4. Tekan "Gantikan & Isi Presensi" untuk mencatat presensi murid secara otomatis atas nama Anda.',
+  //             style: TextStyle(fontSize: 12, height: 1.5),
+  //           ),
+  //         ],
+  //       ),
+  //       actions: [
+  //         FilledButton(
+  //           onPressed: () => Navigator.pop(ctx),
+  //           style: FilledButton.styleFrom(
+  //             backgroundColor: isDark
+  //                 ? AppColors.primaryDark
+  //                 : AppColors.primaryLight,
+  //             foregroundColor: isDark
+  //                 ? AppColors.onPrimaryDark
+  //                 : AppColors.onPrimaryLight,
+  //             shape: RoundedRectangleBorder(
+  //               borderRadius: BorderRadius.circular(12),
+  //             ),
+  //           ),
+  //           child: const Text('Mengerti'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   void _showRuanganPickerBottomSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -286,7 +286,9 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
                                         width: 40,
                                         height: 40,
                                         decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                           color: isDark
                                               ? AppColors
                                                     .surfaceContainerHighDark
@@ -440,7 +442,7 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
                                 : AppColors.primaryLight.withValues(
                                     alpha: 0.15,
                                   ),
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(
                             Icons.swap_horiz_rounded,
@@ -724,14 +726,14 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
       appBar: CustomAppBar(
         titleText: 'Presensi Guru Pengganti',
         subtitleText: 'Badal Mengajar & Presensi Murid',
-        actions: [
-          CircularIconButton(
-            icon: Icons.info_outline_rounded,
-            iconSize: 20,
-            tooltip: 'Info Guru Pengganti',
-            onPressed: () => _showInfoDialog(context),
-          ),
-        ],
+        // actions: [
+        //   CircularIconButton(
+        //     icon: Icons.info_outline_rounded,
+        //     iconSize: 20,
+        //     tooltip: 'Info Guru Pengganti',
+        //     onPressed: () => _showInfoDialog(context),
+        //   ),
+        // ],
       ),
       body: RefreshIndicator(
         onRefresh: badal.refresh,
@@ -1043,7 +1045,7 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
                         color: isDark
                             ? const Color(0xFF382305)
                             : const Color(0xFFFEF3C7),
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Icon(
                         Icons.beach_access_rounded,
@@ -1087,7 +1089,7 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
                         color: isDark
                             ? const Color(0xFF2E1065)
                             : const Color(0xFFF3E8FF),
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Icon(
                         Icons.assignment_turned_in_rounded,
@@ -1444,94 +1446,94 @@ class _BadalPresensiScreenState extends State<BadalPresensiScreen> {
                       const SizedBox(height: 12),
 
                       if (!item.isBebasKbm) ...[
-                      // Status Presensi Murid & Tombol Aksi
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Icon(
-                                  item.sudahAbsenMurid
-                                      ? Icons.check_circle_rounded
-                                      : Icons.radio_button_unchecked_rounded,
-                                  size: 15,
-                                  color: item.sudahAbsenMurid
-                                      ? AppColors.hadirTextLight
-                                      : AppColors.amberAccent,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
+                        // Status Presensi Murid & Tombol Aksi
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Icon(
                                     item.sudahAbsenMurid
-                                        ? 'Murid Sudah Diabsen (${item.totalTerisi}/${item.totalMurid})'
-                                        : 'Presensi Murid Belum Diisi',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: item.sudahAbsenMurid
-                                          ? (isDark
-                                                ? AppColors.hadirTextDark
-                                                : AppColors.hadirTextLight)
-                                          : (isDark
-                                                ? AppColors.amberAccent
-                                                : const Color(0xFFB45309)),
+                                        ? Icons.check_circle_rounded
+                                        : Icons.radio_button_unchecked_rounded,
+                                    size: 15,
+                                    color: item.sudahAbsenMurid
+                                        ? AppColors.hadirTextLight
+                                        : AppColors.amberAccent,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      item.sudahAbsenMurid
+                                          ? 'Murid Sudah Diabsen (${item.totalTerisi}/${item.totalMurid})'
+                                          : 'Presensi Murid Belum Diisi',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: item.sudahAbsenMurid
+                                            ? (isDark
+                                                  ? AppColors.hadirTextDark
+                                                  : AppColors.hadirTextLight)
+                                            : (isDark
+                                                  ? AppColors.amberAccent
+                                                  : const Color(0xFFB45309)),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
 
-                      // Tombol Gantikan & Buka Presensi Murid
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            HapticHelper.medium();
-                            _showAlasanBadalModal(context, item);
-                          },
-                          icon: Icon(
-                            item.sudahAbsenMurid
-                                ? Icons.edit_note_rounded
-                                : Icons.how_to_reg_rounded,
-                            size: 18,
-                          ),
-                          label: Text(
-                            item.sudahAbsenMurid
-                                ? 'Ubah Presensi Murid (Badal)'
-                                : 'Gantikan & Isi Presensi Murid',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
+                        // Tombol Gantikan & Buka Presensi Murid
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              HapticHelper.medium();
+                              _showAlasanBadalModal(context, item);
+                            },
+                            icon: Icon(
+                              item.sudahAbsenMurid
+                                  ? Icons.edit_note_rounded
+                                  : Icons.how_to_reg_rounded,
+                              size: 18,
                             ),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: item.sudahAbsenMurid
-                                ? (isDark
-                                      ? AppColors.surfaceContainerHighDark
-                                      : const Color(0xFFE2E8F0))
-                                : (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight),
-                            foregroundColor: item.sudahAbsenMurid
-                                ? (isDark
-                                      ? AppColors.primaryDark
-                                      : const Color(0xFF1E293B))
-                                : (isDark
-                                      ? AppColors.onPrimaryDark
-                                      : AppColors.onPrimaryLight),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            label: Text(
+                              item.sudahAbsenMurid
+                                  ? 'Ubah Presensi Murid (Badal)'
+                                  : 'Gantikan & Isi Presensi Murid',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: item.sudahAbsenMurid
+                                  ? (isDark
+                                        ? AppColors.surfaceContainerHighDark
+                                        : const Color(0xFFE2E8F0))
+                                  : (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight),
+                              foregroundColor: item.sudahAbsenMurid
+                                  ? (isDark
+                                        ? AppColors.primaryDark
+                                        : const Color(0xFF1E293B))
+                                  : (isDark
+                                        ? AppColors.onPrimaryDark
+                                        : AppColors.onPrimaryLight),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
                       ],
+                    ],
                   ),
                 );
               }),

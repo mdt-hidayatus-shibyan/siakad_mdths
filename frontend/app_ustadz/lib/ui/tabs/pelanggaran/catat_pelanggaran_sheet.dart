@@ -105,6 +105,7 @@ class _CatatPelanggaranSheetState extends State<CatatPelanggaranSheet> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      showDragHandle: false,
       builder: (ctx) {
         String searchQuery = '';
         return StatefulBuilder(
@@ -349,8 +350,8 @@ class _CatatPelanggaranSheetState extends State<CatatPelanggaranSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF101710) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        color: isDark ? AppColors.surfaceContainerLowDark : AppColors.surfaceContainerLowLight,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.fromLTRB(
         20,

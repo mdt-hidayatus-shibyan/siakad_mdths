@@ -82,7 +82,7 @@ class _TabunganScreenState extends State<TabunganScreen> {
                       color: isDark
                           ? const Color(0xFF1F291F)
                           : const Color(0xFFF1F5F9),
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     child: Icon(
                       Icons.account_balance_wallet_outlined,

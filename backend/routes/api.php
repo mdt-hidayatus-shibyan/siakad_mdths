@@ -119,6 +119,10 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/kas-ruangan/setoran/simpan', [KasRuanganController::class, 'simpanSetoran']);
     Route::post('/kas-ruangan/setoran/update/{id}', [KasRuanganController::class, 'updateSetoran']);
     Route::delete('/kas-ruangan/setoran/hapus/{id}', [KasRuanganController::class, 'hapusSetoran']);
+    Route::get('/kas-ruangan/pengeluaran/riwayat', [KasRuanganController::class, 'getRiwayatPengeluaran']);
+    Route::post('/kas-ruangan/pengeluaran/simpan', [KasRuanganController::class, 'simpanPengeluaran']);
+    Route::post('/kas-ruangan/pengeluaran/update/{id}', [KasRuanganController::class, 'updatePengeluaran']);
+    Route::delete('/kas-ruangan/pengeluaran/hapus/{id}', [KasRuanganController::class, 'hapusPengeluaran']);
 
     // 2.8 Tagihan & SPP (Wali Ruangan)
     Route::get('/tagihan/spp/ringkasan', [TagihanController::class, 'getSppRingkasan']);

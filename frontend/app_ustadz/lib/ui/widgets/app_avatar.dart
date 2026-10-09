@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
@@ -25,7 +26,7 @@ class AppAvatar extends StatelessWidget {
     this.textColor,
     this.border,
     this.cacheDimension,
-    this.shape = BoxShape.circle,
+    this.shape = BoxShape.rectangle,
     this.borderRadius,
     this.fit = BoxFit.cover,
     this.alignment = Alignment.center,
@@ -67,32 +68,26 @@ class AppAvatar extends StatelessWidget {
     Widget avatarContent;
 
     if (resolvedUrl != null && resolvedUrl.isNotEmpty) {
-      avatarContent = Image.network(
-        resolvedUrl,
+      avatarContent = CachedNetworkImage(
+        imageUrl: resolvedUrl,
         width: size,
         height: size,
         fit: fit,
         alignment: alignment,
-        cacheWidth: memCacheSize,
+        memCacheWidth: memCacheSize,
+        memCacheHeight: memCacheSize,
         filterQuality: FilterQuality.medium,
-        errorBuilder: (context, error, stackTrace) => fallbackChild,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-            child: SizedBox(
-              width: radius * 0.8,
-              height: radius * 0.8,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
-                    : null,
-              ),
+        placeholder: (context, url) => Center(
+          child: SizedBox(
+            width: radius * 0.8,
+            height: radius * 0.8,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
             ),
-          );
-        },
+          ),
+        ),
+        errorWidget: (context, url, error) => fallbackChild,
       );
     } else {
       avatarContent = fallbackChild;
@@ -106,7 +101,7 @@ class AppAvatar extends StatelessWidget {
         shape: shape,
         borderRadius: shape == BoxShape.circle
             ? null
-            : (borderRadius ?? BorderRadius.circular(radius * 0.5)),
+            : (borderRadius ?? BorderRadius.circular(radius * 0.55)),
         border: border,
       ),
       clipBehavior: Clip.antiAlias,
@@ -116,7 +111,7 @@ class AppAvatar extends StatelessWidget {
               child: SizedBox(width: size, height: size, child: avatarContent),
             )
           : ClipRRect(
-              borderRadius: borderRadius ?? BorderRadius.circular(radius * 0.5),
+              borderRadius: borderRadius ?? BorderRadius.circular(radius * 0.55),
               child: SizedBox(width: size, height: size, child: avatarContent),
             ),
     );

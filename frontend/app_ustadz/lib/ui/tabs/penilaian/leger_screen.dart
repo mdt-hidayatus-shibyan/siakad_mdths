@@ -476,8 +476,8 @@ class _LegerRuanganScreenState extends State<LegerRuanganScreen> {
                       color:
                           rankBadgeBg ??
                           (isDark
-                              ? const Color(0xFF101710)
-                              : const Color(0xFFF3F4F1)),
+                              ? AppColors.surfaceContainerLowDark
+                              : AppColors.surfaceContainerLowLight),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: rankBadgeText != null
