@@ -1421,13 +1421,18 @@ class _PresensiImniScreenState extends State<PresensiImniScreen> {
           // Header Santri (Avatar, Nama, NISM, Badge Status & Lock status)
           Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: isBelumDiisi
-                    ? (isDark
-                          ? Colors.white10
-                          : Colors.black.withValues(alpha: 0.06))
-                    : statusColor.withValues(alpha: 0.15),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isBelumDiisi
+                      ? (isDark
+                            ? Colors.white10
+                            : Colors.black.withValues(alpha: 0.06))
+                      : statusColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(18 * 0.55),
+                ),
+                alignment: Alignment.center,
                 child: !isTpq && m.nomorMeja != null
                     ? Text(
                         '#${m.nomorMeja}',

@@ -29,7 +29,7 @@ class AppAvatar extends StatelessWidget {
     this.shape = BoxShape.rectangle,
     this.borderRadius,
     this.fit = BoxFit.cover,
-    this.alignment = Alignment.center,
+    this.alignment = const Alignment(0.0, -0.2), // Fokus 20% lebih ke atas (area wajah/kepala pas, tidak condong)
     this.onTap,
   });
 
@@ -44,8 +44,9 @@ class AppAvatar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final resolvedUrl = ApiClient.resolveImageUrl(imageUrl);
     final size = radius * 2;
+    // Downsampling memori yang ketat: 80 - 240px cukup untuk retina display tanpa membebani RAM
     final int memCacheSize =
-        cacheDimension ?? (size * 2.5).toInt().clamp(60, 400);
+        cacheDimension ?? (size * 2.2).toInt().clamp(80, 240);
 
     final defaultBg = isDark
         ? const Color(0xFF0F2313)
@@ -76,6 +77,8 @@ class AppAvatar extends StatelessWidget {
         alignment: alignment,
         memCacheWidth: memCacheSize,
         memCacheHeight: memCacheSize,
+        maxWidthDiskCache: 400,
+        maxHeightDiskCache: 400,
         filterQuality: FilterQuality.medium,
         placeholder: (context, url) => Center(
           child: SizedBox(
@@ -93,27 +96,41 @@ class AppAvatar extends StatelessWidget {
       avatarContent = fallbackChild;
     }
 
-    final avatarBox = Container(
+    final avatarBox = SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: backgroundColor ?? defaultBg,
-        shape: shape,
-        borderRadius: shape == BoxShape.circle
-            ? null
-            : (borderRadius ?? BorderRadius.circular(radius * 0.55)),
-        border: border,
+      child: AspectRatio(
+        aspectRatio: 1.0,
+        child: Container(
+          decoration: BoxDecoration(
+            color: backgroundColor ?? defaultBg,
+            shape: shape,
+            borderRadius: shape == BoxShape.circle
+                ? null
+                : (borderRadius ?? BorderRadius.circular(radius * 0.55)),
+            border: border,
+          ),
+          clipBehavior: Clip.antiAlias,
+          alignment: Alignment.center,
+          child: shape == BoxShape.circle
+              ? ClipOval(
+                  child: SizedBox(
+                    width: size,
+                    height: size,
+                    child: avatarContent,
+                  ),
+                )
+              : ClipRRect(
+                  borderRadius:
+                      borderRadius ?? BorderRadius.circular(radius * 0.55),
+                  child: SizedBox(
+                    width: size,
+                    height: size,
+                    child: avatarContent,
+                  ),
+                ),
+        ),
       ),
-      clipBehavior: Clip.antiAlias,
-      alignment: Alignment.center,
-      child: shape == BoxShape.circle
-          ? ClipOval(
-              child: SizedBox(width: size, height: size, child: avatarContent),
-            )
-          : ClipRRect(
-              borderRadius: borderRadius ?? BorderRadius.circular(radius * 0.55),
-              child: SizedBox(width: size, height: size, child: avatarContent),
-            ),
     );
 
     if (onTap != null) {

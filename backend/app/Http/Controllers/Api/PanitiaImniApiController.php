@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\JadwalPelajaran;
 use App\Models\Level;
+use App\Models\MataPelajaran;
 use App\Models\Murid;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
@@ -288,6 +289,7 @@ class PanitiaImniApiController extends Controller
 
         $pesertas = $query
             ->orderBy('peserta_imnis.tingkat_id', 'asc')
+            ->orderBy('murids.jenis_kelamin', 'asc')
             ->orderBy('murids.nama_lengkap', 'asc')
             ->get();
 
@@ -1592,12 +1594,12 @@ class PanitiaImniApiController extends Controller
         $selectedJadwalId = $request->jadwal_ujian_id ? (int) $request->jadwal_ujian_id : ($jadwalList->first()['id'] ?? null);
 
         $muridList = collect();
-        if ($selectedRuanganId) {
+        if ($selectedRuanganId && $selectedJadwalId) {
             $pesertaList = PesertaImni::with(['murid', 'pembayaran'])
                 ->where('tahun_pelajaran_id', $tahunId)
                 ->where(function ($q) use ($selectedRuanganId) {
                     $q->where('ruangan_asal_id', $selectedRuanganId)
-                      ->orWhere('ruangan_ujian_id', $selectedRuanganId);
+                        ->orWhere('ruangan_ujian_id', $selectedRuanganId);
                 })
                 ->get()
                 ->sort(function ($a, $b) {

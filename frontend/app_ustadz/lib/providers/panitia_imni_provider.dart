@@ -66,13 +66,19 @@ class PanitiaImniProvider extends ChangeNotifier {
       final sBayar = statusPembayaran ?? _filterStatusBayar;
       final qSearch = search ?? _searchQueryPeserta;
 
-      _pesertaList = await _repo.getPembayaranPesertaList(
+      final list = await _repo.getPembayaranPesertaList(
         tahunId: tahunId,
         tingkatId: tId,
         ruanganId: rId,
         statusPembayaran: sBayar,
         search: qSearch,
       );
+      list.sort((a, b) {
+        final jkComp = a.jenisKelamin.compareTo(b.jenisKelamin);
+        if (jkComp != 0) return jkComp;
+        return a.namaLengkap.toLowerCase().compareTo(b.namaLengkap.toLowerCase());
+      });
+      _pesertaList = list;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
     } finally {

@@ -7,6 +7,7 @@ import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/shimmer_loading.dart';
+import '../../widgets/app_avatar.dart';
 
 class LaporanPresensiUstadzScreen extends StatefulWidget {
   final int? initialRuanganId;
@@ -611,20 +612,14 @@ class _LaporanPresensiUstadzScreenState
                         // Baris 1: Avatar, Nama, NIUP, Mapel
                         Row(
                           children: [
-                            CircleAvatar(
+                            AppAvatar(
                               radius: 20,
+                              name: ustadz.nama,
+                              imageUrl: ustadz.foto,
                               backgroundColor: primary.withValues(
                                 alpha: isDark ? 0.2 : 0.12,
                               ),
-                              child: Text(
-                                ustadz.nama.isNotEmpty
-                                    ? ustadz.nama[0].toUpperCase()
-                                    : 'U',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: primary,
-                                ),
-                              ),
+                              textColor: primary,
                             ),
                             const SizedBox(width: 12),
                             Expanded(

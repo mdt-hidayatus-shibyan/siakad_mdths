@@ -590,11 +590,16 @@ class _MuridNilaiCardState extends State<_MuridNilaiCard> {
       child: Row(
         children: [
           // Avatar nomor urut
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: isDark
-                ? AppColors.surfaceContainerHighDark
-                : AppColors.surfaceContainerHighLight,
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.surfaceContainerHighDark
+                  : AppColors.surfaceContainerHighLight,
+              borderRadius: BorderRadius.circular(18 * 0.55),
+            ),
+            alignment: Alignment.center,
             child: Text(
               '${widget.index + 1}',
               style: TextStyle(

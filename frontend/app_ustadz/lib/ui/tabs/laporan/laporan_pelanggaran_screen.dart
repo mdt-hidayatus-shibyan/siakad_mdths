@@ -7,6 +7,7 @@ import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/shimmer_loading.dart';
+import '../../widgets/app_avatar.dart';
 
 class LaporanPelanggaranScreen extends StatefulWidget {
   final int? initialRuanganId;
@@ -368,24 +369,17 @@ class _LaporanPelanggaranScreenState extends State<LaporanPelanggaranScreen>
                     padding: const EdgeInsets.all(14),
                     child: Row(
                       children: [
-                        CircleAvatar(
+                        AppAvatar(
                           radius: 20,
-                          backgroundColor:
-                              (santri.totalPoin > 0
-                                      ? AppColors.roseDanger
-                                      : primary)
-                                  .withValues(alpha: isDark ? 0.2 : 0.12),
-                          child: Text(
-                            santri.nama.isNotEmpty
-                                ? santri.nama[0].toUpperCase()
-                                : 'M',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: santri.totalPoin > 0
+                          name: santri.nama,
+                          imageUrl: santri.foto,
+                          backgroundColor: (santri.totalPoin > 0
                                   ? AppColors.roseDanger
-                                  : primary,
-                            ),
-                          ),
+                                  : primary)
+                              .withValues(alpha: isDark ? 0.2 : 0.12),
+                          textColor: santri.totalPoin > 0
+                              ? AppColors.roseDanger
+                              : primary,
                         ),
                         const SizedBox(width: 12),
                         Expanded(

@@ -490,6 +490,45 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
                     child: ShimmerLoadingList(count: 6, height: 60),
                   ),
                 )
+              else if (jadwals.isEmpty || selectedJadwal == null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 40,
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.event_busy_rounded,
+                            size: 48,
+                            color: isDark ? Colors.white24 : Colors.black26,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Jadwal ujian belum tersedia',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white70 : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Nama peserta dan form input nilai akan muncul setelah jadwal mata pelajaran ujian di ruangan ini ditambahkan.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white38 : Colors.black45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
               else if (provider.nilaiMuridList.isEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
@@ -526,7 +565,9 @@ class _NilaiImniScreenState extends State<NilaiImniScreen> {
         ),
 
         // Bottom Action Bar (Simpan Draf & Publikasikan) - floating GlassCard like in form_nilai_screen.dart
-        if (provider.nilaiMuridList.isNotEmpty)
+        if (jadwals.isNotEmpty &&
+            selectedJadwal != null &&
+            provider.nilaiMuridList.isNotEmpty)
           Positioned(
             left: 16,
             right: 16,

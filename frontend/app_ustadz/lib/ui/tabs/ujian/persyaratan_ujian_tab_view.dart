@@ -6,6 +6,7 @@ import '../../../data/models/syarat_ujian_model.dart';
 import '../../../providers/syarat_ujian_provider.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/shimmer_loading.dart';
+import '../../widgets/app_avatar.dart';
 
 class PersyaratanUjianTabView extends StatefulWidget {
   const PersyaratanUjianTabView({super.key});
@@ -842,17 +843,11 @@ class _PersyaratanUjianTabViewState extends State<PersyaratanUjianTabView> {
                     // Header Baris 1: Avatar, Nama, NISM & Status Badge
                     Row(
                       children: [
-                        CircleAvatar(
+                        AppAvatar(
                           radius: 18,
+                          name: m.nama,
                           backgroundColor: statusBgColor,
-                          child: Text(
-                            m.nama.isNotEmpty ? m.nama[0].toUpperCase() : 'M',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: statusTextColor,
-                            ),
-                          ),
+                          textColor: statusTextColor,
                         ),
                         const SizedBox(width: 10),
                         Expanded(

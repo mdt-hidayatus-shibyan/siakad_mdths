@@ -613,7 +613,6 @@ class _LaporanKenaikanScreenState extends State<LaporanKenaikanScreen> {
                       radius: 20,
                       name: murid.nama,
                       imageUrl: murid.foto,
-                      shape: BoxShape.circle,
                       cacheDimension: 100,
                     ),
                     Positioned(
@@ -1029,18 +1028,10 @@ class _LaporanKenaikanScreenState extends State<LaporanKenaikanScreen> {
               // Header Modal
               Row(
                 children: [
-                  CircleAvatar(
+                  AppAvatar(
                     radius: 20,
-                    backgroundColor: primary.withValues(
-                      alpha: isDark ? 0.25 : 0.15,
-                    ),
-                    child: Text(
-                      murid.nama.isNotEmpty ? murid.nama[0].toUpperCase() : 'M',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: primary,
-                      ),
-                    ),
+                    name: murid.nama,
+                    imageUrl: murid.foto,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

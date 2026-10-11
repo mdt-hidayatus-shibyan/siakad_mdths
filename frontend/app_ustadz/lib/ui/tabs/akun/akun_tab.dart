@@ -1695,6 +1695,7 @@ class _AkunTabState extends State<AkunTab> {
                           imageUrl: user?.photo,
                           name: user?.name ?? '-',
                           cacheDimension: 200,
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
                       const SizedBox(width: 16),

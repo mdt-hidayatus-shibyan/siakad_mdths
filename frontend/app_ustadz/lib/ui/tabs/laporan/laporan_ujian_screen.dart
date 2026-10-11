@@ -766,7 +766,6 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
                         radius: 23,
                         name: santri.nama,
                         imageUrl: santri.foto,
-                        shape: BoxShape.circle,
                         cacheDimension: 110,
                       ),
                       Positioned(
@@ -1074,7 +1073,6 @@ class _LaporanUjianScreenState extends State<LaporanUjianScreen> {
                         radius: 20,
                         name: santri.nama,
                         imageUrl: santri.foto,
-                        shape: BoxShape.circle,
                         cacheDimension: 100,
                       ),
                       const SizedBox(width: 12),

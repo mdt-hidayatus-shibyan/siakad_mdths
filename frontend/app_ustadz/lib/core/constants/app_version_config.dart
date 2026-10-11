@@ -41,7 +41,7 @@ class AppVersionConfig {
   // ---------------------------------------------------------------------------
   static const String appTitle = 'Ustadz - MDTHS';
   static const String appSubtitle = 'MDT Hidayatus Shibyan';
-  static const String version = '3.2.3';
+  static const String version = '3.2.4';
   static const String buildNumber = '2026.10.05';
   static const String releaseDate = 'Oktober 2026';
   static const String statusBadge = 'Versi Stabil';
@@ -53,13 +53,17 @@ class AppVersionConfig {
   static const String releaseSubtitle = 'Stable Release - Oktober 2026';
   static const String releaseBadge = 'Stable Version';
 
-  /// 🌟 DAFTAR PENAMBAHAN FITUR BARU
   /// Ubah / tambahkan fitur baru di sini:
   static const List<ChangelogEntry> newFeatures = [
     ChangelogEntry(
       title: 'Penyegaran Tampilan',
       description:
           'Penyegaran tampilan antarmuka aplikasi untuk meningkatkan pengalaman pengguna, termasuk perbaikan desain visual dan navigasi yang lebih intuitif ala Material 3 Expressive Design System (M3).',
+    ),
+    ChangelogEntry(
+      title: 'Penambahan Warna Aksen Tema',
+      description:
+          'Penambahan opsi warna aksen baru untuk tema aplikasi, memungkinkan pengguna untuk menyesuaikan tampilan sesuai preferensi mereka.',
     ),
     ChangelogEntry(
       title: 'Atur Tata Letak Menu Cepat di Home Screen',

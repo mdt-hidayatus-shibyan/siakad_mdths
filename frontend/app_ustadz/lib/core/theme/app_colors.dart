@@ -106,9 +106,9 @@ class AppColorPreset {
 class AppColors {
   AppColors._();
 
-  // === 6 SUITABLE COLOR PRESETS (EACH WITH DYNAMIC TINTED SURFACES) ===
+  // === 10 ACCENT COLORS (SESUAI GAMBAR) + EMERALD DEFAULT ===
   static const List<AppColorPreset> presets = [
-    // 1. Hijau Madrasah (Default) - Sejuk, Religius & Asri
+    // 0. Hijau Madrasah (Default) - Sejuk, Religius & Asri
     AppColorPreset(
       key: 'emerald',
       name: 'Hijau Madrasah',
@@ -160,11 +160,11 @@ class AppColors {
       outlineVariantDark: Color(0xFF2B3C2B),
     ),
 
-    // 2. Biru Samudra - Modern, Tenang & Profesional
+    // 1. Biru Langit (Sky Blue - Lingkaran 1)
     AppColorPreset(
-      key: 'ocean',
-      name: 'Biru Samudra',
-      subtitle: 'Modern, tenang, & profesional',
+      key: 'sky_blue',
+      name: 'Biru Langit',
+      subtitle: 'Cerah, modern, & profesional',
       primaryLight: Color(0xFF0284C7),
       primaryDark: Color(0xFF38BDF8),
       primaryContainerLight: Color(0xFFE0F2FE),
@@ -173,7 +173,7 @@ class AppColors {
       onPrimaryDark: Color(0xFF082F49),
       onPrimaryContainerLight: Color(0xFF0369A1),
       onPrimaryContainerDark: Color(0xFFBAE6FD),
-      previewColor: Color(0xFF0284C7),
+      previewColor: Color(0xFF00A3FF),
       secondaryLight: Color(0xFF4F616E),
       secondaryDark: Color(0xFFB6C9D8),
       secondaryContainerLight: Color(0xFFD2E5F5),
@@ -187,7 +187,6 @@ class AppColors {
       tertiaryContainerLight: Color(0xFFE9DCFF),
       tertiaryContainerDark: Color(0xFF4B4263),
 
-      // Dynamic Tinted Surfaces - Light Mode (Icy Sky Ocean Tint)
       surfaceLight: Color(0xFFF6FAFD),
       surfaceDimLight: Color(0xFFECF3F9),
       surfaceBrightLight: Color(0xFFFFFFFF),
@@ -199,7 +198,6 @@ class AppColors {
       outlineLight: Color(0xFF6F7982),
       outlineVariantLight: Color(0xFFBFCAD5),
 
-      // Dynamic Tinted Surfaces - Dark Mode (Super AMOLED with dark ocean navy containers)
       surfaceDark: Color(0xFF000000),
       surfaceDimDark: Color(0xFF000000),
       surfaceBrightDark: Color(0xFF14202B),
@@ -212,11 +210,11 @@ class AppColors {
       outlineVariantDark: Color(0xFF27384A),
     ),
 
-    // 3. Tosca Islami - Teduh, Bersih & Harmonis
+    // 2. Tosca Mint (Aqua - Lingkaran 2)
     AppColorPreset(
-      key: 'teal',
-      name: 'Tosca Islami',
-      subtitle: 'Teduh, bersih, & harmonis',
+      key: 'mint',
+      name: 'Tosca Mint',
+      subtitle: 'Sejuk, jernih, & menyegarkan',
       primaryLight: Color(0xFF0D9488),
       primaryDark: Color(0xFF2DD4BF),
       primaryContainerLight: Color(0xFFCCFBF1),
@@ -225,7 +223,7 @@ class AppColors {
       onPrimaryDark: Color(0xFF042F2E),
       onPrimaryContainerLight: Color(0xFF134E4A),
       onPrimaryContainerDark: Color(0xFF99F6E4),
-      previewColor: Color(0xFF0D9488),
+      previewColor: Color(0xFF2DD4BF),
       secondaryLight: Color(0xFF4A635E),
       secondaryDark: Color(0xFFB1CCC5),
       secondaryContainerLight: Color(0xFFCCE8E1),
@@ -239,7 +237,6 @@ class AppColors {
       tertiaryContainerLight: Color(0xFFCDE5FF),
       tertiaryContainerDark: Color(0xFF2D4960),
 
-      // Dynamic Tinted Surfaces - Light Mode (Soothing Tosca Aqua Tint)
       surfaceLight: Color(0xFFF5FAF9),
       surfaceDimLight: Color(0xFFECF4F2),
       surfaceBrightLight: Color(0xFFFFFFFF),
@@ -251,7 +248,6 @@ class AppColors {
       outlineLight: Color(0xFF6E7A77),
       outlineVariantLight: Color(0xFFBECDC9),
 
-      // Dynamic Tinted Surfaces - Dark Mode (Super AMOLED with dark tosca containers)
       surfaceDark: Color(0xFF000000),
       surfaceDimDark: Color(0xFF000000),
       surfaceBrightDark: Color(0xFF132321),
@@ -264,11 +260,261 @@ class AppColors {
       outlineVariantDark: Color(0xFF253935),
     ),
 
-    // 4. Ungu Elegan - Prestisius, Mewah & Berwibawa
+    // 3. Hijau Lemon (Lime - Lingkaran 3)
     AppColorPreset(
-      key: 'violet',
-      name: 'Ungu Elegan',
-      subtitle: 'Prestisius, mewah, & berwibawa',
+      key: 'lime',
+      name: 'Hijau Lemon',
+      subtitle: 'Energik, segar, & ceria',
+      primaryLight: Color(0xFF4D7C0F),
+      primaryDark: Color(0xFFA3E635),
+      primaryContainerLight: Color(0xFFECFCCB),
+      primaryContainerDark: Color(0xFF365314),
+      onPrimaryLight: Color(0xFFFFFFFF),
+      onPrimaryDark: Color(0xFF1A2E05),
+      onPrimaryContainerLight: Color(0xFF365314),
+      onPrimaryContainerDark: Color(0xFFD9F99D),
+      previewColor: Color(0xFFA3E635),
+      secondaryLight: Color(0xFF55624C),
+      secondaryDark: Color(0xFFBDCBB0),
+      secondaryContainerLight: Color(0xFFD9E7CC),
+      secondaryContainerDark: Color(0xFF3D4A35),
+      onSecondaryLight: Color(0xFFFFFFFF),
+      onSecondaryDark: Color(0xFF273420),
+      onSecondaryContainerLight: Color(0xFF131F0D),
+      onSecondaryContainerDark: Color(0xFFD9E7CC),
+      tertiaryLight: Color(0xFF386663),
+      tertiaryDark: Color(0xFFA0D0CD),
+      tertiaryContainerLight: Color(0xFFBCECE9),
+      tertiaryContainerDark: Color(0xFF1F4E4B),
+
+      surfaceLight: Color(0xFFF8FAF4),
+      surfaceDimLight: Color(0xFFEFF3EB),
+      surfaceBrightLight: Color(0xFFFFFFFF),
+      surfaceContainerLowestLight: Color(0xFFFFFFFF),
+      surfaceContainerLowLight: Color(0xFFF2F6ED),
+      surfaceContainerLight: Color(0xFFEAF1E4),
+      surfaceContainerHighLight: Color(0xFFE2EBDC),
+      surfaceContainerHighestLight: Color(0xFFD9E5D3),
+      outlineLight: Color(0xFF737A6F),
+      outlineVariantLight: Color(0xFFC3C9BE),
+
+      surfaceDark: Color(0xFF000000),
+      surfaceDimDark: Color(0xFF000000),
+      surfaceBrightDark: Color(0xFF1A2613),
+      surfaceContainerLowestDark: Color(0xFF070E04),
+      surfaceContainerLowDark: Color(0xFF0F1A0A),
+      surfaceContainerDark: Color(0xFF16250F),
+      surfaceContainerHighDark: Color(0xFF1F3216),
+      surfaceContainerHighestDark: Color(0xFF2A421F),
+      outlineDark: Color(0xFF8D9588),
+      outlineVariantDark: Color(0xFF2C3E21),
+    ),
+
+    // 4. Kuning Mentari (Sunflower - Lingkaran 4)
+    AppColorPreset(
+      key: 'yellow',
+      name: 'Kuning Mentari',
+      subtitle: 'Hangat, terang, & penuh semangat',
+      primaryLight: Color(0xFFB45309),
+      primaryDark: Color(0xFFFACC15),
+      primaryContainerLight: Color(0xFFFEF9C3),
+      primaryContainerDark: Color(0xFF713F12),
+      onPrimaryLight: Color(0xFFFFFFFF),
+      onPrimaryDark: Color(0xFF422006),
+      onPrimaryContainerLight: Color(0xFF713F12),
+      onPrimaryContainerDark: Color(0xFFFEF08A),
+      previewColor: Color(0xFFFACC15),
+      secondaryLight: Color(0xFF6C5D47),
+      secondaryDark: Color(0xFFD8C4A9),
+      secondaryContainerLight: Color(0xFFF5E0C4),
+      secondaryContainerDark: Color(0xFF534631),
+      onSecondaryLight: Color(0xFFFFFFFF),
+      onSecondaryDark: Color(0xFF3B2F1C),
+      onSecondaryContainerLight: Color(0xFF241A09),
+      onSecondaryContainerDark: Color(0xFFF5E0C4),
+      tertiaryLight: Color(0xFF4F6546),
+      tertiaryDark: Color(0xFFB5CDAA),
+      tertiaryContainerLight: Color(0xFFD1EAC5),
+      tertiaryContainerDark: Color(0xFF384D30),
+
+      surfaceLight: Color(0xFFFCFAF4),
+      surfaceDimLight: Color(0xFFF6F2E8),
+      surfaceBrightLight: Color(0xFFFFFFFF),
+      surfaceContainerLowestLight: Color(0xFFFFFFFF),
+      surfaceContainerLowLight: Color(0xFFF7F4EA),
+      surfaceContainerLight: Color(0xFFF2ECE0),
+      surfaceContainerHighLight: Color(0xFFECE4D5),
+      surfaceContainerHighestLight: Color(0xFFE5DCCB),
+      outlineLight: Color(0xFF7C766B),
+      outlineVariantLight: Color(0xFFCDC6BA),
+
+      surfaceDark: Color(0xFF000000),
+      surfaceDimDark: Color(0xFF000000),
+      surfaceBrightDark: Color(0xFF262013),
+      surfaceContainerLowestDark: Color(0xFF0F0C05),
+      surfaceContainerLowDark: Color(0xFF191509),
+      surfaceContainerDark: Color(0xFF241E0E),
+      surfaceContainerHighDark: Color(0xFF312914),
+      surfaceContainerHighestDark: Color(0xFF40361C),
+      outlineDark: Color(0xFF948E83),
+      outlineVariantDark: Color(0xFF3C3322),
+    ),
+
+    // 5. Oranye Senja (Tangerine - Lingkaran 5)
+    AppColorPreset(
+      key: 'orange',
+      name: 'Oranye Senja',
+      subtitle: 'Hangat, antusias, & ramah',
+      primaryLight: Color(0xFFEA580C),
+      primaryDark: Color(0xFFFB923C),
+      primaryContainerLight: Color(0xFFFFEDD5),
+      primaryContainerDark: Color(0xFF7C2D12),
+      onPrimaryLight: Color(0xFFFFFFFF),
+      onPrimaryDark: Color(0xFF431407),
+      onPrimaryContainerLight: Color(0xFF9A3412),
+      onPrimaryContainerDark: Color(0xFFFED7AA),
+      previewColor: Color(0xFFFB923C),
+      secondaryLight: Color(0xFF74584C),
+      secondaryDark: Color(0xFFE3BFA8),
+      secondaryContainerLight: Color(0xFFFFDBCF),
+      secondaryContainerDark: Color(0xFF5B4136),
+      onSecondaryLight: Color(0xFFFFFFFF),
+      onSecondaryDark: Color(0xFF422C21),
+      onSecondaryContainerLight: Color(0xFF2B170E),
+      onSecondaryContainerDark: Color(0xFFFFDBCF),
+      tertiaryLight: Color(0xFF675F36),
+      tertiaryDark: Color(0xFFD2C798),
+      tertiaryContainerLight: Color(0xFFEEE3B2),
+      tertiaryContainerDark: Color(0xFF4E4721),
+
+      surfaceLight: Color(0xFFFCF8F5),
+      surfaceDimLight: Color(0xFFF7EFE9),
+      surfaceBrightLight: Color(0xFFFFFFFF),
+      surfaceContainerLowestLight: Color(0xFFFFFFFF),
+      surfaceContainerLowLight: Color(0xFFF9F1EB),
+      surfaceContainerLight: Color(0xFFF3E7DF),
+      surfaceContainerHighLight: Color(0xFFEDDDD3),
+      surfaceContainerHighestLight: Color(0xFFE6D3C7),
+      outlineLight: Color(0xFF7E736E),
+      outlineVariantLight: Color(0xFFD0C3BC),
+
+      surfaceDark: Color(0xFF000000),
+      surfaceDimDark: Color(0xFF000000),
+      surfaceBrightDark: Color(0xFF271A13),
+      surfaceContainerLowestDark: Color(0xFF100805),
+      surfaceContainerLowDark: Color(0xFF1A0E08),
+      surfaceContainerDark: Color(0xFF26170E),
+      surfaceContainerHighDark: Color(0xFF342014),
+      surfaceContainerHighestDark: Color(0xFF442B1C),
+      outlineDark: Color(0xFF968B84),
+      outlineVariantDark: Color(0xFF402A1F),
+    ),
+
+    // 6. Merah Coral (Salmon - Lingkaran 6, Terpilih di Gambar)
+    AppColorPreset(
+      key: 'coral',
+      name: 'Merah Coral',
+      subtitle: 'Elegan, dinamis, & memikat (Sesuai Gambar)',
+      primaryLight: Color(0xFFE11D48),
+      primaryDark: Color(0xFFFB7185),
+      primaryContainerLight: Color(0xFFFFE4E6),
+      primaryContainerDark: Color(0xFF881337),
+      onPrimaryLight: Color(0xFFFFFFFF),
+      onPrimaryDark: Color(0xFF4C0519),
+      onPrimaryContainerLight: Color(0xFF9F1239),
+      onPrimaryContainerDark: Color(0xFFFECDD3),
+      previewColor: Color(0xFFFB7185),
+      secondaryLight: Color(0xFF78565B),
+      secondaryDark: Color(0xFFE7BDC1),
+      secondaryContainerLight: Color(0xFFFFD9DC),
+      secondaryContainerDark: Color(0xFF5E3F43),
+      onSecondaryLight: Color(0xFFFFFFFF),
+      onSecondaryDark: Color(0xFF452A2E),
+      onSecondaryContainerLight: Color(0xFF2E151A),
+      onSecondaryContainerDark: Color(0xFFFFD9DC),
+      tertiaryLight: Color(0xFF7A583B),
+      tertiaryDark: Color(0xFFECBE99),
+      tertiaryContainerLight: Color(0xFFFFDDBF),
+      tertiaryContainerDark: Color(0xFF604126),
+
+      surfaceLight: Color(0xFFFCF6F7),
+      surfaceDimLight: Color(0xFFF7ECED),
+      surfaceBrightLight: Color(0xFFFFFFFF),
+      surfaceContainerLowestLight: Color(0xFFFFFFFF),
+      surfaceContainerLowLight: Color(0xFFF8EFF1),
+      surfaceContainerLight: Color(0xFFF3E3E6),
+      surfaceContainerHighLight: Color(0xFFEED8DC),
+      surfaceContainerHighestLight: Color(0xFFE7CCD1),
+      outlineLight: Color(0xFF7E7275),
+      outlineVariantLight: Color(0xFFD1C1C4),
+
+      surfaceDark: Color(0xFF000000),
+      surfaceDimDark: Color(0xFF000000),
+      surfaceBrightDark: Color(0xFF281418),
+      surfaceContainerLowestDark: Color(0xFF100608),
+      surfaceContainerLowDark: Color(0xFF1A0A0E),
+      surfaceContainerDark: Color(0xFF271016),
+      surfaceContainerHighDark: Color(0xFF36161F),
+      surfaceContainerHighestDark: Color(0xFF471E29),
+      outlineDark: Color(0xFF978A8D),
+      outlineVariantDark: Color(0xFF402129),
+    ),
+
+    // 7. Pink Manis (Bubblegum - Lingkaran 7)
+    AppColorPreset(
+      key: 'pink',
+      name: 'Pink Manis',
+      subtitle: 'Lembut, manis, & anggun',
+      primaryLight: Color(0xFFDB2777),
+      primaryDark: Color(0xFFF472B6),
+      primaryContainerLight: Color(0xFFFCE7F3),
+      primaryContainerDark: Color(0xFF831843),
+      onPrimaryLight: Color(0xFFFFFFFF),
+      onPrimaryDark: Color(0xFF500724),
+      onPrimaryContainerLight: Color(0xFF9D174D),
+      onPrimaryContainerDark: Color(0xFFFBCFE8),
+      previewColor: Color(0xFFF472B6),
+      secondaryLight: Color(0xFF765666),
+      secondaryDark: Color(0xFFE5BDCF),
+      secondaryContainerLight: Color(0xFFFFD9E9),
+      secondaryContainerDark: Color(0xFF5C3F4E),
+      onSecondaryLight: Color(0xFFFFFFFF),
+      onSecondaryDark: Color(0xFF442937),
+      onSecondaryContainerLight: Color(0xFF2D1422),
+      onSecondaryContainerDark: Color(0xFFFFD9E9),
+      tertiaryLight: Color(0xFF775940),
+      tertiaryDark: Color(0xFFE7BF9E),
+      tertiaryContainerLight: Color(0xFFFFDDC3),
+      tertiaryContainerDark: Color(0xFF5D422B),
+
+      surfaceLight: Color(0xFFFCF6F9),
+      surfaceDimLight: Color(0xFFF8EDF2),
+      surfaceBrightLight: Color(0xFFFFFFFF),
+      surfaceContainerLowestLight: Color(0xFFFFFFFF),
+      surfaceContainerLowLight: Color(0xFFF9EFF4),
+      surfaceContainerLight: Color(0xFFF4E3EC),
+      surfaceContainerHighLight: Color(0xFFEFD8E4),
+      surfaceContainerHighestLight: Color(0xFFE9CCDC),
+      outlineLight: Color(0xFF7E727A),
+      outlineVariantLight: Color(0xFFD1C1CA),
+
+      surfaceDark: Color(0xFF000000),
+      surfaceDimDark: Color(0xFF000000),
+      surfaceBrightDark: Color(0xFF281421),
+      surfaceContainerLowestDark: Color(0xFF10060D),
+      surfaceContainerLowDark: Color(0xFF1A0A15),
+      surfaceContainerDark: Color(0xFF271020),
+      surfaceContainerHighDark: Color(0xFF36162C),
+      surfaceContainerHighestDark: Color(0xFF481E3B),
+      outlineDark: Color(0xFF978992),
+      outlineVariantDark: Color(0xFF412134),
+    ),
+
+    // 8. Ungu Lavender (Lilac - Lingkaran 8)
+    AppColorPreset(
+      key: 'lavender',
+      name: 'Ungu Lavender',
+      subtitle: 'Prestisius, artistik, & damai',
       primaryLight: Color(0xFF7C3AED),
       primaryDark: Color(0xFFA78BFA),
       primaryContainerLight: Color(0xFFEDE9FE),
@@ -277,7 +523,7 @@ class AppColors {
       onPrimaryDark: Color(0xFF2E1065),
       onPrimaryContainerLight: Color(0xFF5B21B6),
       onPrimaryContainerDark: Color(0xFFDDD6FE),
-      previewColor: Color(0xFF7C3AED),
+      previewColor: Color(0xFFA78BFA),
       secondaryLight: Color(0xFF625B71),
       secondaryDark: Color(0xFFCBC2DB),
       secondaryContainerLight: Color(0xFFE8DEF8),
@@ -291,7 +537,6 @@ class AppColors {
       tertiaryContainerLight: Color(0xFFFFD8E4),
       tertiaryContainerDark: Color(0xFF633B48),
 
-      // Dynamic Tinted Surfaces - Light Mode (Royal Lavender Lilac Tint)
       surfaceLight: Color(0xFFFAF7FD),
       surfaceDimLight: Color(0xFFF3EDFA),
       surfaceBrightLight: Color(0xFFFFFFFF),
@@ -303,7 +548,6 @@ class AppColors {
       outlineLight: Color(0xFF787383),
       outlineVariantLight: Color(0xFFC9C3D4),
 
-      // Dynamic Tinted Surfaces - Dark Mode (Super AMOLED with dark violet containers)
       surfaceDark: Color(0xFF000000),
       surfaceDimDark: Color(0xFF000000),
       surfaceBrightDark: Color(0xFF21192C),
@@ -316,20 +560,70 @@ class AppColors {
       outlineVariantDark: Color(0xFF352948),
     ),
 
-    // 5. Cokelat Klasik - Hangat, Klasik & Penuh Khidmah
+    // 9. Hijau Sage (Celadon - Lingkaran 9)
     AppColorPreset(
-      key: 'amber',
-      name: 'Cokelat Klasik',
-      subtitle: 'Hangat, klasik, & penuh khidmah',
+      key: 'sage',
+      name: 'Hijau Sage',
+      subtitle: 'Alami, teduh, & sejuk di mata',
+      primaryLight: Color(0xFF43654E),
+      primaryDark: Color(0xFF94A89A),
+      primaryContainerLight: Color(0xFFD6E6DA),
+      primaryContainerDark: Color(0xFF253E2E),
+      onPrimaryLight: Color(0xFFFFFFFF),
+      onPrimaryDark: Color(0xFF122317),
+      onPrimaryContainerLight: Color(0xFF233B2B),
+      onPrimaryContainerDark: Color(0xFFC1DEC7),
+      previewColor: Color(0xFF94A89A),
+      secondaryLight: Color(0xFF516356),
+      secondaryDark: Color(0xFFB8CCBE),
+      secondaryContainerLight: Color(0xFFD4E8DA),
+      secondaryContainerDark: Color(0xFF394B3F),
+      onSecondaryLight: Color(0xFFFFFFFF),
+      onSecondaryDark: Color(0xFF233529),
+      onSecondaryContainerLight: Color(0xFF0F2015),
+      onSecondaryContainerDark: Color(0xFFD4E8DA),
+      tertiaryLight: Color(0xFF3E656B),
+      tertiaryDark: Color(0xFFA5CED5),
+      tertiaryContainerLight: Color(0xFFC1EBF2),
+      tertiaryContainerDark: Color(0xFF244D53),
+
+      surfaceLight: Color(0xFFF7FAF8),
+      surfaceDimLight: Color(0xFFEEF3EF),
+      surfaceBrightLight: Color(0xFFFFFFFF),
+      surfaceContainerLowestLight: Color(0xFFFFFFFF),
+      surfaceContainerLowLight: Color(0xFFF0F6F2),
+      surfaceContainerLight: Color(0xFFE7EFE9),
+      surfaceContainerHighLight: Color(0xFFDEE8E1),
+      surfaceContainerHighestLight: Color(0xFFD5E1D8),
+      outlineLight: Color(0xFF717973),
+      outlineVariantLight: Color(0xFFC1C9C3),
+
+      surfaceDark: Color(0xFF000000),
+      surfaceDimDark: Color(0xFF000000),
+      surfaceBrightDark: Color(0xFF18231C),
+      surfaceContainerLowestDark: Color(0xFF070E0A),
+      surfaceContainerLowDark: Color(0xFF0D1711),
+      surfaceContainerDark: Color(0xFF132219),
+      surfaceContainerHighDark: Color(0xFF1B2E22),
+      surfaceContainerHighestDark: Color(0xFF243B2D),
+      outlineDark: Color(0xFF8B948D),
+      outlineVariantDark: Color(0xFF283B2F),
+    ),
+
+    // 10. Krem Pasir (Sand Gold - Lingkaran 10)
+    AppColorPreset(
+      key: 'sand',
+      name: 'Krem Pasir',
+      subtitle: 'Klasik, estetik, & hangat',
       primaryLight: Color(0xFFB45309),
-      primaryDark: Color(0xFFFBBF24),
+      primaryDark: Color(0xFFE8BA78),
       primaryContainerLight: Color(0xFFFEF3C7),
       primaryContainerDark: Color(0xFF78350F),
       onPrimaryLight: Color(0xFFFFFFFF),
       onPrimaryDark: Color(0xFF451A03),
       onPrimaryContainerLight: Color(0xFF78350F),
       onPrimaryContainerDark: Color(0xFFFDE68A),
-      previewColor: Color(0xFFB45309),
+      previewColor: Color(0xFFE8BA78),
       secondaryLight: Color(0xFF705B40),
       secondaryDark: Color(0xFFDDC3A1),
       secondaryContainerLight: Color(0xFFFBDFAF),
@@ -343,7 +637,6 @@ class AppColors {
       tertiaryContainerLight: Color(0xFFD6E9B9),
       tertiaryContainerDark: Color(0xFF3C4C28),
 
-      // Dynamic Tinted Surfaces - Light Mode (Warm Golden Sand Amber Tint)
       surfaceLight: Color(0xFFFCF9F4),
       surfaceDimLight: Color(0xFFF6F0E6),
       surfaceBrightLight: Color(0xFFFFFFFF),
@@ -355,7 +648,6 @@ class AppColors {
       outlineLight: Color(0xFF7C756B),
       outlineVariantLight: Color(0xFFCDC5B9),
 
-      // Dynamic Tinted Surfaces - Dark Mode (Super AMOLED with dark amber caramel containers)
       surfaceDark: Color(0xFF000000),
       surfaceDimDark: Color(0xFF000000),
       surfaceBrightDark: Color(0xFF261D12),
@@ -367,69 +659,30 @@ class AppColors {
       outlineDark: Color(0xFF958E83),
       outlineVariantDark: Color(0xFF3E3022),
     ),
-
-    // 6. Pink Maroon - Anggun, Lembut & Mempesona
-    AppColorPreset(
-      key: 'pink_maroon',
-      name: 'Pink Maroon',
-      subtitle: 'Anggun, lembut, & mempesona',
-      primaryLight: Color(0xFF9F1239),
-      primaryDark: Color(0xFFFB7185),
-      primaryContainerLight: Color(0xFFFFE4E6),
-      primaryContainerDark: Color(0xFF4C0519),
-      onPrimaryLight: Color(0xFFFFFFFF),
-      onPrimaryDark: Color(0xFF4C0519),
-      onPrimaryContainerLight: Color(0xFF881337),
-      onPrimaryContainerDark: Color(0xFFFECDD3),
-      previewColor: Color(0xFF9F1239),
-      secondaryLight: Color(0xFF77565B),
-      secondaryDark: Color(0xFFE5BDC1),
-      secondaryContainerLight: Color(0xFFFFD9DD),
-      secondaryContainerDark: Color(0xFF5D3F43),
-      onSecondaryLight: Color(0xFFFFFFFF),
-      onSecondaryDark: Color(0xFF44292D),
-      onSecondaryContainerLight: Color(0xFF2C1519),
-      onSecondaryContainerDark: Color(0xFFFFD9DD),
-      tertiaryLight: Color(0xFF7B5838),
-      tertiaryDark: Color(0xFFEEBE98),
-      tertiaryContainerLight: Color(0xFFFFDDBE),
-      tertiaryContainerDark: Color(0xFF614022),
-
-      // Dynamic Tinted Surfaces - Light Mode (Gentle Blush Rose Tint)
-      surfaceLight: Color(0xFFFCF6F7),
-      surfaceDimLight: Color(0xFFF7ECED),
-      surfaceBrightLight: Color(0xFFFFFFFF),
-      surfaceContainerLowestLight: Color(0xFFFFFFFF),
-      surfaceContainerLowLight: Color(0xFFF8EFF1),
-      surfaceContainerLight: Color(0xFFF3E3E6),
-      surfaceContainerHighLight: Color(0xFFEED8DC),
-      surfaceContainerHighestLight: Color(0xFFE7CCD1),
-      outlineLight: Color(0xFF7E7275),
-      outlineVariantLight: Color(0xFFD1C1C4),
-
-      // Dynamic Tinted Surfaces - Dark Mode (Super AMOLED with dark rose maroon containers)
-      surfaceDark: Color(0xFF000000),
-      surfaceDimDark: Color(0xFF000000),
-      surfaceBrightDark: Color(0xFF29141A),
-      surfaceContainerLowestDark: Color(0xFF110609),
-      surfaceContainerLowDark: Color(0xFF1B0B11),
-      surfaceContainerDark: Color(0xFF281119),
-      surfaceContainerHighDark: Color(0xFF381824),
-      surfaceContainerHighestDark: Color(0xFF4A2030),
-      outlineDark: Color(0xFF978A8D),
-      outlineVariantDark: Color(0xFF41222E),
-    ),
   ];
 
   static AppColorPreset _activePreset = presets[0];
 
   static AppColorPreset get activePreset => _activePreset;
 
-  static void setPreset(String key) {
-    _activePreset = presets.firstWhere(
-      (p) => p.key == key,
+  static AppColorPreset getPreset(String key) {
+    // Backward compatibility mapping for previously saved preset keys
+    final normalizedKey = switch (key) {
+      'ocean' => 'sky_blue',
+      'teal' => 'mint',
+      'violet' => 'lavender',
+      'amber' => 'sand',
+      'pink_maroon' => 'coral',
+      _ => key,
+    };
+    return presets.firstWhere(
+      (p) => p.key == normalizedKey,
       orElse: () => presets[0],
     );
+  }
+
+  static void setPreset(String key) {
+    _activePreset = getPreset(key);
   }
 
   // === DYNAMIC BRAND PRIMARY ===

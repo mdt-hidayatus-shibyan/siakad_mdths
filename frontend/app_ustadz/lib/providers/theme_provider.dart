@@ -14,8 +14,9 @@ class ThemeProvider extends ChangeNotifier {
   ThemeProvider() {
     final cachedPreset = StorageService.getCachedColorPreset();
     if (cachedPreset != null) {
-      _colorPresetKey = cachedPreset;
-      AppColors.setPreset(cachedPreset);
+      final preset = AppColors.getPreset(cachedPreset);
+      _colorPresetKey = preset.key;
+      AppColors.setPreset(preset.key);
     }
     _loadTheme();
   }
@@ -31,9 +32,12 @@ class ThemeProvider extends ChangeNotifier {
     }
 
     final savedPreset = await StorageService.getColorPreset();
-    if (savedPreset != null && savedPreset != _colorPresetKey) {
-      _colorPresetKey = savedPreset;
-      AppColors.setPreset(savedPreset);
+    if (savedPreset != null) {
+      final preset = AppColors.getPreset(savedPreset);
+      if (preset.key != _colorPresetKey) {
+        _colorPresetKey = preset.key;
+        AppColors.setPreset(preset.key);
+      }
     }
 
     notifyListeners();

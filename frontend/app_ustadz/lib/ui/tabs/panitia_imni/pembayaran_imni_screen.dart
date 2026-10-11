@@ -36,15 +36,27 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
     super.dispose();
   }
 
-  void _loadData() {
+  void _loadData() async {
     final provider = context.read<PanitiaImniProvider>();
-    provider.fetchPembayaranRingkasan();
-    provider.fetchPesertaList(
-      tingkatId: _selectedTingkatId,
-      ruanganId: _selectedRuanganId,
-      statusPembayaran: _selectedStatus == 'Semua' ? null : _selectedStatus,
-      search: _searchCtrl.text.trim(),
-    );
+    await provider.fetchPembayaranRingkasan();
+    if (!mounted) return;
+
+    final daftarRuangan = provider.pembayaranDaftarRuangan;
+    if (daftarRuangan.isNotEmpty &&
+        (_selectedRuanganId == null ||
+            !daftarRuangan.any((r) => r.id == _selectedRuanganId))) {
+      setState(() {
+        _selectedRuanganId = daftarRuangan.first.id;
+      });
+      provider.setFilterRuangan(_selectedRuanganId);
+    } else {
+      provider.fetchPesertaList(
+        tingkatId: _selectedTingkatId,
+        ruanganId: _selectedRuanganId,
+        statusPembayaran: _selectedStatus == 'Semua' ? null : _selectedStatus,
+        search: _searchCtrl.text.trim(),
+      );
+    }
   }
 
   String _formatRupiah(num number) {
@@ -650,10 +662,17 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = context.watch<PanitiaImniProvider>();
     final ringkasan = provider.pembayaranRingkasan;
+    final daftarRuangan = provider.pembayaranDaftarRuangan;
+
+    if (daftarRuangan.isNotEmpty &&
+        (_selectedRuanganId == null ||
+            !daftarRuangan.any((r) => r.id == _selectedRuanganId))) {
+      _selectedRuanganId = daftarRuangan.first.id;
+    }
 
     return Scaffold(
       appBar: const CustomAppBar(
-        titleText: 'Pembayaran & Kas IMNI',
+        titleText: 'Pembayaran IMNI',
         subtitleText: 'Penerimaan Tagihan Murid Kelas Akhir',
       ),
       body: RefreshIndicator(
@@ -878,40 +897,34 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<int?>(
                             isExpanded: true,
-                            value: _selectedRuanganId,
+                            value: daftarRuangan.any((r) => r.id == _selectedRuanganId)
+                                ? _selectedRuanganId
+                                : (daftarRuangan.isNotEmpty
+                                    ? daftarRuangan.first.id
+                                    : null),
                             hint: const Text(
-                              'Semua Ruangan Kelas IMNI',
+                              'Pilih Ruangan / Kelas IMNI',
                               style: TextStyle(fontSize: 13),
                             ),
-                            items: [
-                              const DropdownMenuItem<int?>(
-                                value: null,
+                            items: daftarRuangan.map((r) {
+                              return DropdownMenuItem<int?>(
+                                value: r.id,
                                 child: Text(
-                                  'Semua Ruangan Peserta IMNI (Gabungan)',
-                                  style: TextStyle(
+                                  '${r.namaRuangan} (${r.namaLevel} - ${r.kodeTingkat})',
+                                  style: const TextStyle(
                                     fontSize: 13,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ),
-                              ...provider.pembayaranDaftarRuangan.map((r) {
-                                return DropdownMenuItem<int?>(
-                                  value: r.id,
-                                  child: Text(
-                                    '${r.namaRuangan} (${r.namaLevel} - ${r.kodeTingkat})',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ],
+                              );
+                            }).toList(),
                             onChanged: (val) {
-                              setState(() {
-                                _selectedRuanganId = val;
-                              });
-                              provider.setFilterRuangan(val);
+                              if (val != null) {
+                                setState(() {
+                                  _selectedRuanganId = val;
+                                });
+                                provider.setFilterRuangan(val);
+                              }
                             },
                           ),
                         ),

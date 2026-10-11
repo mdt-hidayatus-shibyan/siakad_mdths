@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -240,91 +241,140 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     ColorScheme colorScheme,
     bool isDark,
   ) {
+    final theme = Theme.of(context);
+    final scaffoldBg = theme.scaffoldBackgroundColor;
     final bottomInset = MediaQuery.of(context).padding.bottom;
     // Pada mobile web / device tanpa inset, 12dp agar melayang rapat & pas
     // Pada device dengan gesture pill/3-button, float 8dp di atas inset sistem
     final effectiveBottomMargin = math.max(12.0, bottomInset + 8.0);
+    final totalBarHeight = 66.0 + effectiveBottomMargin;
+    final scrimHeight = totalBarHeight + 45.0;
 
     return Align(
       alignment: Alignment.bottomCenter,
       heightFactor: 1.0,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, effectiveBottomMargin),
-          child: Container(
-            height: 66,
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? colorScheme.surfaceContainerHigh
-                  : colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(
-                color: isDark
-                    ? colorScheme.outlineVariant.withValues(alpha: 0.35)
-                    : colorScheme.outlineVariant.withValues(alpha: 0.30),
-                width: 1.0,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        clipBehavior: Clip.none,
+        children: [
+          // 1. Lapisan Gradien Halus di Belakang Navigation Bar (melembutkan konten saat digulir di bawah)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: scrimHeight,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      scaffoldBg.withValues(alpha: 0.0),
+                      scaffoldBg.withValues(alpha: 0.45),
+                      scaffoldBg.withValues(alpha: 0.85),
+                      scaffoldBg.withValues(alpha: 0.99),
+                    ],
+                    stops: const [0.0, 0.35, 0.65, 1.0],
+                  ),
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.38 : 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _buildNavItem(
-                  index: 0,
-                  icon: Icons.home_outlined,
-                  selectedIcon: Icons.home_rounded,
-                  label: 'Beranda',
-                  colorScheme: colorScheme,
-                  isDark: isDark,
-                ),
-                _buildNavItem(
-                  index: 1,
-                  icon: Icons.how_to_reg_outlined,
-                  selectedIcon: Icons.how_to_reg_rounded,
-                  label: 'Presensi',
-                  colorScheme: colorScheme,
-                  isDark: isDark,
-                ),
-                _buildNavItem(
-                  index: 2,
-                  icon: Icons.warning_amber_outlined,
-                  selectedIcon: Icons.warning_amber_rounded,
-                  label: 'Pelanggaran',
-                  colorScheme: colorScheme,
-                  isDark: isDark,
-                ),
-                _buildNavItem(
-                  index: 3,
-                  icon: Icons.assignment_outlined,
-                  selectedIcon: Icons.assignment_turned_in_rounded,
-                  label: 'Ujian',
-                  colorScheme: colorScheme,
-                  isDark: isDark,
-                ),
-                _buildNavItem(
-                  index: 4,
-                  icon: Icons.person_outline_rounded,
-                  selectedIcon: Icons.person_rounded,
-                  label: 'Akun',
-                  colorScheme: colorScheme,
-                  isDark: isDark,
-                ),
-              ],
             ),
           ),
-        ),
+
+          // 2. Floating Navigation Bar dengan Efek Frosted Glass Blur (BackdropFilter)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, effectiveBottomMargin),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.10),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: isDark
+                          ? colorScheme.outlineVariant.withValues(alpha: 0.18)
+                          : Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, -1),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(26),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                    child: Container(
+                      height: 66,
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? colorScheme.surfaceContainerHigh.withValues(alpha: 0.94)
+                            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(26),
+                        border: Border.all(
+                          color: isDark
+                              ? colorScheme.outlineVariant.withValues(alpha: 0.35)
+                              : colorScheme.outlineVariant.withValues(alpha: 0.30),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildNavItem(
+                            index: 0,
+                            icon: Icons.home_outlined,
+                            selectedIcon: Icons.home_rounded,
+                            label: 'Beranda',
+                            colorScheme: colorScheme,
+                            isDark: isDark,
+                          ),
+                          _buildNavItem(
+                            index: 1,
+                            icon: Icons.how_to_reg_outlined,
+                            selectedIcon: Icons.how_to_reg_rounded,
+                            label: 'Presensi',
+                            colorScheme: colorScheme,
+                            isDark: isDark,
+                          ),
+                          _buildNavItem(
+                            index: 2,
+                            icon: Icons.warning_amber_outlined,
+                            selectedIcon: Icons.warning_amber_rounded,
+                            label: 'Pelanggaran',
+                            colorScheme: colorScheme,
+                            isDark: isDark,
+                          ),
+                          _buildNavItem(
+                            index: 3,
+                            icon: Icons.assignment_outlined,
+                            selectedIcon: Icons.assignment_turned_in_rounded,
+                            label: 'Ujian',
+                            colorScheme: colorScheme,
+                            isDark: isDark,
+                          ),
+                          _buildNavItem(
+                            index: 4,
+                            icon: Icons.person_outline_rounded,
+                            selectedIcon: Icons.person_rounded,
+                            label: 'Akun',
+                            colorScheme: colorScheme,
+                            isDark: isDark,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

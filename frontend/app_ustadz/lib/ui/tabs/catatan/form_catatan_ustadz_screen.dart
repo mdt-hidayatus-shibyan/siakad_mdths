@@ -1172,8 +1172,14 @@ class _MuridPickerModalState extends State<_MuridPickerModal> {
                           horizontal: 8,
                           vertical: 2,
                         ),
-                        leading: CircleAvatar(
-                          backgroundColor: primaryColor.withValues(alpha: 0.15),
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: primaryColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20 * 0.55),
+                          ),
+                          alignment: Alignment.center,
                           child: Icon(
                             Icons.person_rounded,
                             size: 20,
