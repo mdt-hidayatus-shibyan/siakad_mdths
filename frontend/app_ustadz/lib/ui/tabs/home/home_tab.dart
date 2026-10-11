@@ -214,7 +214,9 @@ class _HomeTabState extends State<HomeTab> {
     StorageService.clearMenuOrder();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Tata letak, pin, dan ukuran menu dikembalikan ke default'),
+        content: const Text(
+          'Tata letak, pin, dan ukuran menu dikembalikan ke default',
+        ),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -350,655 +352,647 @@ class _HomeTabState extends State<HomeTab> {
             18,
             MediaQuery.of(context).padding.bottom + 12,
           ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Header Bar: Profile, Salam, & Action Buttons
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    AppAvatar(
-                      name: user?.name ?? 'Ustadz',
-                      imageUrl: user?.photo,
-                      radius: 22,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            user?.name ?? '-',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      (isDark
-                                              ? AppColors.primaryDark
-                                              : AppColors.primaryLight)
-                                          .withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  (user?.isWaliRuangan == true &&
-                                          (user?.ruanganWali?.isNotEmpty ??
-                                              false))
-                                      ? 'Wali Ruangan : ${user?.ruanganWali}'
-                                      : 'Ustadz',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark
-                                        ? AppColors.primaryDark
-                                        : AppColors.primaryLight,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const SignalIndicatorWidget(size: 34),
-                    const SizedBox(width: 6),
-                    Tooltip(
-                      message: 'Perbarui & Sinkronisasi Data',
-                      child: M3ScaleOnPress(
-                        onTap: (_isRefreshing || dashboard.isLoading)
-                            ? null
-                            : _refreshData,
-                        pressedScale: 0.90,
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color:
-                                (isDark
-                                        ? AppColors.primaryDark
-                                        : AppColors.primaryLight)
-                                    .withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Center(
-                            child: _isRefreshing || dashboard.isLoading
-                                ? SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: isDark
-                                          ? AppColors.primaryDark
-                                          : AppColors.primaryLight,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.refresh_rounded,
-                                    size: 18,
-                                    color: isDark
-                                        ? AppColors.primaryDark
-                                        : AppColors.primaryLight,
-                                  ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Tooltip(
-                      message: 'Hubungi Admin & Pusat Bantuan',
-                      child: M3ScaleOnPress(
-                        onTap: () {
-                          HapticHelper.light();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const HubungiAdminScreen(),
-                            ),
-                          );
-                        },
-                        pressedScale: 0.90,
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color:
-                                (isDark
-                                        ? AppColors.primaryDark
-                                        : AppColors.primaryLight)
-                                    .withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.support_agent_rounded,
-                              size: 18,
-                              color: isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Header Bar: Profile, Salam, & Action Buttons
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  AppAvatar(
+                    name: user?.name ?? 'Ustadz',
+                    imageUrl: user?.photo,
+                    radius: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.campaign_rounded,
-                          size: 19,
-                          color: isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight,
-                        ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'Pengumuman Terkini',
-                          style: TextStyle(
+                        Text(
+                          user?.name ?? '-',
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: -0.2,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                if (dashboard.isLoading)
-                  const ShimmerLoadingList(count: 2, height: 85)
-                else if (dashboard.dashboardData?.pengumumanList.isEmpty ??
-                    true)
-                  GlassCard(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 18,
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: 18,
-                            color: isDark
-                                ? const Color(0xFF8D9387)
-                                : const Color(0xFF73796E),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Belum ada pengumuman baru saat ini.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? const Color(0xFF8D9387)
-                                  : const Color(0xFF73796E),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  ...dashboard.dashboardData!.pengumumanList.map(
-                    (p) => _buildPengumumanCard(context, p, isDark),
-                  ),
-                const SizedBox(height: 14),
-
-                // 2. Jadwal Mengajar Hari Ini
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.event_available_rounded,
-                          size: 19,
-                          color: isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight,
-                        ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'Jadwal Mengajar Hari Ini',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                if (dashboard.isLoading)
-                  const ShimmerLoadingList(count: 2)
-                else if (dashboard.dashboardData?.isLiburHariIni ?? false)
-                  GlassCard(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 20,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF382305)
-                                : const Color(0xFFFEF3C7),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(
-                            Icons.beach_access_rounded,
-                            size: 24,
-                            color: AppColors.amberAccent,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Hari Ini Libur KBM',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF92400E),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                dashboard
-                                        .dashboardData
-                                        ?.keteranganLiburHariIni ??
-                                    'Kegiatan Belajar Mengajar Diliburkan',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isDark
-                                      ? const Color(0xFF8D9387)
-                                      : const Color(0xFF73796E),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else if (dashboard.dashboardData?.jadwalHariIniList.isEmpty ??
-                    true)
-                  const GlassCard(
-                    padding: EdgeInsets.all(18),
-                    child: Center(
-                      child: Text(
-                        'Tidak ada jadwal mengajar pada hari ini.',
-                        style: TextStyle(fontSize: 13),
-                      ),
-                    ),
-                  )
-                else
-                  ...dashboard.dashboardData!.jadwalHariIniList.map(
-                    (j) => ScheduleCard(
-                      item: j,
-                      onPresensiGuruTap: () => _handlePresensiGuru(j),
-                      onAbsenTap: () => _handleAbsenMurid(j),
-                    ),
-                  ),
-                const SizedBox(height: 22),
-
-                // 2.5 Menu Tersemat (Hanya tampil saat ada menu yang terpin)
-                if (_pinnedMenuIds.isNotEmpty) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.push_pin_rounded,
-                            size: 19,
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
-                          ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'Menu Tersemat',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 1.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight)
-                                  .withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '${_pinnedMenuIds.length}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (_isCustomizingMenu)
-                        TextButton(
-                          onPressed: () {
-                            HapticHelper.medium();
-                            setState(() {
-                              _pinnedMenuIds.clear();
-                            });
-                            StorageService.savePinnedMenus([]);
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.roseDanger,
-                            visualDensity: VisualDensity.compact,
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                          ),
-                          child: const Text(
-                            'Lepas Semua',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  CustomizableMenuGrid(
-                    items: _buildPinnedMenuItems(user),
-                    sizes: _menuSizes,
-                    isEditing: _isCustomizingMenu,
-                    pinnedIds: _pinnedMenuIds,
-                    onTogglePin: _handleTogglePin,
-                    onResize: _handleResizeMenu,
-                    onLongPressTile: _toggleCustomizingMenu,
-                    onReorder: _handleReorderPinnedMenu,
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // 3. Menu Cepat (Ustadz Umum & Wali Ruangan)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.widgets_rounded,
-                          size: 19,
-                          color: isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight,
-                        ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'Menu Cepat',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (_isCustomizingMenu)
-                      Row(
-                        children: [
-                          TextButton.icon(
-                            onPressed: _handleResetMenuPreferences,
-                            icon: const Icon(
-                              Icons.restart_alt_rounded,
-                              size: 16,
-                            ),
-                            label: const Text(
-                              'Reset',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.roseDanger,
-                              visualDensity: VisualDensity.compact,
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
+                                vertical: 3,
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          FilledButton.icon(
-                            onPressed: _toggleCustomizingMenu,
-                            icon: const Icon(Icons.check_rounded, size: 16),
-                            label: const Text(
-                              'Selesai',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            style: FilledButton.styleFrom(
-                              visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
+                              decoration: BoxDecoration(
+                                color:
+                                    (isDark
+                                            ? AppColors.primaryDark
+                                            : AppColors.primaryLight)
+                                        .withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              backgroundColor: isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight,
-                            ),
-                          ),
-                        ],
-                      )
-                    else
-                      InkWell(
-                        onTap: _toggleCustomizingMenu,
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? colorScheme.surfaceContainerHigh
-                                : colorScheme.surfaceContainerHighest
-                                      .withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.tune_rounded,
-                                size: 14,
-                                color: isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Atur Menu',
+                              child: Text(
+                                (user?.isWaliRuangan == true &&
+                                        (user?.ruanganWali?.isNotEmpty ??
+                                            false))
+                                    ? 'Wali Ruangan : ${user?.ruanganWali}'
+                                    : 'Ustadz',
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
                                   color: isDark
                                       ? AppColors.primaryDark
                                       : AppColors.primaryLight,
                                 ),
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const SignalIndicatorWidget(size: 34),
+                  const SizedBox(width: 6),
+                  Tooltip(
+                    message: 'Perbarui & Sinkronisasi Data',
+                    child: M3ScaleOnPress(
+                      onTap: (_isRefreshing || dashboard.isLoading)
+                          ? null
+                          : _refreshData,
+                      pressedScale: 0.90,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color:
+                              (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: _isRefreshing || dashboard.isLoading
+                              ? SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.refresh_rounded,
+                                  size: 18,
+                                  color: isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Tooltip(
+                    message: 'Hubungi Admin & Pusat Bantuan',
+                    child: M3ScaleOnPress(
+                      onTap: () {
+                        HapticHelper.light();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HubungiAdminScreen(),
                           ),
+                        );
+                      },
+                      pressedScale: 0.90,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color:
+                              (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.support_agent_rounded,
+                            size: 18,
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.campaign_rounded,
+                        size: 19,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Pengumuman Terkini',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              if (dashboard.isLoading)
+                const ShimmerLoadingList(count: 2, height: 85)
+              else if (dashboard.dashboardData?.pengumumanList.isEmpty ?? true)
+                GlassCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 18,
+                          color: isDark
+                              ? const Color(0xFF8D9387)
+                              : const Color(0xFF73796E),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Belum ada pengumuman baru saat ini.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? const Color(0xFF8D9387)
+                                : const Color(0xFF73796E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                ...dashboard.dashboardData!.pengumumanList.map(
+                  (p) => _buildPengumumanCard(context, p, isDark),
+                ),
+              const SizedBox(height: 14),
+
+              // 2. Jadwal Mengajar Hari Ini
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.event_available_rounded,
+                        size: 19,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Jadwal Mengajar Hari Ini',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              if (dashboard.isLoading)
+                const ShimmerLoadingList(count: 2)
+              else if (dashboard.dashboardData?.isLiburHariIni ?? false)
+                GlassCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF382305)
+                              : const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.beach_access_rounded,
+                          size: 24,
+                          color: AppColors.amberAccent,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hari Ini Libur KBM',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF92400E),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              dashboard.dashboardData?.keteranganLiburHariIni ??
+                                  'Kegiatan Belajar Mengajar Diliburkan',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? const Color(0xFF8D9387)
+                                    : const Color(0xFF73796E),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (dashboard.dashboardData?.jadwalHariIniList.isEmpty ??
+                  true)
+                const GlassCard(
+                  padding: EdgeInsets.all(18),
+                  child: Center(
+                    child: Text(
+                      'Tidak ada jadwal mengajar pada hari ini.',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                )
+              else
+                ...dashboard.dashboardData!.jadwalHariIniList.map(
+                  (j) => ScheduleCard(
+                    item: j,
+                    onPresensiGuruTap: () => _handlePresensiGuru(j),
+                    onAbsenTap: () => _handleAbsenMurid(j),
+                  ),
+                ),
+              const SizedBox(height: 22),
+
+              // 2.5 Menu Tersemat (Hanya tampil saat ada menu yang terpin)
+              if (_pinnedMenuIds.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.push_pin_rounded,
+                          size: 19,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Menu Tersemat',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                (isDark
+                                        ? AppColors.primaryDark
+                                        : AppColors.primaryLight)
+                                    .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${_pinnedMenuIds.length}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_isCustomizingMenu)
+                      TextButton(
+                        onPressed: () {
+                          HapticHelper.medium();
+                          setState(() {
+                            _pinnedMenuIds.clear();
+                          });
+                          StorageService.savePinnedMenus([]);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.roseDanger,
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                        ),
+                        child: const Text(
+                          'Lepas Semua',
+                          style: TextStyle(fontSize: 12),
                         ),
                       ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 CustomizableMenuGrid(
-                  items: _buildMenuCepatItems(),
+                  items: _buildPinnedMenuItems(user),
                   sizes: _menuSizes,
                   isEditing: _isCustomizingMenu,
                   pinnedIds: _pinnedMenuIds,
                   onTogglePin: _handleTogglePin,
                   onResize: _handleResizeMenu,
                   onLongPressTile: _toggleCustomizingMenu,
-                  onReorder: _handleReorderMenuCepat,
+                  onReorder: _handleReorderPinnedMenu,
+                ),
+                const SizedBox(height: 24),
+              ],
+
+              // 3. Menu Cepat (Ustadz Umum & Wali Ruangan)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.widgets_rounded,
+                        size: 19,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Menu Cepat',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_isCustomizingMenu)
+                    Row(
+                      children: [
+                        TextButton.icon(
+                          onPressed: _handleResetMenuPreferences,
+                          icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                          label: const Text(
+                            'Reset',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.roseDanger,
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        FilledButton.icon(
+                          onPressed: _toggleCustomizingMenu,
+                          icon: const Icon(Icons.check_rounded, size: 16),
+                          label: const Text(
+                            'Selesai',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          style: FilledButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            backgroundColor: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    InkWell(
+                      onTap: _toggleCustomizingMenu,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colorScheme.surfaceContainerHigh
+                              : colorScheme.surfaceContainerHighest.withValues(
+                                  alpha: 0.5,
+                                ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              size: 14,
+                              color: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Atur Menu',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              CustomizableMenuGrid(
+                items: _buildMenuCepatItems(),
+                sizes: _menuSizes,
+                isEditing: _isCustomizingMenu,
+                pinnedIds: _pinnedMenuIds,
+                onTogglePin: _handleTogglePin,
+                onResize: _handleResizeMenu,
+                onLongPressTile: _toggleCustomizingMenu,
+                onReorder: _handleReorderMenuCepat,
+              ),
+              const SizedBox(height: 18),
+
+              // Menu Tambahan Khusus Wali Ruangan
+              if (user?.isWaliRuangan ?? false) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.admin_panel_settings_rounded,
+                          size: 19,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Wali Ruangan (${user?.ruanganWali ?? "-"})',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.primaryContainerDark
+                            : AppColors.primaryContainerLight,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Akses Khusus',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                CustomizableMenuGrid(
+                  items: _buildWaliRuanganItems(user),
+                  sizes: _menuSizes,
+                  isEditing: _isCustomizingMenu,
+                  pinnedIds: _pinnedMenuIds,
+                  onTogglePin: _handleTogglePin,
+                  onResize: _handleResizeMenu,
+                  onLongPressTile: _toggleCustomizingMenu,
+                  onReorder: _handleReorderWaliRuangan,
                 ),
                 const SizedBox(height: 18),
-
-                // Menu Tambahan Khusus Wali Ruangan
-                if (user?.isWaliRuangan ?? false) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.admin_panel_settings_rounded,
-                            size: 19,
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Wali Ruangan (${user?.ruanganWali ?? "-"})',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.primaryContainerDark
-                              : AppColors.primaryContainerLight,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Akses Khusus',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  CustomizableMenuGrid(
-                    items: _buildWaliRuanganItems(user),
-                    sizes: _menuSizes,
-                    isEditing: _isCustomizingMenu,
-                    pinnedIds: _pinnedMenuIds,
-                    onTogglePin: _handleTogglePin,
-                    onResize: _handleResizeMenu,
-                    onLongPressTile: _toggleCustomizingMenu,
-                    onReorder: _handleReorderWaliRuangan,
-                  ),
-                  const SizedBox(height: 18),
-                ],
-
-                // Menu Tambahan Khusus Kepanitiaan IMNI
-                if (user?.isPanitiaImni ?? false) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.stars_rounded,
-                            size: 19,
-                            color: AppColors.amberAccent,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Kepanitiaan IMNI (${user?.jabatanPanitiaImni ?? "-"})',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF382305)
-                              : const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'Panitia IMNI',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.amberAccent,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  CustomizableMenuGrid(
-                    items: _buildPanitiaImniItems(),
-                    sizes: _menuSizes,
-                    isEditing: _isCustomizingMenu,
-                    pinnedIds: _pinnedMenuIds,
-                    onTogglePin: _handleTogglePin,
-                    onResize: _handleResizeMenu,
-                    onLongPressTile: _toggleCustomizingMenu,
-                    onReorder: _handleReorderPanitiaImni,
-                  ),
-                  const SizedBox(height: 10),
-                ],
               ],
-            ),
+
+              // Menu Tambahan Khusus Kepanitiaan IMNI
+              if (user?.isPanitiaImni ?? false) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.stars_rounded,
+                          size: 19,
+                          color: AppColors.amberAccent,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Kepanitiaan IMNI (${user?.jabatanPanitiaImni ?? "-"})',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF382305)
+                            : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Panitia IMNI',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.amberAccent,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                CustomizableMenuGrid(
+                  items: _buildPanitiaImniItems(),
+                  sizes: _menuSizes,
+                  isEditing: _isCustomizingMenu,
+                  pinnedIds: _pinnedMenuIds,
+                  onTogglePin: _handleTogglePin,
+                  onResize: _handleResizeMenu,
+                  onLongPressTile: _toggleCustomizingMenu,
+                  onReorder: _handleReorderPanitiaImni,
+                ),
+                const SizedBox(height: 10),
+              ],
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   List<QuickMenuItemData> _sortItemsByOrder(
@@ -1246,7 +1240,7 @@ class _HomeTabState extends State<HomeTab> {
         icon: Icons.payments_rounded,
         title: 'Tagihan IMNI',
         shortTitle: 'Tagihan',
-        subtitle: 'Iuran Santri',
+        subtitle: 'Iuran Peserta IMNI',
         accentColor: AppColors.amberAccent,
         onTap: () {
           Navigator.push(
@@ -1322,9 +1316,9 @@ class _HomeTabState extends State<HomeTab> {
 
   List<QuickMenuItemData> _buildWaliRuanganItems(dynamic user) {
     // Saring item yang sedang tersemat di atas agar tidak tampil dobel
-    return _getAllWaliRuanganItems(user)
-        .where((item) => !_pinnedMenuIds.contains(item.id))
-        .toList();
+    return _getAllWaliRuanganItems(
+      user,
+    ).where((item) => !_pinnedMenuIds.contains(item.id)).toList();
   }
 
   List<QuickMenuItemData> _buildPanitiaImniItems() {

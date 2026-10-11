@@ -176,9 +176,14 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                   key: ValueKey(
                     'ujian_${provider.selectedRuanganId}_${provider.selectedUjianId}',
                   ),
-                  initialValue: provider.daftarUjian.any((u) => u.id == provider.selectedUjianId)
+                  initialValue:
+                      provider.daftarUjian.any(
+                        (u) => u.id == provider.selectedUjianId,
+                      )
                       ? provider.selectedUjianId
-                      : (provider.daftarUjian.isNotEmpty ? provider.daftarUjian.first.id : null),
+                      : (provider.daftarUjian.isNotEmpty
+                            ? provider.daftarUjian.first.id
+                            : null),
                   decoration: const InputDecoration(
                     labelText: 'Agenda Ujian',
                     prefixIcon: Icon(Icons.auto_stories_rounded, size: 18),
@@ -310,7 +315,10 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
             // 4. DAFTAR MATA PELAJARAN SESUAI JADWAL UJIAN
             // ===================================================================
             if (provider.currentUjian?.tipeUjian == 'IMNI' ||
-                provider.currentUjian?.namaUjian.toUpperCase().contains('IMNI') == true) ...[
+                provider.currentUjian?.namaUjian.toUpperCase().contains(
+                      'IMNI',
+                    ) ==
+                    true) ...[
               Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.symmetric(
@@ -464,31 +472,6 @@ class _InputNilaiTabViewState extends State<InputNilaiTabView> {
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.badge_outlined,
-                                size: 12,
-                                color: isDark
-                                    ? const Color(0xFF8D9387)
-                                    : const Color(0xFF73796E),
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  'Pengawas: ${j.pengawasNama}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? const Color(0xFF8D9387)
-                                        : const Color(0xFF73796E),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

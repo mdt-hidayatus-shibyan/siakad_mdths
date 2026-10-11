@@ -513,7 +513,7 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildKwitansiRow('Santri', peserta.namaLengkap),
+                _buildKwitansiRow('Murid', peserta.namaLengkap),
                 _buildKwitansiRow('NISM', peserta.nism),
                 _buildKwitansiRow('No. Peserta', peserta.nomorPeserta),
                 _buildKwitansiRow(
@@ -1197,7 +1197,7 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Kelas: ${p.ruanganAsal} (${p.kodeTingkat}) • Ujian: ${p.ruanganUjian}',
+                        'Ruangan: ${p.ruanganAsal} (${p.kodeTingkat})',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark

@@ -253,12 +253,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         child: Padding(
           padding: EdgeInsets.fromLTRB(16, 0, 16, effectiveBottomMargin),
           child: Container(
-            height: 64,
+            height: 66,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
             decoration: BoxDecoration(
               color: isDark
                   ? colorScheme.surfaceContainerHigh
                   : colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(26),
               border: Border.all(
                 color: isDark
                     ? colorScheme.outlineVariant.withValues(alpha: 0.35)
@@ -340,36 +341,45 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     final inactiveColor = isDark
         ? const Color(0xFF90968B)
         : const Color(0xFF6B7265);
+    final activeBgColor = isDark
+        ? colorScheme.primary.withValues(alpha: 0.20)
+        : colorScheme.primary.withValues(alpha: 0.12);
+    final activeBorderColor = isDark
+        ? colorScheme.primary.withValues(alpha: 0.32)
+        : colorScheme.primary.withValues(alpha: 0.20);
 
     return Expanded(
       child: M3ScaleOnPress(
         onTap: () => _onTabSelected(index),
-        pressedScale: 0.92,
-        borderRadius: BorderRadius.circular(20),
+        pressedScale: 0.94,
+        borderRadius: BorderRadius.circular(18),
         enableFeedback: false,
-        child: Container(
-          color: Colors.transparent,
+        child: AnimatedContainer(
+          duration: AppMotion.durationShort2,
+          curve: AppMotion.emphasized,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? activeBgColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSelected ? activeBorderColor : Colors.transparent,
+              width: 1.0,
+            ),
+          ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              AnimatedContainer(
+              AnimatedScale(
+                scale: isSelected ? 1.05 : 1.0,
                 duration: AppMotion.durationShort2,
                 curve: AppMotion.emphasized,
-                width: 44,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? colorScheme.primary.withValues(alpha: isDark ? 0.22 : 0.14)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Icon(
-                    isSelected ? selectedIcon : icon,
-                    size: 20,
-                    color: isSelected ? colorScheme.primary : inactiveColor,
-                  ),
+                child: Icon(
+                  isSelected ? selectedIcon : icon,
+                  size: 21,
+                  color: isSelected ? colorScheme.primary : inactiveColor,
                 ),
               ),
               const SizedBox(height: 3),

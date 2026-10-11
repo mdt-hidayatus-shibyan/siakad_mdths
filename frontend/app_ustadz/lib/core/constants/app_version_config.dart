@@ -41,8 +41,8 @@ class AppVersionConfig {
   // ---------------------------------------------------------------------------
   static const String appTitle = 'Ustadz - MDTHS';
   static const String appSubtitle = 'MDT Hidayatus Shibyan';
-  static const String version = '3.2.2';
-  static const String buildNumber = '2026.10.04';
+  static const String version = '3.2.3';
+  static const String buildNumber = '2026.10.05';
   static const String releaseDate = 'Oktober 2026';
   static const String statusBadge = 'Versi Stabil';
   static const bool isLatest = true;
