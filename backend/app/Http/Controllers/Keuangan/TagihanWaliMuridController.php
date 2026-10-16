@@ -21,6 +21,51 @@ use Illuminate\Support\Str;
 class TagihanWaliMuridController extends Controller
 {
     /**
+     * Ambil array ID Master Tagihan yang termasuk kegiatan Ikhtibar / Haflah
+     */
+    private function getIkhtibarMasterIds(): array
+    {
+        $fromKegiatan = [];
+        try {
+            if (class_exists(\App\Models\Ikhtibar\KegiatanIkhtibar::class)) {
+                $fromKegiatan = \App\Models\Ikhtibar\KegiatanIkhtibar::whereNotNull('pengaturan_tagihan_id')
+                    ->pluck('pengaturan_tagihan_id')
+                    ->filter()
+                    ->all();
+            }
+        } catch (\Throwable $e) {
+            $fromKegiatan = [];
+        }
+
+        $fromPattern = PengaturanTagihan::where('sasaran', 'wali_murid')
+            ->where(function ($q) {
+                $q->where('kode_tagihan', 'LIKE', '%IKH%')
+                    ->orWhere('nama_tagihan', 'LIKE', '%Ikhtibar%')
+                    ->orWhere('nama_tagihan', 'LIKE', '%Haflah%');
+            })
+            ->pluck('id')
+            ->all();
+
+        return array_values(array_unique(array_merge($fromKegiatan, $fromPattern)));
+    }
+
+    /**
+     * Query Master Tagihan Wali Murid (Non-Ikhtibar / Reguler Madrasah)
+     */
+    private function queryMasterTagihanNonIkhtibar($tahunPelajaranId = null)
+    {
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
+
+        return PengaturanTagihan::where('sasaran', 'wali_murid')
+            ->when($tahunPelajaranId, fn($q) => $q->where('tahun_pelajaran_id', $tahunPelajaranId))
+            ->whereNotIn('id', $ikhtibarIds)
+            ->where('kode_tagihan', 'NOT LIKE', '%IKH%')
+            ->where('nama_tagihan', 'NOT LIKE', '%Ikhtibar%')
+            ->where('nama_tagihan', 'NOT LIKE', '%Haflah%')
+            ->orderBy('id', 'asc');
+    }
+
+    /**
      * Redirect Index ke Kasir
      */
     public function index(Request $request)
@@ -29,7 +74,7 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Submenu 1: Penerbitan Tagihan Wali Murid (KK Aktif)
+     * Submenu 1: Penerbitan Tagihan Wali Murid (KK Aktif - Non Ikhtibar)
      */
     public function terbitkanIndex(Request $request)
     {
@@ -39,13 +84,11 @@ class TagihanWaliMuridController extends Controller
         $daftarKampung = Kampung::orderBy('kode', 'asc')->get();
         $selectedKampungId = $request->kampung_id ?? ($daftarKampung->first()?->id ?? null);
 
-        $masterTagihans = PengaturanTagihan::where('tahun_pelajaran_id', $tahunPelajaranId)
-            ->where('sasaran', 'wali_murid')
-            ->orderBy('id', 'asc')
-            ->get();
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
+        $masterTagihans = $this->queryMasterTagihanNonIkhtibar($tahunPelajaranId)->get();
 
         $selectedMasterId = $request->pengaturan_tagihan_id ?? ($masterTagihans->first()?->id ?? null);
-        $selectedMaster = $masterTagihans->firstWhere('id', $selectedMasterId);
+        $selectedMaster = $selectedMasterId ? $masterTagihans->firstWhere('id', $selectedMasterId) : null;
 
         $queryWali = WaliMurid::with([
             'kampung',
@@ -62,8 +105,9 @@ class TagihanWaliMuridController extends Controller
                         }
                     }]);
             },
-            'tagihanWaliMurids' => function ($q) use ($tahunPelajaranId, $selectedMasterId) {
+            'tagihanWaliMurids' => function ($q) use ($tahunPelajaranId, $selectedMasterId, $ikhtibarIds) {
                 $q->where('tahun_pelajaran_id', $tahunPelajaranId)
+                    ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                     ->when($selectedMasterId, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMasterId))
                     ->with('pembayaranTagihan');
             }
@@ -105,7 +149,7 @@ class TagihanWaliMuridController extends Controller
         $totalBelumTerbitCount = 0;
 
         foreach ($walis as $wali) {
-            $tagihan = $wali->tagihanWaliMurids->first();
+            $tagihan = $selectedMasterId ? $wali->tagihanWaliMurids->first() : null;
             $wali->current_tagihan = $tagihan;
             if ($tagihan) {
                 $totalSudahTerbitCount++;
@@ -115,7 +159,7 @@ class TagihanWaliMuridController extends Controller
         }
 
         // Filter Status Terbit
-        if ($request->filled('status_terbit')) {
+        if ($request->filled('status_terbit') && $selectedMasterId) {
             if ($request->status_terbit === 'Belum Terbit') {
                 $walis = $walis->filter(fn($w) => !$w->current_tagihan);
             } elseif ($request->status_terbit === 'Sudah Terbit') {
@@ -147,6 +191,7 @@ class TagihanWaliMuridController extends Controller
         $daftarTahun = TahunPelajaran::orderBy('id', 'asc')->get();
         $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()?->id;
 
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
         $waliTerpilih = null;
         $semuaTagihan = collect();
         $availableTabungans = collect();
@@ -168,8 +213,14 @@ class TagihanWaliMuridController extends Controller
                             }
                         ]);
                 },
-                'tagihanWaliMurids' => function ($q) use ($tahunPelajaranId) {
+                'tagihanWaliMurids' => function ($q) use ($tahunPelajaranId, $ikhtibarIds) {
                     $q->where('tahun_pelajaran_id', $tahunPelajaranId)
+                        ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
+                        ->whereHas('pengaturanTagihan', function ($ptq) {
+                            $ptq->where('kode_tagihan', 'NOT LIKE', '%IKH%')
+                                ->where('nama_tagihan', 'NOT LIKE', '%Ikhtibar%')
+                                ->where('nama_tagihan', 'NOT LIKE', '%Haflah%');
+                        })
                         ->with(['pengaturanTagihan', 'pembayaranTagihan']);
                 }
             ])
@@ -188,7 +239,7 @@ class TagihanWaliMuridController extends Controller
                 ->first();
 
             if ($waliTerpilih) {
-                // Tarik semua tagihan KK tahun ini
+                // Tarik semua tagihan KK reguler tahun ini (Non-Ikhtibar)
                 $semuaTagihan = $waliTerpilih->tagihanWaliMurids;
 
                 // Rekap daftar rekening tabungan santri dari KK tersebut
@@ -209,9 +260,17 @@ class TagihanWaliMuridController extends Controller
             }
         }
 
-        // Riwayat Transaksi Hari Ini untuk Kasir
+        // Riwayat Transaksi Hari Ini untuk Kasir Reguler (Non-Ikhtibar)
         $riwayatHariIni = PembayaranTagihan::whereDate('tanggal_bayar', Carbon::today())
             ->where('tipe_pembayar', 'Wali Murid')
+            ->whereHas('tagihanWaliMurids', function ($tq) use ($ikhtibarIds) {
+                $tq->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
+                    ->whereHas('pengaturanTagihan', function ($ptq) {
+                        $ptq->where('kode_tagihan', 'NOT LIKE', '%IKH%')
+                            ->where('nama_tagihan', 'NOT LIKE', '%Ikhtibar%')
+                            ->where('nama_tagihan', 'NOT LIKE', '%Haflah%');
+                    });
+            })
             ->orderBy('id', 'desc')
             ->take(10)
             ->get();
@@ -228,7 +287,7 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Submenu 2B: Kasir Leger Matriks Per Dusun
+     * Submenu 2B: Kasir Leger Matriks Per Dusun (Non-Ikhtibar)
      */
     public function kasirLeger(Request $request)
     {
@@ -239,13 +298,11 @@ class TagihanWaliMuridController extends Controller
         $selectedKampungId = $request->kampung_id ?? ($daftarKampung->first()?->id ?? null);
         $kampungTerpilih = $selectedKampungId ? Kampung::find($selectedKampungId) : null;
 
-        $masterTagihans = PengaturanTagihan::where('tahun_pelajaran_id', $tahunPelajaranId)
-            ->where('sasaran', 'wali_murid')
-            ->orderBy('id', 'asc')
-            ->get();
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
+        $masterTagihans = $this->queryMasterTagihanNonIkhtibar($tahunPelajaranId)->get();
 
         $selectedMasterId = $request->pengaturan_tagihan_id ?? ($masterTagihans->first()?->id ?? null);
-        $selectedMaster = $masterTagihans->firstWhere('id', $selectedMasterId);
+        $selectedMaster = $selectedMasterId ? $masterTagihans->firstWhere('id', $selectedMasterId) : null;
 
         $walis = collect();
 
@@ -270,8 +327,9 @@ class TagihanWaliMuridController extends Controller
                             }
                         ]);
                 },
-                'tagihanWaliMurids' => function ($q) use ($tahunPelajaranId, $selectedMasterId) {
+                'tagihanWaliMurids' => function ($q) use ($tahunPelajaranId, $selectedMasterId, $ikhtibarIds) {
                     $q->where('tahun_pelajaran_id', $tahunPelajaranId)
+                        ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                         ->when($selectedMasterId, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMasterId))
                         ->with('pembayaranTagihan');
                 }
@@ -305,7 +363,7 @@ class TagihanWaliMuridController extends Controller
             $walis = $queryWali->get();
 
             foreach ($walis as $wali) {
-                $tagihan = $wali->tagihanWaliMurids->first();
+                $tagihan = $selectedMasterId ? $wali->tagihanWaliMurids->first() : null;
                 $wali->current_tagihan = $tagihan;
 
                 $wali->available_tabungans = $wali->murids->flatMap(function ($anak) {
@@ -344,7 +402,7 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Pelunasan Massal Tagihan Wali Murid via Leger
+     * Pelunasan Massal Tagihan Wali Murid via Leger (Non-Ikhtibar)
      */
     public function prosesLeger(Request $request)
     {
@@ -358,11 +416,13 @@ class TagihanWaliMuridController extends Controller
 
         $metode = $request->metode_pembayaran ?? 'Tunai';
         $tanggalBayar = $request->tanggal_bayar ?? now();
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
 
         DB::beginTransaction();
         try {
             $tagihans = TagihanWaliMurid::with(['waliMurid', 'pengaturanTagihan'])
                 ->whereIn('id', $request->tagihan_ids)
+                ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                 ->where('status_bayar', '!=', 'Lunas')
                 ->lockForUpdate()
                 ->get();
@@ -417,7 +477,7 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Submenu 3: Laporan & Rekapitulasi Tagihan Wali Murid (KK)
+     * Submenu 3: Laporan & Rekapitulasi Tagihan Wali Murid (KK - Non Ikhtibar)
      */
     public function laporan(Request $request)
     {
@@ -427,69 +487,73 @@ class TagihanWaliMuridController extends Controller
         $daftarKampung = Kampung::orderBy('kode', 'asc')->get();
         $selectedKampungId = $request->filled('kampung_id') && $request->kampung_id !== 'semua' ? $request->kampung_id : null;
 
-        $masterTagihans = PengaturanTagihan::where('tahun_pelajaran_id', $tahunPelajaranId)
-            ->where('sasaran', 'wali_murid')
-            ->orderBy('id', 'asc')
-            ->get();
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
+        $masterTagihans = $this->queryMasterTagihanNonIkhtibar($tahunPelajaranId)->get();
 
         $selectedMasterId = $request->pengaturan_tagihan_id ?? ($masterTagihans->first()?->id ?? null);
-        $selectedMaster = $masterTagihans->firstWhere('id', $selectedMasterId);
+        $selectedMaster = $selectedMasterId ? $masterTagihans->firstWhere('id', $selectedMasterId) : null;
 
-        $queryWali = WaliMurid::with([
-            'kampung',
-            'murids' => function ($q) use ($tahunPelajaranId) {
-                $q->where('status', 'Aktif')
-                    ->whereHas('ruangans', function ($rq) use ($tahunPelajaranId) {
-                        if ($tahunPelajaranId) {
-                            $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunPelajaranId);
-                        }
-                    })
-                    ->with(['ruangans' => function ($rq) use ($tahunPelajaranId) {
-                        if ($tahunPelajaranId) {
-                            $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunPelajaranId);
-                        }
-                    }]);
-            },
-            'tagihanWaliMurids' => function ($q) use ($tahunPelajaranId, $selectedMasterId) {
-                $q->where('tahun_pelajaran_id', $tahunPelajaranId)
-                    ->when($selectedMasterId, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMasterId))
-                    ->with('pembayaranTagihan');
+        $allWalis = collect();
+
+        if ($selectedMasterId) {
+            $queryWali = WaliMurid::with([
+                'kampung',
+                'murids' => function ($q) use ($tahunPelajaranId) {
+                    $q->where('status', 'Aktif')
+                        ->whereHas('ruangans', function ($rq) use ($tahunPelajaranId) {
+                            if ($tahunPelajaranId) {
+                                $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunPelajaranId);
+                            }
+                        })
+                        ->with(['ruangans' => function ($rq) use ($tahunPelajaranId) {
+                            if ($tahunPelajaranId) {
+                                $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunPelajaranId);
+                            }
+                        }]);
+                },
+                'tagihanWaliMurids' => function ($q) use ($tahunPelajaranId, $selectedMasterId, $ikhtibarIds) {
+                    $q->where('tahun_pelajaran_id', $tahunPelajaranId)
+                        ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
+                        ->when($selectedMasterId, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMasterId))
+                        ->with('pembayaranTagihan');
+                }
+            ])
+                ->where('is_active', true)
+                ->whereHas('murids', function ($q) use ($tahunPelajaranId) {
+                    $q->where('status', 'Aktif')
+                        ->whereHas('ruangans', function ($rq) use ($tahunPelajaranId) {
+                            if ($tahunPelajaranId) {
+                                $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunPelajaranId);
+                            }
+                        });
+                })
+                ->whereHas('tagihanWaliMurids', function ($q) use ($tahunPelajaranId, $selectedMasterId, $ikhtibarIds) {
+                    $q->where('tahun_pelajaran_id', $tahunPelajaranId)
+                        ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
+                        ->when($selectedMasterId, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMasterId));
+                });
+
+            if ($selectedKampungId) {
+                $queryWali->where('kampung_id', $selectedKampungId);
             }
-        ])
-            ->where('is_active', true)
-            ->whereHas('murids', function ($q) use ($tahunPelajaranId) {
-                $q->where('status', 'Aktif')
-                    ->whereHas('ruangans', function ($rq) use ($tahunPelajaranId) {
-                        if ($tahunPelajaranId) {
-                            $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunPelajaranId);
-                        }
-                    });
-            })
-            ->whereHas('tagihanWaliMurids', function ($q) use ($tahunPelajaranId, $selectedMasterId) {
-                $q->where('tahun_pelajaran_id', $tahunPelajaranId)
-                    ->when($selectedMasterId, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMasterId));
-            });
 
-        if ($selectedKampungId) {
-            $queryWali->where('kampung_id', $selectedKampungId);
+            if ($request->filled('search')) {
+                $search = trim($request->search);
+                $searchHash = hash_sensitive($search);
+                $queryWali->where(function ($q) use ($search, $searchHash) {
+                    $q->where('nama_kepala_keluarga', 'LIKE', "%{$search}%")
+                        ->orWhere('no_registrasi', 'LIKE', "%{$search}%")
+                        ->orWhere('no_kk_hash', $searchHash)
+                        ->orWhere('no_hp', 'LIKE', "%{$search}%")
+                        ->orWhereHas('murids', function ($mq) use ($search) {
+                            $mq->where('nama_lengkap', 'LIKE', "%{$search}%")
+                                ->orWhere('nism', 'LIKE', "%{$search}%");
+                        });
+                });
+            }
+
+            $allWalis = $queryWali->get();
         }
-
-        if ($request->filled('search')) {
-            $search = trim($request->search);
-            $searchHash = hash_sensitive($search);
-            $queryWali->where(function ($q) use ($search, $searchHash) {
-                $q->where('nama_kepala_keluarga', 'LIKE', "%{$search}%")
-                    ->orWhere('no_registrasi', 'LIKE', "%{$search}%")
-                    ->orWhere('no_kk_hash', $searchHash)
-                    ->orWhere('no_hp', 'LIKE', "%{$search}%")
-                    ->orWhereHas('murids', function ($mq) use ($search) {
-                        $mq->where('nama_lengkap', 'LIKE', "%{$search}%")
-                            ->orWhere('nism', 'LIKE', "%{$search}%");
-                    });
-            });
-        }
-
-        $allWalis = $queryWali->get();
 
         $nominalTarif = $selectedMaster?->nominal ?? 0;
         $totalWaliAktif = $allWalis->count();
@@ -567,7 +631,7 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Terbitkan Tagihan Massal ke Seluruh / Pilihan Wali Murid Aktif
+     * Terbitkan Tagihan Massal ke Seluruh / Pilihan Wali Murid Aktif (Non-Ikhtibar)
      */
     public function terbitkan(Request $request)
     {
@@ -580,7 +644,13 @@ class TagihanWaliMuridController extends Controller
         ]);
 
         $tahunId = $request->tahun_pelajaran_id;
-        $master = PengaturanTagihan::where('sasaran', 'wali_murid')->findOrFail($request->pengaturan_tagihan_id);
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
+        $master = PengaturanTagihan::where('sasaran', 'wali_murid')
+            ->whereNotIn('id', $ikhtibarIds)
+            ->where('kode_tagihan', 'NOT LIKE', '%IKH%')
+            ->where('nama_tagihan', 'NOT LIKE', '%Ikhtibar%')
+            ->where('nama_tagihan', 'NOT LIKE', '%Haflah%')
+            ->findOrFail($request->pengaturan_tagihan_id);
 
         // Ambil daftar wali aktif
         $queryWali = WaliMurid::where('is_active', true)
@@ -644,7 +714,7 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Proses Kasir Pembayaran Tagihan Per Wali Murid (Single / Massal)
+     * Proses Kasir Pembayaran Tagihan Per Wali Murid (Single / Massal - Non Ikhtibar)
      */
     public function bayar(Request $request)
     {
@@ -660,16 +730,18 @@ class TagihanWaliMuridController extends Controller
         $tagihanIds = $request->tagihan_ids;
         $metode = $request->metode_pembayaran ?? 'Tunai';
         $tanggalBayar = $request->tanggal_bayar ?? now();
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
 
         DB::beginTransaction();
         try {
             $tagihans = TagihanWaliMurid::with(['waliMurid.murids.tabungans', 'pengaturanTagihan'])
                 ->whereIn('id', $tagihanIds)
+                ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                 ->lockForUpdate()
                 ->get();
 
             if ($tagihans->isEmpty()) {
-                throw new \Exception('Tagihan tidak ditemukan.');
+                throw new \Exception('Tagihan tidak ditemukan atau merupakan Tagihan Ikhtibar (silakan lakukan pembayaran pada modul Kepanitiaan Ikhtibar).');
             }
 
             $alreadyPaid = $tagihans->where('status_bayar', 'Lunas');
@@ -814,13 +886,16 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Batal Transaksi Pembayaran / Refund Tagihan Wali Murid
+     * Batal Transaksi Pembayaran / Refund Tagihan Wali Murid (Non-Ikhtibar)
      */
     public function batalBayar($id)
     {
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
         DB::beginTransaction();
         try {
-            $tagihan = TagihanWaliMurid::with('waliMurid.murids')->findOrFail($id);
+            $tagihan = TagihanWaliMurid::with('waliMurid.murids')
+                ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
+                ->findOrFail($id);
             $pembayaranId = $tagihan->pembayaran_tagihan_id;
 
             if ($pembayaranId) {
@@ -909,11 +984,14 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Hapus Tagihan Perorangan Wali Murid (Hanya yang Belum Lunas)
+     * Hapus Tagihan Perorangan Wali Murid (Hanya yang Belum Lunas & Non-Ikhtibar)
      */
     public function destroy($id)
     {
-        $tagihan = TagihanWaliMurid::with('waliMurid')->findOrFail($id);
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
+        $tagihan = TagihanWaliMurid::with('waliMurid')
+            ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
+            ->findOrFail($id);
 
         if ($tagihan->status_bayar === 'Lunas') {
             if (request()->ajax()) {
@@ -938,7 +1016,7 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Hapus Tagihan Terpilih / Tercentang (Hanya yang Belum Lunas)
+     * Hapus Tagihan Terpilih / Tercentang (Hanya yang Belum Lunas & Non-Ikhtibar)
      */
     public function hapusMassal(Request $request)
     {
@@ -947,7 +1025,9 @@ class TagihanWaliMuridController extends Controller
             'tagihan_ids.*' => 'exists:tagihan_wali_murids,id',
         ]);
 
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
         $tagihans = TagihanWaliMurid::whereIn('id', $request->tagihan_ids)
+            ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
             ->where('status_bayar', '!=', 'Lunas')
             ->get();
 
@@ -972,7 +1052,7 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Hapus Seluruh Tagihan Belum Lunas pada Jenis Tagihan & Tahun Ini
+     * Hapus Seluruh Tagihan Belum Lunas pada Jenis Tagihan & Tahun Ini (Non-Ikhtibar)
      */
     public function hapusSemua(Request $request)
     {
@@ -982,10 +1062,17 @@ class TagihanWaliMuridController extends Controller
             'kampung_id'            => 'nullable|exists:kampungs,id',
         ]);
 
-        $master = PengaturanTagihan::where('sasaran', 'wali_murid')->findOrFail($request->pengaturan_tagihan_id);
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
+        $master = PengaturanTagihan::where('sasaran', 'wali_murid')
+            ->whereNotIn('id', $ikhtibarIds)
+            ->where('kode_tagihan', 'NOT LIKE', '%IKH%')
+            ->where('nama_tagihan', 'NOT LIKE', '%Ikhtibar%')
+            ->where('nama_tagihan', 'NOT LIKE', '%Haflah%')
+            ->findOrFail($request->pengaturan_tagihan_id);
 
         $query = TagihanWaliMurid::where('tahun_pelajaran_id', $request->tahun_pelajaran_id)
             ->where('pengaturan_tagihan_id', $master->id)
+            ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
             ->where('status_bayar', '!=', 'Lunas');
 
         if ($request->filled('kampung_id')) {
@@ -1002,11 +1089,12 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Modal Detail Tanggungan KK & Riwayat Tagihan
+     * Modal Detail Tanggungan KK & Riwayat Tagihan (Non-Ikhtibar)
      */
     public function detail($id, Request $request)
     {
         $tahunId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id');
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
         $wali = WaliMurid::with([
             'kampung',
             'murids' => function ($q) use ($tahunId) {
@@ -1017,8 +1105,14 @@ class TagihanWaliMuridController extends Controller
                         }
                     }]);
             },
-            'tagihanWaliMurids' => function ($q) use ($tahunId) {
+            'tagihanWaliMurids' => function ($q) use ($tahunId, $ikhtibarIds) {
                 $q->where('tahun_pelajaran_id', $tahunId)
+                    ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
+                    ->whereHas('pengaturanTagihan', function ($ptq) {
+                        $ptq->where('kode_tagihan', 'NOT LIKE', '%IKH%')
+                            ->where('nama_tagihan', 'NOT LIKE', '%Ikhtibar%')
+                            ->where('nama_tagihan', 'NOT LIKE', '%Haflah%');
+                    })
                     ->with(['pengaturanTagihan', 'pembayaranTagihan']);
             }
         ])->findOrFail($id);
@@ -1031,10 +1125,11 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Cetak Kwitansi Resmi Pembayaran Tagihan Wali Murid
+     * Cetak Kwitansi Resmi Pembayaran Tagihan Wali Murid (Non-Ikhtibar)
      */
     public function cetakKwitansi($id)
     {
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
         $tagihan = TagihanWaliMurid::with([
             'waliMurid.kampung',
             'waliMurid.murids' => function ($q) {
@@ -1043,7 +1138,9 @@ class TagihanWaliMuridController extends Controller
             'tahunPelajaran',
             'pengaturanTagihan',
             'pembayaranTagihan'
-        ])->findOrFail($id);
+        ])
+            ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
+            ->findOrFail($id);
 
         $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
         $bendahara = Pengurus::getAktifByJabatan('Bendahara') ?? Pengurus::getAktifByJabatan('Sekretaris Jenderal');
@@ -1055,15 +1152,20 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Cetak Lembar Rekapitulasi Tagihan Per Wali Murid Aktif
+     * Cetak Lembar Rekapitulasi Tagihan Per Wali Murid Aktif (Non-Ikhtibar)
      */
     public function cetakRekap(Request $request)
     {
         $tahunId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id');
         $tahunPelajaran = TahunPelajaran::findOrFail($tahunId);
 
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
         $selectedMasterId = $request->pengaturan_tagihan_id;
-        $selectedMaster = PengaturanTagihan::find($selectedMasterId);
+        $selectedMaster = $this->queryMasterTagihanNonIkhtibar($tahunId)->where('id', $selectedMasterId)->first();
+
+        if (!$selectedMaster) {
+            abort(404, 'Master tarif tagihan reguler wali murid tidak ditemukan.');
+        }
 
         $daftarKampung = Kampung::orderBy('kode', 'asc')->get();
         $kampungId = $request->filled('kampung_id') && $request->kampung_id !== 'semua' ? $request->kampung_id : null;
@@ -1080,8 +1182,9 @@ class TagihanWaliMuridController extends Controller
                         $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunId);
                     }]);
             },
-            'tagihanWaliMurids' => function ($q) use ($tahunId, $selectedMasterId) {
+            'tagihanWaliMurids' => function ($q) use ($tahunId, $selectedMasterId, $ikhtibarIds) {
                 $q->where('tahun_pelajaran_id', $tahunId)
+                    ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                     ->when($selectedMasterId, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMasterId))
                     ->with('pembayaranTagihan');
             }
@@ -1093,8 +1196,9 @@ class TagihanWaliMuridController extends Controller
                         $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunId);
                     });
             })
-            ->whereHas('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMasterId) {
+            ->whereHas('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMasterId, $ikhtibarIds) {
                 $q->where('tahun_pelajaran_id', $tahunId)
+                    ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                     ->when($selectedMasterId, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMasterId));
             });
 
@@ -1125,21 +1229,23 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Cetak Kartu Penarapan / Tagihan Wali Murid (Single KK)
+     * Cetak Kartu Penarapan / Tagihan Wali Murid (Single KK - Non Ikhtibar)
      */
     public function cetakKartu(Request $request, $wali_id, $tahun_id)
     {
         $tahunPelajaran = TahunPelajaran::findOrFail($tahun_id);
         $selectedMasterId = $request->pengaturan_tagihan_id;
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
 
-        $masterTagihans = PengaturanTagihan::where('tahun_pelajaran_id', $tahun_id)
-            ->where('sasaran', 'wali_murid')
-            ->orderBy('id', 'asc')
-            ->get();
+        $masterTagihans = $this->queryMasterTagihanNonIkhtibar($tahun_id)->get();
 
         $selectedMaster = $selectedMasterId
             ? $masterTagihans->firstWhere('id', $selectedMasterId)
             : $masterTagihans->first();
+
+        if (!$selectedMaster) {
+            abort(404, 'Master tarif tagihan reguler wali murid tidak ditemukan.');
+        }
 
         $wali = WaliMurid::with([
             'kampung',
@@ -1152,8 +1258,9 @@ class TagihanWaliMuridController extends Controller
                         $rq->where('murid_ruangans.tahun_pelajaran_id', $tahun_id);
                     }]);
             },
-            'tagihanWaliMurids' => function ($q) use ($tahun_id, $selectedMaster) {
+            'tagihanWaliMurids' => function ($q) use ($tahun_id, $selectedMaster, $ikhtibarIds) {
                 $q->where('tahun_pelajaran_id', $tahun_id)
+                    ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                     ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id))
                     ->with('pembayaranTagihan');
             }
@@ -1177,18 +1284,22 @@ class TagihanWaliMuridController extends Controller
     }
 
     /**
-     * Cetak Kartu Penarapan / Tagihan Wali Murid (Massal)
+     * Cetak Kartu Penarapan / Tagihan Wali Murid (Massal - Non Ikhtibar)
      */
     public function cetakKartuMassal(Request $request)
     {
         $tahunId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id');
         $tahunPelajaran = TahunPelajaran::findOrFail($tahunId);
+        $ikhtibarIds = $this->getIkhtibarMasterIds();
 
         $selectedMasterId = $request->pengaturan_tagihan_id;
-        $selectedMaster = PengaturanTagihan::where('tahun_pelajaran_id', $tahunId)
-            ->where('sasaran', 'wali_murid')
+        $selectedMaster = $this->queryMasterTagihanNonIkhtibar($tahunId)
             ->when($selectedMasterId, fn($q) => $q->where('id', $selectedMasterId))
             ->first();
+
+        if (!$selectedMaster) {
+            abort(404, 'Master tarif tagihan reguler wali murid tidak ditemukan.');
+        }
 
         $kampungId = $request->filled('kampung_id') && $request->kampung_id !== 'semua' ? $request->kampung_id : null;
 
@@ -1203,8 +1314,9 @@ class TagihanWaliMuridController extends Controller
                         $rq->where('murid_ruangans.tahun_pelajaran_id', $tahunId);
                     }]);
             },
-            'tagihanWaliMurids' => function ($q) use ($tahunId, $selectedMaster) {
+            'tagihanWaliMurids' => function ($q) use ($tahunId, $selectedMaster, $ikhtibarIds) {
                 $q->where('tahun_pelajaran_id', $tahunId)
+                    ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                     ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id))
                     ->with('pembayaranTagihan');
             }
@@ -1229,19 +1341,22 @@ class TagihanWaliMuridController extends Controller
         // Filter status penerbitan jika ada
         if ($request->filled('status_terbit')) {
             if ($request->status_terbit === 'Belum Terbit') {
-                $queryWali->whereDoesntHave('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMaster) {
+                $queryWali->whereDoesntHave('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMaster, $ikhtibarIds) {
                     $q->where('tahun_pelajaran_id', $tahunId)
+                        ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                         ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id));
                 });
             } elseif ($request->status_terbit === 'Terbit (Belum Lunas)') {
-                $queryWali->whereHas('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMaster) {
+                $queryWali->whereHas('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMaster, $ikhtibarIds) {
                     $q->where('tahun_pelajaran_id', $tahunId)
+                        ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                         ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id))
                         ->where('status_bayar', '!=', 'Lunas');
                 });
             } elseif ($request->status_terbit === 'Terbit & Lunas') {
-                $queryWali->whereHas('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMaster) {
+                $queryWali->whereHas('tagihanWaliMurids', function ($q) use ($tahunId, $selectedMaster, $ikhtibarIds) {
                     $q->where('tahun_pelajaran_id', $tahunId)
+                        ->whereNotIn('pengaturan_tagihan_id', $ikhtibarIds)
                         ->when($selectedMaster, fn($sq) => $sq->where('pengaturan_tagihan_id', $selectedMaster->id))
                         ->where('status_bayar', 'Lunas');
                 });

@@ -890,3 +890,53 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+// ==========================================
+// I. TOGGLE VERIFIKASI POTONG TABUNGAN IKHTIBAR
+// ==========================================
+window.toggleVerifikasiTabungan = function (btn, url) {
+    if (!url) return;
+    const $btn = $(btn);
+    const originalHtml = $btn.html();
+    $btn.prop("disabled", true).html('<i class="bi bi-arrow-repeat animate-spin"></i> Memproses...');
+
+    const csrfToken = $('meta[name="csrf-token"]').attr("content") || $('input[name="_token"]').val();
+
+    $.ajax({
+        url: url,
+        method: "POST",
+        headers: {
+            "X-CSRF-TOKEN": csrfToken,
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        data: {
+            _token: csrfToken
+        },
+        success: function (response) {
+            if (typeof Toast !== "undefined") {
+                Toast.fire({
+                    icon: "success",
+                    title: response.message || "Status verifikasi berhasil diperbarui!"
+                });
+            }
+            // Berikan jeda sejenak agar toast terbaca, lalu reload halaman agar kalkulasi kas terupdate
+            setTimeout(function () {
+                window.location.reload();
+            }, 600);
+        },
+        error: function (xhr) {
+            $btn.prop("disabled", false).html(originalHtml);
+            const errorMsg = xhr.responseJSON?.message || "Gagal memperbarui status verifikasi.";
+            if (typeof Toast !== "undefined") {
+                Toast.fire({
+                    icon: "error",
+                    title: errorMsg
+                });
+            } else {
+                alert(errorMsg);
+            }
+        }
+    });
+};
+

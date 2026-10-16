@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\CatatanUstadzController;
 use App\Http\Controllers\Api\BadalController;
 use App\Http\Controllers\Api\AppVersionApiController;
 use App\Http\Controllers\Api\PanitiaImniApiController;
+use App\Http\Controllers\Api\PanitiaIkhtibarApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -189,6 +190,26 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::get('/nilai/data', [PanitiaImniApiController::class, 'getNilaiData']);
         Route::post('/nilai/simpan', [PanitiaImniApiController::class, 'simpanNilai']);
         Route::get('/nilai/leger', [PanitiaImniApiController::class, 'getLegerNilai']);
+    });
+
+    // 2.15 Kepanitiaan Ikhtibar (Fitur Khusus Ustadz Panitia Ikhtibar)
+    Route::prefix('panitia-ikhtibar')->group(function () {
+        Route::get('/profile-status', [PanitiaIkhtibarApiController::class, 'getProfileStatus']);
+
+        // Kasir Pembayaran Tagihan KK Ikhtibar (Khusus BPH)
+        Route::get('/kasir/ringkasan', [PanitiaIkhtibarApiController::class, 'getKasirRingkasan']);
+        Route::get('/kasir/list', [PanitiaIkhtibarApiController::class, 'getKasirList']);
+        Route::post('/kasir/bayar', [PanitiaIkhtibarApiController::class, 'simpanPembayaran']);
+        Route::post('/kasir/verifikasi-tabungan/{id}', [PanitiaIkhtibarApiController::class, 'toggleVerifikasiTabungan']);
+
+        // Laporan Pembayaran Tagihan Ikhtibar (Khusus BPH)
+        Route::get('/laporan/ringkasan', [PanitiaIkhtibarApiController::class, 'getLaporanRingkasan']);
+        Route::get('/laporan/riwayat', [PanitiaIkhtibarApiController::class, 'getLaporanRiwayat']);
+
+        // Pagu & Realisasi SPJ (BPH & Divisi)
+        Route::get('/pagu-spj/ringkasan', [PanitiaIkhtibarApiController::class, 'getPaguSpjRingkasan']);
+        Route::get('/spj/list', [PanitiaIkhtibarApiController::class, 'getSpjList']);
+        Route::post('/spj/simpan', [PanitiaIkhtibarApiController::class, 'simpanSpj']);
     });
 
     // =========================================================================

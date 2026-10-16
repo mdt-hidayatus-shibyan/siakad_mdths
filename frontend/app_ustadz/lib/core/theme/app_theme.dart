@@ -15,6 +15,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      splashFactory: InkRipple.splashFactory,
       brightness: Brightness.light,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       colorScheme: ColorScheme.light(
@@ -169,6 +170,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      splashFactory: InkRipple.splashFactory,
       brightness: Brightness.dark,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       colorScheme: ColorScheme.dark(

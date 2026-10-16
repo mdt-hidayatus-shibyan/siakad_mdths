@@ -7,6 +7,7 @@ use App\Mail\SendOtpResetPasswordMail;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
 use App\Models\Ujian\PanitiaImni;
+use App\Models\Ikhtibar\PanitiaIkhtibar;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use Carbon\Carbon;
@@ -99,6 +100,12 @@ class AuthController extends Controller
                     ->where('tahun_pelajaran_id', $tahunAktif->id)
                     ->where('is_active', true)
                     ->first();
+
+                $panitiaIkhtibar = PanitiaIkhtibar::with(['kegiatanIkhtibar', 'divisi'])
+                    ->where('ustadz_id', $user->ustadz->id)
+                    ->where('tahun_pelajaran_id', $tahunAktif->id)
+                    ->where('is_active', true)
+                    ->first();
             }
 
             $roleName = $user->roles->first()->name ?? 'ustadz';
@@ -157,6 +164,25 @@ class AuthController extends Controller
                         'jabatan' => $panitiaImni->jabatan,
                         'no_sk' => $panitiaImni->no_sk,
                         'keterangan' => $panitiaImni->keterangan,
+                    ] : null,
+
+                    // --- DATA KEPANITIAAN IKHTIBAR ---
+                    'is_panitia_ikhtibar' => ($panitiaIkhtibar !== null),
+                    'ikhtibar_ke' => $panitiaIkhtibar?->kegiatanIkhtibar?->ikhtibar_ke ?? '52 Th',
+                    'nama_kegiatan_ikhtibar' => $panitiaIkhtibar?->kegiatanIkhtibar?->nama_kegiatan ?? 'Ikhtibar & Haflah Akhirussanah',
+                    'kelompok_jabatan_ikhtibar' => $panitiaIkhtibar?->kelompok_jabatan,
+                    'jabatan_ikhtibar' => $panitiaIkhtibar?->jabatan,
+                    'nama_divisi_ikhtibar' => $panitiaIkhtibar?->divisi?->nama_divisi,
+                    'divisi_ikhtibar_id' => $panitiaIkhtibar?->divisi_ikhtibar_id,
+                    'panitia_ikhtibar' => $panitiaIkhtibar ? [
+                        'id' => $panitiaIkhtibar->id,
+                        'kegiatan_ikhtibar_id' => $panitiaIkhtibar->kegiatan_ikhtibar_id,
+                        'kelompok_jabatan' => $panitiaIkhtibar->kelompok_jabatan,
+                        'jabatan' => $panitiaIkhtibar->jabatan,
+                        'divisi_id' => $panitiaIkhtibar->divisi_ikhtibar_id,
+                        'nama_divisi' => $panitiaIkhtibar->divisi?->nama_divisi,
+                        'ikhtibar_ke' => $panitiaIkhtibar->kegiatanIkhtibar?->ikhtibar_ke,
+                        'nama_kegiatan' => $panitiaIkhtibar->kegiatanIkhtibar?->nama_kegiatan,
                     ] : null,
                 ]
             ], 200);
@@ -866,6 +892,12 @@ class AuthController extends Controller
                 ->where('tahun_pelajaran_id', $tahunAktif->id)
                 ->where('is_active', true)
                 ->first();
+
+            $panitiaIkhtibar = PanitiaIkhtibar::with(['kegiatanIkhtibar', 'divisi'])
+                ->where('ustadz_id', $user->ustadz->id)
+                ->where('tahun_pelajaran_id', $tahunAktif->id)
+                ->where('is_active', true)
+                ->first();
         }
 
         return response()->json([
@@ -902,6 +934,25 @@ class AuthController extends Controller
                     'jabatan' => $panitiaImni->jabatan,
                     'no_sk' => $panitiaImni->no_sk,
                     'keterangan' => $panitiaImni->keterangan,
+                ] : null,
+
+                // --- DATA KEPANITIAAN IKHTIBAR ---
+                'is_panitia_ikhtibar' => ($panitiaIkhtibar !== null),
+                'ikhtibar_ke' => $panitiaIkhtibar?->kegiatanIkhtibar?->ikhtibar_ke ?? '52 Th',
+                'nama_kegiatan_ikhtibar' => $panitiaIkhtibar?->kegiatanIkhtibar?->nama_kegiatan ?? 'Ikhtibar & Haflah Akhirussanah',
+                'kelompok_jabatan_ikhtibar' => $panitiaIkhtibar?->kelompok_jabatan,
+                'jabatan_ikhtibar' => $panitiaIkhtibar?->jabatan,
+                'nama_divisi_ikhtibar' => $panitiaIkhtibar?->divisi?->nama_divisi,
+                'divisi_ikhtibar_id' => $panitiaIkhtibar?->divisi_ikhtibar_id,
+                'panitia_ikhtibar' => $panitiaIkhtibar ? [
+                    'id' => $panitiaIkhtibar->id,
+                    'kegiatan_ikhtibar_id' => $panitiaIkhtibar->kegiatan_ikhtibar_id,
+                    'kelompok_jabatan' => $panitiaIkhtibar->kelompok_jabatan,
+                    'jabatan' => $panitiaIkhtibar->jabatan,
+                    'divisi_id' => $panitiaIkhtibar->divisi_ikhtibar_id,
+                    'nama_divisi' => $panitiaIkhtibar->divisi?->nama_divisi,
+                    'ikhtibar_ke' => $panitiaIkhtibar->kegiatanIkhtibar?->ikhtibar_ke,
+                    'nama_kegiatan' => $panitiaIkhtibar->kegiatanIkhtibar?->nama_kegiatan,
                 ] : null,
             ]
         ], 200);

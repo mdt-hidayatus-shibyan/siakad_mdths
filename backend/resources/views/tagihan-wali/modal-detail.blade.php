@@ -74,7 +74,7 @@
     <div>
         <h4
             class="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-            <i class="bi bi-receipt text-primary"></i> <span>Histori Tagihan KK Tahun Ini</span>
+            <i class="bi bi-receipt text-primary"></i> <span>Histori Tagihan KK Reguler (Non-Ikhtibar)</span>
         </h4>
         <div class="space-y-2">
             @forelse ($wali->tagihanWaliMurids as $t)
@@ -109,7 +109,7 @@
                     </div>
                 </div>
             @empty
-                <p class="text-xs text-zinc-400 italic">Belum ada tagihan yang diterbitkan untuk KK ini.</p>
+                <p class="text-xs text-zinc-400 italic">Belum ada tagihan reguler yang diterbitkan untuk KK ini.</p>
             @endforelse
         </div>
     </div>

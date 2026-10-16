@@ -38,6 +38,19 @@
         @endif
     </div>
 
+    @if ($masterTagihans->isEmpty())
+        <div class="p-4 mb-6 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 flex items-start gap-3 text-xs">
+            <i class="bi bi-info-circle-fill text-lg shrink-0 mt-0.5 text-amber-500"></i>
+            <div class="space-y-1">
+                <p class="font-black text-sm text-zinc-900 dark:text-white">Laporan Khusus Tagihan Wali Murid Selain Ikhtibar</p>
+                <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                    Saat ini belum ada master tarif tagihan wali murid selain Ikhtibar. Laporan dan rekapitulasi Ikhtibar kini tersedia pada modul 
+                    <a href="{{ route('tagihan-ikhtibar.kasir') }}" class="font-bold underline text-amber-600 dark:text-amber-400 hover:text-amber-700">Kepanitiaan Ikhtibar &gt; Tagihan &amp; Kas Masuk</a>.
+                </p>
+            </div>
+        </div>
+    @endif
+
     <!-- FILTER BAR LAPORAN -->
     <div
         class="m3-glass-card p-4 rounded-3xl space-y-3 bg-white/70 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-zinc-800 shadow-2xs mb-6">
@@ -80,7 +93,7 @@
                                 {{ $mt->nama_tagihan }} — Rp {{ number_format($mt->nominal, 0, ',', '.') }}
                             </option>
                         @empty
-                            <option value="">(Belum ada master tarif sasaran Wali Murid)</option>
+                            <option value="">(Belum ada master tarif non-ikhtibar)</option>
                         @endforelse
                     </select>
                     <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-zinc-400">

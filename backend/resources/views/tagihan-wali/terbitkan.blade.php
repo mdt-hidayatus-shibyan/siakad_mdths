@@ -5,18 +5,40 @@
         <!-- HEADER PAGE -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-
+                <div class="flex items-center gap-2">
+                    <span
+                        class="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide uppercase bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                        Tagihan Non-Ikhtibar / Reguler
+                    </span>
+                </div>
                 <h2 class="text-xl md:text-2xl font-black text-zinc-900 dark:text-white tracking-tight mt-1">
-                    Penerbitan Tagihan Per Wali Murid (KK Aktif)
+                    Penerbitan Tagihan Wali Murid (KK Aktif)
                 </h2>
                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    Kelola dan terbitkan tagihan keluarga secara massal atau per Kepala Keluarga (KK) yang memiliki
-                    murid aktif.
+                    Kelola dan terbitkan tagihan keluarga non-ikhtibar (Infaq Pembangunan, Kalender, dll.) secara massal
+                    atau per Kepala Keluarga (KK).
                 </p>
             </div>
-
-
         </div>
+
+        @if ($masterTagihans->isEmpty())
+            <div
+                class="p-4 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 flex items-start gap-3 text-xs">
+                <i class="bi bi-info-circle-fill text-lg shrink-0 mt-0.5 text-amber-500"></i>
+                <div class="space-y-1">
+                    <p class="font-black text-sm text-zinc-900 dark:text-white">Modul Khusus Tagihan Wali Murid Selain
+                        Ikhtibar</p>
+
+                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        Untuk menerbitkan tagihan KK reguler lainnya (seperti Infaq Pembangunan, Kalender, dll.),
+                        silakan buat master tarif baru di menu
+                        <a href="{{ route('pengaturan-tagihan.index') }}"
+                            class="font-bold underline text-primary">Pengaturan Tagihan</a> dengan sasaran <strong>Wali
+                            Murid</strong>.
+                    </p>
+                </div>
+            </div>
+        @endif
         <!-- ALERT FEEDBACK -->
         @if (session('success'))
             <div
@@ -86,7 +108,7 @@
                                     {{ $mt->nama_tagihan }} — Rp {{ number_format($mt->nominal, 0, ',', '.') }}
                                 </option>
                             @empty
-                                <option value="">(Belum ada master tarif sasaran Wali Murid)</option>
+                                <option value="">(Belum ada master tarif non-ikhtibar)</option>
                             @endforelse
                         </select>
                         <div
@@ -210,7 +232,8 @@
                         <i class="bi bi-lightning-charge-fill"></i>
                     </div>
                 </div>
-                <h3 class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight mt-1.5">
+                <h3
+                    class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight mt-1.5">
                     {{ number_format($totalSudahTerbitCount, 0, ',', '.') }} <span class="text-xs font-bold">KK</span>
                 </h3>
                 <p class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
@@ -276,7 +299,8 @@
                     </button>
 
                     <!-- 3. Dropdown Opsi Lainnya -->
-                    <x-dropdown align="right" width="w-64" contentClasses="p-1.5 divide-y divide-zinc-100 dark:divide-zinc-800/80">
+                    <x-dropdown align="right" width="w-64"
+                        contentClasses="p-1.5 divide-y divide-zinc-100 dark:divide-zinc-800/80">
                         <x-slot name="trigger">
                             <button type="button"
                                 class="h-9 px-3 rounded-2xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer">

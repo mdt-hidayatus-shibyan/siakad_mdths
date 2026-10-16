@@ -68,6 +68,14 @@ use App\Http\Controllers\UjianAlquran\PenilaianAlquranController;
 use App\Http\Controllers\UjianAlquran\RekapUjianAlquranController;
 use App\Http\Controllers\PetugasCetakController;
 
+// 5.1 Kepanitiaan Ikhtibar Controllers
+use App\Http\Controllers\Ikhtibar\DashboardIkhtibarController;
+use App\Http\Controllers\Ikhtibar\MasterIkhtibarController;
+use App\Http\Controllers\Ikhtibar\PanitiaIkhtibarController;
+use App\Http\Controllers\Ikhtibar\TagihanIkhtibarController;
+use App\Http\Controllers\Ikhtibar\PaguDivisiIkhtibarController;
+use App\Http\Controllers\Ikhtibar\SpjIkhtibarController;
+
 // 6. Kesekretariatan & Arsip Controllers
 use App\Http\Controllers\Kepengurusan\JabatanPengurusController;
 use App\Http\Controllers\Kepengurusan\PeriodeKepengurusanController;
@@ -196,6 +204,14 @@ Route::get('/storage/{path}', function ($path) {
 // Arsip Dokumen Publik (Cetak & Unduh PDF via ID UUID Dokumen)
 Route::get('/arsip-dokumen/{id}/cetak', [ArsipDokumenController::class, 'cetak'])->name('arsip.cetak');
 Route::get('/arsip-dokumen/{id}/download', [ArsipDokumenController::class, 'download'])->name('arsip.download');
+
+// Kwitansi Ikhtibar Publik (Signed URL untuk Aplikasi Mobile Ustadz & Wali)
+Route::get('/kwitansi-ikhtibar/{id}', [TagihanIkhtibarController::class, 'cetakKwitansiPublik'])
+    ->name('ikhtibar.tagihan.cetak-kwitansi-publik')
+    ->middleware('signed');
+Route::get('/kwitansi-ikhtibar-cicilan/{id}', [TagihanIkhtibarController::class, 'cetakKwitansiCicilanPublik'])
+    ->name('ikhtibar.tagihan.cetak-kwitansi-cicilan-publik')
+    ->middleware('signed');
 
 
 /*
@@ -760,6 +776,108 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cetak-sk/{pesertaId}', [RekapUjianAlquranController::class, 'cetakSk'])->name('cetak-sk');
         Route::get('/cetak-rekap', [RekapUjianAlquranController::class, 'cetakRekap'])->name('cetak-rekap');
     });
+
+    // ==========================================
+    // 5.2 KEPANITIAAN IKHTIBAR (MODULAR ROUTES)
+    // ==========================================
+
+    // 1. Dashboard Terpadu Kepanitiaan Ikhtibar
+    Route::prefix('dashboard-ikhtibar')->name('dashboard-ikhtibar.')->group(function () {
+        Route::get('/', [DashboardIkhtibarController::class, 'index'])->name('index');
+    });
+
+    // 2. Master Kegiatan & Divisi Ikhtibar
+    Route::prefix('master-ikhtibar')->name('master-ikhtibar.')->group(function () {
+        Route::get('/', [MasterIkhtibarController::class, 'index'])->name('index');
+        Route::put('/identitas/{id}', [MasterIkhtibarController::class, 'updateIdentitas'])->name('update-identitas');
+        Route::get('/divisi/create/{kegiatanId}', [MasterIkhtibarController::class, 'createDivisi'])->name('create-divisi');
+        Route::post('/divisi/store/{kegiatanId}', [MasterIkhtibarController::class, 'storeDivisi'])->name('store-divisi');
+        Route::get('/divisi/{id}/edit', [MasterIkhtibarController::class, 'editDivisi'])->name('edit-divisi');
+        Route::put('/divisi/{id}', [MasterIkhtibarController::class, 'updateDivisi'])->name('update-divisi');
+        Route::delete('/divisi/{id}', [MasterIkhtibarController::class, 'destroyDivisi'])->name('destroy-divisi');
+        Route::post('/divisi/generate-standar/{kegiatanId}', [MasterIkhtibarController::class, 'generateDivisiStandar'])->name('generate-divisi-standar');
+        Route::post('/divisi/{id}/toggle-status', [MasterIkhtibarController::class, 'toggleStatusDivisi'])->name('toggle-status-divisi');
+    });
+
+    // 3. Susunan SK Kepanitiaan Ikhtibar (Ustadz & Eksternal)
+    Route::prefix('panitia-ikhtibar')->name('panitia-ikhtibar.')->group(function () {
+        Route::get('/', [PanitiaIkhtibarController::class, 'index'])->name('index');
+        Route::get('/create/{kegiatanId}', [PanitiaIkhtibarController::class, 'create'])->name('create');
+        Route::post('/store/{kegiatanId}', [PanitiaIkhtibarController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [PanitiaIkhtibarController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PanitiaIkhtibarController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PanitiaIkhtibarController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/toggle-status', [PanitiaIkhtibarController::class, 'toggleStatus'])->name('toggle-status');
+        Route::get('/cetak-sk/{kegiatanId}', [PanitiaIkhtibarController::class, 'cetakSk'])->name('cetak-sk');
+        Route::get('/cetak-id-card/{kegiatanId}', [PanitiaIkhtibarController::class, 'cetakIdCard'])->name('cetak-id-card');
+    });
+
+    // 4. Tagihan Ikhtibar Wali Murid / Per KK (Selaras Modul Tagihan-Wali)
+    Route::prefix('tagihan-ikhtibar')->name('tagihan-ikhtibar.')->controller(TagihanIkhtibarController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+
+        // 1. Submenu: Terbitkan Tagihan Ikhtibar
+        Route::get('/terbitkan', 'terbitkanIndex')->name('terbitkan-index');
+        Route::post('/terbitkan', 'terbitkan')->name('terbitkan');
+        Route::post('/hapus-massal', 'hapusMassal')->name('hapus-massal');
+        Route::post('/hapus-semua', 'hapusSemua')->name('hapus-semua');
+        Route::delete('/destroy/{id}', 'destroy')->name('destroy');
+
+        // 2. Submenu: Kasir Pembayaran Ikhtibar
+        Route::get('/kasir', 'kasir')->name('kasir');
+        Route::get('/kasir/leger', 'kasirLeger')->name('kasir-leger');
+        Route::post('/kasir/leger-proses', 'prosesLeger')->name('kasir-leger.proses');
+        Route::post('/bayar', 'bayar')->name('bayar');
+        Route::post('/batal/{id}', 'batalBayar')->name('batal');
+        Route::get('/cetak-kwitansi/{id}', 'cetakKwitansi')->name('cetak-kwitansi');
+        Route::get('/cetak-kwitansi-cicilan/{pembayaran_ikhtibar_id}', 'cetakKwitansiCicilan')->name('cetak-kwitansi-cicilan');
+        Route::post('/pembayaran/{id}/toggle-verifikasi', 'toggleVerifikasiTabungan')->name('toggle-verifikasi-tabungan');
+
+        // 3. Submenu: Laporan & Rekapitulasi Tagihan Ikhtibar
+        Route::get('/laporan', 'laporan')->name('laporan');
+        Route::get('/cetak-rekap', 'cetakRekap')->name('cetak-rekap');
+        Route::get('/cetak-leger', 'cetakLeger')->name('cetak-leger');
+
+        // 4. Cetak Kartu Tagihan Ikhtibar KK
+        Route::get('/cetak-kartu/{wali_id}/{tahun_id?}', 'cetakKartu')->name('cetak-kartu');
+        Route::get('/cetak-kartu-massal', 'cetakKartuMassal')->name('cetak-kartu-massal');
+
+        // 5. Detail Tagihan AJAX Modal
+        Route::get('/detail/{id}', 'detail')->name('detail');
+
+        // Legacy compatibility routes
+        Route::post('/terbitkan-massal/{kegiatanId}', 'terbitkanMassalLegacy')->name('terbitkan-massal');
+        Route::get('/modal-bayar/{tagihanId}', 'modalBayar')->name('modal-bayar');
+        Route::post('/proses-bayar/{tagihanId}', 'prosesBayar')->name('proses-bayar');
+        Route::post('/batal-bayar/{tagihanId}', 'batalBayar')->name('batal-bayar');
+    });
+
+    // 5. Pagu Anggaran, Distribusi & Penarikan Sisa Pagu Divisi
+    Route::prefix('pagu-divisi-ikhtibar')->name('pagu-divisi-ikhtibar.')->group(function () {
+        Route::get('/', [PaguDivisiIkhtibarController::class, 'index'])->name('index');
+        Route::get('/modal-update-pagu/{divisiId}', [PaguDivisiIkhtibarController::class, 'modalUpdatePagu'])->name('modal-update-pagu');
+        Route::put('/simpan-update-pagu/{divisiId}', [PaguDivisiIkhtibarController::class, 'simpanUpdatePagu'])->name('simpan-update-pagu');
+        Route::get('/modal-salur-dana/{divisiId}', [PaguDivisiIkhtibarController::class, 'modalSalurDana'])->name('modal-salur-dana');
+        Route::post('/simpan-salur-dana/{divisiId}', [PaguDivisiIkhtibarController::class, 'simpanSalurDana'])->name('simpan-salur-dana');
+        Route::get('/modal-tarik-sisa/{divisiId}', [PaguDivisiIkhtibarController::class, 'modalTarikSisa'])->name('modal-tarik-sisa');
+        Route::post('/simpan-tarik-sisa/{divisiId}', [PaguDivisiIkhtibarController::class, 'simpanTarikSisa'])->name('simpan-tarik-sisa');
+        Route::delete('/transaksi/{id}', [PaguDivisiIkhtibarController::class, 'destroyTransaksi'])->name('destroy-transaksi');
+        Route::get('/cetak-bukti-salur/{id}', [PaguDivisiIkhtibarController::class, 'cetakBuktiPenyaluran'])->name('cetak-bukti-salur');
+        Route::get('/cetak-bukti-tarik/{id}', [PaguDivisiIkhtibarController::class, 'cetakBuktiPenarikan'])->name('cetak-bukti-tarik');
+    });
+
+    // 6. SPJ, Pengeluaran & LPJ Terpadu Ikhtibar
+    Route::prefix('spj-ikhtibar')->name('spj-ikhtibar.')->group(function () {
+        Route::get('/', [SpjIkhtibarController::class, 'index'])->name('index');
+        Route::get('/create/{kegiatanId}', [SpjIkhtibarController::class, 'create'])->name('create');
+        Route::post('/store/{kegiatanId}', [SpjIkhtibarController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [SpjIkhtibarController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [SpjIkhtibarController::class, 'update'])->name('update');
+        Route::put('/{id}/verifikasi', [SpjIkhtibarController::class, 'verifikasi'])->name('verifikasi');
+        Route::delete('/{id}', [SpjIkhtibarController::class, 'destroy'])->name('destroy');
+        Route::get('/cetak-lpj/{kegiatanId}', [SpjIkhtibarController::class, 'cetakLpj'])->name('cetak-lpj');
+    });
+
 
 
     // ==========================================

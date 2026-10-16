@@ -15,6 +15,13 @@ class UserModel {
   final bool isPanitiaImni;
   final String? jabatanPanitiaImni;
   final String? noSkPanitiaImni;
+  final bool isPanitiaIkhtibar;
+  final String? ikhtibarKe;
+  final String? namaKegiatanIkhtibar;
+  final String? kelompokJabatanIkhtibar;
+  final String? jabatanIkhtibar;
+  final String? namaDivisiIkhtibar;
+  final int? divisiIkhtibarId;
   final String? kodeUstadz;
   final String? nigm;
   final String? nik;
@@ -25,6 +32,12 @@ class UserModel {
   final String? noHp;
   final int? tahunMulaiMengajar;
   final String? tandaTangan;
+
+  bool get isBphIkhtibar =>
+      isPanitiaIkhtibar && (kelompokJabatanIkhtibar?.toUpperCase() == 'BPH');
+  bool get isDivisiIkhtibar =>
+      isPanitiaIkhtibar && (kelompokJabatanIkhtibar?.toUpperCase() == 'DIVISI');
+  String get ikhtibarTitle => 'Kepanitiaan Ikhtibar ke-${ikhtibarKe ?? ""}';
 
   UserModel({
     required this.id,
@@ -41,6 +54,13 @@ class UserModel {
     this.isPanitiaImni = false,
     this.jabatanPanitiaImni,
     this.noSkPanitiaImni,
+    this.isPanitiaIkhtibar = false,
+    this.ikhtibarKe,
+    this.namaKegiatanIkhtibar,
+    this.kelompokJabatanIkhtibar,
+    this.jabatanIkhtibar,
+    this.namaDivisiIkhtibar,
+    this.divisiIkhtibarId,
     this.kodeUstadz,
     this.nigm,
     this.nik,
@@ -69,6 +89,13 @@ class UserModel {
       isPanitiaImni: json['is_panitia_imni'] ?? (json['panitia_imni']?['is_panitia'] ?? false),
       jabatanPanitiaImni: json['jabatan_panitia_imni'] ?? json['panitia_imni']?['jabatan'],
       noSkPanitiaImni: json['no_sk_panitia_imni'] ?? json['panitia_imni']?['no_sk'],
+      isPanitiaIkhtibar: json['is_panitia_ikhtibar'] ?? (json['panitia_ikhtibar'] != null),
+      ikhtibarKe: json['ikhtibar_ke'] ?? json['panitia_ikhtibar']?['ikhtibar_ke'],
+      namaKegiatanIkhtibar: json['nama_kegiatan_ikhtibar'] ?? json['panitia_ikhtibar']?['nama_kegiatan'],
+      kelompokJabatanIkhtibar: json['kelompok_jabatan_ikhtibar'] ?? json['panitia_ikhtibar']?['kelompok_jabatan'],
+      jabatanIkhtibar: json['jabatan_ikhtibar'] ?? json['panitia_ikhtibar']?['jabatan'],
+      namaDivisiIkhtibar: json['nama_divisi_ikhtibar'] ?? json['panitia_ikhtibar']?['nama_divisi'],
+      divisiIkhtibarId: json['divisi_ikhtibar_id'] ?? json['panitia_ikhtibar']?['divisi_id'],
       kodeUstadz: json['kode_ustadz'] ?? json['kode'],
       nigm: json['nigm'],
       nik: json['nik'],
@@ -100,6 +127,13 @@ class UserModel {
       'is_panitia_imni': isPanitiaImni,
       'jabatan_panitia_imni': jabatanPanitiaImni,
       'no_sk_panitia_imni': noSkPanitiaImni,
+      'is_panitia_ikhtibar': isPanitiaIkhtibar,
+      'ikhtibar_ke': ikhtibarKe,
+      'nama_kegiatan_ikhtibar': namaKegiatanIkhtibar,
+      'kelompok_jabatan_ikhtibar': kelompokJabatanIkhtibar,
+      'jabatan_ikhtibar': jabatanIkhtibar,
+      'nama_divisi_ikhtibar': namaDivisiIkhtibar,
+      'divisi_ikhtibar_id': divisiIkhtibarId,
       'kode_ustadz': kodeUstadz,
       'nigm': nigm,
       'nik': nik,
@@ -122,6 +156,13 @@ class UserModel {
     bool? isPanitiaImni,
     String? jabatanPanitiaImni,
     String? noSkPanitiaImni,
+    bool? isPanitiaIkhtibar,
+    String? ikhtibarKe,
+    String? namaKegiatanIkhtibar,
+    String? kelompokJabatanIkhtibar,
+    String? jabatanIkhtibar,
+    String? namaDivisiIkhtibar,
+    int? divisiIkhtibarId,
     String? nigm,
     String? nik,
     String? jenisKelamin,
@@ -147,6 +188,15 @@ class UserModel {
       isPanitiaImni: isPanitiaImni ?? this.isPanitiaImni,
       jabatanPanitiaImni: jabatanPanitiaImni ?? this.jabatanPanitiaImni,
       noSkPanitiaImni: noSkPanitiaImni ?? this.noSkPanitiaImni,
+      isPanitiaIkhtibar: isPanitiaIkhtibar ?? this.isPanitiaIkhtibar,
+      ikhtibarKe: ikhtibarKe ?? this.ikhtibarKe,
+      namaKegiatanIkhtibar:
+          namaKegiatanIkhtibar ?? this.namaKegiatanIkhtibar,
+      kelompokJabatanIkhtibar:
+          kelompokJabatanIkhtibar ?? this.kelompokJabatanIkhtibar,
+      jabatanIkhtibar: jabatanIkhtibar ?? this.jabatanIkhtibar,
+      namaDivisiIkhtibar: namaDivisiIkhtibar ?? this.namaDivisiIkhtibar,
+      divisiIkhtibarId: divisiIkhtibarId ?? this.divisiIkhtibarId,
       kodeUstadz: kodeUstadz,
       nigm: nigm ?? this.nigm,
       nik: nik ?? this.nik,

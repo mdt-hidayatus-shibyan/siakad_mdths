@@ -1,4 +1,4 @@
-﻿@php
+@php
     // Normalisasi Data Dinamis Berdasarkan Tipe
     $namaLengkap = '';
     $fotoPath = null;
@@ -6,7 +6,15 @@
     $keteranganJabatan = $roleName; // Fallback ke roleName dari Controller
     $keteranganTambahan = 'MDT Hidayatus Shibyan';
 
-    if (strtolower($tipe) === 'pengurus') {
+    if (in_array(strtolower($tipe), ['panitia', 'panitia-ikhtibar'])) {
+        $namaLengkap = $profil->nama_tampil ?? 'Tanpa Nama';
+        $fotoPath = $profil->foto_utama ?? null;
+        $ttdPath = $profil->ttd_utama ?? null;
+        $keteranganJabatan = $roleName;
+        if ($profil->kegiatanIkhtibar) {
+            $keteranganTambahan = $profil->kegiatanIkhtibar->nama_kegiatan . ' (' . ($profil->kegiatanIkhtibar->ikhtibar_ke ?: '') . ')';
+        }
+    } elseif (strtolower($tipe) === 'pengurus') {
         $namaLengkap = $profil->anggota->nama_lengkap ?? 'Tanpa Nama';
         $fotoPath = $profil->anggota->foto_utama ?? null;
         $ttdPath = $profil->anggota->ttd_utama ?? null;

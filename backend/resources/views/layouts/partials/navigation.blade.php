@@ -26,6 +26,28 @@
                     'tagihan-wali.detail',
                 ],
                 'tagihan-wali.laporan' => ['tagihan-wali.laporan', 'tagihan-wali.cetak-rekap'],
+                // Tagihan Ikhtibar Module
+                'tagihan-ikhtibar.terbitkan-index' => [
+                    'tagihan-ikhtibar.terbitkan-index',
+                    'tagihan-ikhtibar.terbitkan',
+                    'tagihan-ikhtibar.hapus-massal',
+                    'tagihan-ikhtibar.hapus-semua',
+                    'tagihan-ikhtibar.destroy',
+                ],
+                'tagihan-ikhtibar.kasir' => [
+                    'tagihan-ikhtibar.kasir',
+                    'tagihan-ikhtibar.kasir-leger',
+                    'tagihan-ikhtibar.kasir-leger.proses',
+                    'tagihan-ikhtibar.bayar',
+                    'tagihan-ikhtibar.batal',
+                    'tagihan-ikhtibar.cetak-kwitansi',
+                    'tagihan-ikhtibar.cetak-kwitansi-cicilan',
+                ],
+                'tagihan-ikhtibar.laporan' => [
+                    'tagihan-ikhtibar.laporan',
+                    'tagihan-ikhtibar.cetak-rekap',
+                    'tagihan-ikhtibar.cetak-leger',
+                ],
                 'pengaturan-versi.index' => [
                     'pengaturan-versi.index',
                     'pengaturan-versi.riwayat',

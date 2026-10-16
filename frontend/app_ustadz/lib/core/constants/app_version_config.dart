@@ -41,20 +41,25 @@ class AppVersionConfig {
   // ---------------------------------------------------------------------------
   static const String appTitle = 'Ustadz - MDTHS';
   static const String appSubtitle = 'MDT Hidayatus Shibyan';
-  static const String version = '3.2.4';
-  static const String buildNumber = '2026.10.05';
+  static const String version = '3.5.0';
+  static const String buildNumber = '2026.10.06';
   static const String releaseDate = 'Oktober 2026';
-  static const String statusBadge = 'Versi Stabil';
+  static const String statusBadge = 'Versi Beta';
   static const bool isLatest = true;
 
   // ---------------------------------------------------------------------------
   // 2. CATATAN RILIS (CHANGELOG)
   // ---------------------------------------------------------------------------
-  static const String releaseSubtitle = 'Stable Release - Oktober 2026';
-  static const String releaseBadge = 'Stable Version';
+  static const String releaseSubtitle = 'Beta Release - Oktober 2026';
+  static const String releaseBadge = 'Beta Version';
 
   /// Ubah / tambahkan fitur baru di sini:
   static const List<ChangelogEntry> newFeatures = [
+    ChangelogEntry(
+      title: 'Kepanitiaan Ikhtibar',
+      description:
+          'Fitur baru khusus Kepanitiaan Ikhtibar untuk mempermudah pengelolaan Pagu Anggaran dan administrasi panitia.',
+    ),
     ChangelogEntry(
       title: 'Penyegaran Tampilan',
       description:
@@ -93,7 +98,7 @@ class AppVersionConfig {
     ChangelogEntry(
       title: 'Perbaikan Bug',
       description:
-          'Perbaikan bug minor dan peningkatan stabilitas aplikasi untuk memastikan pengalaman pengguna yang lebih lancar dan bebas dari gangguan teknis.',
+          'Perbaikan bug saat aplikasi sedang aktif dan HP dibiarkan hingga terkunci (atau dimatikan lewat tombol power), ketika HP dinyalakan kembali Android akan menampilkan mode buka kunci (PIN / Pola / Sidik Jari) seperti biasa.',
     ),
   ];
 

@@ -34,6 +34,9 @@ import '../panitia_imni/pembayaran_imni_screen.dart';
 import '../panitia_imni/pengeluaran_imni_screen.dart';
 import '../panitia_imni/presensi_imni_screen.dart';
 import '../panitia_imni/nilai_imni_screen.dart';
+import '../panitia_ikhtibar/kasir_ikhtibar_screen.dart';
+import '../panitia_ikhtibar/laporan_ikhtibar_screen.dart';
+import '../panitia_ikhtibar/pengeluaran_spj_ikhtibar_screen.dart';
 import '../../../core/storage/storage_service.dart';
 import 'widgets/customizable_menu_grid.dart';
 
@@ -84,9 +87,16 @@ class _HomeTabState extends State<HomeTab> {
     'imni_nilai',
   ];
 
+  static const List<String> _defaultPanitiaIkhtibarOrder = [
+    'ikhtibar_kasir',
+    'ikhtibar_laporan',
+    'ikhtibar_spj',
+  ];
+
   List<String> _menuCepatOrder = List.from(_defaultMenuCepatOrder);
   List<String> _waliRuanganOrder = List.from(_defaultWaliRuanganOrder);
   List<String> _panitiaImniOrder = List.from(_defaultPanitiaImniOrder);
+  List<String> _panitiaIkhtibarOrder = List.from(_defaultPanitiaIkhtibarOrder);
 
   @override
   void initState() {
@@ -128,6 +138,14 @@ class _HomeTabState extends State<HomeTab> {
       _panitiaImniOrder = List.from(savedImni);
       for (final id in _defaultPanitiaImniOrder) {
         if (!_panitiaImniOrder.contains(id)) _panitiaImniOrder.add(id);
+      }
+    }
+
+    final savedIkhtibar = StorageService.getMenuOrder('ikhtibar');
+    if (savedIkhtibar != null && savedIkhtibar.isNotEmpty) {
+      _panitiaIkhtibarOrder = List.from(savedIkhtibar);
+      for (final id in _defaultPanitiaIkhtibarOrder) {
+        if (!_panitiaIkhtibarOrder.contains(id)) _panitiaIkhtibarOrder.add(id);
       }
     }
   }
@@ -200,6 +218,18 @@ class _HomeTabState extends State<HomeTab> {
     StorageService.saveMenuOrder('imni', _panitiaImniOrder);
   }
 
+  void _handleReorderPanitiaIkhtibar(String fromId, String toId) {
+    setState(() {
+      final oldIndex = _panitiaIkhtibarOrder.indexOf(fromId);
+      final newIndex = _panitiaIkhtibarOrder.indexOf(toId);
+      if (oldIndex != -1 && newIndex != -1) {
+        final item = _panitiaIkhtibarOrder.removeAt(oldIndex);
+        _panitiaIkhtibarOrder.insert(newIndex, item);
+      }
+    });
+    StorageService.saveMenuOrder('ikhtibar', _panitiaIkhtibarOrder);
+  }
+
   void _handleResetMenuPreferences() {
     HapticHelper.medium();
     setState(() {
@@ -208,6 +238,7 @@ class _HomeTabState extends State<HomeTab> {
       _menuCepatOrder = List.from(_defaultMenuCepatOrder);
       _waliRuanganOrder = List.from(_defaultWaliRuanganOrder);
       _panitiaImniOrder = List.from(_defaultPanitiaImniOrder);
+      _panitiaIkhtibarOrder = List.from(_defaultPanitiaIkhtibarOrder);
     });
     StorageService.clearMenuSizes();
     StorageService.clearPinnedMenus();
@@ -986,6 +1017,76 @@ class _HomeTabState extends State<HomeTab> {
                   onLongPressTile: _toggleCustomizingMenu,
                   onReorder: _handleReorderPanitiaImni,
                 ),
+                const SizedBox(height: 18),
+              ],
+
+              // Menu Tambahan Khusus Kepanitiaan Ikhtibar
+              if (user?.isPanitiaIkhtibar ?? false) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.celebration_rounded,
+                          size: 19,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Kepanitiaan Ikhtibar ke ${user?.ikhtibarKe ?? ""}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight)
+                                .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        user?.jabatanIkhtibar != null &&
+                                user!.jabatanIkhtibar!.isNotEmpty
+                            ? (user.isDivisiIkhtibar &&
+                                      user.namaDivisiIkhtibar != null
+                                  ? '${user.jabatanIkhtibar} (${user.namaDivisiIkhtibar})'
+                                  : user.jabatanIkhtibar!)
+                            : 'Panitia Ikhtibar',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                CustomizableMenuGrid(
+                  items: _buildPanitiaIkhtibarItems(user),
+                  sizes: _menuSizes,
+                  isEditing: _isCustomizingMenu,
+                  pinnedIds: _pinnedMenuIds,
+                  onTogglePin: _handleTogglePin,
+                  onResize: _handleResizeMenu,
+                  onLongPressTile: _toggleCustomizingMenu,
+                  onReorder: _handleReorderPanitiaIkhtibar,
+                ),
                 const SizedBox(height: 10),
               ],
             ],
@@ -1294,11 +1395,67 @@ class _HomeTabState extends State<HomeTab> {
     ], _panitiaImniOrder);
   }
 
+  List<QuickMenuItemData> _getAllPanitiaIkhtibarItems(dynamic user) {
+    final isBph = user?.isBphIkhtibar == true;
+    final items = <QuickMenuItemData>[
+      if (isBph) ...[
+        QuickMenuItemData(
+          id: 'ikhtibar_kasir',
+          icon: Icons.point_of_sale_rounded,
+          title: 'Kasir Pembayaran',
+          shortTitle: 'Kasir',
+          subtitle: 'Bayar Tagihan KK',
+          accentColor: AppColors.primaryLight,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const KasirIkhtibarScreen()),
+            );
+          },
+        ),
+        QuickMenuItemData(
+          id: 'ikhtibar_laporan',
+          icon: Icons.analytics_rounded,
+          title: 'Laporan Pembayaran',
+          shortTitle: 'Laporan',
+          subtitle: 'Kas Masuk & Dusun',
+          accentColor: AppColors.skyBlueAccent,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const LaporanIkhtibarScreen()),
+            );
+          },
+        ),
+      ],
+      QuickMenuItemData(
+        id: 'ikhtibar_spj',
+        icon: Icons.receipt_long_rounded,
+        title: 'Pengeluaran & SPJ',
+        shortTitle: 'Pagu & SPJ',
+        subtitle: isBph ? '16 Pos & LPJ Divisi' : 'Pagu & Nota SPJ',
+        accentColor: AppColors.roseDanger,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const PengeluaranSpjIkhtibarScreen(),
+            ),
+          );
+        },
+      ),
+    ];
+
+    return _sortItemsByOrder(items, _panitiaIkhtibarOrder);
+  }
+
   List<QuickMenuItemData> _buildPinnedMenuItems(dynamic user) {
     final all = <QuickMenuItemData>[
       ..._getAllMenuCepatItems(),
       if (user?.isWaliRuangan ?? false) ..._getAllWaliRuanganItems(user),
       if (user?.isPanitiaImni ?? false) ..._getAllPanitiaImniItems(),
+      if (user?.isPanitiaIkhtibar ?? false)
+        ..._getAllPanitiaIkhtibarItems(user),
     ];
     final map = {for (final item in all) item.id: item};
     return _pinnedMenuIds
@@ -1326,6 +1483,13 @@ class _HomeTabState extends State<HomeTab> {
     return _getAllPanitiaImniItems()
         .where((item) => !_pinnedMenuIds.contains(item.id))
         .toList();
+  }
+
+  List<QuickMenuItemData> _buildPanitiaIkhtibarItems(dynamic user) {
+    // Saring item yang sedang tersemat di atas agar tidak tampil dobel
+    return _getAllPanitiaIkhtibarItems(
+      user,
+    ).where((item) => !_pinnedMenuIds.contains(item.id)).toList();
   }
 
   Widget _buildPengumumanCard(

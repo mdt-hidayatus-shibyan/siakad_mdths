@@ -50,6 +50,14 @@ class PublicProfileController extends Controller
                 $roleName = 'Pengurus Yayasan';
                 break;
 
+            case 'panitia':
+            case 'panitia-ikhtibar':
+                $profil = \App\Models\Ikhtibar\PanitiaIkhtibar::with(['kegiatanIkhtibar', 'ustadz'])->findOrFail($id);
+                $roleName = 'Panitia Ikhtibar - ' . $profil->jabatan;
+                $kegiatan = $profil->kegiatanIkhtibar;
+                $keteranganTambahan = $kegiatan ? ($kegiatan->nama_kegiatan . ' (' . ($kegiatan->ikhtibar_ke ?: '') . ')') : 'MDT Hidayatus Shibyan';
+                break;
+
             default:
                 abort(404, 'Tipe profil tidak dikenali.');
         }

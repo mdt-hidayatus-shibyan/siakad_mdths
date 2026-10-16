@@ -215,10 +215,10 @@
                             <h3
                                 class="text-base font-black text-zinc-900 dark:text-white tracking-tight flex items-center gap-2">
                                 <i class="bi bi-receipt-cutoff text-emerald-500"></i>
-                                <span>Daftar Tagihan Keluarga (Tahun Ajaran Ini)</span>
+                                <span>Daftar Tagihan KK Reguler (Non-Ikhtibar)</span>
                             </h3>
                             <p class="text-xs text-zinc-400 mt-0.5">
-                                Pilih tagihan yang ingin dibayar atau cetak kwitansi untuk tagihan yang telah lunas.
+                                Khusus pembayaran tagihan KK selain Ikhtibar (Infaq Pembangunan, Kalender, dll.).
                             </p>
                         </div>
 
@@ -334,10 +334,24 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="py-8 text-center text-zinc-400 italic">
-                                            <i class="bi bi-info-circle text-2xl block mb-2 opacity-50"></i>
-                                            Belum ada tagihan yang diterbitkan untuk Wali Murid ini pada tahun
-                                            ajaran yang dipilih.
+                                        <td colspan="6" class="py-10 text-center text-zinc-400">
+                                            <div class="max-w-md mx-auto space-y-2">
+                                                <i class="bi bi-info-circle text-3xl block text-zinc-300 dark:text-zinc-600"></i>
+                                                <p class="font-bold text-xs text-zinc-600 dark:text-zinc-300">
+                                                    Belum ada tagihan KK reguler / non-ikhtibar yang aktif untuk keluarga ini.
+                                                </p>
+                                                <p class="text-[11px] text-zinc-400">
+                                                    Jika ingin memproses pembayaran <strong>Iuran Ikhtibar / Haflah</strong>, silakan buka menu khusus:
+                                                </p>
+                                                <div class="pt-1">
+                                                    <a href="{{ route('tagihan-ikhtibar.kasir', ['search_wali' => $waliTerpilih->no_registrasi ?? $waliTerpilih->nama_kepala_keluarga]) }}"
+                                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500 text-amber-700 dark:text-amber-400 hover:text-white border border-amber-500/20 text-xs font-black transition-all">
+                                                        <i class="bi bi-mortarboard-fill"></i>
+                                                        <span>Buka Kasir Tagihan Ikhtibar</span>
+                                                        <i class="bi bi-arrow-right text-[10px]"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforelse

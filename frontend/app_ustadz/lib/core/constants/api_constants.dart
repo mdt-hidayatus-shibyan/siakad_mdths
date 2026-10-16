@@ -143,6 +143,25 @@ class ApiConstants {
   static const String panitiaImniNilaiSimpan = '/panitia-imni/nilai/simpan';
   static const String panitiaImniNilaiLeger = '/panitia-imni/nilai/leger';
 
+  // Kepanitiaan Ikhtibar
+  static const String panitiaIkhtibarProfileStatus =
+      '/panitia-ikhtibar/profile-status';
+  static const String panitiaIkhtibarKasirRingkasan =
+      '/panitia-ikhtibar/kasir/ringkasan';
+  static const String panitiaIkhtibarKasirList = '/panitia-ikhtibar/kasir/list';
+  static const String panitiaIkhtibarKasirBayar =
+      '/panitia-ikhtibar/kasir/bayar';
+  static const String panitiaIkhtibarKasirVerifikasiTabungan =
+      '/panitia-ikhtibar/kasir/verifikasi-tabungan';
+  static const String panitiaIkhtibarLaporanRingkasan =
+      '/panitia-ikhtibar/laporan/ringkasan';
+  static const String panitiaIkhtibarLaporanRiwayat =
+      '/panitia-ikhtibar/laporan/riwayat';
+  static const String panitiaIkhtibarPaguSpjRingkasan =
+      '/panitia-ikhtibar/pagu-spj/ringkasan';
+  static const String panitiaIkhtibarSpjList = '/panitia-ikhtibar/spj/list';
+  static const String panitiaIkhtibarSpjSimpan = '/panitia-ikhtibar/spj/simpan';
+
   /// Format URL foto/gambar dari backend agar cocok dengan host yang aktif.
   /// Menghindari kegagalan koneksi ketika backend mengembalikan host 'localhost' / '127.0.0.1'
   /// saat diakses dari HP fisik atau emulator Android.

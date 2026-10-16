@@ -17,6 +17,7 @@ class TagihanWaliMurid extends Model
         'pengaturan_tagihan_id',
         'nama_tagihan_spesifik',
         'nominal_tagihan',
+        'total_terbayar',
         'status_bayar',
         'pembayaran_tagihan_id',
         'keterangan',
@@ -24,6 +25,7 @@ class TagihanWaliMurid extends Model
 
     protected $casts = [
         'nominal_tagihan' => 'integer',
+        'total_terbayar'  => 'integer',
     ];
 
     /**
@@ -59,11 +61,66 @@ class TagihanWaliMurid extends Model
     }
 
     /**
-     * Scope Tagihan yang belum lunas
+     * Relasi ke Riwayat Transaksi Ikhtibar (Tunai, Potong Tabungan Manual, dan Cicilan Maks 3x)
+     */
+    public function pembayaranIkhtibars()
+    {
+        return $this->hasMany(\App\Models\Ikhtibar\PembayaranTagihanIkhtibar::class, 'tagihan_wali_murid_id')->orderBy('termin_ke', 'asc');
+    }
+
+    /**
+     * Total Terbayar / Nominal Bayar (Alias untuk total_terbayar)
+     */
+    public function getNominalBayarAttribute(): int
+    {
+        return (int) ($this->total_terbayar ?? 0);
+    }
+
+    /**
+     * Sisa Tagihan (Nominal Tagihan dikurangi Total Terbayar)
+     */
+    public function getSisaTagihanAttribute(): int
+    {
+        if ($this->status_bayar === 'Lunas') {
+            return 0;
+        }
+        $terbayar = $this->total_terbayar ?? 0;
+        return max(0, $this->nominal_tagihan - $terbayar);
+    }
+
+    /**
+     * Jumlah Termin Cicilan yang sudah dicatat
+     */
+    public function getJumlahCicilanAttribute(): int
+    {
+        if ($this->relationLoaded('pembayaranIkhtibars')) {
+            return $this->pembayaranIkhtibars->count();
+        }
+        return $this->pembayaranIkhtibars()->count();
+    }
+
+    /**
+     * Termin Berikutnya (Maksimal 3)
+     */
+    public function getTerminBerikutnyaAttribute(): int
+    {
+        return min(3, $this->jumlah_cicilan + 1);
+    }
+
+    /**
+     * Scope Tagihan yang sedang dalam status Cicilan
+     */
+    public function scopeCicilan($query)
+    {
+        return $query->where('status_bayar', 'Cicilan');
+    }
+
+    /**
+     * Scope Tagihan yang belum lunas (termasuk Cicilan dan Belum Lunas)
      */
     public function scopeBelumLunas($query)
     {
-        return $query->where('status_bayar', 'Belum Lunas');
+        return $query->whereIn('status_bayar', ['Belum Lunas', 'Cicilan']);
     }
 
     /**
