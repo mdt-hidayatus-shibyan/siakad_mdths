@@ -20,8 +20,6 @@ return new class extends Migration
 
                 // Identitas Ikhtibar
                 $table->string('logo_kegiatan')->nullable();
-                $table->string('kop_logo_ikhtibar')->nullable();
-                $table->string('kop_logo_ikhtibar')->nullable();
                 $table->string('nama_kegiatan')->default('Haflah Ikhtibar');
                 $table->string('ikhtibar_ke')->nullable(); // Contoh: "52 Th", "53 Th"
                 $table->string('tema_kegiatan')->nullable();
