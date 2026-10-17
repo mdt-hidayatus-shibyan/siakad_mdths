@@ -29,7 +29,7 @@ class AppAvatar extends StatelessWidget {
     this.shape = BoxShape.rectangle,
     this.borderRadius,
     this.fit = BoxFit.cover,
-    this.alignment = const Alignment(0.0, -0.2), // Fokus 20% lebih ke atas (area wajah/kepala pas, tidak condong)
+    this.alignment = const Alignment(0.0, -0.65), // Fokus area kepala & wajah (menjaga pasfoto 3:4 seimbang di tengah, peci tidak terpotong, dan tidak condong ke bawah)
     this.onTap,
   });
 
@@ -44,8 +44,8 @@ class AppAvatar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final resolvedUrl = ApiClient.resolveImageUrl(imageUrl);
     final size = radius * 2;
-    // Downsampling memori yang ketat: 80 - 240px cukup untuk retina display tanpa membebani RAM
-    final int memCacheSize =
+    // Downsampling memori yang aman: sesuaikan ukuran lebar dengan retina display (~2x)
+    final int memCacheWidth =
         cacheDimension ?? (size * 2.2).toInt().clamp(80, 240);
 
     final defaultBg = isDark
@@ -75,10 +75,12 @@ class AppAvatar extends StatelessWidget {
         height: size,
         fit: fit,
         alignment: alignment,
-        memCacheWidth: memCacheSize,
-        memCacheHeight: memCacheSize,
+        memCacheWidth: memCacheWidth,
+        // CATATAN PENTING: Jangan set memCacheHeight sama dengan memCacheWidth!
+        // Jika keduanya diisi sama, Flutter ResizeImage akan memaksa gambar di-stretch/gepeng
+        // menjadi bujur sangkar 1:1 sehingga rasio aslinya (3:4) rusak dan distorsi.
+        // Dengan hanya menentukan memCacheWidth, Flutter mendecode tinggi proporsional otomatis.
         maxWidthDiskCache: 400,
-        maxHeightDiskCache: 400,
         filterQuality: FilterQuality.medium,
         placeholder: (context, url) => Center(
           child: SizedBox(

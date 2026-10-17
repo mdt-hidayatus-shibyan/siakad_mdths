@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/panitia_ikhtibar_model.dart';
@@ -50,8 +51,8 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
     return formatter.format(number);
   }
 
-  Future<void> _bukaKwitansi(String? url) async {
-    if (url == null || url.isEmpty) {
+  Future<void> _bukaKwitansi(String? rawUrl) async {
+    if (rawUrl == null || rawUrl.trim().isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tautan kwitansi tidak tersedia')),
@@ -61,17 +62,26 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
     }
     HapticHelper.light();
     try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tidak dapat membuka tautan kwitansi'),
-            ),
-          );
-        }
+      final formattedUrl = ApiClient.resolveWebUrl(rawUrl) ?? rawUrl.trim();
+      final uri = Uri.parse(formattedUrl);
+
+      bool launched = false;
+      try {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {}
+
+      if (!launched) {
+        try {
+          launched = await launchUrl(uri);
+        } catch (_) {}
+      }
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tidak dapat membuka tautan kwitansi di peramban'),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -288,9 +298,16 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
         builder: (context, setModalState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0
+              ? (bottomInset + 20)
+              : (systemBottom + 24);
 
           return Container(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, bottomInset + 20),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E2129) : Colors.white,
               borderRadius: const BorderRadius.vertical(
@@ -910,7 +927,7 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
 
     return Scaffold(
       appBar: CustomAppBar(
-        titleText: 'Kasir Ikhtibar (${ringkasan?.ikhtibarKe ?? "52 Th"})',
+        titleText: 'Kasir Ikhtibar (${ringkasan?.ikhtibarKe ?? "-"})',
         showBackButton: true,
       ),
       body: RefreshIndicator(
@@ -921,130 +938,6 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Ringkasan Eksekutif Kasir Card
-              if (ringkasan != null) ...[
-                GlassCard(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color:
-                                      (isDark
-                                              ? AppColors.primaryDark
-                                              : AppColors.primaryLight)
-                                          .withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.point_of_sale_rounded,
-                                  color: isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Text(
-                                'Progres Tagihan Ikhtibar',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  (isDark
-                                          ? AppColors.primaryDark
-                                          : AppColors.primaryLight)
-                                      .withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${ringkasan.persentaseKelunasan}% Lunas',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? AppColors.primaryDark
-                                    : AppColors.primaryLight,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Progress Bar
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: (ringkasan.persentaseKelunasan / 100).clamp(
-                            0.0,
-                            1.0,
-                          ),
-                          minHeight: 8,
-                          backgroundColor: isDark
-                              ? Colors.white12
-                              : Colors.black12,
-                          color: isDark
-                              ? AppColors.primaryDark
-                              : AppColors.primaryLight,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildMetricCol(
-                              'Target Total',
-                              _formatRupiah(ringkasan.targetNominal),
-                              isDark,
-                            ),
-                          ),
-                          Expanded(
-                            child: _buildMetricCol(
-                              'Terkumpul',
-                              _formatRupiah(ringkasan.totalMasuk),
-                              isDark,
-                              color: isDark
-                                  ? AppColors.primaryDark
-                                  : AppColors.primaryLight,
-                            ),
-                          ),
-                          Expanded(
-                            child: _buildMetricCol(
-                              'Sisa Piutang',
-                              _formatRupiah(ringkasan.totalSisa),
-                              isDark,
-                              color: AppColors.roseDanger,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // const SizedBox(height: 12),
-
-                const SizedBox(height: 8),
-              ],
-
               // 2. Search Box
               TextField(
                 controller: _searchCtrl,
@@ -1219,35 +1112,6 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildMetricCol(
-    String title,
-    String value,
-    bool isDark, {
-    Color? color,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 10,
-            color: isDark ? Colors.white60 : Colors.black54,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
     );
   }
 

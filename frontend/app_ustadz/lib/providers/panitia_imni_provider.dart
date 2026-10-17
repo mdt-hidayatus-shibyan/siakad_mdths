@@ -110,7 +110,7 @@ class PanitiaImniProvider extends ChangeNotifier {
     fetchPesertaList();
   }
 
-  Future<bool> simpanPembayaran({
+  Future<Map<String, dynamic>?> simpanPembayaran({
     required int pesertaId,
     required double nominalBayar,
     String? tanggalBayar,
@@ -123,7 +123,7 @@ class PanitiaImniProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _repo.simpanPembayaran(
+      final res = await _repo.simpanPembayaran(
         pesertaId: pesertaId,
         nominalBayar: nominalBayar,
         tanggalBayar: tanggalBayar,
@@ -135,11 +135,11 @@ class PanitiaImniProvider extends ChangeNotifier {
       // Refresh ringkasan & list
       await fetchPembayaranRingkasan();
       await fetchPesertaList();
-      return true;
+      return res['data'] as Map<String, dynamic>? ?? res;
     } catch (e) {
       HapticHelper.warning();
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      return false;
+      return null;
     } finally {
       _isSubmittingPembayaran = false;
       notifyListeners();

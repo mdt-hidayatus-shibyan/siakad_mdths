@@ -2,7 +2,7 @@ class ApiConstants {
   ApiConstants._();
 
   // Backend API URL
-  // static const String defaultBaseUrl = 'http://10.35.20.1:8000/api';
+  // static const String defaultBaseUrl = 'http://10.187.187.1:8000/api';
   // static const String defaultBaseUrl = 'http://127.0.0.1:8000/api';
   static const String defaultBaseUrl =
       'https://mdt-hidayatus-shibyan.sch.id/api';
@@ -202,5 +202,38 @@ class ApiConstants {
     }
 
     return trimmed;
+  }
+
+  /// Format URL umum/dokumen/kwitansi agar mengarah ke host backend yang aktif.
+  /// Menjamin bila backend mengirimkan 'localhost' atau '127.0.0.1', otomatis diarahkan
+  /// ke IP/Domain server yang sedang digunakan aplikasi Ustadz.
+  static String? formatWebUrl(String? rawUrl, [String? customBaseUrl]) {
+    if (rawUrl == null || rawUrl.trim().isEmpty) return null;
+
+    final trimmed = rawUrl.trim();
+    final activeBase = (customBaseUrl != null && customBaseUrl.isNotEmpty)
+        ? customBaseUrl
+        : defaultBaseUrl;
+    final baseUri = Uri.tryParse(activeBase);
+    if (baseUri == null || !baseUri.hasScheme || !baseUri.hasAuthority) {
+      return trimmed;
+    }
+
+    final targetHostAuthority = '${baseUri.scheme}://${baseUri.authority}';
+
+    final rawUri = Uri.tryParse(trimmed);
+    if (rawUri != null && rawUri.hasScheme && rawUri.hasAuthority) {
+      if (rawUri.host == 'localhost' ||
+          rawUri.host == '127.0.0.1' ||
+          rawUri.host != baseUri.host) {
+        final pathAndQuery =
+            '${rawUri.path}${rawUri.hasQuery ? '?${rawUri.query}' : ''}';
+        return '$targetHostAuthority$pathAndQuery';
+      }
+      return trimmed;
+    }
+
+    final cleanPath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return '$targetHostAuthority$cleanPath';
   }
 }

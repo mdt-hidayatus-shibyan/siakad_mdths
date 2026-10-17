@@ -151,6 +151,7 @@ class PembayaranDetailItem {
   final String metodePembayaran;
   final String? namaPenyetor;
   final String penerimaNama;
+  final String? kwitansiUrl;
 
   PembayaranDetailItem({
     this.id,
@@ -164,6 +165,7 @@ class PembayaranDetailItem {
     required this.metodePembayaran,
     this.namaPenyetor,
     required this.penerimaNama,
+    this.kwitansiUrl,
   });
 
   factory PembayaranDetailItem.fromJson(Map<String, dynamic> json) {
@@ -179,6 +181,7 @@ class PembayaranDetailItem {
       metodePembayaran: json['metode_pembayaran'] ?? 'Tunai',
       namaPenyetor: json['nama_penyetor'],
       penerimaNama: json['penerima_nama'] ?? 'Bendahara',
+      kwitansiUrl: json['kwitansi_url'],
     );
   }
 }

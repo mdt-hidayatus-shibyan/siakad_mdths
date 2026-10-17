@@ -72,4 +72,9 @@ class ApiClient {
   static String? resolveImageUrl(String? rawUrl) {
     return ApiConstants.formatImageUrl(rawUrl, _instance.baseUrl);
   }
+
+  /// Format URL web / dokumen / kwitansi menggunakan base URL yang sedang aktif
+  static String? resolveWebUrl(String? rawUrl) {
+    return ApiConstants.formatWebUrl(rawUrl, _instance.baseUrl);
+  }
 }

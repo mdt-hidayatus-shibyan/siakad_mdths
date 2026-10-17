@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
@@ -78,8 +79,8 @@ class _LaporanIkhtibarScreenState extends State<LaporanIkhtibarScreen>
     return formatter.format(number);
   }
 
-  Future<void> _bukaKwitansi(String? url) async {
-    if (url == null || url.isEmpty) {
+  Future<void> _bukaKwitansi(String? rawUrl) async {
+    if (rawUrl == null || rawUrl.trim().isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tautan kwitansi tidak tersedia')),
@@ -89,17 +90,26 @@ class _LaporanIkhtibarScreenState extends State<LaporanIkhtibarScreen>
     }
     HapticHelper.light();
     try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tidak dapat membuka tautan kwitansi'),
-            ),
-          );
-        }
+      final formattedUrl = ApiClient.resolveWebUrl(rawUrl) ?? rawUrl.trim();
+      final uri = Uri.parse(formattedUrl);
+
+      bool launched = false;
+      try {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {}
+
+      if (!launched) {
+        try {
+          launched = await launchUrl(uri);
+        } catch (_) {}
+      }
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tidak dapat membuka tautan kwitansi di peramban'),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

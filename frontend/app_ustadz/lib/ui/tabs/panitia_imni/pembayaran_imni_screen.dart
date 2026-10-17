@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/panitia_imni_model.dart';
@@ -71,6 +73,47 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
       }
     }
     return 'Rp ${buffer.toString().split('').reversed.join('')}';
+  }
+
+  Future<void> _bukaKwitansi(String? rawUrl) async {
+    if (rawUrl == null || rawUrl.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tautan kwitansi tidak tersedia')),
+        );
+      }
+      return;
+    }
+    HapticHelper.light();
+    try {
+      final formattedUrl = ApiClient.resolveWebUrl(rawUrl) ?? rawUrl.trim();
+      final uri = Uri.parse(formattedUrl);
+
+      bool launched = false;
+      try {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {}
+
+      if (!launched) {
+        try {
+          launched = await launchUrl(uri);
+        } catch (_) {}
+      }
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tidak dapat membuka tautan kwitansi di peramban'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal membuka kwitansi: $e')));
+      }
+    }
   }
 
   // =========================================================================
@@ -389,7 +432,7 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
                                 return;
                               }
 
-                              final ok = await provider.simpanPembayaran(
+                              final result = await provider.simpanPembayaran(
                                 pesertaId: peserta.id,
                                 nominalBayar: nom,
                                 namaPenyetor: penyetorCtrl.text.trim().isEmpty
@@ -403,15 +446,35 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
 
                               if (context.mounted) {
                                 Navigator.pop(context);
-                                if (ok) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Pembayaran untuk ${peserta.namaLengkap} berhasil dicatat!',
+                                if (result != null) {
+                                  final statusBayar =
+                                      result['status_pembayaran'] as String? ??
+                                      '';
+                                  final sisaTagihan =
+                                      (result['sisa_tagihan'] as num?)
+                                          ?.toDouble() ??
+                                      0.0;
+                                  final isLunas =
+                                      statusBayar == 'Lunas' ||
+                                      sisaTagihan <= 0;
+
+                                  if (isLunas) {
+                                    _showModalDetailLunasImni(
+                                      peserta,
+                                      result,
+                                      nom,
+                                      metodePembayaran,
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Pembayaran untuk ${peserta.namaLengkap} sebesar ${_formatRupiah(nom)} berhasil dicatat!',
+                                        ),
+                                        backgroundColor: Colors.green,
                                       ),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
+                                    );
+                                  }
                                 } else if (provider.errorMessage != null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -458,126 +521,470 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
     );
   }
 
-  // =========================================================================
-  // DIALOG: KWITANSI RESMI IMNI
-  // =========================================================================
-  void _openKwitansiDialog(PesertaImniItem peserta) {
-    HapticHelper.light();
-    final pem = peserta.pembayaran;
+  void _showModalDetailLunasImni(
+    PesertaImniItem peserta,
+    Map<String, dynamic> data,
+    double nominalBayar,
+    String metode,
+  ) {
+    HapticHelper.confirmSuccess();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark
+        ? AppColors.primaryDark
+        : AppColors.primaryLight;
+    final kwitansiUrl =
+        data['kwitansi_url'] as String? ?? peserta.pembayaran.kwitansiUrl;
+    final noKwitansi =
+        data['no_kwitansi'] as String? ?? peserta.pembayaran.noKwitansi;
 
     showDialog(
       context: context,
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-
-        return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF161F16) : Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
+      barrierDismissible: false,
+      builder: (dlgCtx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: isDark ? const Color(0xFF1E2129) : Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
+                  color: primaryColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.receipt_rounded,
-                  color: Colors.green,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Kwitansi IMNI',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: primaryColor,
+                  size: 40,
                 ),
               ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+              const SizedBox(height: 16),
+              const Text(
+                'Pembayaran Lunas!',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Alhamdulillah, seluruh administrasi IMNI santri ini telah selesai dibayarkan.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? Colors.white12 : Colors.black12,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    _buildKwitansiDetailRow(
+                      'Nama Santri',
+                      peserta.namaLengkap,
+                      isDark,
+                      isBold: true,
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+                    const Divider(height: 14),
+                    _buildKwitansiDetailRow('No. Kwitansi', noKwitansi, isDark),
+                    const Divider(height: 14),
+                    _buildKwitansiDetailRow(
+                      'No. Peserta',
+                      peserta.nomorPeserta,
+                      isDark,
                     ),
-                    child: Text(
-                      'No. ${pem.noKwitansi}',
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
+                    const Divider(height: 14),
+                    _buildKwitansiDetailRow(
+                      'Ruangan',
+                      '${peserta.ruanganUjian} (${peserta.namaTingkat})',
+                      isDark,
+                    ),
+                    const Divider(height: 14),
+                    _buildKwitansiDetailRow('Metode Bayar', metode, isDark),
+                    const Divider(height: 14),
+                    _buildKwitansiDetailRow(
+                      'Nominal Dibayar',
+                      _formatRupiah(nominalBayar),
+                      isDark,
+                      isBold: true,
+                      valueColor: primaryColor,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (kwitansiUrl != null && kwitansiUrl.isNotEmpty) ...[
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dlgCtx);
+                      _bukaKwitansi(kwitansiUrl);
+                    },
+                    icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                    label: const Text(
+                      'Buka Kwitansi',
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.green,
                         fontSize: 13,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                _buildKwitansiRow('Murid', peserta.namaLengkap),
-                _buildKwitansiRow('NISM', peserta.nism),
-                _buildKwitansiRow('No. Peserta', peserta.nomorPeserta),
-                _buildKwitansiRow(
-                  'Tingkat/Kelas',
-                  '${peserta.namaTingkat} (${peserta.namaLevel})',
-                ),
-                _buildKwitansiRow('Ruangan Ujian', peserta.ruanganUjian),
-                const Divider(height: 20),
-                _buildKwitansiRow(
-                  'Nominal Bayar',
-                  _formatRupiah(pem.nominalBayar),
-                  isBold: true,
-                  color: Colors.green,
-                ),
-                _buildKwitansiRow(
-                  'Sisa Tagihan',
-                  _formatRupiah(pem.sisaTagihan),
-                  color: pem.sisaTagihan > 0 ? Colors.orange : null,
-                ),
-                _buildKwitansiRow('Status', pem.statusPembayaran, isBold: true),
-                _buildKwitansiRow(
-                  'Tgl Bayar',
-                  pem.tanggalBayarFormat ?? pem.tanggalBayar ?? '-',
-                ),
-                _buildKwitansiRow('Metode', pem.metodePembayaran),
-                _buildKwitansiRow('Penerima', pem.penerimaNama),
-                if (pem.namaPenyetor != null && pem.namaPenyetor!.isNotEmpty)
-                  _buildKwitansiRow('Penyetor', pem.namaPenyetor!),
+                const SizedBox(height: 10),
               ],
+              SizedBox(
+                width: double.infinity,
+                height: 42,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(dlgCtx),
+                  child: Text(
+                    'Selesai',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =========================================================================
+  // DIALOG: KWITANSI RESMI IMNI (M-BANKING STYLE SLIP)
+  // =========================================================================
+  void _openKwitansiDialog(PesertaImniItem peserta) {
+    HapticHelper.light();
+    final pem = peserta.pembayaran;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark
+        ? AppColors.primaryDark
+        : AppColors.primaryLight;
+    final isLunas = pem.statusPembayaran == 'Lunas';
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: isDark ? const Color(0xFF1E2129) : Colors.white,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // M-Banking Header Seal
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.school_rounded,
+                              size: 20,
+                              color: primaryColor,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'MDT HIDAYATUS SHIBYAN',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              Text(
+                                'Panitia IMNI',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isDark
+                                      ? Colors.white60
+                                      : Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.green.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: const Text(
+                          '✓ SAH',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Hero Icon & Status
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: isLunas ? Colors.green : Colors.amber.shade700,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isLunas ? Colors.green : Colors.amber)
+                              .withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      isLunas ? Icons.check_rounded : Icons.access_time_rounded,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isLunas ? 'PEMBAYARAN LUNAS' : 'TRANSAKSI IMNI',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    pem.tanggalBayarFormat ??
+                        pem.tanggalBayar ??
+                        'Terkonfirmasi',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Large Nominal
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        'Rp ',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                      Text(
+                        _formatRupiah(pem.nominalBayar).replaceAll('Rp ', ''),
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Ticket Divider
+                  Row(
+                    children: List.generate(
+                      24,
+                      (index) => Expanded(
+                        child: Container(
+                          color: index % 2 == 0
+                              ? (isDark ? Colors.white24 : Colors.black12)
+                              : Colors.transparent,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Key-value Details
+                  _buildKwitansiDetailRow(
+                    'No. Kwitansi',
+                    pem.noKwitansi,
+                    isDark,
+                    isMono: true,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildKwitansiDetailRow(
+                    'Nama Santri',
+                    peserta.namaLengkap,
+                    isDark,
+                    isBold: true,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildKwitansiDetailRow(
+                    'No. Peserta / Kelas',
+                    '${peserta.nomorPeserta} (${peserta.namaTingkat})',
+                    isDark,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildKwitansiDetailRow(
+                    'Ruangan Ujian',
+                    peserta.ruanganUjian,
+                    isDark,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildKwitansiDetailRow(
+                    'Metode Bayar',
+                    pem.metodePembayaran,
+                    isDark,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildKwitansiDetailRow(
+                    'Penerima / Kasir',
+                    pem.penerimaNama,
+                    isDark,
+                  ),
+                  if (pem.namaPenyetor != null &&
+                      pem.namaPenyetor!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildKwitansiDetailRow(
+                      'Penyetor',
+                      pem.namaPenyetor!,
+                      isDark,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  _buildKwitansiDetailRow(
+                    'Sisa Tagihan',
+                    pem.sisaTagihan > 0
+                        ? _formatRupiah(pem.sisaTagihan)
+                        : 'Rp 0 (LUNAS)',
+                    isDark,
+                    isBold: true,
+                    valueColor: pem.sisaTagihan > 0
+                        ? Colors.orange
+                        : Colors.green,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Action Buttons
+                  if (pem.kwitansiUrl != null &&
+                      pem.kwitansiUrl!.isNotEmpty) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _bukaKwitansi(pem.kwitansiUrl);
+                        },
+                        icon: const Icon(
+                          Icons.open_in_browser_rounded,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Lihat Kwitansi',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _confirmBatalBayar(peserta);
+                          },
+                          child: const Text(
+                            'Batalkan / Reset',
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(
+                            'Tutup',
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black87,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _confirmBatalBayar(peserta);
-              },
-              child: const Text(
-                'Batalkan / Reset',
-                style: TextStyle(color: Colors.redAccent),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text('Tutup'),
-            ),
-          ],
         );
       },
     );
@@ -628,32 +1035,39 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
     );
   }
 
-  Widget _buildKwitansiRow(
+  Widget _buildKwitansiDetailRow(
     String label,
-    String value, {
+    String value,
+    bool isDark, {
     bool isBold = false,
-    Color? color,
+    bool isMono = false,
+    Color? valueColor,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-                color: color,
-              ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+              fontFamily: isMono ? 'monospace' : null,
+              color: valueColor ?? (isDark ? Colors.white : Colors.black87),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -897,11 +1311,14 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<int?>(
                             isExpanded: true,
-                            value: daftarRuangan.any((r) => r.id == _selectedRuanganId)
+                            value:
+                                daftarRuangan.any(
+                                  (r) => r.id == _selectedRuanganId,
+                                )
                                 ? _selectedRuanganId
                                 : (daftarRuangan.isNotEmpty
-                                    ? daftarRuangan.first.id
-                                    : null),
+                                      ? daftarRuangan.first.id
+                                      : null),
                             hint: const Text(
                               'Pilih Ruangan / Kelas IMNI',
                               style: TextStyle(fontSize: 13),
@@ -1271,31 +1688,33 @@ class _PembayaranImniScreenState extends State<PembayaranImniScreen> {
                           ),
                         ),
                       ),
-                    const SizedBox(width: 6),
-                    ElevatedButton.icon(
-                      onPressed: () => _openSetorBayarSheet(p),
-                      icon: const Icon(Icons.add_card_rounded, size: 14),
-                      label: Text(
-                        isLunas ? 'Tambah' : 'Setor Kas',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                    if (!isLunas) ...[
+                      if (pem.nominalBayar > 0) const SizedBox(width: 6),
+                      ElevatedButton.icon(
+                        onPressed: () => _openSetorBayarSheet(p),
+                        icon: const Icon(Icons.add_card_rounded, size: 14),
+                        label: const Text(
+                          'Setor Kas',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark
+                              ? AppColors.primaryDark
+                              : AppColors.primaryLight,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ],

@@ -88,9 +88,16 @@ class _PengeluaranSpjIkhtibarScreenState
         builder: (context, setModalState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemBottom = MediaQuery.of(context).padding.bottom;
+          final bottomPadding = bottomInset > 0
+              ? (bottomInset + 20)
+              : (systemBottom + 24);
 
           return Container(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, bottomInset + 20),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E2129) : Colors.white,
               borderRadius: const BorderRadius.vertical(
@@ -1043,35 +1050,6 @@ class _PengeluaranSpjIkhtibarScreenState
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              (d.isBph == true
-                                      ? AppColors.amberAccent
-                                      : (isDark
-                                            ? AppColors.primaryDark
-                                            : AppColors.primaryLight))
-                                  .withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          d.kode,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                            color: d.isBph == true
-                                ? AppColors.amberAccent
-                                : (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       Text(
                         d.namaDivisi,
                         style: const TextStyle(
@@ -1198,7 +1176,9 @@ class _PengeluaranSpjIkhtibarScreenState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(

@@ -41,17 +41,17 @@ class AppVersionConfig {
   // ---------------------------------------------------------------------------
   static const String appTitle = 'Ustadz - MDTHS';
   static const String appSubtitle = 'MDT Hidayatus Shibyan';
-  static const String version = '3.5.0';
+  static const String version = '3.5.5';
   static const String buildNumber = '2026.10.06';
   static const String releaseDate = 'Oktober 2026';
-  static const String statusBadge = 'Versi Beta';
+  static const String statusBadge = 'Versi Stabil';
   static const bool isLatest = true;
 
   // ---------------------------------------------------------------------------
   // 2. CATATAN RILIS (CHANGELOG)
   // ---------------------------------------------------------------------------
-  static const String releaseSubtitle = 'Beta Release - Oktober 2026';
-  static const String releaseBadge = 'Beta Version';
+  static const String releaseSubtitle = 'Stable Release - Oktober 2026';
+  static const String releaseBadge = 'Stable Version';
 
   /// Ubah / tambahkan fitur baru di sini:
   static const List<ChangelogEntry> newFeatures = [
@@ -90,6 +90,11 @@ class AppVersionConfig {
   /// 🛠️ DAFTAR PERBAIKAN & PENINGKATAN SISTEM
   /// Ubah / tambahkan perbaikan bug atau peningkatan sistem di sini:
   static const List<ChangelogEntry> improvements = [
+    ChangelogEntry(
+      title: 'Perbaikan Sistem',
+      description:
+          'Perbaikan Kwitansi Lunas agar lebih mudah dibaca dan dicetak, termasuk perbaikan format tanggal, nomor kwitansi, dan tata letak informasi pembayaran.',
+    ),
     ChangelogEntry(
       title: 'Perbaikan Sistem',
       description:
