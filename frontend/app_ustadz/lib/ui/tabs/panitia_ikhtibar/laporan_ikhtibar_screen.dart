@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
+import '../../../data/models/panitia_ikhtibar_model.dart';
 import '../../../providers/panitia_ikhtibar_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
+import '../../widgets/kwitansi_pembayaran_screen.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/shimmer_loading.dart';
 
@@ -52,7 +52,7 @@ class _LaporanIkhtibarScreenState extends State<LaporanIkhtibarScreen>
   void _shiftDate(int days) {
     HapticHelper.selection();
     final provider = context.read<PanitiaIkhtibarProvider>();
-    final current = provider.filterLaporanTanggal ?? DateTime.now();
+    final current = provider.filterLaporanTanggal;
     provider.setFilterLaporanTanggal(current.add(Duration(days: days)));
   }
 
@@ -60,7 +60,7 @@ class _LaporanIkhtibarScreenState extends State<LaporanIkhtibarScreen>
     final provider = context.read<PanitiaIkhtibarProvider>();
     final picked = await showDatePicker(
       context: context,
-      initialDate: provider.filterLaporanTanggal ?? DateTime.now(),
+      initialDate: provider.filterLaporanTanggal,
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
     );
@@ -79,45 +79,36 @@ class _LaporanIkhtibarScreenState extends State<LaporanIkhtibarScreen>
     return formatter.format(number);
   }
 
-  Future<void> _bukaKwitansi(String? rawUrl) async {
-    if (rawUrl == null || rawUrl.trim().isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tautan kwitansi tidak tersedia')),
-        );
-      }
-      return;
-    }
+  void _bukaHalamanKwitansiRiwayat(RiwayatPembayaranIkhtibarItem r) {
     HapticHelper.light();
-    try {
-      final formattedUrl = ApiClient.resolveWebUrl(rawUrl) ?? rawUrl.trim();
-      final uri = Uri.parse(formattedUrl);
+    final provider = context.read<PanitiaIkhtibarProvider>();
+    final ikhtibarKe = provider.kasirRingkasan?.ikhtibarKe;
+    final judulKegiatan = (ikhtibarKe != null && ikhtibarKe.isNotEmpty)
+        ? 'Ikhtibar $ikhtibarKe'
+        : 'Ikhtibar';
+    final tglBayar = r.tanggal != null ? DateTime.tryParse(r.tanggal!) : null;
 
-      bool launched = false;
-      try {
-        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } catch (_) {}
-
-      if (!launched) {
-        try {
-          launched = await launchUrl(uri);
-        } catch (_) {}
-      }
-
-      if (!launched && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tidak dapat membuka tautan kwitansi di peramban'),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal membuka kwitansi: $e')));
-      }
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KwitansiPembayaranScreen(
+          judulKegiatan: judulKegiatan,
+          subJudul: 'Riwayat Setoran Panitia Ikhtibar',
+          noTransaksi: r.noTransaksi,
+          status: r.tipePembayaran,
+          nominalBayar: r.nominal,
+          namaPembayar: r.namaPenyetor,
+          kampung: r.kampung,
+          metodePembayaran: r.metode,
+          nomorTabungan: r.nomorTabungan,
+          namaNasabah: r.namaNasabah,
+          ruanganNasabah: r.ruanganNasabah,
+          tanggalBayar: tglBayar,
+          kasir: r.diterimaOleh,
+          kwitansiUrl: r.kwitansiUrl ?? r.kwitansiTagihanUrl,
+        ),
+      ),
+    );
   }
 
   @override
@@ -759,6 +750,12 @@ class _LaporanIkhtibarScreenState extends State<LaporanIkhtibarScreen>
   // TAB 3: RIWAYAT TRANSAKSI
   // =========================================================================
   Widget _buildTabRiwayat(PanitiaIkhtibarProvider provider, bool isDark) {
+    final now = DateTime.now();
+    final isToday =
+        provider.filterLaporanTanggal.year == now.year &&
+        provider.filterLaporanTanggal.month == now.month &&
+        provider.filterLaporanTanggal.day == now.day;
+
     return Column(
       children: [
         // 1. Filter Metode Horizontal
@@ -828,17 +825,15 @@ class _LaporanIkhtibarScreenState extends State<LaporanIkhtibarScreen>
                           const SizedBox(width: 8),
                           Flexible(
                             child: Text(
-                              provider.filterLaporanTanggal != null
-                                  ? DateHelper.formatTanggalIndo(
-                                      provider.filterLaporanTanggal!,
-                                    )
-                                  : 'Semua Tanggal (Ketuk untuk pilih)',
+                              isToday
+                                  ? '${DateHelper.formatTanggalIndo(provider.filterLaporanTanggal)} (Hari Ini)'
+                                  : DateHelper.formatTanggalIndo(
+                                      provider.filterLaporanTanggal,
+                                    ),
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.bold,
-                                color: provider.filterLaporanTanggal != null
-                                    ? (isDark ? Colors.white : Colors.black87)
-                                    : (isDark ? Colors.white60 : Colors.black54),
+                                color: isDark ? Colors.white : Colors.black87,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -848,14 +843,20 @@ class _LaporanIkhtibarScreenState extends State<LaporanIkhtibarScreen>
                     ),
                   ),
                 ),
-                if (provider.filterLaporanTanggal != null)
+                if (!isToday)
                   IconButton(
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Tampilkan Semua Tanggal',
-                    icon: const Icon(Icons.close_rounded, size: 18),
+                    tooltip: 'Kembali ke Hari Ini',
+                    icon: Icon(
+                      Icons.today_rounded,
+                      size: 18,
+                      color: isDark
+                          ? AppColors.primaryDark
+                          : AppColors.primaryLight,
+                    ),
                     onPressed: () {
                       HapticHelper.light();
-                      provider.setFilterLaporanTanggal(null);
+                      provider.setFilterLaporanTanggal(DateTime.now());
                     },
                   ),
                 IconButton(
@@ -1040,7 +1041,7 @@ class _LaporanIkhtibarScreenState extends State<LaporanIkhtibarScreen>
                               if (r.kwitansiUrl != null &&
                                   r.kwitansiUrl!.isNotEmpty)
                                 InkWell(
-                                  onTap: () => _bukaKwitansi(r.kwitansiUrl),
+                                  onTap: () => _bukaHalamanKwitansiRiwayat(r),
                                   borderRadius: BorderRadius.circular(6),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(

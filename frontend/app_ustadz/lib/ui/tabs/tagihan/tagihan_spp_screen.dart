@@ -75,7 +75,9 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceContainerLowDark : AppColors.surfaceContainerLowLight,
+              color: isDark
+                  ? AppColors.surfaceContainerLowDark
+                  : AppColors.surfaceContainerLowLight,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
@@ -646,36 +648,6 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-
-                    // Badges count status
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildMiniBadge(
-                          'Lunas Semua: ${ringkasan.totalSantriLunasSemua}',
-                          AppColors.hadirTextLight,
-                          isDark
-                              ? AppColors.hadirBgDark
-                              : AppColors.hadirBgLight,
-                        ),
-                        _buildMiniBadge(
-                          'Belum Lunas: ${ringkasan.totalSantriBelumLunas}',
-                          AppColors.amberAccent,
-                          isDark
-                              ? const Color(0xFF382305)
-                              : const Color(0xFFFEF3C7),
-                        ),
-                        if (ringkasan.totalSantriBebasDonatur > 0)
-                          _buildMiniBadge(
-                            'Bebas: ${ringkasan.totalSantriBebasDonatur}',
-                            AppColors.violetAccent,
-                            isDark
-                                ? const Color(0xFF241538)
-                                : const Color(0xFFF3E8FF),
-                          ),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -1085,24 +1057,6 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMiniBadge(String text, Color textColor, Color bgColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
       ),
     );
   }

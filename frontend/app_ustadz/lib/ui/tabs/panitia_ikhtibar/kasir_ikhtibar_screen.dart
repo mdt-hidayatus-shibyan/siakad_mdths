@@ -1,8 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
@@ -10,6 +9,7 @@ import '../../../data/models/panitia_ikhtibar_model.dart';
 import '../../../providers/panitia_ikhtibar_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/glass_card.dart';
+import '../../widgets/kwitansi_pembayaran_screen.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/shimmer_loading.dart';
 
@@ -21,11 +21,21 @@ class KasirIkhtibarScreen extends StatefulWidget {
 }
 
 class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
-  final TextEditingController _searchCtrl = TextEditingController();
+  int _selectedTab = 0; // 0: Kasir, 1: Leger, 2: Riwayat
+
+  final TextEditingController _kasirSearchCtrl = TextEditingController();
+  final TextEditingController _legerSearchCtrl = TextEditingController();
+  Timer? _searchDebounce;
+  String _activeKasirQuery = '';
+  bool _isSearchingKasirDirect = false;
+  TagihanKkIkhtibarItem? _kasirDirectResult;
 
   @override
   void initState() {
     super.initState();
+    _legerSearchCtrl.addListener(() {
+      if (mounted) setState(() {});
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -33,14 +43,146 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
 
   @override
   void dispose() {
-    _searchCtrl.dispose();
+    _searchDebounce?.cancel();
+    _kasirSearchCtrl.dispose();
+    _legerSearchCtrl.dispose();
     super.dispose();
   }
 
-  void _loadData() {
+  Future<void> _performKasirSearch() async {
+    FocusScope.of(context).unfocus();
+    HapticHelper.light();
+    final query = _kasirSearchCtrl.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _activeKasirQuery = '';
+        _kasirDirectResult = null;
+        _isSearchingKasirDirect = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _activeKasirQuery = query;
+      _isSearchingKasirDirect = true;
+    });
+
     final provider = context.read<PanitiaIkhtibarProvider>();
-    provider.fetchKasirRingkasan();
+    final cleanQ = query.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // 1. Coba cari di memori lokal (_tagihanList)
+    TagihanKkIkhtibarItem? match;
+    for (final t in provider.tagihanList) {
+      if (t.noRegistrasi == query ||
+          (cleanQ.isNotEmpty && t.noRegistrasi == cleanQ)) {
+        match = t;
+        break;
+      }
+    }
+    if (match == null && cleanQ.isNotEmpty) {
+      final intVal = int.tryParse(cleanQ);
+      if (intVal != null && intVal < 1000) {
+        final offset = (50000 + intVal).toString();
+        for (final t in provider.tagihanList) {
+          if (t.noRegistrasi == offset) {
+            match = t;
+            break;
+          }
+        }
+      }
+    }
+    if (match == null) {
+      for (final t in provider.tagihanList) {
+        if (t.namaKepalaKeluarga.toLowerCase().contains(query.toLowerCase())) {
+          match = t;
+          break;
+        }
+      }
+    }
+
+    // 2. Jika tidak ditemukan di memori lokal, panggil API backend secara langsung!
+    if (match == null) {
+      try {
+        final serverResults = await provider.searchKasirDirect(query);
+        if (serverResults.isNotEmpty) {
+          for (final t in serverResults) {
+            if (t.noRegistrasi == query ||
+                (cleanQ.isNotEmpty && t.noRegistrasi == cleanQ)) {
+              match = t;
+              break;
+            }
+          }
+          if (match == null && cleanQ.isNotEmpty) {
+            final intVal = int.tryParse(cleanQ);
+            if (intVal != null && intVal < 1000) {
+              final offset = (50000 + intVal).toString();
+              for (final t in serverResults) {
+                if (t.noRegistrasi == offset) {
+                  match = t;
+                  break;
+                }
+              }
+            }
+          }
+          match ??= serverResults.first;
+        }
+      } catch (e) {
+        debugPrint('Error direct search kasir: $e');
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _kasirDirectResult = match;
+        _isSearchingKasirDirect = false;
+      });
+    }
+  }
+
+  void _clearKasirSearch() {
+    _kasirSearchCtrl.clear();
+    setState(() {
+      _activeKasirQuery = '';
+      _kasirDirectResult = null;
+      _isSearchingKasirDirect = false;
+    });
+  }
+
+  void _onLegerSearchChanged(String val) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        context.read<PanitiaIkhtibarProvider>().setSearchQuery(val.trim());
+      }
+    });
+  }
+
+  Future<void> _loadData() async {
+    final provider = context.read<PanitiaIkhtibarProvider>();
+    await provider.fetchKasirRingkasan();
     provider.fetchKasirList();
+    provider.fetchLaporanRiwayat();
+  }
+
+  void _shiftDate(int days) {
+    HapticHelper.selection();
+    final provider = context.read<PanitiaIkhtibarProvider>();
+    final current = provider.filterLaporanTanggal;
+    provider.setFilterLaporanTanggal(current.add(Duration(days: days)));
+  }
+
+  Future<void> _pickDate(BuildContext context) async {
+    final provider = context.read<PanitiaIkhtibarProvider>();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: provider.filterLaporanTanggal,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+    );
+    if (picked != null) {
+      HapticHelper.light();
+      provider.setFilterLaporanTanggal(picked);
+    }
   }
 
   String _formatRupiah(num number) {
@@ -52,223 +194,118 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
     return formatter.format(number);
   }
 
-  Future<void> _bukaKwitansi(String? rawUrl) async {
-    if (rawUrl == null || rawUrl.trim().isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tautan kwitansi tidak tersedia')),
-        );
-      }
-      return;
-    }
-    HapticHelper.light();
-    try {
-      final formattedUrl = ApiClient.resolveWebUrl(rawUrl) ?? rawUrl.trim();
-      final uri = Uri.parse(formattedUrl);
-
-      bool launched = false;
-      try {
-        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } catch (_) {}
-
-      if (!launched) {
-        try {
-          launched = await launchUrl(uri);
-        } catch (_) {}
-      }
-
-      if (!launched && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tidak dapat membuka tautan kwitansi di peramban'),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal membuka kwitansi: $e')));
-      }
-    }
-  }
-
-  void _showModalDetailLunas(Map<String, dynamic> data) {
+  void _bukaHalamanKwitansiResult(
+    Map<String, dynamic> data, {
+    List<AnakKkItem>? daftarAnak,
+  }) {
     HapticHelper.confirmSuccess();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark
-        ? AppColors.primaryDark
-        : AppColors.primaryLight;
-    final namaKk = data['nama_kepala_keluarga'] ?? '-';
-    final noReg = data['no_registrasi'] ?? '-';
-    final kampung = data['kampung'] ?? '-';
-    final totalTerbayar = (data['total_terbayar'] as num?)?.toInt() ?? 0;
-    final nominalBayar = (data['nominal_bayar'] as num?)?.toInt() ?? 0;
-    final metode = data['metode_pembayaran'] ?? 'Tunai';
-    final tanggalBayarRaw = data['tanggal_bayar'] as String?;
-    final kwitansiUrl = data['kwitansi_url'] as String?;
+    final provider = context.read<PanitiaIkhtibarProvider>();
+    final ringkasan = provider.kasirRingkasan;
+    final rincianSantri = (daftarAnak != null && daftarAnak.isNotEmpty)
+        ? daftarAnak.map((a) => '${a.nama} (${a.ruangan})').join(', ')
+        : null;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dlgCtx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: isDark ? const Color(0xFF1E2129) : Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_circle_rounded,
-                  color: primaryColor,
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Pembayaran Lunas!',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Alhamdulillah, seluruh tagihan iuran ikhtibar KK ini telah selesai dibayarkan.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.white60 : Colors.black54,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.04)
-                      : Colors.black.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark ? Colors.white12 : Colors.black12,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _buildDetailRow(
-                      'Kepala Keluarga',
-                      namaKk,
-                      isDark,
-                      isBold: true,
-                    ),
-                    const Divider(height: 14),
-                    _buildDetailRow('No. Registrasi', noReg, isDark),
-                    const Divider(height: 14),
-                    _buildDetailRow('Dusun / Kampung', kampung, isDark),
-                    const Divider(height: 14),
-                    _buildDetailRow(
-                      'Tanggal Bayar',
-                      tanggalBayarRaw != null
-                          ? DateHelper.formatTanggalIndo(DateTime.parse(tanggalBayarRaw))
-                          : DateHelper.formatTanggalIndo(DateTime.now()),
-                      isDark,
-                    ),
-                    const Divider(height: 14),
-                    _buildDetailRow('Metode Bayar', metode, isDark),
-                    const Divider(height: 14),
-                    _buildDetailRow(
-                      'Bayar Sekarang',
-                      _formatRupiah(nominalBayar),
-                      isDark,
-                      valueColor: primaryColor,
-                    ),
-                    const Divider(height: 14),
-                    _buildDetailRow(
-                      'Total Terbayar',
-                      _formatRupiah(totalTerbayar),
-                      isDark,
-                      isBold: true,
-                      valueColor: primaryColor,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              if (kwitansiUrl != null && kwitansiUrl.isNotEmpty) ...[
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _bukaKwitansi(kwitansiUrl),
-                    icon: const Icon(Icons.receipt_long_rounded, size: 18),
-                    label: const Text(
-                      'Lihat & Cetak Kwitansi',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-              ],
-              SizedBox(
-                width: double.infinity,
-                height: 42,
-                child: TextButton(
-                  onPressed: () => Navigator.pop(dlgCtx),
-                  child: Text(
-                    'Selesai',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : Colors.black87,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+    final tglRaw = data['tanggal_bayar'] as String?;
+    final tglBayar = tglRaw != null
+        ? DateTime.tryParse(tglRaw)
+        : DateTime.now();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KwitansiPembayaranScreen(
+          judulKegiatan: 'Ikhtibar ${ringkasan?.ikhtibarKe ?? ""}'.trim(),
+          subJudul: 'Tagihan Iuran Tingkat Keluarga (KK)',
+          noTransaksi:
+              data['no_transaksi'] ??
+              'TRX/IKH/WLI/${data['no_registrasi'] ?? ""}',
+          status: data['status_bayar'] ?? 'Lunas',
+          nominalBayar: (data['nominal_bayar'] as num?) ?? 0,
+          totalTagihan: (data['nominal_tagihan'] as num?),
+          sisaTagihan: (data['sisa_tagihan'] as num?) ?? 0,
+          namaPembayar: data['nama_kepala_keluarga'] ?? '-',
+          noRegistrasi: data['no_registrasi'],
+          kampung: data['kampung'],
+          rincianSubjek: rincianSantri,
+          metodePembayaran: data['metode_pembayaran'] ?? 'Tunai',
+          tanggalBayar: tglBayar,
+          kwitansiUrl: data['kwitansi_url'],
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(
-    String label,
-    String value,
-    bool isDark, {
-    bool isBold = false,
-    Color? valueColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: isDark ? Colors.white60 : Colors.black54,
-          ),
+  void _bukaHalamanKwitansiTagihan(TagihanKkIkhtibarItem t) {
+    HapticHelper.light();
+    final provider = context.read<PanitiaIkhtibarProvider>();
+    final ringkasan = provider.kasirRingkasan;
+    final rincianSantri = t.daftarAnak.isNotEmpty
+        ? t.daftarAnak.map((a) => '${a.nama} (${a.ruangan})').join(', ')
+        : null;
+
+    final noTrx =
+        t.pembayaranTerakhir?.noTransaksi ??
+        'TRX/IKH/WLI/${t.noRegistrasi}/${t.tagihanId}';
+
+    final tglBayar = t.pembayaranTerakhir?.tanggal != null
+        ? DateTime.tryParse(t.pembayaranTerakhir!.tanggal!)
+        : null;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KwitansiPembayaranScreen(
+          judulKegiatan: 'Ikhtibar ${ringkasan?.ikhtibarKe ?? ""}'.trim(),
+          subJudul: 'Tagihan Iuran Tingkat Keluarga (KK)',
+          noTransaksi: noTrx,
+          status: t.statusBayar,
+          nominalBayar: t.nominalBayar > 0 ? t.nominalBayar : t.nominalTagihan,
+          totalTagihan: t.nominalTagihan,
+          sisaTagihan: t.sisaTagihan,
+          namaPembayar: t.namaKepalaKeluarga,
+          noRegistrasi: t.noRegistrasi,
+          kampung: t.kampung,
+          rincianSubjek: rincianSantri,
+          metodePembayaran: t.pembayaranTerakhir?.metode ?? 'Tunai',
+          nomorTabungan: t.pembayaranTerakhir?.nomorTabungan,
+          namaNasabah: t.pembayaranTerakhir?.namaNasabah,
+          ruanganNasabah: t.pembayaranTerakhir?.ruanganNasabah,
+          tanggalBayar: tglBayar,
+          kwitansiUrl: t.kwitansiUrl ?? t.pembayaranTerakhir?.kwitansiUrl,
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-            color: valueColor ?? (isDark ? Colors.white : Colors.black87),
-          ),
+      ),
+    );
+  }
+
+  void _bukaHalamanKwitansiRiwayat(RiwayatPembayaranIkhtibarItem r) {
+    HapticHelper.light();
+    final provider = context.read<PanitiaIkhtibarProvider>();
+    final ikhtibarKe = provider.kasirRingkasan?.ikhtibarKe;
+    final judulKegiatan = (ikhtibarKe != null && ikhtibarKe.isNotEmpty)
+        ? 'Ikhtibar $ikhtibarKe'
+        : 'Ikhtibar';
+    final tglBayar = r.tanggal != null ? DateTime.tryParse(r.tanggal!) : null;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KwitansiPembayaranScreen(
+          judulKegiatan: judulKegiatan,
+          subJudul: 'Riwayat Setoran Panitia Ikhtibar',
+          noTransaksi: r.noTransaksi,
+          status: r.tipePembayaran,
+          nominalBayar: r.nominal,
+          namaPembayar: r.namaPenyetor,
+          kampung: r.kampung,
+          metodePembayaran: r.metode,
+          nomorTabungan: r.nomorTabungan,
+          namaNasabah: r.namaNasabah,
+          ruanganNasabah: r.ruanganNasabah,
+          tanggalBayar: tglBayar,
+          kasir: r.diterimaOleh,
+          kwitansiUrl: r.kwitansiUrl ?? r.kwitansiTagihanUrl,
         ),
-      ],
+      ),
     );
   }
 
@@ -473,7 +510,9 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              DateHelper.formatTanggalIndo(selectedTanggalBayar),
+                              DateHelper.formatTanggalIndo(
+                                selectedTanggalBayar,
+                              ),
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -486,10 +525,11 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight)
-                                  .withValues(alpha: 0.12),
+                              color:
+                                  (isDark
+                                          ? AppColors.primaryDark
+                                          : AppColors.primaryLight)
+                                      .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -860,7 +900,10 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                               statusBayar == 'Lunas' || sisaTagihan <= 0;
 
                           if (isLunas) {
-                            _showModalDetailLunas(result);
+                            _bukaHalamanKwitansiResult(
+                              result,
+                              daftarAnak: tagihan.daftarAnak,
+                            );
                           } else {
                             final statusMsg = isPotongTabungan
                                 ? ' (Menunggu verifikasi admin backend)'
@@ -1015,207 +1058,1448 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = isDark
+        ? AppColors.primaryDark
+        : AppColors.primaryLight;
     final provider = context.watch<PanitiaIkhtibarProvider>();
     final ringkasan = provider.kasirRingkasan;
 
     return Scaffold(
       appBar: CustomAppBar(
-        titleText: 'Kasir Ikhtibar (${ringkasan?.ikhtibarKe ?? "-"})',
+        titleText: 'Pembayaran Ikhtibar (${ringkasan?.ikhtibarKe ?? "-"})',
         showBackButton: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Segarkan Data',
+            onPressed: () {
+              HapticHelper.light();
+              _loadData();
+            },
+          ),
+        ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async => _loadData(),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
+      body: Column(
+        children: [
+          // 1. SEGMENTED NAVIGATION TAB (Kasir, Leger, Riwayat)
+          SegmentedTabBar(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            selectedIndex: _selectedTab,
+            onTabChanged: (idx) {
+              setState(() {
+                _selectedTab = idx;
+              });
+              if (idx == 2) {
+                provider.fetchLaporanRiwayat();
+              }
+            },
+            items: [
+              SegmentedTabItem(
+                activeIcon: Icons.point_of_sale_rounded,
+                inactiveIcon: Icons.point_of_sale_outlined,
+                label: 'Kasir',
+                activeColor: primaryColor,
+              ),
+              SegmentedTabItem(
+                activeIcon: Icons.menu_book_rounded,
+                inactiveIcon: Icons.menu_book_outlined,
+                label: 'Leger',
+                activeColor: primaryColor,
+              ),
+              SegmentedTabItem(
+                activeIcon: Icons.history_rounded,
+                inactiveIcon: Icons.history_outlined,
+                label: 'Riwayat',
+                activeColor: primaryColor,
+              ),
+            ],
+          ),
+
+          // 2. TAB CONTENT
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => _loadData(),
+              color: primaryColor,
+              child: IndexedStack(
+                index: _selectedTab,
+                children: [
+                  _buildTabKasir(provider, isDark, primaryColor),
+                  _buildTabLeger(provider, isDark, primaryColor),
+                  _buildTabRiwayat(provider, isDark, primaryColor),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // TAB 1: KASIR (FOKUS NO REG & HANYA TAMPILKAN SATU CARD)
+  // =========================================================================
+  Widget _buildTabKasir(
+    PanitiaIkhtibarProvider provider,
+    bool isDark,
+    Color primaryColor,
+  ) {
+    final query = _activeKasirQuery.trim();
+    final cleanQ = query.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Cari kartu yang cocok berdasarkan No. Registrasi
+    TagihanKkIkhtibarItem? heroCard = _kasirDirectResult;
+    if (query.isNotEmpty) {
+      final list = provider.tagihanList;
+      final currentHero = heroCard;
+      if (currentHero != null) {
+        // Sinkronisasi data jika ada data terupdate di tagihanList (misal setelah bayar)
+        for (final t in list) {
+          if (t.tagihanId == currentHero.tagihanId) {
+            heroCard = t;
+            _kasirDirectResult = t;
+            break;
+          }
+        }
+      } else {
+        // 1. Coba exact match no registrasi
+        if (cleanQ.isNotEmpty) {
+          for (final t in list) {
+            if (t.noRegistrasi == cleanQ) {
+              heroCard = t;
+              break;
+            }
+          }
+          // 1b. Coba dengan offset 50000 (jika user ketik 1, cari 50001)
+          if (heroCard == null) {
+            final intVal = int.tryParse(cleanQ);
+            if (intVal != null && intVal < 1000) {
+              final offset = (50000 + intVal).toString();
+              for (final t in list) {
+                if (t.noRegistrasi == offset) {
+                  heroCard = t;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        // 2. Coba contains no registrasi
+        if (heroCard == null) {
+          for (final t in list) {
+            if (t.noRegistrasi.toLowerCase().contains(query.toLowerCase()) ||
+                (cleanQ.isNotEmpty && t.noRegistrasi.contains(cleanQ))) {
+              heroCard = t;
+              break;
+            }
+          }
+        }
+        // 3. Fallback nama KK
+        if (heroCard == null) {
+          for (final t in list) {
+            if (t.namaKepalaKeluarga.toLowerCase().contains(
+              query.toLowerCase(),
+            )) {
+              heroCard = t;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // POS Search Card Fokus No. Registrasi
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E2129) : Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+              border: Border.all(
+                color: query.isNotEmpty
+                    ? primaryColor.withValues(alpha: 0.5)
+                    : (isDark
+                          ? Colors.white12
+                          : Colors.black.withValues(alpha: 0.08)),
+                width: query.isNotEmpty ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.confirmation_number_rounded,
+                      size: 20,
+                      color: primaryColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Loket Cepat No. Registrasi',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _kasirSearchCtrl,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) => _performKasirSearch(),
+                        autofocus: false,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Ketik No. Reg (misal: 50001 atau 1)...',
+                          hintStyle: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.normal,
+                            color: isDark ? Colors.white38 : Colors.black38,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.confirmation_number_outlined,
+                            color: primaryColor,
+                            size: 20,
+                          ),
+                          suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: _kasirSearchCtrl,
+                            builder: (context, val, _) {
+                              if (val.text.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+                              return IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 20),
+                                tooltip: 'Bersihkan',
+                                onPressed: _clearKasirSearch,
+                              );
+                            },
+                          ),
+                          filled: true,
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.04)
+                              : const Color(0xFFF8FAFC),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: _performKasirSearch,
+                        icon: const Icon(Icons.search_rounded, size: 18),
+                        label: const Text(
+                          'Cari',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Masukkan No. Reg lalu tekan Enter atau klik Cari untuk menampilkan kartu transaksi.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.white54 : Colors.black45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Tampilan Card Tunggal / State
+          if (_isSearchingKasirDirect ||
+              (provider.isLoadingKasir && provider.tagihanList.isEmpty))
+            const ShimmerLoadingList(count: 1, height: 260)
+          else if (query.isEmpty)
+            // Empty State yang bersih & informatif
+            _buildKasirEmptyPrompt(provider, isDark, primaryColor)
+          else if (heroCard != null)
+            // SATU CARD TUNGGAL LOKET KASIR
+            _buildHeroCardKasir(heroCard, isDark, primaryColor)
+          else
+            // State tidak ditemukan
+            _buildKasirNotFound(query, isDark, primaryColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKasirEmptyPrompt(
+    PanitiaIkhtibarProvider provider,
+    bool isDark,
+    Color primaryColor,
+  ) {
+    return GlassCard(
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: primaryColor.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.point_of_sale_rounded,
+              size: 44,
+              color: primaryColor,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Loket Kasir (Individu)',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Silakan masukkan Nomor Registrasi KK pada kolom pencarian di atas untuk memuat tagihan keluarga.',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white60 : Colors.black54,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKasirNotFound(String query, bool isDark, Color primaryColor) {
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off_rounded,
+            size: 48,
+            color: AppColors.roseDanger.withValues(alpha: 0.8),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No. Registrasi "$query" Tidak Ditemukan',
+            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Pastikan nomor registrasi sudah benar atau periksa daftar lengkap di tab Leger.',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white60 : Colors.black54,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _clearKasirSearch,
+            icon: const Icon(Icons.clear_rounded, size: 16),
+            label: const Text('Reset Pencarian'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.05),
+              foregroundColor: isDark ? Colors.white : Colors.black87,
+              elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // SATU CARD TUNGGAL HERO KASIR
+  Widget _buildHeroCardKasir(
+    TagihanKkIkhtibarItem t,
+    bool isDark,
+    Color primaryColor,
+  ) {
+    final isLunas = t.statusBayar == 'Lunas' || t.sisaTagihan <= 0;
+    Color statusColor;
+    String statusText;
+    if (t.hasPendingTabungan) {
+      statusColor = AppColors.amberAccent;
+      statusText = 'Menunggu Konfirmasi';
+    } else if (isLunas) {
+      statusColor = const Color(0xFF10B981);
+      statusText = 'Lunas';
+    } else if (t.statusBayar == 'Cicilan') {
+      statusColor = AppColors.amberAccent;
+      statusText = 'Cicilan';
+    } else {
+      statusColor = AppColors.roseDanger;
+      statusText = 'Belum Lunas';
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2129) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        border: Border.all(
+          color: isLunas
+              ? const Color(0xFF10B981).withValues(alpha: 0.4)
+              : primaryColor.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Card: Badge Registrasi & Status
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 2. Search Box
-              TextField(
-                controller: _searchCtrl,
-                onSubmitted: (val) => provider.setSearchQuery(val.trim()),
-                decoration: InputDecoration(
-                  hintText:
-                      'Cari No. Registrasi / KK / Nama Kepala Keluarga...',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  suffixIcon: _searchCtrl.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear_rounded),
-                          onPressed: () {
-                            _searchCtrl.clear();
-                            provider.setSearchQuery('');
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.03),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.3),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.confirmation_number_rounded,
+                      size: 14,
+                      color: primaryColor,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'REG: ${t.noRegistrasi}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: primaryColor,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  statusText.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                    color: statusColor,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+            ],
+          ),
+          const SizedBox(height: 12),
 
-              // 3. Filter Kampung Input Select
-              if (ringkasan?.daftarKampung.isNotEmpty ?? false) ...[
-                DropdownButtonFormField<int?>(
-                  initialValue: provider.filterKampungId,
+          // Nama Kepala Keluarga & Lokasi
+          Text(
+            t.namaKepalaKeluarga,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(
+                Icons.location_on_rounded,
+                size: 14,
+                color: isDark ? Colors.white60 : Colors.black54,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Kampung: ${t.kampung}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Daftar Anak Santri
+          if (t.daftarAnak.isNotEmpty) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.04)
+                    : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white10
+                      : Colors.black.withValues(alpha: 0.05),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.school_rounded, size: 14, color: primaryColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Rincian Anak (${t.daftarAnak.length} Anak):',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: t.daftarAnak.map((anak) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isDark ? Colors.white12 : Colors.black12,
+                          ),
+                        ),
+                        child: Text(
+                          '${anak.nama} (${anak.ruangan})',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          // Kotak Ringkasan Finansial Hero
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.03)
+                  : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Total Tagihan',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatRupiah(t.nominalTagihan),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Sudah Dibayar',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatRupiah(t.nominalBayar),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: t.nominalBayar > 0
+                              ? const Color(0xFF10B981)
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Sisa Tagihan',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatRupiah(t.sisaTagihan),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: t.sisaTagihan > 0
+                              ? AppColors.roseDanger
+                              : const Color(0xFF10B981),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Tombol Aksi Kasir Utama
+          if (!isLunas) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () => _openBayarSheet(t),
+                icon: const Icon(Icons.payment_rounded, size: 20),
+                label: const Text(
+                  'Proses Pembayaran Kasir',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 2,
+                ),
+              ),
+            ),
+            if (t.nominalBayar > 0) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                height: 42,
+                child: OutlinedButton.icon(
+                  onPressed: () => _bukaHalamanKwitansiTagihan(t),
+                  icon: const Icon(Icons.receipt_rounded, size: 16),
+                  label: const Text(
+                    'Lihat Bukti Cicilan Terakhir',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryColor,
+                    side: BorderSide(
+                      color: primaryColor.withValues(alpha: 0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ] else ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 16,
+                    color: Color(0xFF10B981),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Tagihan keluarga ini sudah LUNAS sepenuhnya',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: ElevatedButton.icon(
+                onPressed: () => _bukaHalamanKwitansiTagihan(t),
+                icon: const Icon(Icons.receipt_long_rounded, size: 20),
+                label: const Text(
+                  'Buka Kwitansi Lunas Resmi',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 1,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // TAB 2: LEGER (FILTER KAMPUNG & PENCARIAN NO. REG / NAMA KK)
+  // =========================================================================
+  Widget _buildTabLeger(
+    PanitiaIkhtibarProvider provider,
+    bool isDark,
+    Color primaryColor,
+  ) {
+    final ringkasan = provider.kasirRingkasan;
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Filter Dusun / Kampung (Dropdown & Quick Select)
+          if (ringkasan?.daftarKampung.isNotEmpty ?? false) ...[
+            Builder(
+              builder: (ctx) {
+                final listKampung = ringkasan!.daftarKampung;
+                final currentId = provider.filterKampungId;
+                final selectedId = listKampung.any((k) => k.id == currentId)
+                    ? currentId
+                    : listKampung.first.id;
+
+                return DropdownButtonFormField<int>(
+                  key: ValueKey('dropdown_kampung_$selectedId'),
+                  initialValue: selectedId,
                   isExpanded: true,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(
-                      Icons.location_on_outlined,
+                    labelText: 'Filter Wilayah Kampung / Dusun',
+                    labelStyle: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.location_city_rounded,
                       size: 20,
+                      color: primaryColor,
                     ),
                     filled: true,
-                    fillColor: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.03),
+                    fillColor: isDark ? const Color(0xFF1E2129) : Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
+                      borderSide: BorderSide(
+                        color: isDark ? Colors.white12 : Colors.black12,
+                      ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 12,
                     ),
                   ),
-                  hint: const Text(
-                    'Pilih Kampung',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                  items: [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text(
-                        'Semua Kampung',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
+                  items: listKampung
+                      .map(
+                        (k) => DropdownMenuItem<int>(
+                          value: k.id,
+                          child: Text(
+                            '${k.kode} - ${k.namaKampung}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    ...ringkasan!.daftarKampung.map(
-                      (k) => DropdownMenuItem<int?>(
-                        value: k.id,
-                        child: Text(
-                          '${k.kode} - ${k.namaKampung}',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ),
-                  ],
+                      )
+                      .toList(),
                   onChanged: (val) {
-                    provider.setFilterKampung(val);
+                    if (val != null) {
+                      provider.setFilterKampung(val);
+                    }
                   },
-                ),
-                const SizedBox(height: 12),
-              ],
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+          ],
 
-              // 4. Filter Status Bayar (SegmentedTabBar konsisten M3)
-              SegmentedTabBar(
-                margin: const EdgeInsets.only(bottom: 12),
-                selectedIndex: [
-                  'Semua',
-                  'Belum Lunas',
-                  'Cicilan',
-                  'Lunas',
-                ].indexOf(provider.filterStatusBayar).clamp(0, 3),
-                onTabChanged: (idx) {
-                  const statuses = ['Semua', 'Belum Lunas', 'Cicilan', 'Lunas'];
-                  if (idx >= 0 && idx < statuses.length) {
-                    provider.setFilterStatusBayar(statuses[idx]);
-                  }
-                },
-                items: [
-                  SegmentedTabItem(
-                    activeIcon: Icons.all_inclusive_rounded,
-                    inactiveIcon: Icons.all_inclusive_outlined,
-                    label: 'Semua',
-                    activeColor: isDark
-                        ? AppColors.primaryDark
-                        : AppColors.primaryLight,
+          // 2. Kotak Pencarian Leger (No. Reg / Nama KK)
+          TextField(
+            controller: _legerSearchCtrl,
+            textInputAction: TextInputAction.search,
+            onChanged: _onLegerSearchChanged,
+            decoration: InputDecoration(
+              hintText: 'Cari No. Reg atau Nama Kepala Keluarga...',
+              hintStyle: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white38 : Colors.black38,
+              ),
+              prefixIcon: Icon(Icons.search_rounded, color: primaryColor),
+              suffixIcon: _legerSearchCtrl.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded),
+                      onPressed: () {
+                        _legerSearchCtrl.clear();
+                        provider.setSearchQuery('');
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: isDark ? const Color(0xFF1E2129) : Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: isDark ? Colors.white12 : Colors.black12,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // 3. Mini Segmented Filter Status Bayar
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: ['Semua', 'Belum Lunas', 'Cicilan', 'Lunas'].map((st) {
+                final isSelected = provider.filterStatusBayar == st;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChoiceChip(
+                    label: Text(
+                      st,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? Colors.white
+                            : (isDark ? Colors.white70 : Colors.black87),
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: primaryColor,
+                    backgroundColor: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03),
+                    onSelected: (val) {
+                      if (val) provider.setFilterStatusBayar(st);
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(
+                        color: isSelected
+                            ? primaryColor
+                            : (isDark ? Colors.white10 : Colors.black12),
+                      ),
+                    ),
                   ),
-                  SegmentedTabItem(
-                    activeIcon: Icons.pending_actions_rounded,
-                    inactiveIcon: Icons.pending_actions_outlined,
-                    label: 'Belum Lunas',
-                    activeColor: AppColors.roseDanger,
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 4. Mini Statistik Ringkasan Leger
+          if (ringkasan != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.06),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildLegerStatItem(
+                    'Total KK',
+                    '${ringkasan.totalKk}',
+                    isDark,
                   ),
-                  SegmentedTabItem(
-                    activeIcon: Icons.timelapse_rounded,
-                    inactiveIcon: Icons.timelapse_outlined,
-                    label: 'Cicilan',
-                    activeColor: AppColors.amberAccent,
+                  _buildLegerStatItem(
+                    'Lunas',
+                    '${ringkasan.totalLunas}',
+                    isDark,
+                    color: const Color(0xFF10B981),
                   ),
-                  SegmentedTabItem(
-                    activeIcon: Icons.check_circle_rounded,
-                    inactiveIcon: Icons.check_circle_outline_rounded,
-                    label: 'Lunas',
-                    activeColor: isDark
-                        ? AppColors.primaryDark
-                        : AppColors.primaryLight,
+                  _buildLegerStatItem(
+                    'Belum',
+                    '${ringkasan.totalBelumLunas}',
+                    isDark,
+                    color: AppColors.roseDanger,
+                  ),
+                  _buildLegerStatItem(
+                    'Kelunasan',
+                    '${ringkasan.persentaseKelunasan.toStringAsFixed(1)}%',
+                    isDark,
+                    color: primaryColor,
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+            ),
 
-              // 5. Daftar Tagihan KK Items
-              if (provider.isLoadingKasir)
-                const ShimmerLoadingList(count: 4)
-              else if (provider.tagihanList.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.inbox_rounded,
-                          size: 48,
-                          color: isDark ? Colors.white24 : Colors.black26,
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'Tidak ada data tagihan KK yang cocok',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ],
+          // 5. Daftar Tagihan Leger
+          if (provider.isLoadingKasir)
+            const ShimmerLoadingList(count: 4)
+          else if (provider.tagihanList.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.folder_off_rounded,
+                      size: 44,
+                      color: isDark ? Colors.white24 : Colors.black26,
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Tidak ada data tagihan yang sesuai filter',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: provider.tagihanList.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (ctx, idx) {
+                final t = provider.tagihanList[idx];
+                return _buildTagihanCard(t, isDark, primaryColor);
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegerStatItem(
+    String label,
+    String value,
+    bool isDark, {
+    Color? color,
+  }) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.5,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: color ?? (isDark ? Colors.white : Colors.black87),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // TAB 3: RIWAYAT (FILTER TANGGAL & METODE PEMBAYARAN)
+  // =========================================================================
+  Widget _buildTabRiwayat(
+    PanitiaIkhtibarProvider provider,
+    bool isDark,
+    Color primaryColor,
+  ) {
+    num totalMasukHariIni = 0;
+    for (final r in provider.riwayatList) {
+      totalMasukHariIni += r.nominal;
+    }
+
+    final now = DateTime.now();
+    final isToday =
+        provider.filterLaporanTanggal.year == now.year &&
+        provider.filterLaporanTanggal.month == now.month &&
+        provider.filterLaporanTanggal.day == now.day;
+
+    return Column(
+      children: [
+        // 1. Filter Tanggal & Navigasi Tanggal
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E2129) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+              border: Border.all(
+                color: isDark ? Colors.white12 : Colors.black12,
+              ),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.chevron_left_rounded),
+                  tooltip: 'Hari Sebelumnya',
+                  onPressed: () => _shiftDate(-1),
+                ),
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () => _pickDate(context),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 14,
+                            color: primaryColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              isToday
+                                  ? '${DateHelper.formatTanggalIndo(provider.filterLaporanTanggal)} (Hari Ini)'
+                                  : DateHelper.formatTanggalIndo(
+                                      provider.filterLaporanTanggal,
+                                    ),
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                ),
+
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.chevron_right_rounded),
+                  tooltip: 'Hari Berikutnya',
+                  onPressed: () => _shiftDate(1),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // 2. Filter Metode Pembayaran
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: ['Semua', 'Tunai', 'Potong Tabungan', 'Cicilan'].map((
+                metode,
+              ) {
+                final isSelected = provider.filterLaporanMetode == metode;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChoiceChip(
+                    label: Text(
+                      metode == 'Semua' ? 'Semua Metode' : metode,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? Colors.white
+                            : (isDark ? Colors.white70 : Colors.black87),
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: primaryColor,
+                    backgroundColor: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03),
+                    onSelected: (val) {
+                      if (val) provider.setFilterLaporanMetode(metode);
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(
+                        color: isSelected
+                            ? primaryColor
+                            : (isDark ? Colors.white10 : Colors.black12),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+
+        // 3. Mini Summary Header Riwayat
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.04)
+                  : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${provider.riwayatList.length} Transaksi Tercatat',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                Text(
+                  'Total: ${_formatRupiah(totalMasukHariIni)}',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF10B981),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // 4. Daftar Riwayat Pembayar
+        Expanded(
+          child: provider.isLoadingLaporan && provider.riwayatList.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: ShimmerLoadingList(count: 4),
                 )
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: provider.tagihanList.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+              : provider.riwayatList.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.receipt_long_rounded,
+                        size: 44,
+                        color: isDark ? Colors.white24 : Colors.black26,
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Belum ada transaksi pembayaran sesuai filter',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  itemCount: provider.riwayatList.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (ctx, idx) {
-                    final t = provider.tagihanList[idx];
-                    return _buildTagihanCard(t, isDark);
+                    final r = provider.riwayatList[idx];
+                    return _buildRiwayatCard(r, isDark, primaryColor);
                   },
                 ),
-            ],
-          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRiwayatCard(
+    RiwayatPembayaranIkhtibarItem r,
+    bool isDark,
+    Color primaryColor,
+  ) {
+    final isTabungan = r.metode == 'Potong Tabungan';
+    final badgeColor = r.isVerified
+        ? (isDark ? AppColors.primaryDark : AppColors.primaryLight)
+        : Colors.amber;
+    String badgeText;
+    if (isTabungan) {
+      badgeText = r.isVerified ? 'Potong Tabungan' : 'Tabungan (Pending)';
+    } else {
+      badgeText = r.metode;
+    }
+
+    final tglFormatted = r.tanggal != null
+        ? DateHelper.formatTanggalIndo(
+            DateTime.tryParse(r.tanggal!) ?? DateTime.now(),
+          )
+        : '-';
+
+    return InkWell(
+      onTap: () => _bukaHalamanKwitansiRiwayat(r),
+      borderRadius: BorderRadius.circular(16),
+      child: GlassCard(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : Colors.black.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    r.noTransaksi,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: badgeColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    badgeText,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: badgeColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        r.namaPenyetor,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Kampung: ${r.kampung}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  _formatRupiah(r.nominal),
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF10B981),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 12,
+                      color: isDark ? Colors.white54 : Colors.black45,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      tglFormatted,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: isDark ? Colors.white54 : Colors.black45,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Petugas: ${r.diterimaOleh}',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: isDark ? Colors.white54 : Colors.black45,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 11,
+                      color: primaryColor,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTagihanCard(TagihanKkIkhtibarItem t, bool isDark) {
+  // =========================================================================
+  // KARTU LEGER
+  // =========================================================================
+  Widget _buildTagihanCard(
+    TagihanKkIkhtibarItem t,
+    bool isDark,
+    Color primaryColor,
+  ) {
     Color statusColor;
     String statusText;
     if (t.hasPendingTabungan) {
       statusColor = AppColors.amberAccent;
       statusText = 'Menunggu Konfirmasi';
     } else if (t.statusBayar == 'Lunas') {
-      statusColor = isDark ? AppColors.primaryDark : AppColors.primaryLight;
+      statusColor = const Color(0xFF10B981);
       statusText = 'Lunas';
     } else if (t.statusBayar == 'Cicilan') {
       statusColor = AppColors.amberAccent;
@@ -1246,22 +2530,47 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'No. Reg: ${t.noRegistrasi} • Dusun: ${t.kampung}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? Colors.white60 : Colors.black54,
-                      ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: primaryColor.withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: Text(
+                            'Reg: ${t.noRegistrasi}',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          'Dusun: ${t.kampung}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
@@ -1269,7 +2578,7 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                 child: Text(
                   statusText,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.bold,
                     color: statusColor,
                   ),
@@ -1279,77 +2588,10 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
           ),
           const SizedBox(height: 10),
 
-          // Info Menunggu Konfirmasi Tabungan
-          if (t.hasPendingTabungan) ...[
-            Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: Colors.amber,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Potongan tabungan menunggu konfirmasi admin',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.amber,
-                          ),
-                        ),
-                        if (t.pembayaranTerakhir?.nomorTabungan != null)
-                          Text(
-                            'Rek: ${t.pembayaranTerakhir!.nomorTabungan} (${t.pembayaranTerakhir!.namaNasabah ?? t.namaKepalaKeluarga})',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isDark ? Colors.white60 : Colors.black54,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (t.pembayaranTerakhir != null &&
-                      !t.pembayaranTerakhir!.isVerified &&
-                      t.pembayaranTerakhir!.id > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'Menunggu Admin',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.amber,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-
-          // Daftar Anak Murid
+          // Anak santri
           if (t.daftarAnak.isNotEmpty) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.03)
@@ -1358,12 +2600,12 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.people_alt_outlined, size: 14),
+                  const Icon(Icons.people_alt_outlined, size: 13),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Anak: ${t.daftarAnak.map((a) => "${a.nama} (${a.ruangan})").join(", ")}',
-                      style: const TextStyle(fontSize: 11),
+                      style: const TextStyle(fontSize: 10.5),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1371,17 +2613,17 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
           ],
 
-          // Baris Keuangan
+          // Baris Angka
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Tagihan KK', style: TextStyle(fontSize: 10)),
+                  const Text('Tagihan', style: TextStyle(fontSize: 10)),
                   Text(
                     _formatRupiah(t.nominalTagihan),
                     style: const TextStyle(
@@ -1400,9 +2642,9 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? AppColors.primaryDark
-                          : AppColors.primaryLight,
+                      color: t.nominalBayar > 0
+                          ? const Color(0xFF10B981)
+                          : null,
                     ),
                   ),
                 ],
@@ -1418,111 +2660,79 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                       fontWeight: FontWeight.bold,
                       color: t.sisaTagihan > 0
                           ? AppColors.roseDanger
-                          : (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primaryLight),
+                          : const Color(0xFF10B981),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          // Tombol Aksi Pembayaran & Kwitansi
-          if (t.sisaTagihan <= 0) ...[
-            if (t.kwitansiUrl != null && t.kwitansiUrl!.isNotEmpty)
-              SizedBox(
-                width: double.infinity,
-                height: 38,
-                child: OutlinedButton.icon(
-                  onPressed: () => _bukaKwitansi(t.kwitansiUrl),
-                  icon: const Icon(Icons.receipt_long_rounded, size: 16),
-                  label: const Text(
-                    'Lihat Kwitansi Resmi (Lunas)',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark
-                        ? AppColors.primaryDark
-                        : AppColors.primaryLight,
-                    side: BorderSide(
-                      color: isDark
-                          ? AppColors.primaryDark
-                          : AppColors.primaryLight,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-          ] else ...[
-            Row(
-              children: [
+          // Tombol Aksi
+          Row(
+            children: [
+              if (t.sisaTagihan > 0) ...[
                 Expanded(
                   child: SizedBox(
-                    height: 38,
+                    height: 36,
                     child: ElevatedButton.icon(
                       onPressed: () => _openBayarSheet(t),
-                      icon: const Icon(Icons.payment_rounded, size: 16),
+                      icon: const Icon(Icons.payment_rounded, size: 15),
                       label: const Text(
                         'Setor / Bayar',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11.5,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
+                        backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
+                        elevation: 0,
                       ),
                     ),
                   ),
                 ),
-                if (t.nominalBayar > 0 &&
-                    t.kwitansiUrl != null &&
-                    t.kwitansiUrl!.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    height: 38,
+                if (t.nominalBayar > 0) const SizedBox(width: 8),
+              ],
+              if (t.nominalBayar > 0)
+                Expanded(
+                  child: SizedBox(
+                    height: 36,
                     child: OutlinedButton.icon(
-                      onPressed: () => _bukaKwitansi(t.kwitansiUrl),
+                      onPressed: () => _bukaHalamanKwitansiTagihan(t),
                       icon: const Icon(Icons.receipt_rounded, size: 15),
-                      label: const Text(
-                        'Kwitansi',
-                        style: TextStyle(
-                          fontSize: 11,
+                      label: Text(
+                        t.sisaTagihan <= 0 ? 'Kwitansi Lunas' : 'Kwitansi',
+                        style: const TextStyle(
+                          fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primaryLight,
+                        foregroundColor: t.sisaTagihan <= 0
+                            ? const Color(0xFF10B981)
+                            : primaryColor,
                         side: BorderSide(
                           color:
-                              (isDark
-                                      ? AppColors.primaryDark
-                                      : AppColors.primaryLight)
+                              (t.sisaTagihan <= 0
+                                      ? const Color(0xFF10B981)
+                                      : primaryColor)
                                   .withValues(alpha: 0.5),
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
                       ),
                     ),
                   ),
-                ],
-              ],
-            ),
-          ],
+                ),
+            ],
+          ),
         ],
       ),
     );

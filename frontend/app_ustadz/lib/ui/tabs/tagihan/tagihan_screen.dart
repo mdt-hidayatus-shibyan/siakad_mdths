@@ -112,7 +112,9 @@ class _TagihanScreenState extends State<TagihanScreen>
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceContainerLowDark : AppColors.surfaceContainerLowLight,
+              color: isDark
+                  ? AppColors.surfaceContainerLowDark
+                  : AppColors.surfaceContainerLowLight,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
@@ -464,21 +466,20 @@ class _TagihanScreenState extends State<TagihanScreen>
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
           final systemBottom = MediaQuery.of(context).padding.bottom;
-          final bottomPadding = bottomInset > 0 ? (bottomInset + 20) : (systemBottom + 24);
+          final bottomPadding = bottomInset > 0
+              ? (bottomInset + 20)
+              : (systemBottom + 24);
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceContainerLowDark : AppColors.surfaceContainerLowLight,
+              color: isDark
+                  ? AppColors.surfaceContainerLowDark
+                  : AppColors.surfaceContainerLowLight,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
             ),
-            padding: EdgeInsets.fromLTRB(
-              20,
-              12,
-              20,
-              bottomPadding,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, bottomPadding),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1116,36 +1117,6 @@ class _TagihanScreenState extends State<TagihanScreen>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-
-                    // Badges count status
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildMiniBadge(
-                          'Lunas Semua: ${ringkasan.totalSantriLunasSemua}',
-                          AppColors.hadirTextLight,
-                          isDark
-                              ? AppColors.hadirBgDark
-                              : AppColors.hadirBgLight,
-                        ),
-                        _buildMiniBadge(
-                          'Belum Lunas: ${ringkasan.totalSantriBelumLunas}',
-                          AppColors.amberAccent,
-                          isDark
-                              ? const Color(0xFF382305)
-                              : const Color(0xFFFEF3C7),
-                        ),
-                        if (ringkasan.totalSantriBebasDonatur > 0)
-                          _buildMiniBadge(
-                            'Bebas: ${ringkasan.totalSantriBebasDonatur}',
-                            AppColors.amberAccent,
-                            isDark
-                                ? const Color(0xFF382305)
-                                : const Color(0xFFFEF3C7),
-                          ),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -1179,286 +1150,292 @@ class _TagihanScreenState extends State<TagihanScreen>
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  ...['Semua', 'Lunas', 'Belum Lunas', 'Ditanggung Donatur'].map(
-                    (status) {
-                      final isSelected = _sppFilterStatus == status;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: FilterChip(
-                          label: Text(
-                            status,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color: isSelected
-                                  ? Colors.white
-                                  : (isDark
-                                        ? const Color(0xFFC3C8BC)
-                                        : const Color(0xFF43483E)),
-                            ),
+                  ...[
+                    'Semua',
+                    'Lunas',
+                    'Belum Lunas',
+                    'Ditanggung Donatur',
+                  ].map((status) {
+                    final isSelected = _sppFilterStatus == status;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: FilterChip(
+                        label: Text(
+                          status,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? Colors.white
+                                : (isDark
+                                      ? const Color(0xFFC3C8BC)
+                                      : const Color(0xFF43483E)),
                           ),
-                          selected: isSelected,
-                          backgroundColor: isDark
-                              ? const Color(0xFF1B241C)
-                              : const Color(0xFFF1F5F9),
-                          selectedColor: primaryColor,
-                          checkmarkColor: Colors.white,
-                          onSelected: (val) {
-                            setState(() => _sppFilterStatus = status);
-                            context.read<TagihanProvider>().fetchSppMuridList(
-                              ruanganId: _selectedRuanganId,
-                              bulanHijriyahId: _selectedBulanId,
-                              status: status,
-                              search: _sppSearchQuery,
-                            );
-                          },
                         ),
-                      );
-                    },
-                  ),
+                        selected: isSelected,
+                        backgroundColor: isDark
+                            ? const Color(0xFF1B241C)
+                            : const Color(0xFFF1F5F9),
+                        selectedColor: primaryColor,
+                        checkmarkColor: Colors.white,
+                        onSelected: (val) {
+                          setState(() => _sppFilterStatus = status);
+                          context.read<TagihanProvider>().fetchSppMuridList(
+                            ruanganId: _selectedRuanganId,
+                            bulanHijriyahId: _selectedBulanId,
+                            status: status,
+                            search: _sppSearchQuery,
+                          );
+                        },
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
             const SizedBox(height: 12),
 
-          // 3. Murid SPP List
-          if (tagihan.isLoading)
-            const ShimmerLoadingList(count: 4, height: 100)
-          else if (tagihan.muridList.isEmpty)
-            _sppSearchQuery.isNotEmpty ||
-                    _sppFilterStatus != 'Semua' ||
-                    _selectedBulanId != null
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: EmptyStateView(
-                      icon: Icons.search_off_rounded,
-                      title: 'Tidak Ada Data Ditemukan',
-                      description:
-                          'Tidak ada data murid yang sesuai dengan filter atau kata kunci pencarian.',
-                    ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: EmptyStateView(
-                      icon: Icons.credit_card_off_rounded,
-                      title: 'Tagihan SPP Belum Diterbitkan',
-                      description:
-                          'Belum ada rincian tagihan SPP santri yang diterbitkan di kelas ini.',
-                      actionLabel: 'Muat Ulang',
-                      onActionTap: _loadData,
-                    ),
-                  )
-          else
-            ...tagihan.muridList.map((m) {
-              final isLunas = m.statusKeseluruhan == 'Lunas';
-              final isDonatur =
-                  m.statusKeseluruhan == 'Ditanggung Donatur' ||
-                  m.statusKeseluruhan == 'Bebas SPP';
-              final progress = m.totalBulan > 0
-                  ? (m.bulanLunasCount / m.totalBulan).clamp(0.0, 1.0)
-                  : 1.0;
-              final isPutra = m.jenisKelamin == 'L';
-
-              return GlassCard(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              AppAvatar(
-                                radius: 18,
-                                name: m.nama,
-                                imageUrl: m.foto,
-                                fit: BoxFit.cover,
-                                alignment: Alignment.topCenter,
-                                backgroundColor: isPutra
-                                    ? Colors.blue.withValues(alpha: 0.15)
-                                    : Colors.pink.withValues(alpha: 0.15),
-                                textColor: isPutra ? Colors.blue : Colors.pink,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      m.nama,
-                                      style: const TextStyle(
-                                        fontSize: 13.5,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      'NISM: ${m.nism} • Wali: ${m.wali}',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: isDark
-                                            ? const Color(0xFF8D9387)
-                                            : const Color(0xFF73796E),
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isLunas
-                                ? (isDark
-                                      ? AppColors.hadirBgDark
-                                      : AppColors.hadirBgLight)
-                                : isDonatur
-                                ? (isDark
-                                      ? const Color(0xFF241538)
-                                      : const Color(0xFFF3E8FF))
-                                : (isDark
-                                      ? const Color(0xFF382305)
-                                      : const Color(0xFFFEF3C7)),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            isDonatur
-                                ? 'Donatur'
-                                : (isLunas ? 'Lunas' : 'Belum Lunas'),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isLunas
-                                  ? AppColors.hadirTextLight
-                                  : isDonatur
-                                  ? AppColors.violetAccent
-                                  : AppColors.amberAccent,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Progress Bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: isDonatur ? 1.0 : progress,
-                        minHeight: 6,
-                        backgroundColor: isDark
-                            ? const Color(0xFF202720)
-                            : const Color(0xFFE5E7EB),
-                        valueColor: AlwaysStoppedAnimation(
-                          isLunas
-                              ? AppColors.hadirTextLight
-                              : isDonatur
-                              ? AppColors.violetAccent
-                              : AppColors.amberAccent,
-                        ),
+            // 3. Murid SPP List
+            if (tagihan.isLoading)
+              const ShimmerLoadingList(count: 4, height: 100)
+            else if (tagihan.muridList.isEmpty)
+              _sppSearchQuery.isNotEmpty ||
+                      _sppFilterStatus != 'Semua' ||
+                      _selectedBulanId != null
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: EmptyStateView(
+                        icon: Icons.search_off_rounded,
+                        title: 'Tidak Ada Data Ditemukan',
+                        description:
+                            'Tidak ada data murid yang sesuai dengan filter atau kata kunci pencarian.',
                       ),
-                    ),
-                    const SizedBox(height: 8),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: EmptyStateView(
+                        icon: Icons.credit_card_off_rounded,
+                        title: 'Tagihan SPP Belum Diterbitkan',
+                        description:
+                            'Belum ada rincian tagihan SPP santri yang diterbitkan di kelas ini.',
+                        actionLabel: 'Muat Ulang',
+                        onActionTap: _loadData,
+                      ),
+                    )
+            else
+              ...tagihan.muridList.map((m) {
+                final isLunas = m.statusKeseluruhan == 'Lunas';
+                final isDonatur =
+                    m.statusKeseluruhan == 'Ditanggung Donatur' ||
+                    m.statusKeseluruhan == 'Bebas SPP';
+                final progress = m.totalBulan > 0
+                    ? (m.bulanLunasCount / m.totalBulan).clamp(0.0, 1.0)
+                    : 1.0;
+                final isPutra = m.jenisKelamin == 'L';
 
-                    // Bulan Dots Matrix (11 Hijriyah Dots)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Wrap(
-                            spacing: 4,
-                            runSpacing: 4,
-                            children: m.bulanItems.map((b) {
-                              final blnLunas = b.statusBayar == 'Lunas';
-                              final blnDonatur =
-                                  b.statusBayar == 'Ditanggung Donatur' ||
-                                  b.statusBayar == 'Bebas SPP';
-
-                              Color dotColor = isDark
-                                  ? const Color(0xFF475569)
-                                  : const Color(0xFFCBD5E1);
-                              if (blnLunas) {
-                                dotColor = AppColors.hadirTextLight;
-                              } else if (blnDonatur) {
-                                dotColor = AppColors.violetAccent;
-                              }
-
-                              return Tooltip(
-                                message: '${b.namaBulan}: ${b.statusBayar}',
-                                child: Container(
-                                  width: 14,
-                                  height: 14,
-                                  decoration: BoxDecoration(
-                                    color: dotColor,
-                                    borderRadius: BorderRadius.circular(4),
+                return GlassCard(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                AppAvatar(
+                                  radius: 18,
+                                  name: m.nama,
+                                  imageUrl: m.foto,
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.topCenter,
+                                  backgroundColor: isPutra
+                                      ? Colors.blue.withValues(alpha: 0.15)
+                                      : Colors.pink.withValues(alpha: 0.15),
+                                  textColor: isPutra
+                                      ? Colors.blue
+                                      : Colors.pink,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        m.nama,
+                                        style: const TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        'NISM: ${m.nism} • Wali: ${m.wali}',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isDark
+                                              ? const Color(0xFF8D9387)
+                                              : const Color(0xFF73796E),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton.icon(
-                          onPressed: () => _openKartuSppSheet(m),
-                          icon: const Icon(
-                            Icons.receipt_long_rounded,
-                            size: 15,
-                          ),
-                          label: const Text(
-                            'Kartu SPP',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
+                              ],
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
+                          Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
+                              horizontal: 8,
+                              vertical: 3,
                             ),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            decoration: BoxDecoration(
+                              color: isLunas
+                                  ? (isDark
+                                        ? AppColors.hadirBgDark
+                                        : AppColors.hadirBgLight)
+                                  : isDonatur
+                                  ? (isDark
+                                        ? const Color(0xFF241538)
+                                        : const Color(0xFFF3E8FF))
+                                  : (isDark
+                                        ? const Color(0xFF382305)
+                                        : const Color(0xFFFEF3C7)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isDonatur
+                                  ? 'Donatur'
+                                  : (isLunas ? 'Lunas' : 'Belum Lunas'),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isLunas
+                                    ? AppColors.hadirTextLight
+                                    : isDonatur
+                                    ? AppColors.violetAccent
+                                    : AppColors.amberAccent,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Lunas: ${m.bulanLunasCount} / ${m.totalBulan} Bulan (${_formatRupiah(m.totalDibayar)})',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                      // Progress Bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: isDonatur ? 1.0 : progress,
+                          minHeight: 6,
+                          backgroundColor: isDark
+                              ? const Color(0xFF202720)
+                              : const Color(0xFFE5E7EB),
+                          valueColor: AlwaysStoppedAnimation(
+                            isLunas
+                                ? AppColors.hadirTextLight
+                                : isDonatur
+                                ? AppColors.violetAccent
+                                : AppColors.amberAccent,
                           ),
                         ),
-                        if (!isLunas && !isDonatur && m.sisaTunggakan > 0)
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Bulan Dots Matrix (11 Hijriyah Dots)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: m.bulanItems.map((b) {
+                                final blnLunas = b.statusBayar == 'Lunas';
+                                final blnDonatur =
+                                    b.statusBayar == 'Ditanggung Donatur' ||
+                                    b.statusBayar == 'Bebas SPP';
+
+                                Color dotColor = isDark
+                                    ? const Color(0xFF475569)
+                                    : const Color(0xFFCBD5E1);
+                                if (blnLunas) {
+                                  dotColor = AppColors.hadirTextLight;
+                                } else if (blnDonatur) {
+                                  dotColor = AppColors.violetAccent;
+                                }
+
+                                return Tooltip(
+                                  message: '${b.namaBulan}: ${b.statusBayar}',
+                                  child: Container(
+                                    width: 14,
+                                    height: 14,
+                                    decoration: BoxDecoration(
+                                      color: dotColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () => _openKartuSppSheet(m),
+                            icon: const Icon(
+                              Icons.receipt_long_rounded,
+                              size: 15,
+                            ),
+                            label: const Text(
+                              'Kartu SPP',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           Text(
-                            'Sisa: ${_formatRupiah(m.sisaTunggakan)}',
+                            'Lunas: ${m.bulanLunasCount} / ${m.totalBulan} Bulan (${_formatRupiah(m.totalDibayar)})',
                             style: const TextStyle(
                               fontSize: 11,
-                              color: AppColors.roseDanger,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }),
+                          if (!isLunas && !isDonatur && m.sisaTunggakan > 0)
+                            Text(
+                              'Sisa: ${_formatRupiah(m.sisaTunggakan)}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.roseDanger,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
           ],
         ],
       ),
@@ -1477,10 +1454,12 @@ class _TagihanScreenState extends State<TagihanScreen>
         : AppColors.onPrimaryLight;
     final ringkasan = tagihan.nonSppRingkasan;
     final masterList = (ringkasan?.masterTagihanList ?? [])
-        .where((m) =>
-            m.tipe.toUpperCase() != 'IMNI' &&
-            !m.namaTagihan.toUpperCase().contains('IMNI') &&
-            !m.kodeTagihan.toUpperCase().contains('IMNI'))
+        .where(
+          (m) =>
+              m.tipe.toUpperCase() != 'IMNI' &&
+              !m.namaTagihan.toUpperCase().contains('IMNI') &&
+              !m.kodeTagihan.toUpperCase().contains('IMNI'),
+        )
         .toList();
     final roomList =
         ringkasan?.ruanganList ?? tagihan.ringkasan?.ruanganList ?? [];
@@ -1575,10 +1554,14 @@ class _TagihanScreenState extends State<TagihanScreen>
                         key: ValueKey(
                           'non_spp_ruangan_${_selectedRuanganId ?? ringkasan?.ruanganId}',
                         ),
-                        initialValue: _selectedRuanganId ?? ringkasan?.ruanganId,
+                        initialValue:
+                            _selectedRuanganId ?? ringkasan?.ruanganId,
                         decoration: const InputDecoration(
                           labelText: 'Ruangan Kelas',
-                          prefixIcon: Icon(Icons.meeting_room_rounded, size: 18),
+                          prefixIcon: Icon(
+                            Icons.meeting_room_rounded,
+                            size: 18,
+                          ),
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 10,
@@ -1622,13 +1605,18 @@ class _TagihanScreenState extends State<TagihanScreen>
                       key: ValueKey(
                         'non_spp_${_selectedRuanganId}_${_selectedMasterTagihanId ?? ringkasan?.pengaturanTagihanId}',
                       ),
-                      initialValue: masterList.any((m) =>
-                              m.id ==
-                              (_selectedMasterTagihanId ??
-                                  ringkasan?.pengaturanTagihanId))
+                      initialValue:
+                          masterList.any(
+                            (m) =>
+                                m.id ==
+                                (_selectedMasterTagihanId ??
+                                    ringkasan?.pengaturanTagihanId),
+                          )
                           ? (_selectedMasterTagihanId ??
-                              ringkasan?.pengaturanTagihanId)
-                          : (masterList.isNotEmpty ? masterList.first.id : null),
+                                ringkasan?.pengaturanTagihanId)
+                          : (masterList.isNotEmpty
+                                ? masterList.first.id
+                                : null),
                       decoration: const InputDecoration(
                         labelText: 'Jenis Tagihan Non-SPP',
                         prefixIcon: Icon(Icons.receipt_long_rounded, size: 18),
@@ -1669,7 +1657,8 @@ class _TagihanScreenState extends State<TagihanScreen>
                                 context
                                     .read<TagihanProvider>()
                                     .fetchNonSppRingkasan(
-                                      ruanganId: _selectedRuanganId ??
+                                      ruanganId:
+                                          _selectedRuanganId ??
                                           ringkasan?.ruanganId,
                                       pengaturanTagihanId: val,
                                     );
@@ -1807,28 +1796,6 @@ class _TagihanScreenState extends State<TagihanScreen>
                               _formatRupiah(ringkasan.totalTunggakanNominal),
                               AppColors.amberAccent,
                               isDark,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Status Count Badges
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildMiniBadge(
-                              'Lunas: ${ringkasan.totalSantriLunas}',
-                              AppColors.hadirTextLight,
-                              isDark
-                                  ? AppColors.hadirBgDark
-                                  : AppColors.hadirBgLight,
-                            ),
-                            _buildMiniBadge(
-                              'Belum Lunas: ${ringkasan.totalSantriBelumLunas}',
-                              AppColors.amberAccent,
-                              isDark
-                                  ? const Color(0xFF382305)
-                                  : const Color(0xFFFEF3C7),
                             ),
                           ],
                         ),
@@ -2056,9 +2023,7 @@ class _TagihanScreenState extends State<TagihanScreen>
                                 backgroundColor: isPutra
                                     ? Colors.blue.withValues(alpha: 0.15)
                                     : Colors.pink.withValues(alpha: 0.15),
-                                textColor: isPutra
-                                    ? Colors.blue
-                                    : Colors.pink,
+                                textColor: isPutra ? Colors.blue : Colors.pink,
                               ),
                               const SizedBox(width: 10),
 
@@ -2189,24 +2154,23 @@ class _TagihanScreenState extends State<TagihanScreen>
                                                 child: const Text('Batal'),
                                               ),
                                               ElevatedButton(
-                                                style:
-                                                    ElevatedButton.styleFrom(
+                                                style: ElevatedButton.styleFrom(
                                                   backgroundColor:
                                                       AppColors.roseDanger,
                                                   foregroundColor: Colors.white,
                                                 ),
                                                 onPressed: () =>
                                                     Navigator.pop(c, true),
-                                                child:
-                                                    const Text('Ya, Batalkan'),
+                                                child: const Text(
+                                                  'Ya, Batalkan',
+                                                ),
                                               ),
                                             ],
                                           ),
                                         );
                                         if (confirm == true) {
-                                          await tagihanProvider.batalBayarNonSpp(
-                                            m.tagihanId!,
-                                          );
+                                          await tagihanProvider
+                                              .batalBayarNonSpp(m.tagihanId!);
                                         }
                                       },
                                     ),
@@ -2406,24 +2370,6 @@ class _TagihanScreenState extends State<TagihanScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMiniBadge(String text, Color textColor, Color bgColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
       ),
     );
   }

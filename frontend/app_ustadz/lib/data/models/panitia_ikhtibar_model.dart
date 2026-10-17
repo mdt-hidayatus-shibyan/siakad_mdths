@@ -179,6 +179,7 @@ class TabunganKkItem {
 
 class PembayaranTerakhirItem {
   final int id;
+  final String? noTransaksi;
   final int nominal;
   final String metode;
   final String? tanggal;
@@ -190,6 +191,7 @@ class PembayaranTerakhirItem {
 
   PembayaranTerakhirItem({
     this.id = 0,
+    this.noTransaksi,
     required this.nominal,
     required this.metode,
     this.tanggal,
@@ -203,6 +205,7 @@ class PembayaranTerakhirItem {
   factory PembayaranTerakhirItem.fromJson(Map<String, dynamic> json) {
     return PembayaranTerakhirItem(
       id: json['id'] ?? 0,
+      noTransaksi: json['no_transaksi'],
       nominal: json['nominal'] ?? 0,
       metode: json['metode'] ?? 'Tunai',
       tanggal: json['tanggal'],

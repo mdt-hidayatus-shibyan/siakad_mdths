@@ -17,6 +17,7 @@ class KegiatanIkhtibar extends Model
     protected $fillable = [
         'tahun_pelajaran_id',
         'pengaturan_tagihan_id',
+        'kalendar_pendidikan_id',
         'logo_kegiatan',
         'kop_logo_ikhtibar',
         'nama_kegiatan',
@@ -55,6 +56,14 @@ class KegiatanIkhtibar extends Model
     public function pengaturanTagihan()
     {
         return $this->belongsTo(PengaturanTagihan::class, 'pengaturan_tagihan_id');
+    }
+
+    /**
+     * Relasi ke Kalendar Pendidikan
+     */
+    public function kalendarPendidikan()
+    {
+        return $this->belongsTo(\App\Models\KalendarPendidikan::class, 'kalendar_pendidikan_id');
     }
 
     /**
@@ -143,6 +152,85 @@ class KegiatanIkhtibar extends Model
             return asset('storage/' . $this->stempel_kegiatan);
         }
         return null;
+    }
+
+    /**
+     * Sinkronkan tanggal mulai dan tanggal selesai ikhtibar ke Kalendar Pendidikan
+     */
+    public function syncToKalendarPendidikan()
+    {
+        if (!$this->tanggal_mulai || !$this->tanggal_selesai || !$this->tahun_pelajaran_id) {
+            if ($this->kalendar_pendidikan_id) {
+                \App\Models\KalendarPendidikan::where('id', $this->kalendar_pendidikan_id)->delete();
+                $this->updateQuietly(['kalendar_pendidikan_id' => null]);
+            }
+            return null;
+        }
+
+        $kategori = \App\Models\KategoriKegiatan::firstOrCreate(
+            ['nama_kategori' => 'Ikhtibar'],
+            ['kode_warna' => '#0284c7']
+        );
+
+        $namaKegiatan = $this->nama_kegiatan;
+        if ($this->ikhtibar_ke && !str_contains($namaKegiatan, $this->ikhtibar_ke)) {
+            $namaKegiatan .= ' (' . $this->ikhtibar_ke . ')';
+        }
+
+        $kalendar = null;
+        if ($this->kalendar_pendidikan_id) {
+            $kalendar = \App\Models\KalendarPendidikan::find($this->kalendar_pendidikan_id);
+        }
+
+        if (!$kalendar) {
+            $kalendar = \App\Models\KalendarPendidikan::where('tahun_pelajaran_id', $this->tahun_pelajaran_id)
+                ->where(function ($q) {
+                    $q->where('nama_kegiatan', 'like', '%ikhtibar%')
+                        ->orWhere('keterangan', 'like', '%ikhtibar%');
+                })
+                ->first();
+        }
+
+        $data = [
+            'tahun_pelajaran_id'   => $this->tahun_pelajaran_id,
+            'kategori_kegiatan_id' => $kategori->id,
+            'nama_kegiatan'        => $namaKegiatan,
+            'tipe_presensi'        => 'tidak_ada',
+            'sesi_kegiatan'        => null,
+            'keterangan'           => 'Kegiatan Ikhtibar & Haflah Akhirussanah' . ($this->ikhtibar_ke ? ' (' . $this->ikhtibar_ke . ')' : ''),
+            'tanggal_mulai'        => $this->tanggal_mulai,
+            'tanggal_selesai'      => $this->tanggal_selesai,
+        ];
+
+        if ($kalendar) {
+            $kalendar->update($data);
+        } else {
+            $kalendar = \App\Models\KalendarPendidikan::create($data);
+        }
+
+        if ($this->kalendar_pendidikan_id !== $kalendar->id) {
+            $this->updateQuietly(['kalendar_pendidikan_id' => $kalendar->id]);
+        }
+
+        return $kalendar;
+    }
+
+    /**
+     * Model Booted Hook untuk otomatisasi sinkronisasi ke Kalendar Pendidikan
+     */
+    protected static function booted()
+    {
+        static::saved(function ($model) {
+            if ($model->wasChanged(['tanggal_mulai', 'tanggal_selesai', 'nama_kegiatan', 'ikhtibar_ke', 'tahun_pelajaran_id'])) {
+                $model->syncToKalendarPendidikan();
+            }
+        });
+
+        static::deleted(function ($model) {
+            if ($model->kalendar_pendidikan_id) {
+                \App\Models\KalendarPendidikan::where('id', $model->kalendar_pendidikan_id)->delete();
+            }
+        });
     }
 }
 

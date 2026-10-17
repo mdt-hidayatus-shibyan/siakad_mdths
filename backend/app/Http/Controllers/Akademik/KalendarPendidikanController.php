@@ -30,6 +30,14 @@ class KalendarPendidikanController extends Controller
         $events = [];
 
         if ($tahunPelajaranId) {
+            $ikhtibar = \App\Models\Ikhtibar\KegiatanIkhtibar::where('tahun_pelajaran_id', $tahunPelajaranId)
+                ->whereNotNull('tanggal_mulai')
+                ->whereNotNull('tanggal_selesai')
+                ->first();
+            if ($ikhtibar && !$ikhtibar->kalendar_pendidikan_id) {
+                $ikhtibar->syncToKalendarPendidikan();
+            }
+
             $kegiatans = KalendarPendidikan::with(['kategoriKegiatan'])
                 ->where('tahun_pelajaran_id', $tahunPelajaranId)
                 ->orderBy('tanggal_mulai', 'asc')
@@ -241,7 +249,8 @@ class KalendarPendidikanController extends Controller
                 $sesiKegiatan = !empty($request->sesi_kegiatan) ? $request->sesi_kegiatan : ['Siang', 'Malam'];
             }
 
-            KalendarPendidikan::findOrFail($id)->update([
+            $kalendar = KalendarPendidikan::findOrFail($id);
+            $kalendar->update([
                 'tahun_pelajaran_id'   => $validated['tahun_pelajaran_id'],
                 'nama_kegiatan'        => $validated['nama_agenda'],
                 'kategori_kegiatan_id' => $validated['kategori_kegiatan_id'],
@@ -251,6 +260,14 @@ class KalendarPendidikanController extends Controller
                 'tanggal_mulai'        => $validated['tanggal_mulai'],
                 'tanggal_selesai'      => $validated['tanggal_selesai'],
             ]);
+
+            $ikhtibar = \App\Models\Ikhtibar\KegiatanIkhtibar::where('kalendar_pendidikan_id', $id)->first();
+            if ($ikhtibar) {
+                $ikhtibar->updateQuietly([
+                    'tanggal_mulai'   => $validated['tanggal_mulai'],
+                    'tanggal_selesai' => $validated['tanggal_selesai'],
+                ]);
+            }
         }
 
         return response()->json([
@@ -270,6 +287,10 @@ class KalendarPendidikanController extends Controller
                 } elseif ($jenis === 'ujian') {
                     Ujian::findOrFail($id)->delete();
                 } else {
+                    $ikhtibar = \App\Models\Ikhtibar\KegiatanIkhtibar::where('kalendar_pendidikan_id', $id)->first();
+                    if ($ikhtibar) {
+                        $ikhtibar->updateQuietly(['kalendar_pendidikan_id' => null]);
+                    }
                     KalendarPendidikan::findOrFail($id)->delete();
                 }
 
@@ -286,10 +307,18 @@ class KalendarPendidikanController extends Controller
         $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id');
         $tp = TahunPelajaran::findOrFail($tahunPelajaranId);
 
+        $ikhtibar = \App\Models\Ikhtibar\KegiatanIkhtibar::where('tahun_pelajaran_id', $tahunPelajaranId)
+            ->whereNotNull('tanggal_mulai')
+            ->whereNotNull('tanggal_selesai')
+            ->first();
+        if ($ikhtibar && !$ikhtibar->kalendar_pendidikan_id) {
+            $ikhtibar->syncToKalendarPendidikan();
+        }
+
         $liburs = HariLibur::with(['ruangan', 'level'])->where('tahun_pelajaran_id', $tahunPelajaranId)->get();
         $ujians = Ujian::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
 
-        $kegiatans = KalendarPendidikan::where('tahun_pelajaran_id', $tahunPelajaranId)->get();
+        $kegiatans = KalendarPendidikan::with('kategoriKegiatan')->where('tahun_pelajaran_id', $tahunPelajaranId)->get();
         $kategoris = KategoriKegiatan::all();
         $bulanTerSet = BulanHijriyah::where('tahun_pelajaran_id', $tahunPelajaranId)
             ->pluck('nama_bulan')

@@ -112,6 +112,12 @@
 
         <div class="flex items-center gap-1.5">
             <span class="w-4 h-4 flex items-center justify-center rounded-md font-black text-[8px] shadow-2xs"
+                style="background-color: #0284c733; color: #0284c7;">IK</span>
+            <span>Ikhtibar</span>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+            <span class="w-4 h-4 flex items-center justify-center rounded-md font-black text-[8px] shadow-2xs"
                 style="background-color: #0ea5e933; color: #0ea5e9;">EF</span>
             <span>Kegiatan Akademik (Warna Dinamis)</span>
         </div>
@@ -358,10 +364,13 @@
                                 (isKegiatanDb.kategori_kegiatan && isKegiatanDb.kategori_kegiatan.kode_warna) ||
                                 '#3b82f6';
 
+                            const namaKegiatanLower = (isKegiatanDb.nama_kegiatan || '').toLowerCase();
+                            const isIkhtibar = namaKegiatanLower.includes('ikhtibar');
+
                             bgClass = "hover:brightness-95 dark:hover:brightness-110";
                             textClass = "font-bold text-[10px] flex items-center justify-center";
                             cellStyle = `background-color: ${hex}26; color: ${hex};`;
-                            cellContent = 'EF';
+                            cellContent = isIkhtibar ? 'IK' : 'EF';
                             cellTitle = `Kegiatan: ${isKegiatanDb.nama_kegiatan} [${isoDate}]`;
                             bulananEfektif++;
                             grandTotalEfektif++;

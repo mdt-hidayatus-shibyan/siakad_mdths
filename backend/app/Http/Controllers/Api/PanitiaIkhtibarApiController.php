@@ -340,7 +340,9 @@ class PanitiaIkhtibarApiController extends Controller
             ? PengaturanTagihan::find($kegiatan->pengaturan_tagihan_id)
             : PengaturanTagihan::where('tahun_pelajaran_id', $tahunId)->where('sasaran', 'wali_murid')->first();
 
-        $query = TagihanWaliMurid::where('tahun_pelajaran_id', $tahunId)
+        $query = TagihanWaliMurid::where('tagihan_wali_murids.tahun_pelajaran_id', $tahunId)
+            ->join('wali_murids', 'tagihan_wali_murids.wali_murid_id', '=', 'wali_murids.id')
+            ->select('tagihan_wali_murids.*')
             ->with([
                 'waliMurid.kampung',
                 'waliMurid.murids' => function ($q) use ($tahunId) {
@@ -355,29 +357,90 @@ class PanitiaIkhtibarApiController extends Controller
             ]);
 
         if ($masterTagihan) {
-            $query->where('pengaturan_tagihan_id', $masterTagihan->id);
+            $query->where('tagihan_wali_murids.pengaturan_tagihan_id', $masterTagihan->id);
         }
 
         if ($request->filled('kampung_id')) {
-            $query->whereHas('waliMurid', fn($wq) => $wq->where('kampung_id', $request->kampung_id));
+            $query->where('wali_murids.kampung_id', $request->kampung_id);
         }
 
         if ($request->filled('status_bayar') && $request->status_bayar !== 'Semua') {
-            $query->where('status_bayar', $request->status_bayar);
+            $query->where('tagihan_wali_murids.status_bayar', $request->status_bayar);
         }
 
         if ($request->filled('search')) {
-            $search = trim($request->search);
-            $searchHash = hash_sensitive($search);
-            $query->whereHas('waliMurid', function ($wq) use ($search, $searchHash) {
-                $wq->where('no_registrasi', 'like', "%{$search}%")
-                    ->orWhere('no_kk_hash', $searchHash)
-                    ->orWhere('nama_kepala_keluarga', 'like', "%{$search}%")
-                    ->orWhereHas('murids', fn($mq) => $mq->where('nama_lengkap', 'like', "%{$search}%"));
+            $rawSearch = trim($request->search);
+            $searchHash = hash_sensitive($rawSearch);
+            $cleanNumeric = preg_replace('/[^0-9]/', '', $rawSearch);
+            $altReg = null;
+            if (!empty($cleanNumeric)) {
+                $numVal = (int) $cleanNumeric;
+                if ($numVal >= 1 && $numVal <= 999) {
+                    $altReg = (string) (50000 + $numVal);
+                }
+            }
+
+            $query->where(function ($sub) use ($rawSearch, $searchHash, $cleanNumeric, $altReg) {
+                // 1. Pencarian no_registrasi
+                $sub->where('wali_murids.no_registrasi', $rawSearch)
+                    ->orWhere('wali_murids.no_registrasi', 'like', "%{$rawSearch}%");
+
+                if (!empty($cleanNumeric)) {
+                    $sub->orWhere('wali_murids.no_registrasi', $cleanNumeric)
+                        ->orWhere('wali_murids.no_registrasi', 'like', "%{$cleanNumeric}%");
+                }
+
+                if ($altReg) {
+                    $sub->orWhere('wali_murids.no_registrasi', $altReg);
+                }
+
+                // 2. No HP
+                if (!empty($cleanNumeric) && strlen($cleanNumeric) >= 4) {
+                    $sub->orWhere('wali_murids.no_hp', 'like', "%{$cleanNumeric}%");
+                }
+
+                // 3. No KK Hash
+                if ($searchHash) {
+                    $sub->orWhere('wali_murids.no_kk_hash', $searchHash);
+                }
+
+                // 4. Nama Kepala Keluarga
+                $sub->orWhere('wali_murids.nama_kepala_keluarga', 'like', "%{$rawSearch}%");
+
+                // 5. Nama Santri / NISM
+                $sub->orWhereHas('waliMurid.murids', function ($mq) use ($rawSearch, $cleanNumeric) {
+                    $mq->where('nama_lengkap', 'like', "%{$rawSearch}%");
+                    if (!empty($cleanNumeric)) {
+                        $mq->orWhere('nism', 'like', "%{$cleanNumeric}%");
+                    }
+                });
             });
+
+            // Optimasi Sorting: Prioritaskan kecocokan no_registrasi persis di urutan paling atas
+            $targetReg = !empty($cleanNumeric) ? $cleanNumeric : $rawSearch;
+            $altTarget = $altReg ?: $targetReg;
+
+            $query->orderByRaw("
+                CASE 
+                    WHEN wali_murids.no_registrasi = ? THEN 1
+                    WHEN wali_murids.no_registrasi = ? THEN 2
+                    WHEN wali_murids.no_registrasi LIKE ? THEN 3
+                    WHEN wali_murids.nama_kepala_keluarga = ? THEN 4
+                    WHEN wali_murids.nama_kepala_keluarga LIKE ? THEN 5
+                    ELSE 6
+                END ASC, wali_murids.no_registrasi ASC
+            ", [
+                $targetReg,
+                $altTarget,
+                "{$targetReg}%",
+                $rawSearch,
+                "{$rawSearch}%"
+            ]);
+        } else {
+            $query->orderBy('wali_murids.no_registrasi', 'asc');
         }
 
-        $perPage = $request->input('limit', 20);
+        $perPage = (int) $request->input('limit', $request->filled('search') ? 100 : 500);
         $tagihanList = $query->paginate($perPage);
 
         $mapped = $tagihanList->getCollection()->map(function ($t) use ($request) {
@@ -427,6 +490,7 @@ class PanitiaIkhtibarApiController extends Controller
                 'kwitansi_url'          => $request->root() . URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-publik', ['id' => $t->id], absolute: false),
                 'pembayaran_terakhir'   => $pembayaranTerakhir ? [
                     'id'                => $pembayaranTerakhir->id,
+                    'no_transaksi'      => $pembayaranTerakhir->no_transaksi,
                     'nominal'           => (int) $pembayaranTerakhir->nominal_bayar,
                     'metode'            => $pembayaranTerakhir->metode_pembayaran,
                     'tanggal'           => $pembayaranTerakhir->tanggal_bayar?->format('Y-m-d'),

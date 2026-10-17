@@ -50,6 +50,12 @@ class KalendarPendidikan extends Model
         return $this->hasMany(PresensiKegiatanUstadz::class, 'kalendar_pendidikan_id');
     }
 
+    // Relasi ke Kegiatan Ikhtibar
+    public function kegiatanIkhtibar()
+    {
+        return $this->hasOne(\App\Models\Ikhtibar\KegiatanIkhtibar::class, 'kalendar_pendidikan_id');
+    }
+
     /**
      * Cek apakah pada tanggal tertentu terdapat event/kegiatan khusus dengan presensi aktif
      *

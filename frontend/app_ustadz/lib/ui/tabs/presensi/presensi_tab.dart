@@ -207,7 +207,7 @@ class _PresensiTabState extends State<PresensiTab>
                       16,
                       16,
                       16,
-                      MediaQuery.of(context).padding.bottom + 12,
+                      MediaQuery.of(context).padding.bottom + 84,
                     ),
                     children: [
                       // 1. DATE PICKER SELECTOR BAR
@@ -1176,7 +1176,7 @@ class _PresensiTabState extends State<PresensiTab>
                       16,
                       16,
                       16,
-                      MediaQuery.of(context).padding.bottom + 12,
+                      MediaQuery.of(context).padding.bottom + 84,
                     ),
                     children: [
                       // 1. DATE PICKER SELECTOR BAR

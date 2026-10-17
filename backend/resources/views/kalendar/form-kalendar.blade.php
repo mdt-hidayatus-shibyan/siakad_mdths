@@ -38,6 +38,13 @@
     <div class="p-5 overflow-y-auto custom-scrollbar flex-1">
         <div class="space-y-4">
 
+            @if (isset($kegiatan) && $kegiatan->kegiatanIkhtibar)
+                <div class="p-3 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-xl text-sky-800 dark:text-sky-300 text-xs flex items-center gap-2">
+                    <i class="bi bi-info-circle-fill text-sky-600 dark:text-sky-400"></i>
+                    <span>Agenda ini tersinkronisasi otomatis dengan <strong>Kepanitiaan Ikhtibar</strong>. Perubahan tanggal di sini akan memperbarui jadwal Ikhtibar.</span>
+                </div>
+            @endif
+
             <!-- Jenis Agenda (Hanya muncul saat Tambah Baru) -->
             @if (!isset($kegiatan))
                 <div class="relative group/select">

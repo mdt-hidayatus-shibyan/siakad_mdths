@@ -112,6 +112,9 @@
                     </label>
                     <input type="date" name="tanggal_mulai" value="{{ old('tanggal_mulai', $kegiatan->tanggal_mulai?->format('Y-m-d')) }}"
                         class="m3-input-glass w-full">
+                    <p class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <i class="bi bi-arrow-repeat"></i> Sinkron ke Kalender
+                    </p>
                 </div>
 
                 <!-- Tanggal Selesai -->
@@ -121,6 +124,9 @@
                     </label>
                     <input type="date" name="tanggal_selesai" value="{{ old('tanggal_selesai', $kegiatan->tanggal_selesai?->format('Y-m-d')) }}"
                         class="m3-input-glass w-full">
+                    <p class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <i class="bi bi-arrow-repeat"></i> Sinkron ke Kalender
+                    </p>
                 </div>
 
                 <!-- Tanggal Puncak Acara -->

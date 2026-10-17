@@ -99,6 +99,7 @@ class MasterIkhtibarController extends Controller
         }
 
         $kegiatan->update($validated);
+        $kegiatan->syncToKalendarPendidikan();
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

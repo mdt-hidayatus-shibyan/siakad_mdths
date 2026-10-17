@@ -378,10 +378,10 @@ class _HomeTabState extends State<HomeTab> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(
-            18,
+            16,
             12,
-            18,
-            MediaQuery.of(context).padding.bottom + 12,
+            16,
+            MediaQuery.of(context).padding.bottom + 84,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1402,7 +1402,7 @@ class _HomeTabState extends State<HomeTab> {
         QuickMenuItemData(
           id: 'ikhtibar_kasir',
           icon: Icons.point_of_sale_rounded,
-          title: 'Kasir Pembayaran',
+          title: 'Pembayaran Ikhtibar',
           shortTitle: 'Kasir',
           subtitle: 'Bayar Tagihan KK',
           accentColor: AppColors.primaryLight,

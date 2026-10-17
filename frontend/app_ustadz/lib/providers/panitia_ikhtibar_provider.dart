@@ -38,7 +38,9 @@ class PanitiaIkhtibarProvider extends ChangeNotifier {
   }
 
   void setSearchQuery(String q) {
-    _searchQuery = q;
+    final trimmed = q.trim();
+    if (_searchQuery == trimmed) return;
+    _searchQuery = trimmed;
     notifyListeners();
     fetchKasirList();
   }
@@ -50,6 +52,11 @@ class PanitiaIkhtibarProvider extends ChangeNotifier {
       notifyListeners();
 
       _kasirRingkasan = await _repo.getKasirRingkasan(tahunId: tahunId);
+      if ((_filterKampungId == null ||
+              !_kasirRingkasan!.daftarKampung.any((k) => k.id == _filterKampungId)) &&
+          _kasirRingkasan!.daftarKampung.isNotEmpty) {
+        _filterKampungId = _kasirRingkasan!.daftarKampung.first.id;
+      }
     } catch (e) {
       _kasirError = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -69,12 +76,28 @@ class PanitiaIkhtibarProvider extends ChangeNotifier {
         kampungId: _filterKampungId,
         statusBayar: _filterStatusBayar,
         search: _searchQuery,
+        limit: 500,
       );
     } catch (e) {
       _kasirError = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoadingKasir = false;
       notifyListeners();
+    }
+  }
+
+  Future<List<TagihanKkIkhtibarItem>> searchKasirDirect(
+    String query, {
+    int? tahunId,
+  }) async {
+    try {
+      return await _repo.getKasirList(
+        tahunId: tahunId,
+        search: query.trim(),
+        limit: 10,
+      );
+    } catch (_) {
+      return [];
     }
   }
 
@@ -144,7 +167,7 @@ class PanitiaIkhtibarProvider extends ChangeNotifier {
   String? _laporanError;
   String _filterLaporanMetode = 'Semua';
   int? _filterLaporanKampungId;
-  DateTime? _filterLaporanTanggal;
+  DateTime _filterLaporanTanggal = DateTime.now();
 
   LaporanIkhtibarRingkasanModel? get laporanRingkasan => _laporanRingkasan;
   List<RiwayatPembayaranIkhtibarItem> get riwayatList => _riwayatList;
@@ -152,7 +175,7 @@ class PanitiaIkhtibarProvider extends ChangeNotifier {
   String? get laporanError => _laporanError;
   String get filterLaporanMetode => _filterLaporanMetode;
   int? get filterLaporanKampungId => _filterLaporanKampungId;
-  DateTime? get filterLaporanTanggal => _filterLaporanTanggal;
+  DateTime get filterLaporanTanggal => _filterLaporanTanggal;
 
   void setFilterLaporanMetode(String metode) {
     _filterLaporanMetode = metode;
@@ -167,7 +190,7 @@ class PanitiaIkhtibarProvider extends ChangeNotifier {
   }
 
   void setFilterLaporanTanggal(DateTime? tanggal) {
-    _filterLaporanTanggal = tanggal;
+    _filterLaporanTanggal = tanggal ?? DateTime.now();
     notifyListeners();
     fetchLaporanRiwayat();
   }
@@ -193,9 +216,8 @@ class PanitiaIkhtibarProvider extends ChangeNotifier {
       _laporanError = null;
       notifyListeners();
 
-      final tglStr = _filterLaporanTanggal != null
-          ? "${_filterLaporanTanggal!.year}-${_filterLaporanTanggal!.month.toString().padLeft(2, '0')}-${_filterLaporanTanggal!.day.toString().padLeft(2, '0')}"
-          : null;
+      final tglStr =
+          "${_filterLaporanTanggal.year}-${_filterLaporanTanggal.month.toString().padLeft(2, '0')}-${_filterLaporanTanggal.day.toString().padLeft(2, '0')}";
 
       _riwayatList = await _repo.getLaporanRiwayat(
         tahunId: tahunId,

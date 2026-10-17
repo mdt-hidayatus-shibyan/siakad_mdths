@@ -1658,7 +1658,7 @@ class _AkunTabState extends State<AkunTab> {
             16,
             12,
             16,
-            MediaQuery.of(context).padding.bottom + 12,
+            MediaQuery.of(context).padding.bottom + 84,
           ),
           children: [
             // =================================================================

@@ -283,91 +283,89 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           ),
 
           // 2. Floating Navigation Bar dengan Efek Frosted Glass Blur (BackdropFilter)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, effectiveBottomMargin),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(26),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.10),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                    BoxShadow(
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, effectiveBottomMargin),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.10),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: isDark
+                        ? colorScheme.outlineVariant.withValues(alpha: 0.18)
+                        : Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, -1),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(26),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    height: 66,
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                    decoration: BoxDecoration(
                       color: isDark
-                          ? colorScheme.outlineVariant.withValues(alpha: 0.18)
-                          : Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, -1),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(26),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                    child: Container(
-                      height: 66,
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-                      decoration: BoxDecoration(
+                          ? colorScheme.surfaceContainerHigh.withValues(alpha: 0.94)
+                          : colorScheme.surfaceContainerHighest.withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(26),
+                      border: Border.all(
                         color: isDark
-                            ? colorScheme.surfaceContainerHigh.withValues(alpha: 0.94)
-                            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(26),
-                        border: Border.all(
-                          color: isDark
-                              ? colorScheme.outlineVariant.withValues(alpha: 0.35)
-                              : colorScheme.outlineVariant.withValues(alpha: 0.30),
-                          width: 1.0,
+                            ? colorScheme.outlineVariant.withValues(alpha: 0.35)
+                            : colorScheme.outlineVariant.withValues(alpha: 0.30),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildNavItem(
+                          index: 0,
+                          icon: Icons.home_outlined,
+                          selectedIcon: Icons.home_rounded,
+                          label: 'Beranda',
+                          colorScheme: colorScheme,
+                          isDark: isDark,
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          _buildNavItem(
-                            index: 0,
-                            icon: Icons.home_outlined,
-                            selectedIcon: Icons.home_rounded,
-                            label: 'Beranda',
-                            colorScheme: colorScheme,
-                            isDark: isDark,
-                          ),
-                          _buildNavItem(
-                            index: 1,
-                            icon: Icons.how_to_reg_outlined,
-                            selectedIcon: Icons.how_to_reg_rounded,
-                            label: 'Presensi',
-                            colorScheme: colorScheme,
-                            isDark: isDark,
-                          ),
-                          _buildNavItem(
-                            index: 2,
-                            icon: Icons.warning_amber_outlined,
-                            selectedIcon: Icons.warning_amber_rounded,
-                            label: 'Pelanggaran',
-                            colorScheme: colorScheme,
-                            isDark: isDark,
-                          ),
-                          _buildNavItem(
-                            index: 3,
-                            icon: Icons.assignment_outlined,
-                            selectedIcon: Icons.assignment_turned_in_rounded,
-                            label: 'Ujian',
-                            colorScheme: colorScheme,
-                            isDark: isDark,
-                          ),
-                          _buildNavItem(
-                            index: 4,
-                            icon: Icons.person_outline_rounded,
-                            selectedIcon: Icons.person_rounded,
-                            label: 'Akun',
-                            colorScheme: colorScheme,
-                            isDark: isDark,
-                          ),
-                        ],
-                      ),
+                        _buildNavItem(
+                          index: 1,
+                          icon: Icons.how_to_reg_outlined,
+                          selectedIcon: Icons.how_to_reg_rounded,
+                          label: 'Presensi',
+                          colorScheme: colorScheme,
+                          isDark: isDark,
+                        ),
+                        _buildNavItem(
+                          index: 2,
+                          icon: Icons.warning_amber_outlined,
+                          selectedIcon: Icons.warning_amber_rounded,
+                          label: 'Pelanggaran',
+                          colorScheme: colorScheme,
+                          isDark: isDark,
+                        ),
+                        _buildNavItem(
+                          index: 3,
+                          icon: Icons.assignment_outlined,
+                          selectedIcon: Icons.assignment_turned_in_rounded,
+                          label: 'Ujian',
+                          colorScheme: colorScheme,
+                          isDark: isDark,
+                        ),
+                        _buildNavItem(
+                          index: 4,
+                          icon: Icons.person_outline_rounded,
+                          selectedIcon: Icons.person_rounded,
+                          label: 'Akun',
+                          colorScheme: colorScheme,
+                          isDark: isDark,
+                        ),
+                      ],
                     ),
                   ),
                 ),
