@@ -208,10 +208,15 @@ Route::get('/arsip-dokumen/{id}/download', [ArsipDokumenController::class, 'down
 // Kwitansi Ikhtibar Publik (Signed URL untuk Aplikasi Mobile Ustadz & Wali)
 Route::get('/kwitansi-ikhtibar/{id}', [TagihanIkhtibarController::class, 'cetakKwitansiPublik'])
     ->name('ikhtibar.tagihan.cetak-kwitansi-publik')
-    ->middleware('signed');
+    ->middleware('signed:relative');
 Route::get('/kwitansi-ikhtibar-cicilan/{id}', [TagihanIkhtibarController::class, 'cetakKwitansiCicilanPublik'])
     ->name('ikhtibar.tagihan.cetak-kwitansi-cicilan-publik')
-    ->middleware('signed');
+    ->middleware('signed:relative');
+
+// Kwitansi IMNI Publik (Signed URL untuk Aplikasi Mobile Ustadz & Wali)
+Route::get('/kwitansi-imni/{id}', [PembayaranImniController::class, 'cetakKwitansiPublik'])
+    ->name('ujian.imni.cetak-kwitansi-publik')
+    ->middleware('signed:relative');
 
 
 /*

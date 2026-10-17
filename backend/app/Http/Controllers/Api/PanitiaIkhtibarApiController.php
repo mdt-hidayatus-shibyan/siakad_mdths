@@ -380,7 +380,7 @@ class PanitiaIkhtibarApiController extends Controller
         $perPage = $request->input('limit', 20);
         $tagihanList = $query->paginate($perPage);
 
-        $mapped = $tagihanList->getCollection()->map(function ($t) {
+        $mapped = $tagihanList->getCollection()->map(function ($t) use ($request) {
             $wali = $t->waliMurid;
             $murids = $wali ? $wali->murids : collect([]);
 
@@ -424,7 +424,7 @@ class PanitiaIkhtibarApiController extends Controller
                 'has_pending_tabungan'  => $hasPendingTabungan,
                 'daftar_anak'           => $daftarAnak,
                 'daftar_tabungan'       => $daftarTabungan,
-                'kwitansi_url'          => URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-publik', ['id' => $t->id]),
+                'kwitansi_url'          => $request->root() . URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-publik', ['id' => $t->id], absolute: false),
                 'pembayaran_terakhir'   => $pembayaranTerakhir ? [
                     'id'                => $pembayaranTerakhir->id,
                     'nominal'           => (int) $pembayaranTerakhir->nominal_bayar,
@@ -434,7 +434,7 @@ class PanitiaIkhtibarApiController extends Controller
                     'nomor_tabungan'    => $pembayaranTerakhir->nomor_tabungan,
                     'nama_nasabah'      => $pembayaranTerakhir->nama_nasabah,
                     'ruangan_nasabah'   => $pembayaranTerakhir->ruangan_nasabah,
-                    'kwitansi_url'      => URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-cicilan-publik', ['id' => $pembayaranTerakhir->id]),
+                    'kwitansi_url'      => $request->root() . URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-cicilan-publik', ['id' => $pembayaranTerakhir->id], absolute: false),
                 ] : null,
             ];
         });
@@ -609,8 +609,8 @@ class PanitiaIkhtibarApiController extends Controller
                     'metode_pembayaran'    => $metodeSimpan,
                     'tanggal_bayar'        => $tanggalBayar,
                     'is_verified'          => $isVerified,
-                    'kwitansi_url'         => URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-publik', ['id' => $tagihan->id]),
-                    'kwitansi_cicilan_url' => URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-cicilan-publik', ['id' => $pembayaran->id]),
+                    'kwitansi_url'         => $request->root() . URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-publik', ['id' => $tagihan->id], absolute: false),
+                    'kwitansi_cicilan_url' => $request->root() . URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-cicilan-publik', ['id' => $pembayaran->id], absolute: false),
                 ]
             ], 200);
         });
@@ -823,7 +823,7 @@ class PanitiaIkhtibarApiController extends Controller
 
         $riwayat = $query->paginate($request->input('limit', 20));
 
-        $mapped = $riwayat->getCollection()->map(function ($r) {
+        $mapped = $riwayat->getCollection()->map(function ($r) use ($request) {
             return [
                 'id'                   => $r->id,
                 'tagihan_wali_murid_id'=> $r->tagihan_wali_murid_id,
@@ -840,8 +840,8 @@ class PanitiaIkhtibarApiController extends Controller
                 'nama_nasabah'         => $r->nama_nasabah,
                 'ruangan_nasabah'      => $r->ruangan_nasabah,
                 'diterima_oleh'        => $r->diterimaOleh?->name ?? 'Admin',
-                'kwitansi_url'         => URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-cicilan-publik', ['id' => $r->id]),
-                'kwitansi_tagihan_url' => URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-publik', ['id' => $r->tagihan_wali_murid_id]),
+                'kwitansi_url'         => $request->root() . URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-cicilan-publik', ['id' => $r->id], absolute: false),
+                'kwitansi_tagihan_url' => $request->root() . URL::signedRoute('ikhtibar.tagihan.cetak-kwitansi-publik', ['id' => $r->tagihan_wali_murid_id], absolute: false),
             ];
         });
 

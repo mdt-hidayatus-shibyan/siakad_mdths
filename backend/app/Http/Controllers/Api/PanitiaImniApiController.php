@@ -28,6 +28,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -293,7 +294,7 @@ class PanitiaImniApiController extends Controller
             ->orderBy('murids.nama_lengkap', 'asc')
             ->get();
 
-        $data = $pesertas->map(function ($p) {
+        $data = $pesertas->map(function ($p) use ($request) {
             $pem = $p->pembayaran;
             $isLunas = $pem && $pem->status_pembayaran === 'Lunas';
             $isDispensasi = $p->status_kelayakan === 'Dispensasi';
@@ -327,6 +328,7 @@ class PanitiaImniApiController extends Controller
                     'metode_pembayaran' => $pem?->metode_pembayaran ?? 'Tunai',
                     'nama_penyetor' => $pem?->nama_penyetor,
                     'penerima_nama' => $pem?->penerima?->name ?? 'Bendahara',
+                    'kwitansi_url' => $pem ? ($request->root() . URL::signedRoute('ujian.imni.cetak-kwitansi-publik', ['id' => $pem->id], absolute: false)) : null,
                 ],
             ];
         });
@@ -417,6 +419,7 @@ class PanitiaImniApiController extends Controller
                     'nominal_bayar' => $pem->nominal_bayar,
                     'sisa_tagihan' => $pem->sisa_tagihan,
                     'status_pembayaran' => $pem->status_pembayaran,
+                    'kwitansi_url' => $request->root() . URL::signedRoute('ujian.imni.cetak-kwitansi-publik', ['id' => $pem->id], absolute: false),
                 ]
             ], 200);
         } catch (\Throwable $e) {

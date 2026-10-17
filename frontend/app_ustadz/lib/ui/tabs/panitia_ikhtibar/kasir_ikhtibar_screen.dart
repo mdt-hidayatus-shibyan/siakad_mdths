@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/date_helper.dart';
 import '../../../core/utils/haptic_helper.dart';
 import '../../../data/models/panitia_ikhtibar_model.dart';
 import '../../../providers/panitia_ikhtibar_provider.dart';
@@ -104,6 +105,7 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
     final totalTerbayar = (data['total_terbayar'] as num?)?.toInt() ?? 0;
     final nominalBayar = (data['nominal_bayar'] as num?)?.toInt() ?? 0;
     final metode = data['metode_pembayaran'] ?? 'Tunai';
+    final tanggalBayarRaw = data['tanggal_bayar'] as String?;
     final kwitansiUrl = data['kwitansi_url'] as String?;
 
     showDialog(
@@ -169,6 +171,14 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                     _buildDetailRow('No. Registrasi', noReg, isDark),
                     const Divider(height: 14),
                     _buildDetailRow('Dusun / Kampung', kampung, isDark),
+                    const Divider(height: 14),
+                    _buildDetailRow(
+                      'Tanggal Bayar',
+                      tanggalBayarRaw != null
+                          ? DateHelper.formatTanggalIndo(DateTime.parse(tanggalBayarRaw))
+                          : DateHelper.formatTanggalIndo(DateTime.now()),
+                      isDark,
+                    ),
                     const Divider(height: 14),
                     _buildDetailRow('Metode Bayar', metode, isDark),
                     const Divider(height: 14),
@@ -267,6 +277,7 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
   // =========================================================================
   void _openBayarSheet(TagihanKkIkhtibarItem tagihan) {
     HapticHelper.light();
+    DateTime selectedTanggalBayar = DateTime.now();
     final nominalCtrl = TextEditingController(
       text: tagihan.sisaTagihan.toString(),
     );
@@ -413,6 +424,87 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Input Tanggal Pembayaran
+                  const Text(
+                    'Tanggal Pembayaran *',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedTanggalBayar,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2035),
+                      );
+                      if (picked != null) {
+                        setModalState(() => selectedTanggalBayar = picked);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: isDark ? Colors.white24 : Colors.black26,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : Colors.black.withValues(alpha: 0.02),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: isDark
+                                ? AppColors.primaryDark
+                                : AppColors.primaryLight,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              DateHelper.formatTanggalIndo(selectedTanggalBayar),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: (isDark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primaryLight)
+                                  .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Ubah',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primaryLight,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -743,6 +835,7 @@ class _KasirIkhtibarScreenState extends State<KasirIkhtibarScreen> {
                           tagihanId: tagihan.tagihanId,
                           nominalBayar: nominal,
                           metodePembayaran: metode,
+                          tanggalBayar: DateHelper.toYmd(selectedTanggalBayar),
                           namaPenyetor: penyetorCtrl.text.trim(),
                           catatan: catatanCtrl.text.trim(),
                           nomorTabungan: isPotongTabungan

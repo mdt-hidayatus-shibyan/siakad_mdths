@@ -693,6 +693,14 @@ class PembayaranImniController extends Controller
     }
 
     /**
+     * Cetak Kwitansi Publik (Signed URL untuk Mobile App Ustadz / Wali Murid)
+     */
+    public function cetakKwitansiPublik($id)
+    {
+        return $this->cetakKwitansi($id);
+    }
+
+    /**
      * Cetak Rekapitulasi Laporan Pembayaran IMNI
      */
     public function cetakRekap(Request $request)

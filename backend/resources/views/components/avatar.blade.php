@@ -46,7 +46,7 @@
     <div
         {{ $attributes->merge(['class' => "{$sizeClasses} {$shapeClasses} bg-primary/10 dark:bg-primary-dark/20 border border-primary/20 dark:border-primary-dark/30 text-primary dark:text-primary-dark flex items-center justify-center font-black select-none overflow-hidden transition-colors duration-200"]) }}>
         @if ($src)
-            <img src="{{ $src }}" alt="{{ $alt ?? $name }}" class="w-full h-full object-cover">
+            <img src="{{ $src }}" alt="{{ $alt ?? $name }}" class="w-full h-full object-cover object-top">
         @else
             <span>{{ $initial }}</span>
         @endif

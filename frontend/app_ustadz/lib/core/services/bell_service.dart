@@ -50,7 +50,7 @@ class BellService {
   static const String _keyTeachingSchedule = 'bell_teaching_schedule';
 
   // Android Notification Channel
-  static const String _channelId = 'mdths_kbm_bell_channel_v6';
+  static const String _channelId = 'mdths_kbm_bell_channel_v7';
   static const String _channelName = 'Bel Masuk KBM MDTHS';
   static const String _channelDesc =
       'Notifikasi jadwal bel masuk jam pertama dan jam kedua';
@@ -233,7 +233,7 @@ class BellService {
 
       if (android != null) {
         // Hapus channel versi lama
-        for (final v in ['', '_v2', '_v3', '_v4', '_v5']) {
+        for (final v in ['', '_v2', '_v3', '_v4', '_v5', '_v6']) {
           try {
             await android.deleteNotificationChannel(
               channelId: 'mdths_kbm_bell_channel$v',
@@ -813,7 +813,7 @@ class BellService {
           repeats: repeats,
         );
         if (nativePlayed) {
-          for (int s = 0; s < repeats * 35; s++) {
+          for (int s = 0; s < repeats * 125; s++) {
             if (_currentSession != session) {
               await SystemSettingsService.stopNativeAlarmSound();
               break;
@@ -832,7 +832,12 @@ class BellService {
       try {
         final byteData = await rootBundle.load('assets/audio/school-bell.wav');
         audioBytes = byteData.buffer.asUint8List();
-      } catch (_) {}
+      } catch (_) {
+        try {
+          final byteData = await rootBundle.load('assets/audio/school-bell.WAV');
+          audioBytes = byteData.buffer.asUint8List();
+        } catch (_) {}
+      }
 
       for (int i = 0; i < repeats; i++) {
         if (_currentSession != session) break;
@@ -844,10 +849,14 @@ class BellService {
             try {
               await _player.play(AssetSource('audio/school-bell.wav'));
             } catch (_) {
-              if (audioBytes != null) {
-                await _player.play(
-                  BytesSource(audioBytes, mimeType: 'audio/wav'),
-                );
+              try {
+                await _player.play(AssetSource('audio/school-bell.WAV'));
+              } catch (_) {
+                if (audioBytes != null) {
+                  await _player.play(
+                    BytesSource(audioBytes, mimeType: 'audio/wav'),
+                  );
+                }
               }
             }
           }
@@ -857,7 +866,7 @@ class BellService {
 
         await Future.any([
           _player.onPlayerComplete.first,
-          Future.delayed(const Duration(milliseconds: 3200)),
+          Future.delayed(const Duration(milliseconds: 12500)),
         ]);
 
         if (_currentSession != session) break;
