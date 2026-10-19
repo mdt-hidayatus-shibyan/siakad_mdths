@@ -21,7 +21,6 @@ class TagihanSppScreen extends StatefulWidget {
 
 class _TagihanSppScreenState extends State<TagihanSppScreen> {
   int? _selectedRuanganId;
-  int? _selectedBulanId;
   String _selectedStatus = 'Semua';
   String _searchQuery = '';
 
@@ -399,7 +398,6 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tagihan = context.watch<TagihanProvider>();
     final ringkasan = tagihan.ringkasan;
-    final roomList = ringkasan?.ruanganList ?? [];
     final bulanList = ringkasan?.bulanList ?? [];
 
     if (tagihan.isLoading && ringkasan == null) {
@@ -482,59 +480,6 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
             40 + MediaQuery.of(context).padding.bottom,
           ),
           children: [
-            // 0. Pemilih Ruangan (Jika Wali mengampu >1 Ruangan)
-            if (roomList.length > 1) ...[
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E293B)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.meeting_room_outlined, size: 18),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Pilih Ruangan: ',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: _selectedRuanganId ?? ringkasan?.ruanganId,
-                          isDense: true,
-                          items: roomList.map((r) {
-                            return DropdownMenuItem<int>(
-                              value: r.id,
-                              child: Text('${r.namaRuangan} (${r.levelNama})'),
-                            );
-                          }).toList(),
-                          onChanged: (newId) {
-                            if (newId != null) {
-                              setState(() => _selectedRuanganId = newId);
-                              context.read<TagihanProvider>().fetchSppRingkasan(
-                                ruanganId: newId,
-                              );
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
             // 1. Ringkasan Finansial SPP
             if (ringkasan != null)
               GlassCard(
@@ -668,7 +613,6 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                 setState(() => _searchQuery = val);
                 context.read<TagihanProvider>().fetchSppMuridList(
                   ruanganId: _selectedRuanganId,
-                  bulanHijriyahId: _selectedBulanId,
                   status: _selectedStatus,
                   search: val,
                 );
@@ -676,65 +620,11 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
             ),
             const SizedBox(height: 10),
 
-            // Filter Chips Bar (Status & Bulan)
+            // Filter Chips Bar (Status)
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  // Dropdown Bulan
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF1B241C)
-                          : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF334155)
-                            : const Color(0xFFCBD5E1),
-                      ),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int?>(
-                        value: _selectedBulanId,
-                        isDense: true,
-                        hint: const Text(
-                          'Semua Bulan',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        items: [
-                          const DropdownMenuItem<int?>(
-                            value: null,
-                            child: Text(
-                              'Semua Bulan',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ),
-                          ...bulanList.map((b) {
-                            return DropdownMenuItem<int?>(
-                              value: b.id,
-                              child: Text(
-                                b.namaBulan,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            );
-                          }),
-                        ],
-                        onChanged: (val) {
-                          setState(() => _selectedBulanId = val);
-                          context.read<TagihanProvider>().fetchSppMuridList(
-                            ruanganId: _selectedRuanganId,
-                            bulanHijriyahId: val,
-                            status: _selectedStatus,
-                            search: _searchQuery,
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
                   // Filter Status Chips
                   ...[
                     'Semua',
@@ -770,7 +660,6 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
                           setState(() => _selectedStatus = status);
                           context.read<TagihanProvider>().fetchSppMuridList(
                             ruanganId: _selectedRuanganId,
-                            bulanHijriyahId: _selectedBulanId,
                             status: status,
                             search: _searchQuery,
                           );
@@ -787,9 +676,7 @@ class _TagihanSppScreenState extends State<TagihanSppScreen> {
             if (tagihan.isLoading)
               const ShimmerLoadingList(count: 4, height: 100)
             else if (tagihan.muridList.isEmpty)
-              _searchQuery.isNotEmpty ||
-                      _selectedStatus != 'Semua' ||
-                      _selectedBulanId != null
+              _searchQuery.isNotEmpty || _selectedStatus != 'Semua'
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: EmptyStateView(

@@ -97,10 +97,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: BoxDecoration(
                               color: isDark
                                   ? colorScheme.surfaceContainerHigh
-                                  : colorScheme.primaryContainer.withValues(alpha: 0.5),
+                                  : colorScheme.primaryContainer.withValues(
+                                      alpha: 0.5,
+                                    ),
                               borderRadius: BorderRadius.circular(28),
                               border: Border.all(
-                                color: colorScheme.primary.withValues(alpha: 0.2),
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.2,
+                                ),
                                 width: 1.5,
                               ),
                             ),
@@ -121,7 +125,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,
-                            color: isDark ? const Color(0xFFE2E3DD) : const Color(0xFF191C19),
+                            color: isDark
+                                ? const Color(0xFFE2E3DD)
+                                : const Color(0xFF191C19),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -175,7 +181,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: 'Kata Sandi',
-                              prefixIcon: const Icon(Icons.lock_outline_rounded),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
+                              ),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword
@@ -200,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Lupa Kata Sandi Button
                           Align(
-                            alignment: Alignment.centerRight,
+                            alignment: Alignment.centerLeft,
                             child: TextButton(
                               onPressed: () {
                                 HapticHelper.light();
@@ -238,7 +246,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             height: 52,
                             child: M3ScaleOnPress(
-                              onTap: authProvider.isLoading ? null : _handleLogin,
+                              onTap: authProvider.isLoading
+                                  ? null
+                                  : _handleLogin,
                               pressedScale: 0.96,
                               borderRadius: BorderRadius.circular(16),
                               child: FilledButton(
@@ -262,7 +272,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                       )
                                     : const Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             'Masuk Sekarang',
@@ -303,8 +314,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isDark
-                              ? colorScheme.outlineVariant.withValues(alpha: 0.3)
-                              : colorScheme.outlineVariant.withValues(alpha: 0.6),
+                              ? colorScheme.outlineVariant.withValues(
+                                  alpha: 0.3,
+                                )
+                              : colorScheme.outlineVariant.withValues(
+                                  alpha: 0.6,
+                                ),
                           width: 0.8,
                         ),
                       ),

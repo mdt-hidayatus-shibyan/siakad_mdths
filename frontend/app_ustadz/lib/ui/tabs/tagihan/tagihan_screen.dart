@@ -33,7 +33,6 @@ class _TagihanScreenState extends State<TagihanScreen>
   int? _selectedRuanganId;
 
   // State Tab 1: SPP Bulanan
-  int? _selectedBulanId;
   String _sppFilterStatus = 'Semua';
   String _sppSearchQuery = '';
 
@@ -817,8 +816,6 @@ class _TagihanScreenState extends State<TagihanScreen>
         ? AppColors.primaryDark
         : AppColors.primaryLight;
     final ringkasan = tagihan.ringkasan;
-    final roomList =
-        ringkasan?.ruanganList ?? tagihan.nonSppRingkasan?.ruanganList ?? [];
     final bulanList = ringkasan?.bulanList ?? [];
 
     if (tagihan.isLoading && ringkasan == null) {
@@ -865,131 +862,7 @@ class _TagihanScreenState extends State<TagihanScreen>
         ),
         children: [
           // ===================================================================
-          // 1. FILTER RUANGAN KELAS & BULAN SPP
-          // ===================================================================
-          GlassCard(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.filter_list_rounded,
-                      size: 18,
-                      color: primaryColor,
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Pilih Ruangan Kelas & Bulan SPP',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // 1.1 Dropdown Ruangan Kelas
-                if (roomList.isNotEmpty) ...[
-                  DropdownButtonFormField<int>(
-                    key: ValueKey(
-                      'spp_ruangan_${_selectedRuanganId ?? ringkasan?.ruanganId}',
-                    ),
-                    initialValue: _selectedRuanganId ?? ringkasan?.ruanganId,
-                    decoration: const InputDecoration(
-                      labelText: 'Ruangan Kelas',
-                      prefixIcon: Icon(Icons.meeting_room_rounded, size: 18),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                    ),
-                    items: roomList.map((r) {
-                      return DropdownMenuItem<int>(
-                        value: r.id,
-                        child: Text(
-                          '${r.namaRuangan} (${r.levelNama})',
-                          style: const TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (newId) {
-                      if (newId != null) {
-                        HapticHelper.light();
-                        setState(() {
-                          _selectedRuanganId = newId;
-                          _selectedBulanId = null;
-                        });
-                        context.read<TagihanProvider>().fetchSppRingkasan(
-                          ruanganId: newId,
-                        );
-                        context.read<TagihanProvider>().fetchNonSppRingkasan(
-                          ruanganId: newId,
-                          pengaturanTagihanId: null,
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // 1.2 Dropdown Bulan SPP
-                DropdownButtonFormField<int?>(
-                  key: ValueKey(
-                    'spp_bulan_${_selectedRuanganId}_$_selectedBulanId',
-                  ),
-                  initialValue: _selectedBulanId,
-                  decoration: const InputDecoration(
-                    labelText: 'Bulan Hijriyah',
-                    prefixIcon: Icon(Icons.calendar_month_rounded, size: 18),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                  ),
-                  items: [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text(
-                        'Semua Bulan',
-                        style: TextStyle(fontSize: 13),
-                      ),
-                    ),
-                    ...bulanList.map((b) {
-                      return DropdownMenuItem<int?>(
-                        value: b.id,
-                        child: Text(
-                          '${b.namaBulan} (${b.tahunHijriyah})',
-                          style: const TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }),
-                  ],
-                  onChanged: (val) {
-                    HapticHelper.light();
-                    setState(() => _selectedBulanId = val);
-                    context.read<TagihanProvider>().fetchSppMuridList(
-                      ruanganId: _selectedRuanganId,
-                      bulanHijriyahId: val,
-                      status: _sppFilterStatus,
-                      search: _sppSearchQuery,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // ===================================================================
-          // 2. KONDISI BELUM DITERBITKAN / DATA KONTEN
+          // 1. KONDISI BELUM DITERBITKAN / DATA KONTEN
           // ===================================================================
           if (isSppBelumDiterbitkan && !tagihan.isLoading)
             Padding(
@@ -1137,7 +1010,6 @@ class _TagihanScreenState extends State<TagihanScreen>
                 setState(() => _sppSearchQuery = val);
                 context.read<TagihanProvider>().fetchSppMuridList(
                   ruanganId: _selectedRuanganId,
-                  bulanHijriyahId: _selectedBulanId,
                   status: _sppFilterStatus,
                   search: val,
                 );
@@ -1184,7 +1056,6 @@ class _TagihanScreenState extends State<TagihanScreen>
                           setState(() => _sppFilterStatus = status);
                           context.read<TagihanProvider>().fetchSppMuridList(
                             ruanganId: _selectedRuanganId,
-                            bulanHijriyahId: _selectedBulanId,
                             status: status,
                             search: _sppSearchQuery,
                           );
@@ -1201,9 +1072,7 @@ class _TagihanScreenState extends State<TagihanScreen>
             if (tagihan.isLoading)
               const ShimmerLoadingList(count: 4, height: 100)
             else if (tagihan.muridList.isEmpty)
-              _sppSearchQuery.isNotEmpty ||
-                      _sppFilterStatus != 'Semua' ||
-                      _selectedBulanId != null
+              _sppSearchQuery.isNotEmpty || _sppFilterStatus != 'Semua'
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: EmptyStateView(
@@ -1461,8 +1330,6 @@ class _TagihanScreenState extends State<TagihanScreen>
               !m.kodeTagihan.toUpperCase().contains('IMNI'),
         )
         .toList();
-    final roomList =
-        ringkasan?.ruanganList ?? tagihan.ringkasan?.ruanganList ?? [];
     final muridList = tagihan.nonSppMuridList;
 
     if (tagihan.isLoadingNonSpp && ringkasan == null) {
@@ -1519,7 +1386,7 @@ class _TagihanScreenState extends State<TagihanScreen>
             ),
             children: [
               // ===================================================================
-              // 1. FILTER RUANGAN KELAS & JENIS TAGIHAN NON-SPP
+              // 1. FILTER JENIS TAGIHAN NON-SPP
               // ===================================================================
               GlassCard(
                 padding: const EdgeInsets.all(16),
@@ -1536,7 +1403,7 @@ class _TagihanScreenState extends State<TagihanScreen>
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(
-                            'Pilih Ruangan Kelas & Jenis Tagihan',
+                            'Pilih Jenis Tagihan',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -1548,59 +1415,7 @@ class _TagihanScreenState extends State<TagihanScreen>
                     ),
                     const SizedBox(height: 14),
 
-                    // 1.1 Dropdown Ruangan Kelas
-                    if (roomList.isNotEmpty) ...[
-                      DropdownButtonFormField<int>(
-                        key: ValueKey(
-                          'non_spp_ruangan_${_selectedRuanganId ?? ringkasan?.ruanganId}',
-                        ),
-                        initialValue:
-                            _selectedRuanganId ?? ringkasan?.ruanganId,
-                        decoration: const InputDecoration(
-                          labelText: 'Ruangan Kelas',
-                          prefixIcon: Icon(
-                            Icons.meeting_room_rounded,
-                            size: 18,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                        ),
-                        items: roomList.map((r) {
-                          return DropdownMenuItem<int>(
-                            value: r.id,
-                            child: Text(
-                              '${r.namaRuangan} (${r.levelNama})',
-                              style: const TextStyle(fontSize: 13),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (newId) {
-                          if (newId != null) {
-                            HapticHelper.light();
-                            setState(() {
-                              _selectedRuanganId = newId;
-                              _selectedMasterTagihanId = null;
-                              _selectedTagihanIds.clear();
-                            });
-                            context.read<TagihanProvider>().fetchSppRingkasan(
-                              ruanganId: newId,
-                            );
-                            context
-                                .read<TagihanProvider>()
-                                .fetchNonSppRingkasan(
-                                  ruanganId: newId,
-                                  pengaturanTagihanId: null,
-                                );
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-
-                    // 1.2 Dropdown Jenis Tagihan Non-SPP
+                    // Dropdown Jenis Tagihan Non-SPP
                     DropdownButtonFormField<int>(
                       key: ValueKey(
                         'non_spp_${_selectedRuanganId}_${_selectedMasterTagihanId ?? ringkasan?.pengaturanTagihanId}',

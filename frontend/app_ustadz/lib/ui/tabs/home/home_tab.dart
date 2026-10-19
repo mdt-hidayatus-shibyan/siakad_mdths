@@ -1288,7 +1288,7 @@ class _HomeTabState extends State<HomeTab> {
         icon: Icons.receipt_long_rounded,
         title: 'Tagihan',
         shortTitle: 'Tagihan',
-        subtitle: 'Iuran Ruangan',
+        subtitle: 'SPP & Iuran Ruangan',
         accentColor: const Color(0xFFF43F5E),
         onTap: () {
           Navigator.push(

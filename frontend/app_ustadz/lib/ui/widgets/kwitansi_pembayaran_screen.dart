@@ -278,7 +278,7 @@ class KwitansiPembayaranScreen extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: isDark ? Colors.white : Colors.transparent,
+                              color: Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Center(
@@ -288,12 +288,18 @@ class KwitansiPembayaranScreen extends StatelessWidget {
                                   maxWidth: 320,
                                 ),
                                 child: Image.asset(
-                                  'assets/kop.png',
+                                  isDark
+                                      ? 'assets/kop_dark.png'
+                                      : 'assets/kop.png',
                                   fit: BoxFit.contain,
                                   errorBuilder: (_, __, ___) => Image.asset(
-                                    'assets/logo_mdt.png',
-                                    height: 54,
+                                    'assets/kop.png',
                                     fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => Image.asset(
+                                      'assets/logo_mdt.png',
+                                      height: 54,
+                                      fit: BoxFit.contain,
+                                    ),
                                   ),
                                 ),
                               ),
