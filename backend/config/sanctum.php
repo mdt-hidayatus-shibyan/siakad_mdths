@@ -50,7 +50,7 @@ return [
     |
     */
 
-    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', 60 * 24 * 30), // 30 hari dalam menit
+    'expiration' => (int) env('SANCTUM_TOKEN_EXPIRATION', 60 * 24 * 30), // default 30 hari dalam menit
 
     /*
     |--------------------------------------------------------------------------

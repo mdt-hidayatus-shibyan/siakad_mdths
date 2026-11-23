@@ -10,7 +10,9 @@ import '../widgets/glass_card.dart';
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? sessionExpiredMessage;
+
+  const LoginScreen({super.key, this.sessionExpiredMessage});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -23,6 +25,132 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.sessionExpiredMessage != null &&
+        widget.sessionExpiredMessage!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showSessionExpiredAlert(context, widget.sessionExpiredMessage!);
+      });
+    }
+  }
+
+  void _showSessionExpiredAlert(BuildContext context, String message) {
+    HapticHelper.warning();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.timer_off_outlined, color: Colors.white, size: 20),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Sesi login telah berakhir. Silakan masuk kembali.',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isDark ? AppColors.roseDanger : const Color(0xFFDC2626),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: isDark
+              ? AppColors.surfaceContainerDark
+              : AppColors.surfaceContainerLight,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: (isDark ? AppColors.roseDanger : AppColors.amberAccent)
+                      .withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.lock_clock_rounded,
+                  size: 34,
+                  color: isDark
+                      ? const Color(0xFFF87171)
+                      : const Color(0xFFD97706),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Sesi Login Berakhir',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.45,
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark
+                      ? AppColors.primaryDark
+                      : AppColors.primaryLight,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.login_rounded, size: 18),
+                label: const Text(
+                  'Masuk Kembali',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                onPressed: () {
+                  HapticHelper.medium();
+                  Navigator.of(ctx).pop();
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    ).whenComplete(() {
+      SessionHelper.resetSessionExpiredFlag();
+    });
+  }
+
+  @override
   void dispose() {
     _loginIdController.dispose();
     _passwordController.dispose();
@@ -33,6 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     HapticHelper.medium();
 
+    SessionHelper.resetSessionExpiredFlag();
     SessionHelper.resetAllProviders(context);
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.login(
@@ -146,6 +275,60 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 28),
+
+                  // Banner pemberitahuan sesi berakhir (jika diarahkan dari logout otomatis)
+                  if (widget.sessionExpiredMessage != null &&
+                      widget.sessionExpiredMessage!.isNotEmpty) ...[
+                    M3StaggeredFadeSlide(
+                      index: 1,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (isDark
+                                  ? AppColors.roseDanger
+                                  : AppColors.amberAccent)
+                              .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: (isDark
+                                    ? AppColors.roseDanger
+                                    : AppColors.amberAccent)
+                                .withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.lock_clock_rounded,
+                              size: 20,
+                              color: isDark
+                                  ? const Color(0xFFF87171)
+                                  : const Color(0xFFD97706),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                widget.sessionExpiredMessage!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.4,
+                                  color: isDark
+                                      ? const Color(0xFFFCA5A5)
+                                      : const Color(0xFFB45309),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
 
                   // Login Form Card
                   M3StaggeredFadeSlide(

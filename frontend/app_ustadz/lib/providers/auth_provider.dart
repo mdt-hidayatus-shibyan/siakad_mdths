@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/network/api_client.dart';
 import '../core/services/bell_service.dart';
+import '../core/storage/storage_service.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
 
@@ -20,7 +21,12 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      _user = await _authRepo.getCachedUser();
+      final token = await StorageService.getToken();
+      if (token == null || token.isEmpty) {
+        _user = null;
+      } else {
+        _user = await _authRepo.getCachedUser();
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

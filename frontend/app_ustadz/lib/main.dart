@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'core/storage/storage_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/utils/session_helper.dart';
 import 'providers/akademik_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/app_version_provider.dart';
@@ -79,6 +80,8 @@ class MDTHidayatusShibyanApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
           return MaterialApp(
+            navigatorKey: SessionHelper.navigatorKey,
+            scaffoldMessengerKey: SessionHelper.scaffoldMessengerKey,
             title: 'Ustadz MDTHS',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,

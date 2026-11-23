@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
 import '../storage/storage_service.dart';
+import '../utils/session_helper.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -45,8 +46,41 @@ class ApiClient {
           }
           return handler.next(options);
         },
-        onError: (DioException e, handler) {
-          // Normalisasi pesan error agar seragam
+        onError: (DioException e, handler) async {
+          if (e.response?.statusCode == 401) {
+            final requestPath = e.requestOptions.path;
+            final isPublicOrAuthEndpoint =
+                requestPath.contains(ApiConstants.login) ||
+                requestPath.contains(ApiConstants.logout) ||
+                requestPath.contains(ApiConstants.forgotPassword) ||
+                requestPath.contains(ApiConstants.verifyOtp) ||
+                requestPath.contains(ApiConstants.resetPassword) ||
+                requestPath.contains('/ping') ||
+                requestPath.contains('/app-version');
+
+            final token =
+                StorageService.getCachedToken() ??
+                await StorageService.getToken();
+            final hasToken = token != null && token.isNotEmpty;
+
+            if (!isPublicOrAuthEndpoint && hasToken) {
+              String? serverMessage;
+              if (e.response?.data is Map) {
+                final rawMsg = e.response?.data['message']?.toString();
+                if (rawMsg != null &&
+                    rawMsg.isNotEmpty &&
+                    rawMsg.toLowerCase() != 'unauthenticated.') {
+                  serverMessage = rawMsg;
+                }
+              }
+
+              SessionHelper.handleSessionExpired(
+                message: serverMessage != null
+                    ? 'Sesi Anda telah berakhir: $serverMessage. Silakan masuk kembali.'
+                    : 'Masa berlaku sesi login Anda telah berakhir demi keamanan. Silakan masuk kembali ke akun Ustadz Anda.',
+              );
+            }
+          }
           return handler.next(e);
         },
       ),
