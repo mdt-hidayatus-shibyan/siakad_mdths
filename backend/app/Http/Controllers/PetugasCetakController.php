@@ -21,8 +21,13 @@ class PetugasCetakController extends Controller
             $murid = Murid::where('nism', $nism)->first();
 
             if ($murid) {
-                // 2. Tarik semua arsip milik murid ini dari database
-                $arsips = ArsipDokumen::where('snapshot_data->nism', $murid->nism)
+                // 2. Tarik semua arsip milik murid ini yang telah disahkan dari database
+                $arsips = ArsipDokumen::where(function ($q) use ($murid) {
+                    $q->where(function ($sub) use ($murid) {
+                        $sub->where('referensi_tipe', Murid::class)
+                            ->where('referensi_id', $murid->id);
+                    })->orWhere('snapshot_data->nism', $murid->nism);
+                })
                     ->orderBy('created_at', 'desc')
                     ->get();
 
@@ -60,35 +65,9 @@ class PetugasCetakController extends Controller
                         $arsipDikelompokkan[$thn][$rng] = [];
                     }
 
-                    // Simpan objek arsip ke dalam slot yang sudah spesifik
-                    $arsipDikelompokkan[$thn][$rng][$tipe] = $arsip;
-                }
-
-                // 4. Sinkronisasi & Cek data Peserta Ujian Al-Qur'an murid ini
-                $pesertaAlqurans = \App\Models\UjianAlquran\PesertaUjianAlquran::with([
-                    'ujianAlquran.tahunPelajaran',
-                    'ruangan.level'
-                ])->where('murid_id', $murid->id)->get();
-
-                foreach ($pesertaAlqurans as $peserta) {
-                    $ujian = $peserta->ujianAlquran;
-                    $thn = $ujian ? (($ujian->tahunPelajaran->nama_hijriyah ?? '-') . ' H - ' . ($ujian->tahunPelajaran->nama_masehi ?? '-') . ' M') : 'Tahun Tidak Diketahui';
-                    $rng = $peserta->ruangan->nama_ruangan ?? 'Ruangan Tidak Diketahui';
-
-                    if (!isset($arsipDikelompokkan[$thn][$rng])) {
-                        $arsipDikelompokkan[$thn][$rng] = [];
-                    }
-
-                    $arsipDikelompokkan[$thn][$rng]['peserta_alquran'] = $peserta;
-
-                    if (!isset($arsipDikelompokkan[$thn][$rng]['sk_alquran']) && $peserta->status_kelulusan !== 'Belum Diuji') {
-                        $arsipSk = app(\App\Services\ArsipService::class)->arsipkanSkAlquran($peserta);
-                        $arsipDikelompokkan[$thn][$rng]['sk_alquran'] = $arsipSk;
-                    }
-
-                    if (!isset($arsipDikelompokkan[$thn][$rng]['ijazah_alquran']) && $peserta->status_kelulusan === 'Lulus') {
-                        $arsipIjz = app(\App\Services\ArsipService::class)->arsipkanIjazahAlquran($peserta);
-                        $arsipDikelompokkan[$thn][$rng]['ijazah_alquran'] = $arsipIjz;
+                    // Simpan objek arsip ke dalam slot yang sudah spesifik (ambil yang terbaru)
+                    if (!isset($arsipDikelompokkan[$thn][$rng][$tipe])) {
+                        $arsipDikelompokkan[$thn][$rng][$tipe] = $arsip;
                     }
                 }
             }

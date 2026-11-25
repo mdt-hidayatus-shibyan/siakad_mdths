@@ -206,7 +206,8 @@
                     <ol class="list-decimal pl-4 m-0">
                         <li>Pedoman Kurikulum dan Peraturan Akademik MDT Hidayatus Shibyan;</li>
                         <li>Standar Operasional Prosedur (SOP) Penyelenggaraan Ujian Al-Qur'an Tingkat Ibtidaiyah;</li>
-                        <li>Ketetapan Batas Minimal Nilai Kelulusan (KKM &ge; 55).</li>
+                        <li>Ketetapan Batas Minimal Nilai Kelulusan (KKM &ge;
+                            {{ (int) ($data['kkm_kelulusan'] ?? 55) }}).</li>
                     </ol>
                 </td>
             </tr>
@@ -249,7 +250,7 @@
             <tr>
                 <td>Ruangan / Kelas</td>
                 <td>:</td>
-                <td>{{ $data['nama_ruangan'] ?? '-' }} (Level: {{ $data['nama_level'] ?? '5 IBT' }})</td>
+                <td>{{ $data['nama_ruangan'] ?? '-' }} (Kelas: {{ $data['nama_level'] ?? '5 IBT' }})</td>
             </tr>
             <tr>
                 <td>Nomor Peserta</td>
@@ -259,11 +260,15 @@
         </table>
 
         <!-- RINCIAN HASIL EVALUASI -->
+        @php
+            $bobotJali = (float) ($data['bobot_jali'] ?? 5);
+            $bobotKhofi = (float) ($data['bobot_khofi'] ?? 3);
+        @endphp
         <table class="tabel-rincian">
             <thead>
                 <tr>
-                    <th>Khotho' Jali (-5/err)</th>
-                    <th>Khotho' Khofi (-3/err)</th>
+                    <th>Khotho' Jali (-{{ (int) $bobotJali }}/err)</th>
+                    <th>Khotho' Khofi (-{{ (int) $bobotKhofi }}/err)</th>
                     <th>Total Pengurangan</th>
                     <th>Nilai Akhir</th>
                     <th>Predikat</th>
@@ -271,10 +276,10 @@
             </thead>
             <tbody>
                 <tr class="font-semibold">
-                    <td>{{ $data['jumlah_khoto_jali'] ?? 0 }} x 5 =
-                        -{{ $data['poin_pengurangan_jali'] ?? ($data['jumlah_khoto_jali'] ?? 0) * 5 }}</td>
-                    <td>{{ $data['jumlah_khoto_khofi'] ?? 0 }} x 3 =
-                        -{{ $data['poin_pengurangan_khofi'] ?? ($data['jumlah_khoto_khofi'] ?? 0) * 3 }}</td>
+                    <td>{{ $data['jumlah_khoto_jali'] ?? 0 }} x {{ (int) $bobotJali }} =
+                        -{{ $data['poin_pengurangan_jali'] ?? ($data['jumlah_khoto_jali'] ?? 0) * $bobotJali }}</td>
+                    <td>{{ $data['jumlah_khoto_khofi'] ?? 0 }} x {{ (int) $bobotKhofi }} =
+                        -{{ $data['poin_pengurangan_khofi'] ?? ($data['jumlah_khoto_khofi'] ?? 0) * $bobotKhofi }}</td>
                     <td class="text-rose-700 font-bold">-{{ $data['total_pengurangan'] ?? 0 }}</td>
                     <td class="font-black text-[11pt]">{{ number_format($data['nilai_akhir'] ?? 0, 0) }} / 100</td>
                     <td>{{ $data['predikat'] ?? '-' }} ({{ $data['predikat_arab'] ?? '-' }})</td>

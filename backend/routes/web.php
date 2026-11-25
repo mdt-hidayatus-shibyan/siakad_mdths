@@ -777,6 +777,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 5. Rekapitulasi & Dokumen Output
     Route::prefix('rekap-ujian-alquran')->name('rekap-ujian-alquran.')->group(function () {
         Route::get('/', [RekapUjianAlquranController::class, 'index'])->name('index');
+        Route::post('/{pesertaId}/sahkan', [RekapUjianAlquranController::class, 'sahkan'])->name('sahkan');
+        Route::post('/sahkan-bulk', [RekapUjianAlquranController::class, 'sahkanBulk'])->name('sahkan-bulk');
         Route::get('/cetak-ijazah/{pesertaId}', [RekapUjianAlquranController::class, 'cetakIjazah'])->name('cetak-ijazah');
         Route::get('/cetak-sk/{pesertaId}', [RekapUjianAlquranController::class, 'cetakSk'])->name('cetak-sk');
         Route::get('/cetak-rekap', [RekapUjianAlquranController::class, 'cetakRekap'])->name('cetak-rekap');

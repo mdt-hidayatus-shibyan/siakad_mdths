@@ -29,14 +29,14 @@ class ArsipDokumenController extends Controller
 
             case 'sk_keputusan':
             case 'sk_alquran':
-                if (($data['tipe_sk'] ?? '') === 'sk_alquran' || isset($data['nomor_sk_alquran'])) {
+                if ($arsip->tipe_dokumen === 'sk_alquran' || ($data['tipe_sk'] ?? '') === 'sk_alquran' || isset($data['nomor_sk_alquran'])) {
                     return view('cetak-baru.cetak_sk_alquran_arsip', compact('data', 'arsip'));
                 }
                 return view('cetak-baru.cetak_sk_arsip', compact('data', 'arsip'));
 
             case 'ijazah':
             case 'ijazah_alquran':
-                if (($data['tipe_ijazah'] ?? '') === 'ijazah_alquran' || isset($data['nomor_ijazah_alquran'])) {
+                if ($arsip->tipe_dokumen === 'ijazah_alquran' || ($data['tipe_ijazah'] ?? '') === 'ijazah_alquran' || isset($data['nomor_ijazah_alquran'])) {
                     return view('cetak-baru.cetak_ijazah_alquran_arsip', compact('data', 'arsip'));
                 }
                 return view('cetak-baru.cetak_ijazah_arsip', compact('data', 'arsip'));

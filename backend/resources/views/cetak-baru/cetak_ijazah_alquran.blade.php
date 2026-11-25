@@ -265,14 +265,14 @@
                 <img src="{{ asset('storage/logo_hitam.png') }}" alt="Logo Madrasah">
             </div>
             <div class="arabic-image">
-                <img src="{{ asset('storage/lafadz.png') }}" alt="Kaligrafi Ayat">
+                <img src="{{ asset('assets/lafadz_ijazah_quran.png') }}" alt="Kaligrafi Ayat">
             </div>
         </div>
 
         <!-- JUDUL & IDENTITAS INSTANSI -->
         <div class="title-section">
             <div class="title-ijazah">IJAZAH</div>
-            <div class="title-tingkat">SYARAT KELULUSAN TINGKAT IBTIDAIYAH</div>
+            <div class="title-tingkat">UJIAN AL-QUR'AN TINGKAT IBTIDAIYAH</div>
             <div class="title-madrasah">MADRASAH DINIYAH TAKMILIYAH HIDAYATUS SHIBYAN</div>
             <div class="title-alamat">SOMORKONENG KWANYAR BANGKALAN</div>
             <div class="title-tahun">Tahun Pelajaran
@@ -320,7 +320,7 @@
             <div class="lulus-text">L U L U S</div>
 
             <p>
-                dalam <strong>Ujian Membaca Kitab Suci Al-Qur'an</strong> sebagai Syarat Kelulusan Tingkat Ibtidaiyah
+                dalam <strong>Ujian Membaca Kitab Suci Al-Qur'an</strong> Tingkat Ibtidaiyah
                 yang diselenggarakan pada tanggal
                 <strong>{{ !empty($peserta->ujianAlquran->tanggal_ujian) ? \Carbon\Carbon::parse($peserta->ujianAlquran->tanggal_ujian)->translatedFormat('d F Y') : (!empty($peserta->ujianAlquran->tanggal_pelaksanaan) ? \Carbon\Carbon::parse($peserta->ujianAlquran->tanggal_pelaksanaan)->translatedFormat('d F Y') : (!empty($peserta->tanggal_lulus) ? \Carbon\Carbon::parse($peserta->tanggal_lulus)->translatedFormat('d F Y') : (!empty($data['tanggal_ujian']) ? \Carbon\Carbon::parse($data['tanggal_ujian'])->translatedFormat('d F Y') : '-'))) }}</strong>.
             </p>
@@ -347,9 +347,33 @@
                 </div>
             </div>
 
-            <!-- TENGAH: DEWAN PENGUJI / PENANGGUNG JAWAB -->
+            <!-- TENGAH: PENGASUH  -->
             <div class="ttd-box">
-                <p>Dewan Penguji</p>
+                <p>Pengasuh</p>
+                <p>Madrasah Diniyah</p>
+                <p>Hidayatus Shibyan</p>
+
+                <div class="qr-space">
+                    @if (!empty($pengasuh?->id))
+                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(70)->generate(
+                            URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $pengasuh->id]),
+                        ) !!}
+                    @elseif(!empty($data['pengasuh_id']))
+                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(70)->generate(
+                            URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $data['pengasuh_id']]),
+                        ) !!}
+                    @endif
+                </div>
+
+                <p class="ttd-nama">
+                    {{ $pengasuh?->anggota?->nama_lengkap ?? ($pengasuh?->nama ?? ($data['pengasuh_nama'] ?? 'Pengasuh')) }}
+                </p>
+            </div>
+
+
+            <!-- KANAN: DEWAN PENGUJI / PENANGGUNG JAWAB -->
+            <div class="ttd-box">
+                <p>Penanggung Jawab</p>
                 <p>Ujian Al-Qur'an</p>
                 <p>Hidayatus Shibyan</p>
 
@@ -370,29 +394,6 @@
                 </div>
 
                 <p class="ttd-nama">{{ $juriPj?->ustadz?->nama_lengkap ?? ($data['juri_pj_nama'] ?? 'Dewan Penguji') }}
-                </p>
-            </div>
-
-            <!-- KANAN: PENGASUH -->
-            <div class="ttd-box">
-                <p>Pengasuh</p>
-                <p>Madrasah Diniyah</p>
-                <p>Hidayatus Shibyan</p>
-
-                <div class="qr-space">
-                    @if (!empty($pengasuh?->id))
-                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(70)->generate(
-                            URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $pengasuh->id]),
-                        ) !!}
-                    @elseif(!empty($data['pengasuh_id']))
-                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(70)->generate(
-                            URL::signedRoute('profil.publik', ['tipe' => 'pengurus', 'id' => $data['pengasuh_id']]),
-                        ) !!}
-                    @endif
-                </div>
-
-                <p class="ttd-nama">
-                    {{ $pengasuh?->anggota?->nama_lengkap ?? ($pengasuh?->nama ?? ($data['pengasuh_nama'] ?? 'Pengasuh')) }}
                 </p>
             </div>
 

@@ -188,7 +188,7 @@
                 {{ $peserta->nomor_sk_alquran ?? ($peserta->ujianAlquran->nomor_surat_keputusan ?? 'SK/UAQ/' . date('Y')) }}
             </p>
             <p class="font-bold mt-1 uppercase text-[10pt]">TENTANG<br>PENETAPAN HASIL UJIAN BACA KITAB SUCI AL-QUR'AN
-                SEBAGAI SYARAT KELULUSAN TINGKAT IBTIDAIYAH</p>
+                TINGKAT IBTIDAIYAH</p>
         </div>
 
         <p class="mb-2">Pengasuh Madrasah Diniyah Takmiliyah Hidayatus Shibyan,</p>
@@ -200,7 +200,7 @@
                 <td>
                     <ol class="list-decimal pl-4 m-0">
                         <li>Bahwa kemampuan membaca Kitab Suci Al-Qur'an secara tartil, fasih, dan sesuai kaidah tajwid
-                            merupakan salah satu syarat mutlak kelulusan murid dari tingkat Ibtidaiyah di MDT Hidayatus
+                            pada Tingkat Ibtidaiyah di MDT Hidayatus
                             Shibyan;</li>
                         <li>Bahwa berdasarkan hasil evaluasi Dewan Juri pada Ujian Al-Qur'an Tahun Pelajaran
                             {{ $peserta->ujianAlquran->tahunPelajaran->nama_masehi ?? '-' }}, murid yang bersangkutan
@@ -259,7 +259,7 @@
             <tr>
                 <td>Ruangan / Kelas</td>
                 <td>:</td>
-                <td>{{ $peserta->ruangan->nama_ruangan ?? '-' }} (Level:
+                <td>{{ $peserta->ruangan->nama_ruangan ?? '-' }} (Kelas:
                     {{ $peserta->ruangan->level->nama_level ?? '-' }})</td>
             </tr>
             <tr>

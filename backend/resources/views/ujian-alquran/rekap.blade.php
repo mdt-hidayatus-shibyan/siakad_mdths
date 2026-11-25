@@ -194,178 +194,347 @@
             </form>
         </div>
 
-        <!-- TABEL HASIL REKAPITULASI -->
+        <!-- TABEL HASIL REKAPITULASI & PENGESAHAN -->
         <div
             class="m3-glass-card rounded-3xl border border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 p-5 shadow-2xs">
-            <div class="flex items-center justify-between pb-3 border-b border-zinc-200/60 dark:border-zinc-800 mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-200/60 dark:border-zinc-800 mb-4">
                 <div>
                     <h3
                         class="text-base font-black text-zinc-900 dark:text-white tracking-tight flex items-center gap-2">
                         <i class="bi bi-journal-check text-emerald-500"></i>
-                        <span>Tabel Rekapitulasi Nilai & Dokumen Kelulusan</span>
+                        <span>Tabel Rekapitulasi Nilai & Pengesahan Dokumen Kelulusan</span>
                     </h3>
                     <p class="text-xs text-zinc-400 mt-0.5">
-                        Urutan nomor peserta murid berdasarkan hasil evaluasi Dewan Juri.
+                        Sahkan hasil ujian murid agar dokumen Ijazah Al-Qur'an &amp; SK otomatis dibekukan ke Arsip Dokumen.
                     </p>
                 </div>
                 <span
-                    class="px-3 py-1 rounded-xl text-xs font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                    class="px-3 py-1 rounded-xl text-xs font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 self-start sm:self-auto">
                     {{ $pesertas->total() }} Murid Ditampilkan
                 </span>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr
-                            class="border-b border-zinc-200/80 dark:border-zinc-800 text-[10px] uppercase font-black tracking-wider text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/20">
-                            <th class="py-3 px-3 w-12">No</th>
-                            <th class="py-3 px-3 w-28">No. Peserta</th>
-                            <th class="py-3 px-3 min-w-[180px]">Nama Lengkap Murid</th>
-                            <th class="py-3 px-3 w-24">Ruangan</th>
-                            <th class="py-3 px-3 text-center w-20">
-                                <span class="text-rose-600 dark:text-rose-400 font-bold">Jali</span>
-                                <span
-                                    class="block text-[8px] text-zinc-400 font-normal">(-{{ (int) $ujian->bobot_jali }}
-                                    pt)</span>
-                            </th>
-                            <th class="py-3 px-3 text-center w-20">
-                                <span class="text-amber-600 dark:text-amber-400 font-bold">Khofi</span>
-                                <span
-                                    class="block text-[8px] text-zinc-400 font-normal">(-{{ (int) $ujian->bobot_khofi }}
-                                    pt)</span>
-                            </th>
-                            <th class="py-3 px-3 text-center w-20">Minus</th>
-                            <th class="py-3 px-3 text-center w-24">Nilai Akhir</th>
-                            <th class="py-3 px-3 text-center w-24">Predikat</th>
-                            <th class="py-3 px-3 text-center w-28">Status</th>
-                            <th class="py-3 px-3 text-right min-w-[150px]">Cetak Dokumen</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-zinc-200/60 dark:divide-zinc-800/60 font-medium">
-                        @forelse ($pesertas as $idx => $p)
+            <form action="{{ route('rekap-ujian-alquran.sahkan-bulk') }}" method="POST" id="formSahkanAlquran">
+                @csrf
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
                             <tr
-                                class="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors {{ $p->status_kelulusan === 'Lulus' ? '' : ($p->status_kelulusan === 'Tidak Lulus' ? 'bg-rose-50/30 dark:bg-rose-950/10' : '') }}">
-                                <td class="py-3 px-3 text-zinc-400 font-mono text-[11px]">
-                                    {{ $pesertas->firstItem() + $idx }}
-                                </td>
-                                <td class="py-3 px-3 font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs">
-                                    {{ $p->nomor_peserta ?? '-' }}
-                                </td>
-                                <td class="py-3 px-3">
+                                class="border-b border-zinc-200/80 dark:border-zinc-800 text-[10px] uppercase font-black tracking-wider text-zinc-400 bg-zinc-50/50 dark:bg-zinc-800/20">
+                                <th class="py-3 px-3 text-center w-10">
+                                    <input type="checkbox" id="checkAllAlquran"
+                                        class="rounded border-zinc-300 dark:border-zinc-700 text-primary dark:text-primary-dark focus:ring-primary dark:focus:ring-primary-dark dark:bg-zinc-800 cursor-pointer w-4 h-4">
+                                </th>
+                                <th class="py-3 px-3 w-10">No</th>
+                                <th class="py-3 px-3 w-28">No. Peserta</th>
+                                <th class="py-3 px-3 min-w-[180px]">Nama Lengkap Murid</th>
+                                <th class="py-3 px-3 w-24">Ruangan</th>
+                                <th class="py-3 px-3 text-center w-16">
+                                    <span class="text-rose-600 dark:text-rose-400 font-bold">Jali</span>
                                     <span
-                                        class="font-bold text-zinc-900 dark:text-white uppercase block text-xs md:text-sm">
-                                        {{ $p->murid->nama_lengkap ?? '-' }}
-                                    </span>
-                                    <span class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 font-mono">
-                                        NISM: {{ $p->murid->nism ?? '-' }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-3">
+                                        class="block text-[8px] text-zinc-400 font-normal">(-{{ (int) $ujian->bobot_jali }}
+                                        pt)</span>
+                                </th>
+                                <th class="py-3 px-3 text-center w-16">
+                                    <span class="text-amber-600 dark:text-amber-400 font-bold">Khofi</span>
                                     <span
-                                        class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-                                        {{ $p->ruangan->nama_ruangan ?? '-' }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-3 text-center font-mono font-bold text-rose-600 dark:text-rose-400">
-                                    {{ $p->jumlah_khoto_jali }}
-                                </td>
-                                <td
-                                    class="py-3 px-3 text-center font-mono font-bold text-amber-600 dark:text-amber-400">
-                                    {{ $p->jumlah_khoto_khofi }}
-                                </td>
-                                <td class="py-3 px-3 text-center font-mono font-bold text-rose-700 dark:text-rose-400">
-                                    -{{ $p->total_pengurangan }}
-                                </td>
-                                <td
-                                    class="py-3 px-3 text-center font-mono font-black text-sm {{ $p->status_kelulusan === 'Lulus' ? 'text-emerald-600 dark:text-emerald-400' : ($p->status_kelulusan === 'Tidak Lulus' ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-500') }}">
-                                    {{ number_format($p->nilai_akhir, 0) }}
-                                </td>
-                                <td
-                                    class="py-3 px-3 text-center text-[10px] font-bold text-zinc-700 dark:text-zinc-300">
-                                    @if ($p->status_kelulusan === 'Lulus')
-                                        <span class="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800">
-                                            {{ $p->predikat }}
-                                        </span>
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                <td class="py-3 px-3 text-center">
-                                    @if ($p->status_kelulusan === 'Lulus')
-                                        <span
-                                            class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
-                                            <i class="bi bi-check-circle-fill text-xs"></i> Lulus
-                                        </span>
-                                    @elseif ($p->status_kelulusan === 'Tidak Lulus')
-                                        <span
-                                            class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
-                                            <i class="bi bi-x-circle-fill text-xs"></i> Tidak Lulus
-                                        </span>
-                                    @else
-                                        <span
-                                            class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 inline-flex items-center gap-1">
-                                            Belum Diuji
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="py-3 px-3 text-right">
-                                    <div class="flex items-center justify-end gap-1.5">
-                                        @if ($p->status_kelulusan === 'Lulus')
-                                            <!-- Cetak Ijazah -->
-                                            <a href="{{ route('rekap-ujian-alquran.cetak-ijazah', $p->id) }}"
-                                                target="_blank"
-                                                class="px-2.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                                                title="Cetak Ijazah Kelulusan Al-Qur'an">
-                                                <i class="bi bi-award-fill"></i>
-                                                <span>Ijazah</span>
-                                            </a>
-
-                                            <!-- Cetak SK -->
-                                            <a href="{{ route('rekap-ujian-alquran.cetak-sk', $p->id) }}"
-                                                target="_blank"
-                                                class="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                                                title="Cetak Surat Keputusan Penetapan Kelulusan">
-                                                <i class="bi bi-file-earmark-text-fill"></i>
-                                                <span>SK</span>
-                                            </a>
-                                        @elseif ($p->status_kelulusan === 'Tidak Lulus')
-                                            <!-- Cetak SK Penetapan Hasil -->
-                                            <a href="{{ route('rekap-ujian-alquran.cetak-sk', $p->id) }}"
-                                                target="_blank"
-                                                class="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                                                title="Cetak Surat Keputusan Hasil Ujian (Mengulang)">
-                                                <i class="bi bi-file-earmark-text-fill"></i>
-                                                <span>SK</span>
-                                            </a>
+                                        class="block text-[8px] text-zinc-400 font-normal">(-{{ (int) $ujian->bobot_khofi }}
+                                        pt)</span>
+                                </th>
+                                <th class="py-3 px-3 text-center w-16">Minus</th>
+                                <th class="py-3 px-3 text-center w-20">Nilai</th>
+                                <th class="py-3 px-3 text-center w-24">Predikat</th>
+                                <th class="py-3 px-3 text-center w-28">Kelulusan</th>
+                                <th class="py-3 px-3 text-center w-28">Pengesahan</th>
+                                <th class="py-3 px-3 text-right min-w-[180px]">Aksi &amp; Dokumen</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-200/60 dark:divide-zinc-800/60 font-medium">
+                            @forelse ($pesertas as $idx => $p)
+                                @php
+                                    $arsipIjazah = $arsipIjazahMap->get($p->id);
+                                    $arsipSk = $arsipSkMap->get($p->id);
+                                    $isDisahkan =
+                                        $p->status_kelulusan === 'Lulus'
+                                            ? ($arsipIjazah && $arsipSk)
+                                            : ($p->status_kelulusan === 'Tidak Lulus' ? (bool) $arsipSk : false);
+                                @endphp
+                                <tr
+                                    class="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors {{ $isDisahkan ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : ($p->status_kelulusan === 'Tidak Lulus' ? 'bg-rose-50/30 dark:bg-rose-950/10' : '') }}">
+                                    <!-- Checkbox / Status Kunci -->
+                                    <td class="py-3 px-3 text-center">
+                                        @if ($isDisahkan)
+                                            <i class="bi bi-shield-lock-fill text-emerald-500 text-sm"
+                                                title="Dokumen Telah Disahkan &amp; Diarsipkan"></i>
+                                        @elseif ($p->status_kelulusan === 'Belum Diuji')
+                                            <i class="bi bi-exclamation-circle text-amber-400 text-sm"
+                                                title="Belum Diuji"></i>
                                         @else
-                                            <!-- Link Input Nilai -->
-                                            <a href="{{ route('penilaian-ujian-alquran.index', ['tahun_id' => $tahunPelajaranId, 'ruangan_id' => $p->ruangan_id, 'search' => $p->nomor_peserta]) }}"
-                                                class="px-2.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition-all active:scale-95"
-                                                title="Input Nilai Murid Ini">
-                                                <i class="bi bi-pencil-square"></i>
-                                                <span>Nilai</span>
-                                            </a>
+                                            <input type="checkbox" name="selected_peserta[]" value="{{ $p->id }}"
+                                                class="row-checkbox-alquran rounded border-zinc-300 dark:border-zinc-700 text-primary dark:text-primary-dark focus:ring-primary dark:focus:ring-primary-dark dark:bg-zinc-800 cursor-pointer w-4 h-4">
                                         @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="11" class="py-8 text-center text-zinc-400 italic">
-                                    Belum ada data rekapitulasi ujian yang sesuai dengan filter pencarian.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                                    </td>
+
+                                    <td class="py-3 px-3 text-zinc-400 font-mono text-[11px]">
+                                        {{ $pesertas->firstItem() + $idx }}
+                                    </td>
+                                    <td class="py-3 px-3 font-mono font-bold text-zinc-800 dark:text-zinc-200 text-xs">
+                                        {{ $p->nomor_peserta ?? '-' }}
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <span
+                                            class="font-bold text-zinc-900 dark:text-white uppercase block text-xs md:text-sm">
+                                            {{ $p->murid->nama_lengkap ?? '-' }}
+                                        </span>
+                                        <span class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 font-mono">
+                                            NISM: {{ $p->murid->nism ?? '-' }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <span
+                                            class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                                            {{ $p->ruangan->nama_ruangan ?? '-' }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3 text-center font-mono font-bold text-rose-600 dark:text-rose-400">
+                                        {{ $p->jumlah_khoto_jali }}
+                                    </td>
+                                    <td
+                                        class="py-3 px-3 text-center font-mono font-bold text-amber-600 dark:text-amber-400">
+                                        {{ $p->jumlah_khoto_khofi }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center font-mono font-bold text-rose-700 dark:text-rose-400">
+                                        -{{ $p->total_pengurangan }}
+                                    </td>
+                                    <td
+                                        class="py-3 px-3 text-center font-mono font-black text-sm {{ $p->status_kelulusan === 'Lulus' ? 'text-emerald-600 dark:text-emerald-400' : ($p->status_kelulusan === 'Tidak Lulus' ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-500') }}">
+                                        {{ number_format($p->nilai_akhir, 0) }}
+                                    </td>
+                                    <td
+                                        class="py-3 px-3 text-center text-[10px] font-bold text-zinc-700 dark:text-zinc-300">
+                                        @if ($p->status_kelulusan === 'Lulus')
+                                            <span class="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800">
+                                                {{ $p->predikat }}
+                                            </span>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        @if ($p->status_kelulusan === 'Lulus')
+                                            <span
+                                                class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                                                <i class="bi bi-check-circle-fill text-xs"></i> Lulus
+                                            </span>
+                                        @elseif ($p->status_kelulusan === 'Tidak Lulus')
+                                            <span
+                                                class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                                                <i class="bi bi-x-circle-fill text-xs"></i> Tidak Lulus
+                                            </span>
+                                        @else
+                                            <span
+                                                class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 inline-flex items-center gap-1">
+                                                Belum Diuji
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <!-- Status Pengesahan / Arsip -->
+                                    <td class="py-3 px-3 text-center">
+                                        @if ($isDisahkan)
+                                            <span
+                                                class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/40 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                                <i class="bi bi-shield-lock-fill text-xs"></i> Diarsipkan
+                                            </span>
+                                        @elseif ($p->status_kelulusan === 'Belum Diuji')
+                                            <span
+                                                class="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/40 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                                <i class="bi bi-dash-circle text-xs"></i> Menunggu
+                                            </span>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center gap-1 bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 border border-sky-200/80 dark:border-sky-800/40 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                                <i class="bi bi-file-earmark-check text-xs"></i> Siap Disahkan
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <td class="py-3 px-3 text-right">
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            @if ($isDisahkan)
+                                                @if ($p->status_kelulusan === 'Lulus' && $arsipIjazah)
+                                                    <!-- Cetak Arsip Ijazah -->
+                                                    <a href="{{ route('arsip.cetak', $arsipIjazah->id) }}"
+                                                        target="_blank"
+                                                        class="px-2.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                                        title="Cetak Arsip Ijazah Kelulusan Al-Qur'an">
+                                                        <i class="bi bi-award-fill"></i>
+                                                        <span>Ijazah</span>
+                                                    </a>
+                                                @endif
+
+                                                @if ($arsipSk)
+                                                    <!-- Cetak Arsip SK -->
+                                                    <a href="{{ route('arsip.cetak', $arsipSk->id) }}"
+                                                        target="_blank"
+                                                        class="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                                        title="Cetak Arsip Surat Keputusan Ujian Al-Qur'an">
+                                                        <i class="bi bi-file-earmark-text-fill"></i>
+                                                        <span>SK</span>
+                                                    </a>
+                                                @endif
+                                            @elseif ($p->status_kelulusan === 'Lulus' || $p->status_kelulusan === 'Tidak Lulus')
+                                                <!-- Tombol Pratinjau Sebelum Disahkan -->
+                                                @if ($p->status_kelulusan === 'Lulus')
+                                                    <a href="{{ route('rekap-ujian-alquran.cetak-ijazah', $p->id) }}"
+                                                        target="_blank"
+                                                        class="w-8 h-8 rounded-xl bg-sky-500/10 hover:bg-sky-600 text-sky-600 hover:text-white border border-sky-500/20 flex items-center justify-center transition-all shadow-2xs"
+                                                        title="Pratinjau Ijazah (Belum Disahkan)">
+                                                        <i class="bi bi-award-fill text-xs"></i>
+                                                    </a>
+                                                @endif
+
+                                                <a href="{{ route('rekap-ujian-alquran.cetak-sk', $p->id) }}"
+                                                    target="_blank"
+                                                    class="w-8 h-8 rounded-xl bg-zinc-500/10 hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-white border border-zinc-500/20 flex items-center justify-center transition-all shadow-2xs"
+                                                    title="Pratinjau SK (Belum Disahkan)">
+                                                    <i class="bi bi-file-earmark-text-fill text-xs"></i>
+                                                </a>
+
+                                                <!-- Tombol Sahkan Individu -->
+                                                <button type="button"
+                                                    onclick="sahkanIndividuAlquran({{ $p->id }}, '{{ $p->status_kelulusan }}')"
+                                                    class="px-3 h-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                                    title="Sahkan &amp; Masukkan ke Arsip Dokumen">
+                                                    <i class="bi bi-check-circle-fill text-xs"></i>
+                                                    <span>Sahkan</span>
+                                                </button>
+                                            @else
+                                                <!-- Link Input Nilai -->
+                                                <a href="{{ route('penilaian-ujian-alquran.index', ['tahun_id' => $tahunPelajaranId, 'ruangan_id' => $p->ruangan_id, 'search' => $p->nomor_peserta]) }}"
+                                                    class="px-2.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition-all active:scale-95"
+                                                    title="Input Nilai Murid Ini">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                    <span>Nilai</span>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="13" class="py-8 text-center text-zinc-400 italic">
+                                        Belum ada data rekapitulasi ujian yang sesuai dengan filter pencarian.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- FOOTER / TOMBOL SAHKAN MASSAL -->
+                @if ($pesertas->count() > 0)
+                    <div
+                        class="mt-4 pt-3.5 border-t border-zinc-200/80 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <p class="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                            <i class="bi bi-info-circle-fill text-emerald-500 mr-1"></i>
+                            Dokumen Ijazah &amp; SK Ujian Al-Qur'an baru akan muncul di menu <b>Arsip Dokumen</b> setelah disahkan.
+                        </p>
+                        <button type="button" onclick="konfirmasiSahkanAlquran('bulk')"
+                            class="m3-btn-primary h-10 px-5 self-end sm:self-auto cursor-pointer">
+                            <i class="bi bi-check-all text-lg leading-none"></i>
+                            <span>Sahkan Terpilih</span>
+                        </button>
+                    </div>
+                @endif
+            </form>
 
             @if ($pesertas->hasPages())
-                <div class="pt-4 border-t border-zinc-200/60 dark:border-zinc-800">
+                <div class="pt-4 mt-4 border-t border-zinc-200/60 dark:border-zinc-800">
                     {{ $pesertas->links() }}
                 </div>
             @endif
         </div>
+
+        <!-- SCRIPT PENGESAHAN MASSAL & INDIVIDU -->
+        <script>
+            document.getElementById('checkAllAlquran')?.addEventListener('change', function() {
+                const isChecked = this.checked;
+                document.querySelectorAll('.row-checkbox-alquran').forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+            });
+
+            function sahkanIndividuAlquran(pesertaId, statusKelulusan) {
+                document.querySelectorAll('.row-checkbox-alquran').forEach(cb => cb.checked = false);
+                const targetCheckbox = document.querySelector(`.row-checkbox-alquran[value="${pesertaId}"]`);
+                if (targetCheckbox) {
+                    targetCheckbox.checked = true;
+                }
+                konfirmasiSahkanAlquran('individu', statusKelulusan);
+            }
+
+            function konfirmasiSahkanAlquran(mode = 'bulk', statusKelulusan = '') {
+                const isDark = document.documentElement.classList.contains('dark');
+                const selectedCount = document.querySelectorAll('.row-checkbox-alquran:checked').length;
+
+                if (selectedCount === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '<span class="text-base font-black text-zinc-900 dark:text-white">Pilih Peserta!</span>',
+                        html: '<p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Silakan centang minimal satu peserta yang siap disahkan.</p>',
+                        confirmButtonColor: '#059669',
+                        heightAuto: false,
+                        background: isDark ? '#09090b' : '#ffffff',
+                        customClass: {
+                            popup: 'rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl',
+                            confirmButton: 'rounded-xl font-bold px-5 py-2.5 text-xs'
+                        }
+                    });
+                    return;
+                }
+
+                const titleText = mode === 'individu'
+                    ? 'Sahkan Dokumen Ujian Al-Qur\'an Murid Ini?'
+                    : `Sahkan ${selectedCount} Peserta Terpilih?`;
+
+                const descText = mode === 'individu' && statusKelulusan === 'Tidak Lulus'
+                    ? 'Surat Keputusan (SK) Hasil Ujian Al-Qur\'an akan dibekukan secara permanen dan masuk ke menu <b>Arsip Dokumen &rarr; Arsip SK</b>.'
+                    : 'Dokumen <b>Ijazah Ujian Al-Qur\'an</b> (untuk murid Lulus) dan <b>SK Ujian Al-Qur\'an</b> akan dibekukan secara permanen ke menu <b>Arsip Dokumen</b>.';
+
+                Swal.fire({
+                    title: `<span class="text-base font-black text-zinc-900 dark:text-white">${titleText}</span>`,
+                    html: `<p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mt-1 mb-2 leading-relaxed">${descText}</p>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    heightAuto: false,
+                    confirmButtonColor: '#059669',
+                    cancelButtonColor: isDark ? '#27272a' : '#e4e4e7',
+                    confirmButtonText: '<i class="bi bi-shield-check mr-1"></i> Ya, Sahkan!',
+                    cancelButtonText: '<span class="text-zinc-700 dark:text-zinc-300">Batal</span>',
+                    background: isDark ? '#09090b' : '#ffffff',
+                    customClass: {
+                        popup: 'rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl',
+                        confirmButton: 'rounded-xl font-bold px-5 py-2.5 text-xs',
+                        cancelButton: 'rounded-xl font-bold px-5 py-2.5 text-xs'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: '<span class="text-sm font-bold text-zinc-900 dark:text-white">Mengesahkan &amp; Menyimpan Arsip...</span>',
+                            allowOutsideClick: false,
+                            showConfirmButton: false,
+                            background: isDark ? '#09090b' : '#ffffff',
+                            customClass: {
+                                popup: 'rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl'
+                            },
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        document.getElementById('formSahkanAlquran').submit();
+                    }
+                });
+            }
+        </script>
     @endif
 </x-app-layout>

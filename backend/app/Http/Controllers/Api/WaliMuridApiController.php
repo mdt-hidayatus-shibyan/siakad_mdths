@@ -871,31 +871,37 @@ class WaliMuridApiController extends Controller
             ];
         });
 
-        // 2. Surat Keterangan Kelulusan / SKTB
-        $skList = $arsips->where('tipe_dokumen', 'sk_keputusan')->values()->map(function ($a) {
+        // 2. Surat Keputusan (Kenaikan/Kelulusan & Ujian Al-Qur'an)
+        $skList = $arsips->whereIn('tipe_dokumen', ['sk_keputusan', 'sk_alquran'])->values()->map(function ($a) {
             $data = $a->snapshot_data ?? [];
+            $isAlquran = $a->tipe_dokumen === 'sk_alquran' || ($data['tipe_sk'] ?? '') === 'sk_alquran';
             return [
                 'id'               => $a->id,
-                'nama_dokumen'     => 'Surat Keterangan Kelulusan',
+                'tipe_dokumen'     => $isAlquran ? 'sk_alquran' : 'sk_keputusan',
+                'nama_dokumen'     => $isAlquran ? 'SK Ujian Al-Qur\'an' : 'Surat Keterangan Kelulusan',
                 'nomor_dokumen'    => $data['nomor_dokumen'] ?? '-',
                 'tahun_pelajaran'  => $data['tahun_pelajaran'] ?? '-',
-                'status_keputusan' => $data['status_keputusan'] ?? 'LULUS',
+                'status_keputusan' => $data['status_kelulusan'] ?? ($data['status_keputusan'] ?? 'LULUS'),
                 'tanggal_disahkan' => $data['tanggal_disahkan'] ?? $a->created_at->format('d-m-Y'),
                 'download_url'     => url("/arsip-dokumen/{$a->id}/cetak?print=1"),
                 'cetak_url'        => url("/arsip-dokumen/{$a->id}/cetak"),
             ];
         });
 
-        // 3. Ijazah Madrasah (Khusus Kelas Akhir)
-        $ijazahList = $arsips->where('tipe_dokumen', 'ijazah')->values()->map(function ($a) {
+        // 3. Ijazah (Madrasah & Ujian Al-Qur'an)
+        $ijazahList = $arsips->whereIn('tipe_dokumen', ['ijazah', 'ijazah_alquran'])->values()->map(function ($a) {
             $data = $a->snapshot_data ?? [];
+            $isAlquran = $a->tipe_dokumen === 'ijazah_alquran' || ($data['tipe_ijazah'] ?? '') === 'ijazah_alquran';
             return [
                 'id'                 => $a->id,
-                'nama_dokumen'       => 'Ijazah Madrasah ' . ($data['lulus_dari_tingkat'] ?? ''),
+                'tipe_dokumen'       => $isAlquran ? 'ijazah_alquran' : 'ijazah',
+                'nama_dokumen'       => $isAlquran
+                    ? 'Ijazah Ujian Al-Qur\'an'
+                    : ('Ijazah Madrasah ' . ($data['lulus_dari_tingkat'] ?? '')),
                 'nomor_dokumen'      => $data['nomor_dokumen'] ?? '-',
                 'tahun_pelajaran'    => $data['tahun_pelajaran'] ?? '-',
                 'lulus_dari_tingkat' => $data['lulus_dari_tingkat'] ?? '-',
-                'rata_rata'          => (float) ($data['rata_rata'] ?? 0),
+                'rata_rata'          => (float) ($data['nilai_akhir'] ?? ($data['rata_rata'] ?? 0)),
                 'tanggal_disahkan'   => $data['tanggal_disahkan'] ?? $a->created_at->format('d-m-Y'),
                 'download_url'       => url("/arsip-dokumen/{$a->id}/cetak?print=1"),
                 'cetak_url'          => url("/arsip-dokumen/{$a->id}/cetak"),

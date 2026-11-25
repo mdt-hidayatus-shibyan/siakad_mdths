@@ -28,6 +28,27 @@
                     class="m3-input-glass w-full !pl-9 text-xs font-bold">
             </div>
 
+            <!-- Filter Jenis Ijazah -->
+            <div class="w-full lg:w-52 relative group">
+                <div
+                    class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-amber-500 transition-colors">
+                    <i class="bi bi-funnel-fill text-xs"></i>
+                </div>
+                <select name="jenis" onchange="this.form.submit()"
+                    class="m3-input-glass w-full !pl-9 !pr-8 text-xs font-bold cursor-pointer appearance-none">
+                    <option value="" class="text-zinc-500">Semua Jenis Ijazah</option>
+                    <option value="ijazah_madrasah" {{ request('jenis') === 'ijazah_madrasah' ? 'selected' : '' }}>
+                        Ijazah Madrasah
+                    </option>
+                    <option value="ijazah_alquran" {{ request('jenis') === 'ijazah_alquran' ? 'selected' : '' }}>
+                        Ijazah Ujian Al-Qur'an
+                    </option>
+                </select>
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
+                    <i class="bi bi-chevron-down text-[10px] font-black"></i>
+                </div>
+            </div>
+
             <!-- Filter Tahun Pelajaran -->
             <div class="w-full lg:w-48 relative group">
                 <div
@@ -126,15 +147,28 @@
                             </td>
 
                             <!-- Informasi Dokumen -->
+                            @php
+                                $isIjazahAlquran = ($data['tipe_ijazah'] ?? '') === 'ijazah_alquran' || $arsip->tipe_dokumen === 'ijazah_alquran';
+                            @endphp
                             <td class="py-3 px-5 border-r border-zinc-200/60 dark:border-zinc-800/60 align-top">
                                 <p
                                     class="font-black text-sm text-zinc-900 dark:text-white mb-0.5 uppercase tracking-tight">
-                                    {{ $data['nama_murid'] ?? ($data['nama_murid'] ?? 'Tidak Diketahui') }}
+                                    {{ $data['nama_murid'] ?? 'Tidak Diketahui' }}
                                 </p>
-                                <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
-                                    NISM: {{ $data['nism'] ?? '-' }} &bull; Lulus Tingkat: <span
-                                        class="text-amber-600 dark:text-amber-400">{{ strtoupper($data['lulus_dari_tingkat'] ?? '-') }}</span>
-                                </p>
+                                @if ($isIjazahAlquran)
+                                    <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
+                                        NISM: {{ $data['nism'] ?? '-' }} &bull; Ruang: {{ $data['nama_ruangan'] ?? '-' }}
+                                        &bull; Nilai: <span class="text-emerald-600 dark:text-emerald-400 font-black">{{ number_format($data['nilai_akhir'] ?? 0, 0) }}</span>
+                                        @if (!empty($data['predikat']))
+                                            ({{ $data['predikat'] }})
+                                        @endif
+                                    </p>
+                                @else
+                                    <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
+                                        NISM: {{ $data['nism'] ?? '-' }} &bull; Lulus Tingkat: <span
+                                            class="text-amber-600 dark:text-amber-400">{{ strtoupper($data['lulus_dari_tingkat'] ?? '-') }}</span>
+                                    </p>
+                                @endif
                                 <p
                                     class="text-[10px] font-bold text-zinc-400 mt-1 bg-zinc-100 dark:bg-zinc-800 inline-block px-1.5 py-0.5 rounded-lg border border-zinc-200/60 dark:border-zinc-700 shadow-2xs">
                                     <i class="bi bi-upc-scan mr-1"></i>{{ $data['nomor_dokumen'] ?? 'Tanpa Nomor' }}

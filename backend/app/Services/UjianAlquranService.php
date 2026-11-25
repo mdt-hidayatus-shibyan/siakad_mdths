@@ -298,6 +298,10 @@ class UjianAlquranService
             if (!$tanggalLulus) {
                 $tanggalLulus = $ujian->tanggal_ujian ?? now();
             }
+        } else {
+            if (!$noSk) {
+                $noSk = str_pad($peserta->id, 3, '0', STR_PAD_LEFT) . "/SK.QURAN/IBT/MDT-HS/{$bln}/{$thn}";
+            }
         }
 
         $peserta->update([
@@ -314,14 +318,6 @@ class UjianAlquranService
             'tanggal_lulus'          => $tanggalLulus,
             'diuji_oleh'             => $diujiOlehUserId ?? auth()->id(),
         ]);
-
-        if ($status === 'Lulus') {
-            try {
-                app(\App\Services\ArsipService::class)->arsipkanIjazahAlquran($peserta);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Gagal auto-arsip Ijazah Al-Qur\'an: ' . $e->getMessage());
-            }
-        }
 
         return $peserta;
     }

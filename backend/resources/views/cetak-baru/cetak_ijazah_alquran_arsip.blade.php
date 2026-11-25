@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -265,14 +265,14 @@
                 <img src="{{ asset('storage/logo_hitam.png') }}" alt="Logo Madrasah">
             </div>
             <div class="arabic-image">
-                <img src="{{ asset('storage/lafadz.png') }}" alt="Kaligrafi Ayat">
+                <img src="{{ asset('assets/lafadz_ijazah_quran.png') }}" alt="Kaligrafi Ayat">
             </div>
         </div>
 
         <!-- JUDUL & IDENTITAS INSTANSI -->
         <div class="title-section">
             <div class="title-ijazah">IJAZAH</div>
-            <div class="title-tingkat">SYARAT KELULUSAN TINGKAT IBTIDAIYAH</div>
+            <div class="title-tingkat">UJIAN AL-QUR'AN TINGKAT IBTIDAIYAH</div>
             <div class="title-madrasah">MADRASAH DINIYAH TAKMILIYAH HIDAYATUS SHIBYAN</div>
             <div class="title-alamat">SOMORKONENG KWANYAR BANGKALAN</div>
             <div class="title-tahun">Tahun Pelajaran {{ $data['tahun_masehi'] ?? '-' }} M
@@ -314,7 +314,7 @@
             <div class="lulus-text">L U L U S</div>
 
             <p>
-                dalam <strong>Ujian Membaca Kitab Suci Al-Qur'an</strong> sebagai Syarat Kelulusan Tingkat Ibtidaiyah
+                dalam <strong>Ujian Membaca Kitab Suci Al-Qur'an</strong> Tingkat Ibtidaiyah
                 yang diselenggarakan pada tanggal
                 <strong>{{ !empty($data['tanggal_ujian']) ? \Carbon\Carbon::parse($data['tanggal_ujian'])->translatedFormat('d F Y') : (!empty($data['tanggal_pelaksanaan']) ? \Carbon\Carbon::parse($data['tanggal_pelaksanaan'])->translatedFormat('d F Y') : (!empty($data['tanggal_lulus']) ? \Carbon\Carbon::parse($data['tanggal_lulus'])->translatedFormat('d F Y') : (!empty($data['tanggal_disahkan']) ? \Carbon\Carbon::parse($data['tanggal_disahkan'])->translatedFormat('d F Y') : '-'))) }}</strong>.
             </p>
@@ -337,28 +337,11 @@
             <!-- KIRI: PAS FOTO -->
             <div class="pas-foto-wrapper">
                 <div class="pas-foto">
-                    Pas Foto<br>Murid<br>3x4
+                    Pas Foto<br>3x4
                 </div>
             </div>
 
-            <!-- TENGAH: DEWAN PENGUJI / PENANGGUNG JAWAB -->
-            <div class="ttd-box">
-                <p>Dewan Penguji</p>
-                <p>Ujian Al-Qur'an</p>
-                <p>Hidayatus Shibyan</p>
-
-                <div class="qr-space">
-                    @if (!empty($data['juri_pj_id']))
-                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(70)->generate(
-                            URL::signedRoute('profil.publik', ['tipe' => 'ustadz', 'id' => $data['juri_pj_id']]),
-                        ) !!}
-                    @endif
-                </div>
-
-                <p class="ttd-nama">{{ $data['juri_pj_nama'] ?? 'Dewan Penguji' }}</p>
-            </div>
-
-            <!-- KANAN: PENGASUH -->
+            <!-- TENGAH: PENGASUH -->
             <div class="ttd-box">
                 <p>Pengasuh</p>
                 <p>Madrasah Diniyah</p>
@@ -373,6 +356,23 @@
                 </div>
 
                 <p class="ttd-nama">{{ $data['pengasuh_nama'] ?? 'Pengasuh' }}</p>
+            </div>
+
+            <!-- KANAN: DEWAN PENGUJI / PENANGGUNG JAWAB -->
+            <div class="ttd-box">
+                <p>Dewan Penguji</p>
+                <p>Ujian Al-Qur'an</p>
+                <p>Hidayatus Shibyan</p>
+
+                <div class="qr-space">
+                    @if (!empty($data['juri_pj_id']))
+                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(70)->generate(
+                            URL::signedRoute('profil.publik', ['tipe' => 'ustadz', 'id' => $data['juri_pj_id']]),
+                        ) !!}
+                    @endif
+                </div>
+
+                <p class="ttd-nama">{{ $data['juri_pj_nama'] ?? 'Dewan Penguji' }}</p>
             </div>
 
         </div>
