@@ -39,12 +39,15 @@
                     <i class="bi bi-person-plus-fill text-sm"></i>
                     <span>Tambah Murid</span>
                 </button>
+            @endcan
+
+            @can('read rombongan-belajar')
                 <div class="relative inline-block text-left dropdown-container z-10">
                     <button type="button" data-dropdown-toggle="dropdownOpsiData"
                         class="w-full sm:w-auto h-10 inline-flex items-center justify-center px-3.5 rounded-xl bg-zinc-100/80 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-800 text-xs font-bold transition-all outline-none border border-zinc-200/80 dark:border-zinc-800 shadow-sm active:scale-95">
                         <i class="bi bi-three-dots text-base"></i>
                     </button>
-                    <div id="dropdownOpsiData" class="m3-dropdown-menu hidden right-0 left-0 sm:left-auto">
+                    <div id="dropdownOpsiData" class="m3-dropdown-menu hidden right-0 left-0 sm:left-auto min-w-[220px]">
 
                         <a href="{{ route('rombongan-belajar.export-anggota', $ruangan->id) }}"
                             class="m3-dropdown-item hover:!text-emerald-600 dark:hover:!text-emerald-400">
@@ -53,7 +56,21 @@
 
                         <a href="{{ route('rombongan-belajar.print-anggota', $ruangan->id) }}" target="_blank"
                             class="m3-dropdown-item hover:!text-blue-600 dark:hover:!text-blue-400">
-                            <i class="bi bi-printer mr-2.5 text-base"></i> Print Data
+                            <i class="bi bi-printer mr-2.5 text-base"></i> Print Data Anggota
+                        </a>
+
+                        <div class="m3-dropdown-divider"></div>
+
+                        <a href="{{ route('rombongan-belajar.print-penilaian', ['id' => $ruangan->id, 'mode' => 'mapel']) }}"
+                            target="_blank"
+                            class="m3-dropdown-item hover:!text-amber-600 dark:hover:!text-amber-400">
+                            <i class="bi bi-clipboard2-check mr-2.5 text-base"></i> Cetak Penilaian Ujian
+                        </a>
+
+                        <a href="{{ route('rombongan-belajar.print-penilaian', ['id' => $ruangan->id, 'mode' => 'leger']) }}"
+                            target="_blank"
+                            class="m3-dropdown-item hover:!text-purple-600 dark:hover:!text-purple-400">
+                            <i class="bi bi-table mr-2.5 text-base"></i> Cetak Blangko Leger Ujian
                         </a>
                     </div>
                 </div>

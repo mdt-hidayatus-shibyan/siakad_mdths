@@ -4,11 +4,16 @@ namespace App\Http\Controllers\Akademik;
 
 use App\Http\Controllers\Controller;
 
+use App\Models\Administrator;
+use App\Models\JadwalPelajaran;
+use App\Models\Kepengurusan\Pengurus;
 use App\Models\Level;
+use App\Models\MataPelajaran;
 use App\Models\Murid;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
 use App\Models\Ujian\RiwayatKenaikan;
+use App\Models\Ujian\Ujian;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,15 +32,17 @@ class RombonganBelajarController extends Controller
             $filterTp = $activeTp ? $activeTp->id : null;
         }
 
-        $ruangans = Ruangan::with(['level.tingkat', 'waliRuangan', 'tahunPelajaran'])
+        $ruangans = Ruangan::with(['level.tingkat', 'waliRuangan', 'tahunPelajaran', 'murids'])
             ->when($filterTp, function ($query, $filterTp) {
                 return $query->where('tahun_pelajaran_id', $filterTp);
             })
             ->when($search, function ($query, $search) {
-                return $query->where('nama_ruangan', 'like', '%' . $search . '%')
-                    ->orWhereHas('waliRuangan', function ($q) use ($search) {
-                        $q->where('nama_lengkap', 'like', '%' . $search . '%');
-                    });
+                return $query->where(function ($qSearch) use ($search) {
+                    $qSearch->where('nama_ruangan', 'like', '%' . $search . '%')
+                        ->orWhereHas('waliRuangan', function ($q) use ($search) {
+                            $q->where('nama_lengkap', 'like', '%' . $search . '%');
+                        });
+                });
             })
             ->berdasarkanHakAkses()
             ->orderBy('level_id', 'asc')
@@ -366,6 +373,116 @@ class RombonganBelajarController extends Controller
     }
 
     /**
+     * Halaman Cetak Rincian Jumlah Murid Aktif Berdasarkan Ruangan dan Berdasarkan Level
+     */
+    public function cetakRincian(Request $request)
+    {
+        $filterTp = $request->input('tahun_pelajaran_id');
+        if (!$filterTp) {
+            $activeTp = TahunPelajaran::where('is_active', true)->first();
+            $filterTp = $activeTp ? $activeTp->id : null;
+        }
+
+        $tahunPelajaran = $filterTp ? TahunPelajaran::find($filterTp) : null;
+        $mode = in_array($request->input('mode'), ['semua', 'ruangan', 'level'])
+            ? $request->input('mode')
+            : 'semua';
+
+        $ruangans = Ruangan::with([
+            'level.tingkat',
+            'waliRuangan',
+            'murids' => function ($q) {
+                $q->where('status', 'Aktif');
+            },
+        ])
+            ->when($filterTp, function ($query, $filterTp) {
+                return $query->where('tahun_pelajaran_id', $filterTp);
+            })
+            ->berdasarkanHakAkses()
+            ->orderBy('level_id', 'asc')
+            ->orderBy('nama_ruangan', 'asc')
+            ->get();
+
+        // 1. Rincian berdasarkan Ruangan
+        $rincianRuangan = $ruangans->map(function ($ruangan) {
+            $laki = $ruangan->murids->where('jenis_kelamin', 'L')->count();
+            $perempuan = $ruangan->murids->where('jenis_kelamin', 'P')->count();
+            $total = $ruangan->murids->count();
+
+            return (object) [
+                'id'           => $ruangan->id,
+                'nama_ruangan' => $ruangan->nama_ruangan,
+                'level_id'     => $ruangan->level_id,
+                'nama_level'   => $ruangan->level->nama_level ?? '-',
+                'tingkat_id'   => $ruangan->level->tingkat_id ?? null,
+                'nama_tingkat' => $ruangan->level->tingkat->nama_tingkat ?? '-',
+                'wali_ruangan' => $ruangan->waliRuangan->nama_lengkap ?? '-',
+                'kapasitas'    => (int) ($ruangan->kapasitas ?? 0),
+                'laki'         => $laki,
+                'perempuan'    => $perempuan,
+                'total'        => $total,
+            ];
+        });
+
+        // 2. Rincian berdasarkan Level
+        $rincianLevel = $rincianRuangan->groupBy('level_id')->map(function ($items) {
+            $first = $items->first();
+            return (object) [
+                'level_id'       => $first->level_id,
+                'nama_level'     => $first->nama_level,
+                'tingkat_id'     => $first->tingkat_id,
+                'nama_tingkat'   => $first->nama_tingkat,
+                'jumlah_ruangan' => $items->count(),
+                'daftar_ruangan' => $items->pluck('nama_ruangan')->implode(', '),
+                'kapasitas'      => $items->sum('kapasitas'),
+                'laki'           => $items->sum('laki'),
+                'perempuan'      => $items->sum('perempuan'),
+                'total'          => $items->sum('total'),
+            ];
+        })->values();
+
+        // 3. Rekap ringkas berdasarkan Tingkat
+        $rincianTingkat = $rincianLevel->groupBy('tingkat_id')->map(function ($items) {
+            $first = $items->first();
+            return (object) [
+                'nama_tingkat'   => $first->nama_tingkat,
+                'jumlah_level'   => $items->count(),
+                'jumlah_ruangan' => $items->sum('jumlah_ruangan'),
+                'laki'           => $items->sum('laki'),
+                'perempuan'      => $items->sum('perempuan'),
+                'total'          => $items->sum('total'),
+            ];
+        })->values();
+
+        // 4. Grand Total
+        $grandTotal = (object) [
+            'jumlah_ruangan' => $rincianRuangan->count(),
+            'jumlah_level'   => $rincianLevel->count(),
+            'kapasitas'      => $rincianRuangan->sum('kapasitas'),
+            'laki'           => $rincianRuangan->sum('laki'),
+            'perempuan'      => $rincianRuangan->sum('perempuan'),
+            'total'          => $rincianRuangan->sum('total'),
+        ];
+
+        $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
+        $administrator = Administrator::where('user_id', auth()->id())->first()
+            ?? Administrator::whereNull('tingkat_id')->first()
+            ?? Administrator::first();
+
+        return view('cetak-baru.cetak_rincian_rombongan_belajar', compact(
+            'tahunPelajaran',
+            'filterTp',
+            'mode',
+            'rincianRuangan',
+            'rincianLevel',
+            'rincianTingkat',
+            'grandTotal',
+            'pengasuh',
+            'administrator'
+        ));
+    }
+
+    /**
      * Halaman Print Data Anggota Ruangan
      */
     public function printAnggota($id)
@@ -376,6 +493,102 @@ class RombonganBelajarController extends Controller
         }])->findOrFail($id);
 
         return view('cetak-baru.print-anggota', compact('ruangan'));
+    }
+
+    /**
+     * Halaman Cetak Format / Data Penilaian Ujian Anggota Ruangan
+     * Mendukung mode:
+     * - 'mapel' (A4 Portrait): Lembar Penilaian Ujian per Mata Pelajaran (Kosong / 1 Mapel / Semua Mapel)
+     * - 'leger' (A4 Landscape): Blangko Leger Penilaian Semua Mata Pelajaran
+     */
+    public function printPenilaianUjian(Request $request, $id)
+    {
+        $semuaStatus = $request->boolean('semua_status');
+
+        $ruangan = Ruangan::with([
+            'tahunPelajaran',
+            'level.tingkat',
+            'waliRuangan',
+            'murids' => function ($q) use ($semuaStatus) {
+                if (!$semuaStatus) {
+                    $q->where('status', 'Aktif');
+                }
+                $q->orderBy('jenis_kelamin', 'asc');
+                $q->orderBy('nama_lengkap', 'asc');
+            },
+        ])->findOrFail($id);
+
+        $mode = in_array($request->input('mode'), ['mapel', 'leger'])
+            ? $request->input('mode')
+            : 'mapel';
+
+        $mataPelajarans = MataPelajaran::where('level_id', $ruangan->level_id)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $jadwalMap = JadwalPelajaran::with(['ustadz', 'ustadzs'])
+            ->where('ruangan_id', $ruangan->id)
+            ->get()
+            ->keyBy('mata_pelajaran_id');
+
+        $daftarUjian = Ujian::where('tahun_pelajaran_id', $ruangan->tahun_pelajaran_id)
+            ->where(function ($q) use ($ruangan) {
+                $q->whereNull('tingkat_id');
+                if ($ruangan->level?->tingkat_id) {
+                    $q->orWhere('tingkat_id', $ruangan->level->tingkat_id);
+                }
+            })
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $selectedUjianId = $request->input('ujian_id');
+        $ujianTerpilih = $selectedUjianId ? $daftarUjian->firstWhere('id', $selectedUjianId) : null;
+        $selectedMapelId = $request->input('mapel_id');
+
+        // Susun daftar lembar untuk mode 'mapel'
+        $sheets = collect();
+        if ($mode === 'mapel') {
+            if ($selectedMapelId === 'semua' && $mataPelajarans->isNotEmpty()) {
+                foreach ($mataPelajarans as $mp) {
+                    $jadwal = $jadwalMap->get($mp->id);
+                    $sheets->push((object) [
+                        'mapel_nama'    => $mp->nama_mapel,
+                        'pengampu_nama' => $jadwal?->daftar_nama_pengampu,
+                        'pengampu_id'   => $jadwal?->daftar_ustadz?->first()?->id,
+                    ]);
+                }
+            } elseif (!empty($selectedMapelId) && $selectedMapelId !== 'semua') {
+                $mp = $mataPelajarans->firstWhere('id', $selectedMapelId);
+                $jadwal = $mp ? $jadwalMap->get($mp->id) : null;
+                $sheets->push((object) [
+                    'mapel_nama'    => $mp?->nama_mapel,
+                    'pengampu_nama' => $jadwal?->daftar_nama_pengampu,
+                    'pengampu_id'   => $jadwal?->daftar_ustadz?->first()?->id,
+                ]);
+            } else {
+                // Default: 1 lembar blanko kosong siap tulis
+                $sheets->push((object) [
+                    'mapel_nama'    => null,
+                    'pengampu_nama' => null,
+                    'pengampu_id'   => null,
+                ]);
+            }
+        }
+
+        $pengasuh = Pengurus::getAktifByJabatan('Pengasuh');
+
+        return view('cetak-baru.cetak_penilaian_ujian_anggota', compact(
+            'ruangan',
+            'mode',
+            'semuaStatus',
+            'mataPelajarans',
+            'daftarUjian',
+            'selectedUjianId',
+            'ujianTerpilih',
+            'selectedMapelId',
+            'sheets',
+            'pengasuh'
+        ));
     }
 
     /**

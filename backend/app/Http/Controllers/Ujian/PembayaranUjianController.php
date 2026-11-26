@@ -186,20 +186,37 @@ class PembayaranUjianController extends Controller
         }
     }
 
-    // 6. Laporan Penerimaan Pembayaran (Versi Filter Harian & Jenis Biaya)
+    // 6. Laporan Penerimaan Pembayaran (Versi Filter Harian, Ruangan & Kode Tagihan)
     public function laporan(Request $request)
     {
         // 1. Setup Data Filter (Tahun & Ruangan)
         $daftarTahun = TahunPelajaran::orderBy('id', 'asc')->get();
-        $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()->id;
+        $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()?->id;
 
         $daftarRuangan = Ruangan::where('tahun_pelajaran_id', $tahunPelajaranId)->berdasarkanHakAkses()->orderBy('id', 'asc')->get();
         $ruanganTerpilih = null;
 
-        // 2. Setup Parameter Default (Tanggal & Jenis)
+        // Daftar Kode Tagihan Ujian Reguler di Tahun Pelajaran terpilih
+        $daftarKodeTagihan = PengaturanTagihan::where('tahun_pelajaran_id', $tahunPelajaranId)
+            ->where(function ($q) {
+                $q->whereNull('sasaran')->orWhere('sasaran', 'murid');
+            })
+            ->where('kode_tagihan', '!=', 'IMNI')
+            ->where('kode_tagihan', 'NOT LIKE', '%IMNI%')
+            ->where('nama_tagihan', 'NOT LIKE', '%IMNI%')
+            ->where('kode_tagihan', '!=', 'SPP')
+            ->where('nama_tagihan', 'NOT LIKE', '%SPP%')
+            ->where('nama_tagihan', 'NOT LIKE', '%Syahriyah%')
+            ->select('kode_tagihan')
+            ->distinct()
+            ->orderBy('kode_tagihan', 'asc')
+            ->pluck('kode_tagihan');
+
+        // 2. Setup Parameter Default (Tanggal, Jenis, & Kode Tagihan)
         $startDate = $request->start_date ?? now()->format('Y-m-d');
         $endDate = $request->end_date ?? now()->format('Y-m-d');
-        $jenisBiaya = $request->jenis_biaya ?? 'Lainnya'; // Default langsung arahkan ke 'Lainnya' jika untuk ujian
+        $jenisBiaya = $request->jenis_biaya ?? 'Lainnya';
+        $kodeTagihanFilter = $request->input('kode_tagihan');
 
         // 3. Query Dasar Buku Kas (Transaksi Pembayaran)
         $query = PembayaranTagihan::whereDate('tanggal_bayar', '>=', $startDate)
@@ -217,20 +234,29 @@ class PembayaranUjianController extends Controller
         }
 
         // ==========================================
-        // FILTER 2: Berdasarkan Ruangan (Baru)
+        // FILTER 2: Berdasarkan Kode Tagihan
+        // ==========================================
+        if (!empty($kodeTagihanFilter)) {
+            $query->whereHas('tagihanMurids.pengaturanTagihan', function ($q) use ($kodeTagihanFilter, $tahunPelajaranId) {
+                $q->where('kode_tagihan', $kodeTagihanFilter)
+                    ->where('tahun_pelajaran_id', $tahunPelajaranId);
+            });
+        }
+
+        // ==========================================
+        // FILTER 3: Berdasarkan Ruangan
         // ==========================================
         if ($request->filled('ruangan_id')) {
             $ruanganTerpilih = Ruangan::find($request->ruangan_id);
 
-            // Memastikan transaksi tersebut dimiliki oleh murid di ruangan yang dipilih
-            $query->whereHas('tagihanMurids.murid', function ($q) use ($request) {
+            $query->whereHas('tagihanMurids', function ($q) use ($request) {
                 $q->where('ruangan_id', $request->ruangan_id);
             });
         }
 
         // 4. Kalkulasi Ringkasan Kas
-        $totalPendapatan = $query->sum('total_nominal');
-        $totalTransaksi = $query->count();
+        $totalPendapatan = (clone $query)->sum('total_nominal');
+        $totalTransaksi = (clone $query)->count();
 
         // 5. Eksekusi Ambil Data
         $laporans = $query->orderBy('tanggal_bayar', 'desc')->orderBy('id', 'desc')->get();
@@ -243,11 +269,282 @@ class PembayaranUjianController extends Controller
             'startDate',
             'endDate',
             'jenisBiaya',
-            'daftarTahun',       // <- Wajib dikirim untuk Filter Tahun Pelajaran
-            'tahunPelajaranId',  // <- Wajib dikirim
-            'daftarRuangan',     // <- Wajib dikirim untuk Filter Ruangan
-            'ruanganTerpilih'
+            'daftarTahun',
+            'tahunPelajaranId',
+            'daftarRuangan',
+            'ruanganTerpilih',
+            'daftarKodeTagihan',
+            'kodeTagihanFilter'
         ));
+    }
+
+    /**
+     * Dashboard Laporan Pembayaran Ujian Berdasarkan Kode Tagihan
+     */
+    public function dashboard(Request $request)
+    {
+        $payload = $this->buildDashboardData($request);
+        return view('pembayaran-ujian.dashboard-kode-tagihan', $payload);
+    }
+
+    /**
+     * Cetak Rekap Dashboard Pembayaran Ujian Berdasarkan Kode Tagihan (A4)
+     */
+    public function cetakDashboard(Request $request)
+    {
+        $payload = $this->buildDashboardData($request);
+        $payload['pengasuh'] = \App\Models\Kepengurusan\Pengurus::getAktifByJabatan('Pengasuh');
+        $payload['bendahara'] = \App\Models\Kepengurusan\Pengurus::getAktifByJabatan('Bendahara')
+            ?? \App\Models\Kepengurusan\Pengurus::getAktifByJabatan('Sekretaris Jenderal');
+
+        return view('cetak-baru.cetak_laporan_pembayaran_ujian_kode', $payload);
+    }
+
+    /**
+     * Helper penyusun data agregasi pembayaran ujian berdasarkan kode_tagihan
+     */
+    private function buildDashboardData(Request $request): array
+    {
+        $daftarTahun = TahunPelajaran::orderBy('id', 'asc')->get();
+        $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()?->id;
+        $tahunPelajaran = $daftarTahun->firstWhere('id', $tahunPelajaranId);
+
+        $daftarRuangan = Ruangan::with(['level.tingkat', 'waliRuangan'])
+            ->where('tahun_pelajaran_id', $tahunPelajaranId)
+            ->berdasarkanHakAkses()
+            ->orderBy('level_id', 'asc')
+            ->orderBy('nama_ruangan', 'asc')
+            ->get();
+
+        $allowedRuanganIds = $daftarRuangan->pluck('id')->toArray();
+        $selectedRuanganId = $request->filled('ruangan_id') ? (int) $request->ruangan_id : null;
+        $ruanganTerpilih = $selectedRuanganId ? $daftarRuangan->firstWhere('id', $selectedRuanganId) : null;
+
+        // Ambil seluruh master pengaturan tagihan ujian reguler (exclude IMNI, SPP, Syahriyah, wali_murid)
+        $masterTagihans = PengaturanTagihan::with('level.tingkat')
+            ->where('tahun_pelajaran_id', $tahunPelajaranId)
+            ->where(function ($q) {
+                $q->whereNull('sasaran')->orWhere('sasaran', 'murid');
+            })
+            ->where('kode_tagihan', '!=', 'IMNI')
+            ->where('kode_tagihan', 'NOT LIKE', '%IMNI%')
+            ->where('nama_tagihan', 'NOT LIKE', '%IMNI%')
+            ->where('kode_tagihan', '!=', 'SPP')
+            ->where('nama_tagihan', 'NOT LIKE', '%SPP%')
+            ->where('nama_tagihan', 'NOT LIKE', '%Syahriyah%')
+            ->orderBy('kode_tagihan', 'asc')
+            ->orderBy('level_id', 'asc')
+            ->get();
+
+        // Daftar kode tagihan unik beserta nama dasar (menghapus akhiran " - <Nama Level>")
+        $daftarKodeTagihan = $masterTagihans->groupBy('kode_tagihan')->map(function ($group, $kode) {
+            $first = $group->first();
+            $namaDasar = $first->nama_tagihan ?? $kode;
+            if ($first->level && !empty($first->level->nama_level)) {
+                $suffix = ' - ' . $first->level->nama_level;
+                if (str_ends_with($namaDasar, $suffix)) {
+                    $namaDasar = trim(substr($namaDasar, 0, -strlen($suffix)));
+                }
+            }
+
+            return (object) [
+                'kode_tagihan'     => $kode,
+                'nama_tagihan'     => $namaDasar,
+                'jumlah_level'     => $group->pluck('level_id')->filter()->unique()->count(),
+                'pengaturan_ids'   => $group->pluck('id')->toArray(),
+                'nominal_min'      => (float) $group->min('nominal'),
+                'nominal_max'      => (float) $group->max('nominal'),
+                'pengaturan_by_lv' => $group->keyBy('level_id'),
+            ];
+        })->values();
+
+        $selectedKode = $request->input('kode_tagihan');
+        if ($selectedKode && !$daftarKodeTagihan->contains('kode_tagihan', $selectedKode)) {
+            $selectedKode = null;
+        }
+        $kodeTerpilihObj = $selectedKode ? $daftarKodeTagihan->firstWhere('kode_tagihan', $selectedKode) : null;
+
+        // Ambil seluruh tagihan murid untuk master ujian di tahun pelajaran & ruangan yang diizinkan
+        $masterIdsAll = $masterTagihans->pluck('id')->toArray();
+        $targetRuanganIds = $selectedRuanganId && in_array($selectedRuanganId, $allowedRuanganIds)
+            ? [$selectedRuanganId]
+            : $allowedRuanganIds;
+
+        $allTagihans = collect();
+        if (!empty($masterIdsAll) && !empty($targetRuanganIds)) {
+            $allTagihans = TagihanMurid::with(['pengaturanTagihan', 'ruangan.level.tingkat'])
+                ->whereIn('pengaturan_tagihan_id', $masterIdsAll)
+                ->whereIn('ruangan_id', $targetRuanganIds)
+                ->where(function ($q) {
+                    $q->where('status_bayar', 'Lunas')
+                        ->orWhereHas('murid', function ($mq) {
+                            $mq->where('status', 'Aktif');
+                        });
+                })
+                ->get();
+        }
+
+        // 1. Rekapitulasi Per Kode Tagihan (selalu tampilkan semua kode agar mudah dibandingkan)
+        $rekapPerKode = $daftarKodeTagihan->map(function ($kodeObj) use ($allTagihans) {
+            $items = $allTagihans->whereIn('pengaturan_tagihan_id', $kodeObj->pengaturan_ids);
+
+            $totalCount = $items->count();
+            $lunasItems = $items->where('status_bayar', 'Lunas');
+            $belumItems = $items->where('status_bayar', 'Belum Lunas');
+            $donaturItems = $items->where('status_bayar', 'Ditanggung Donatur');
+
+            $lunasCount = $lunasItems->count();
+            $belumCount = $belumItems->count();
+            $donaturCount = $donaturItems->count();
+
+            $targetNominal = (float) $items->sum('nominal_tagihan');
+            $terbayarNominal = (float) $lunasItems->sum('nominal_tagihan');
+            $tunggakanNominal = (float) $belumItems->sum('nominal_tagihan');
+            $donaturNominal = (float) $donaturItems->sum('nominal_tagihan');
+
+            $persenLunas = $totalCount > 0 ? round(($lunasCount / $totalCount) * 100, 1) : 0;
+            $persenNominal = $targetNominal > 0 ? round(($terbayarNominal / $targetNominal) * 100, 1) : 0;
+
+            return (object) [
+                'kode_tagihan'          => $kodeObj->kode_tagihan,
+                'nama_tagihan'          => $kodeObj->nama_tagihan,
+                'jumlah_level'          => $kodeObj->jumlah_level,
+                'nominal_min'           => $kodeObj->nominal_min,
+                'nominal_max'           => $kodeObj->nominal_max,
+                'total_count'           => $totalCount,
+                'lunas_count'           => $lunasCount,
+                'belum_lunas_count'     => $belumCount,
+                'donatur_count'         => $donaturCount,
+                'target_nominal'        => $targetNominal,
+                'terbayar_nominal'      => $terbayarNominal,
+                'tunggakan_nominal'     => $tunggakanNominal,
+                'donatur_nominal'       => $donaturNominal,
+                'persen_lunas'          => $persenLunas,
+                'persen_nominal'        => $persenNominal,
+            ];
+        });
+
+        // 2. Data Terfilter (untuk KPI Utama, Breakdown Per Ruangan, dan Breakdown Per Level)
+        $filteredTagihans = $selectedKode && $kodeTerpilihObj
+            ? $allTagihans->whereIn('pengaturan_tagihan_id', $kodeTerpilihObj->pengaturan_ids)
+            : $allTagihans;
+
+        $totalCount = $filteredTagihans->count();
+        $lunasItems = $filteredTagihans->where('status_bayar', 'Lunas');
+        $belumItems = $filteredTagihans->where('status_bayar', 'Belum Lunas');
+        $donaturItems = $filteredTagihans->where('status_bayar', 'Ditanggung Donatur');
+
+        $targetNominal = (float) $filteredTagihans->sum('nominal_tagihan');
+        $terbayarNominal = (float) $lunasItems->sum('nominal_tagihan');
+        $tunggakanNominal = (float) $belumItems->sum('nominal_tagihan');
+        $donaturNominal = (float) $donaturItems->sum('nominal_tagihan');
+
+        $summary = (object) [
+            'total_kode'        => $selectedKode ? 1 : $daftarKodeTagihan->count(),
+            'total_count'       => $totalCount,
+            'lunas_count'       => $lunasItems->count(),
+            'belum_lunas_count' => $belumItems->count(),
+            'donatur_count'     => $donaturItems->count(),
+            'target_nominal'    => $targetNominal,
+            'terbayar_nominal'  => $terbayarNominal,
+            'tunggakan_nominal' => $tunggakanNominal,
+            'donatur_nominal'   => $donaturNominal,
+            'persen_lunas'      => $totalCount > 0 ? round(($lunasItems->count() / $totalCount) * 100, 1) : 0,
+            'persen_nominal'    => $targetNominal > 0 ? round(($terbayarNominal / $targetNominal) * 100, 1) : 0,
+        ];
+
+        // 3. Rincian Per Ruangan
+        $ruangansForBreakdown = $selectedRuanganId
+            ? $daftarRuangan->where('id', $selectedRuanganId)
+            : $daftarRuangan;
+
+        $rekapPerRuangan = $ruangansForBreakdown->map(function ($ruangan) use ($filteredTagihans, $kodeTerpilihObj) {
+            $items = $filteredTagihans->where('ruangan_id', $ruangan->id);
+            if ($items->isEmpty()) {
+                return null;
+            }
+
+            $total = $items->count();
+            $lunas = $items->where('status_bayar', 'Lunas');
+            $belum = $items->where('status_bayar', 'Belum Lunas');
+            $donatur = $items->where('status_bayar', 'Ditanggung Donatur');
+
+            $targetNom = (float) $items->sum('nominal_tagihan');
+            $terbayarNom = (float) $lunas->sum('nominal_tagihan');
+            $tunggakanNom = (float) $belum->sum('nominal_tagihan');
+            $donaturNom = (float) $donatur->sum('nominal_tagihan');
+
+            // Cari pengaturan_tagihan_id agar tombol cepat Kasir langsung membuka tagihan yang sesuai
+            $pengaturanIdForLink = $kodeTerpilihObj?->pengaturan_by_lv?->get($ruangan->level_id)?->id
+                ?? $items->first()?->pengaturan_tagihan_id;
+
+            return (object) [
+                'ruangan_id'            => $ruangan->id,
+                'nama_ruangan'          => $ruangan->nama_ruangan,
+                'level_id'              => $ruangan->level_id,
+                'nama_level'            => $ruangan->level->nama_level ?? '-',
+                'tingkat_id'            => $ruangan->level->tingkat_id ?? null,
+                'nama_tingkat'          => $ruangan->level->tingkat->nama_tingkat ?? '-',
+                'wali_ruangan'          => $ruangan->waliRuangan->nama_lengkap ?? '-',
+                'pengaturan_tagihan_id' => $pengaturanIdForLink,
+                'total_count'           => $total,
+                'lunas_count'           => $lunas->count(),
+                'belum_lunas_count'     => $belum->count(),
+                'donatur_count'         => $donatur->count(),
+                'target_nominal'        => $targetNom,
+                'terbayar_nominal'      => $terbayarNom,
+                'tunggakan_nominal'     => $tunggakanNom,
+                'donatur_nominal'       => $donaturNom,
+                'persen_lunas'          => $total > 0 ? round(($lunas->count() / $total) * 100, 1) : 0,
+                'persen_nominal'        => $targetNom > 0 ? round(($terbayarNom / $targetNom) * 100, 1) : 0,
+            ];
+        })->filter()->values();
+
+        // 4. Rincian Per Level
+        $rekapPerLevel = $rekapPerRuangan->groupBy('level_id')->map(function ($rows) {
+            $first = $rows->first();
+            $total = $rows->sum('total_count');
+            $lunas = $rows->sum('lunas_count');
+            $belum = $rows->sum('belum_lunas_count');
+            $donatur = $rows->sum('donatur_count');
+            $targetNom = (float) $rows->sum('target_nominal');
+            $terbayarNom = (float) $rows->sum('terbayar_nominal');
+            $tunggakanNom = (float) $rows->sum('tunggakan_nominal');
+            $donaturNom = (float) $rows->sum('donatur_nominal');
+
+            return (object) [
+                'level_id'          => $first->level_id,
+                'nama_level'        => $first->nama_level,
+                'nama_tingkat'      => $first->nama_tingkat,
+                'jumlah_ruangan'    => $rows->count(),
+                'total_count'       => $total,
+                'lunas_count'       => $lunas,
+                'belum_lunas_count' => $belum,
+                'donatur_count'     => $donatur,
+                'target_nominal'    => $targetNom,
+                'terbayar_nominal'  => $terbayarNom,
+                'tunggakan_nominal' => $tunggakanNom,
+                'donatur_nominal'   => $donaturNom,
+                'persen_lunas'      => $total > 0 ? round(($lunas / $total) * 100, 1) : 0,
+                'persen_nominal'    => $targetNom > 0 ? round(($terbayarNom / $targetNom) * 100, 1) : 0,
+            ];
+        })->values();
+
+        return compact(
+            'daftarTahun',
+            'tahunPelajaranId',
+            'tahunPelajaran',
+            'daftarRuangan',
+            'selectedRuanganId',
+            'ruanganTerpilih',
+            'daftarKodeTagihan',
+            'selectedKode',
+            'kodeTerpilihObj',
+            'rekapPerKode',
+            'summary',
+            'rekapPerRuangan',
+            'rekapPerLevel'
+        );
     }
 
     public function cetakKwitansi($id)

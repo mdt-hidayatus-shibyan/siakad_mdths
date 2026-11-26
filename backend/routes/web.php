@@ -395,7 +395,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}/uploadFoto/{murid_id}', [RombonganBelajarController::class, 'modalUpload'])->name('uploadFoto');
 
         // Print & Export Rombel
+        Route::get('/cetak-rincian', [RombonganBelajarController::class, 'cetakRincian'])->name('cetak-rincian');
         Route::get('/{id}/print-anggota', [RombonganBelajarController::class, 'printAnggota'])->name('print-anggota');
+        Route::get('/{id}/print-penilaian', [RombonganBelajarController::class, 'printPenilaianUjian'])->name('print-penilaian');
         Route::get('/{id}/export-anggota', [RombonganBelajarController::class, 'exportAnggota'])->name('export-anggota');
     });
     Route::resource('rombongan-belajar', RombonganBelajarController::class)->except(['show', 'create', 'edit', 'update', 'destroy']);
@@ -581,6 +583,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // -- Pembayaran Ujian --
     Route::prefix('pembayaran-ujian')->name('pembayaran-ujian.')->controller(PembayaranUjianController::class)->group(function () {
         Route::get('/', 'index')->name('index');
+        Route::get('/dashboard', 'dashboard')->name('dashboard');
+        Route::get('/dashboard/cetak', 'cetakDashboard')->name('dashboard.cetak');
         Route::post('/proses', 'proses')->name('proses');
         Route::post('/batal/{id}', 'batalTransaksi')->name('batal');
         Route::get('/cetak-rekap-spp/{murid_id}/{tahun_id}', 'cetakRekapSpp')->name('cetak-rekap-spp');

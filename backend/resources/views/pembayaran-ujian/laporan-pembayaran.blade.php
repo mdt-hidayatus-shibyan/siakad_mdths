@@ -27,6 +27,9 @@
                 @if (request('jenis_biaya'))
                     <input type="hidden" name="jenis_biaya" value="{{ request('jenis_biaya') }}">
                 @endif
+                @if (request('kode_tagihan'))
+                    <input type="hidden" name="kode_tagihan" value="{{ request('kode_tagihan') }}">
+                @endif
 
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 z-10">
                     <i class="bi bi-calendar-range text-xs"></i>
@@ -56,6 +59,8 @@
         <div class="xl:col-span-2 m3-glass-card p-4 md:p-5 shadow-2xs flex flex-col justify-center">
             <form action="{{ route('pembayaran-ujian.laporan') }}" method="GET"
                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end w-full">
+                <input type="hidden" name="tahun_id" value="{{ $tahunPelajaranId }}">
+                <input type="hidden" name="jenis_biaya" value="{{ $jenisBiaya }}">
 
                 <!-- Tanggal Mulai -->
                 <div class="lg:col-span-3 sm:col-span-1">
@@ -114,21 +119,25 @@
                     </div>
                 </div>
 
-                <!-- Kategori Tagihan -->
+                <!-- Filter Kode Tagihan -->
                 <div class="lg:col-span-3 sm:col-span-1">
                     <label class="block text-[10px] font-black text-zinc-400 uppercase tracking-wider mb-1.5 ml-1">
-                        Kategori Laporan
+                        Kode Tagihan
                     </label>
                     <div class="relative h-10">
                         <div
                             class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-sky-500">
                             <i class="bi bi-tags-fill text-xs"></i>
                         </div>
-                        <select name="jenis_biaya"
+                        <select name="kode_tagihan"
                             class="m3-input-glass w-full !pl-9 !pr-8 text-xs font-bold cursor-pointer appearance-none">
-                            <option value="Lainnya" {{ $jenisBiaya == 'Lainnya' ? 'selected' : '' }}>
-                                Ujian & Tagihan Lainnya
-                            </option>
+                            <option value="">Semua Kode Tagihan</option>
+                            @foreach ($daftarKodeTagihan ?? [] as $kd)
+                                <option value="{{ $kd }}"
+                                    {{ ($kodeTagihanFilter ?? '') === $kd ? 'selected' : '' }}>
+                                    {{ $kd }}
+                                </option>
+                            @endforeach
                         </select>
                         <div
                             class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-zinc-400">
