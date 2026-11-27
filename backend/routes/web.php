@@ -550,6 +550,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/input-leger', [NilaiUjianController::class, 'inputLeger'])->name('input-leger');
         Route::post('/input-leger/store', [NilaiUjianController::class, 'storeLeger'])->name('input-leger.store');
         Route::get('/laporan-leger', [NilaiUjianController::class, 'laporanLeger'])->name('laporan-leger');
+        Route::get('/rekap-mapel', [NilaiUjianController::class, 'rekapMapel'])->name('rekap-mapel');
+        Route::get('/rekap-mapel/cetak', [NilaiUjianController::class, 'cetakRekapMapel'])->name('rekap-mapel.cetak');
     });
 
     // -- Bintang Pelajar (Per Agenda Ujian) --

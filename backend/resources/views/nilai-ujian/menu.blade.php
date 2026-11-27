@@ -32,5 +32,13 @@
         <i class="bi bi-file-earmark-bar-graph text-sm"></i>
         <span>Laporan Leger</span>
     </a>
+
+    {{-- TAB 5: REKAP PER MATA PELAJARAN --}}
+    @php $isRekapMapel = request()->routeIs('nilai-ujian.rekap-mapel*'); @endphp
+    <a href="{{ route('nilai-ujian.rekap-mapel') }}"
+        class="{{ $isRekapMapel ? 'bg-primary dark:bg-primary-dark text-white dark:text-zinc-900 shadow-2xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50' }} h-full px-3.5 md:px-4 rounded-lg text-xs font-black transition-all duration-200 whitespace-nowrap flex items-center justify-center gap-1.5 flex-1 xl:flex-none shrink-0">
+        <i class="bi bi-journal-bookmark-fill text-sm"></i>
+        <span>Rekap Per Mapel</span>
+    </a>
 </div>
 

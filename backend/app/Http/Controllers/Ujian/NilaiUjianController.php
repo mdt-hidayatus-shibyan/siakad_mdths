@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Ujian;
 
 use App\Http\Controllers\Controller;
+use App\Models\Kepengurusan\Pengurus;
 use App\Models\Ruangan;
 use App\Models\TahunPelajaran;
 use App\Models\Ujian\JadwalUjian;
 use App\Models\Ujian\NilaiUjian;
+use App\Models\Ujian\PengecualianUjian;
 use App\Models\Ujian\Ujian;
 use App\Repositories\MuridRuanganRepository;
 use App\Services\NilaiUjianService;
@@ -474,5 +476,315 @@ class NilaiUjianController extends Controller
             'daftarRuangan',
             'dataProgres'
         ));
+    }
+
+    /**
+     * Rekapitulasi Nilai Berdasarkan Mata Pelajaran Jadwal Ujian (Berdasarkan Ruangan & Level)
+     */
+    public function rekapMapel(Request $request)
+    {
+        $payload = $this->buildRekapMapelData($request);
+        return view('nilai-ujian.rekap-mapel', $payload);
+    }
+
+    /**
+     * Cetak A4 Rekapitulasi Nilai Berdasarkan Mata Pelajaran Jadwal Ujian
+     */
+    public function cetakRekapMapel(Request $request)
+    {
+        $payload = $this->buildRekapMapelData($request);
+        $payload['pengasuh'] = Pengurus::getAktifByJabatan('Pengasuh');
+        $tingkatId = $payload['levelTerpilih']?->tingkat_id ?? null;
+        $payload['kabid'] = Pengurus::getAktifByJabatan('Kepala Bidang Pendidikan', $tingkatId)
+            ?? Pengurus::getAktifByJabatan('Kepala Bidang');
+
+        return view('cetak-baru.cetak_rekap_nilai_mapel', $payload);
+    }
+
+    /**
+     * Helper penyusun data rekapitulasi nilai berdasarkan mata pelajaran jadwal ujian per level & per ruangan
+     */
+    private function buildRekapMapelData(Request $request): array
+    {
+        $kkm = 60;
+        $daftarTahun = TahunPelajaran::orderBy('id', 'asc')->get();
+        $tahunPelajaranId = $request->tahun_id ?? TahunPelajaran::where('is_active', true)->value('id') ?? $daftarTahun->first()?->id;
+        $tahunPelajaran = $daftarTahun->firstWhere('id', $tahunPelajaranId);
+
+        // 1. Daftar Agenda Ujian Reguler di Tahun Pelajaran terpilih
+        $queryUjian = Ujian::with(['tahunPelajaran', 'semester_relasi'])
+            ->where('tahun_pelajaran_id', $tahunPelajaranId)
+            ->where('tipe_ujian', '!=', 'IMNI');
+
+        $user = auth()->user();
+        if ($user && $user->hasRole('staff') && $user->tingkat_id) {
+            $queryUjian->where(function ($q) use ($user) {
+                $q->whereNull('tingkat_id')
+                    ->orWhere('tingkat_id', $user->tingkat_id);
+            });
+        }
+        $daftarUjian = $queryUjian->orderBy('id', 'asc')->get();
+        $ujianTerpilih = $request->filled('ujian_id')
+            ? $daftarUjian->firstWhere('id', $request->ujian_id)
+            : null;
+
+        // 2. Daftar Ruangan & Level sesuai Hak Akses dan Agenda Ujian
+        $semuaRuangan = Ruangan::with(['level.tingkat', 'waliRuangan'])
+            ->where('tahun_pelajaran_id', $tahunPelajaranId)
+            ->berdasarkanHakAkses()
+            ->orderBy('level_id', 'asc')
+            ->orderBy('nama_ruangan', 'asc')
+            ->get();
+
+        if ($ujianTerpilih) {
+            if ($ujianTerpilih->tingkat_id) {
+                $semuaRuangan = $semuaRuangan->filter(fn($r) => $r->level && (int) $r->level->tingkat_id === (int) $ujianTerpilih->tingkat_id)->values();
+            }
+            if (in_array($ujianTerpilih->tipe_ujian, ['IMDA 2', 'IMDA 3'])) {
+                $semuaRuangan = $semuaRuangan->reject(fn($r) => Ujian::isKelasAkhir($r->level->nama_level ?? ''))->values();
+            }
+        }
+
+        // Ekstrak daftar Level unik dari ruangan yang dapat diakses
+        $daftarLevel = $semuaRuangan->pluck('level')->filter()->unique('id')->sortBy('id')->values();
+
+        // Tentukan Level & Ruangan terpilih
+        $selectedLevelId = $request->filled('level_id') ? (int) $request->level_id : null;
+        $selectedRuanganId = $request->filled('ruangan_id') ? (int) $request->ruangan_id : null;
+
+        if (!$selectedLevelId && $selectedRuanganId) {
+            $rTmp = $semuaRuangan->firstWhere('id', $selectedRuanganId);
+            if ($rTmp) {
+                $selectedLevelId = (int) $rTmp->level_id;
+            }
+        }
+
+        if ($selectedLevelId && !$daftarLevel->contains('id', $selectedLevelId)) {
+            $selectedLevelId = null;
+        }
+
+        $levelTerpilih = $selectedLevelId ? $daftarLevel->firstWhere('id', $selectedLevelId) : null;
+
+        $daftarRuanganLevel = $selectedLevelId
+            ? $semuaRuangan->where('level_id', $selectedLevelId)->values()
+            : $semuaRuangan;
+
+        if ($selectedRuanganId && !$daftarRuanganLevel->contains('id', $selectedRuanganId)) {
+            $selectedRuanganId = null;
+        }
+        $ruanganTerpilih = $selectedRuanganId ? $daftarRuanganLevel->firstWhere('id', $selectedRuanganId) : null;
+
+        // Variabel output default
+        $jadwals = collect();
+        $jadwalTerpilih = null;
+        $selectedJadwalId = null;
+        $targetRuangans = collect();
+        $rekapPerMapel = collect();
+        $rekapRuanganMapel = collect();
+        $detailNilaiMurid = collect();
+        $summary = (object) [
+            'jumlah_mapel'      => 0,
+            'jumlah_ruangan'    => 0,
+            'jumlah_peserta'    => 0,
+            'total_nilai_masuk' => 0,
+            'target_nilai'      => 0,
+            'persen_progres'    => 0,
+            'rata_rata'         => 0,
+            'tertinggi'         => null,
+            'terendah'          => null,
+            'tuntas_count'      => 0,
+            'belum_tuntas_count' => 0,
+            'persen_tuntas'     => 0,
+        ];
+
+        if ($ujianTerpilih && $levelTerpilih) {
+            $targetRuangans = $ruanganTerpilih ? collect([$ruanganTerpilih]) : $daftarRuanganLevel;
+            $targetRuanganIds = $targetRuangans->pluck('id')->toArray();
+
+            // 3. Tarik Daftar Mata Pelajaran dari Jadwal Ujian untuk Ujian & Level ini
+            $jadwals = JadwalUjian::with(['mataPelajaran', 'pengawas'])
+                ->where('ujian_id', $ujianTerpilih->id)
+                ->where('level_id', $levelTerpilih->id)
+                ->orderBy('tanggal_ujian', 'asc')
+                ->orderBy('waktu_mulai', 'asc')
+                ->get();
+
+            $selectedJadwalId = $request->filled('jadwal_ujian_id') && $jadwals->contains('id', (int) $request->jadwal_ujian_id)
+                ? (int) $request->jadwal_ujian_id
+                : null;
+            $jadwalTerpilih = $selectedJadwalId ? $jadwals->firstWhere('id', $selectedJadwalId) : null;
+
+            // 4. Tarik Daftar Murid Aktif per Ruangan & Pengecualian Ujian
+            $pengecualianIds = PengecualianUjian::where('ujian_id', $ujianTerpilih->id)
+                ->pluck('murid_id')
+                ->toArray();
+
+            $pesertaByRuangan = [];
+            $totalPesertaWajib = 0;
+
+            foreach ($targetRuangans as $rng) {
+                $muridsAktif = $this->muridRuanganRepo->getMuridAktifByRuanganAndTahun($rng->id, $tahunPelajaranId);
+                $pesertaWajib = $muridsAktif->reject(fn($m) => in_array($m->id, $pengecualianIds))->values();
+                $pesertaByRuangan[$rng->id] = $pesertaWajib;
+                $totalPesertaWajib += $pesertaWajib->count();
+            }
+
+            // 5. Tarik Semua Nilai Ujian untuk jadwal & target ruangan (1 query massal)
+            $semuaNilai = collect();
+            if ($jadwals->isNotEmpty() && !empty($targetRuanganIds)) {
+                $semuaNilai = NilaiUjian::with(['murid', 'ruangan'])
+                    ->where('ujian_id', $ujianTerpilih->id)
+                    ->whereIn('ruangan_id', $targetRuanganIds)
+                    ->whereIn('jadwal_ujian_id', $jadwals->pluck('id'))
+                    ->whereNotNull('nilai')
+                    ->get();
+            }
+
+            // 6. Susun Rekapitulasi Per Mata Pelajaran Jadwal Ujian
+            foreach ($jadwals as $jadwal) {
+                $nilaiMapel = $semuaNilai->where('jadwal_ujian_id', $jadwal->id)->values();
+                $dinilaiCount = $nilaiMapel->count();
+                $publishCount = $nilaiMapel->where('is_published', true)->count();
+                $draftCount = $nilaiMapel->where('is_published', false)->count();
+                $tuntasCount = $nilaiMapel->filter(fn($n) => (float) $n->nilai >= $kkm)->count();
+                $belumTuntasCount = $nilaiMapel->filter(fn($n) => (float) $n->nilai < $kkm)->count();
+
+                $rataRata = $dinilaiCount > 0 ? round((float) $nilaiMapel->avg('nilai'), 2) : 0;
+                $maxItem = $dinilaiCount > 0 ? $nilaiMapel->sortByDesc('nilai')->first() : null;
+                $minVal = $dinilaiCount > 0 ? (float) $nilaiMapel->min('nilai') : null;
+
+                // Rincian per ruangan di dalam level untuk mapel ini
+                $perRuangan = [];
+                foreach ($targetRuangans as $rng) {
+                    $pCount = $pesertaByRuangan[$rng->id]->count();
+                    $nRng = $nilaiMapel->where('ruangan_id', $rng->id);
+                    $dCount = $nRng->count();
+                    $tCount = $nRng->filter(fn($n) => (float) $n->nilai >= $kkm)->count();
+
+                    $perRuangan[$rng->id] = (object) [
+                        'ruangan_id'    => $rng->id,
+                        'nama_ruangan'  => $rng->nama_ruangan,
+                        'peserta'       => $pCount,
+                        'dinilai'       => $dCount,
+                        'rata_rata'     => $dCount > 0 ? round((float) $nRng->avg('nilai'), 2) : null,
+                        'tertinggi'     => $dCount > 0 ? (float) $nRng->max('nilai') : null,
+                        'terendah'      => $dCount > 0 ? (float) $nRng->min('nilai') : null,
+                        'tuntas'        => $tCount,
+                        'belum_tuntas'  => $dCount - $tCount,
+                        'persen_tuntas' => $dCount > 0 ? round(($tCount / $dCount) * 100, 1) : 0,
+                    ];
+                }
+
+                $rekapPerMapel->push((object) [
+                    'jadwal'             => $jadwal,
+                    'jadwal_id'          => $jadwal->id,
+                    'nama_mapel'         => $jadwal->nama_mapel,
+                    'hari_tanggal'       => $jadwal->hari_tanggal_singkat,
+                    'jam'                => $jadwal->jam_mulai_format . ' - ' . $jadwal->jam_selesai_format,
+                    'jumlah_peserta'     => $totalPesertaWajib,
+                    'jumlah_dinilai'     => $dinilaiCount,
+                    'jumlah_publish'     => $publishCount,
+                    'jumlah_draft'       => $draftCount,
+                    'belum_dinilai'      => max(0, $totalPesertaWajib - $dinilaiCount),
+                    'rata_rata'          => $rataRata,
+                    'tertinggi'          => $maxItem ? (float) $maxItem->nilai : null,
+                    'peraih_tertinggi'   => $maxItem?->murid?->nama_lengkap,
+                    'terendah'           => $minVal,
+                    'tuntas_count'       => $tuntasCount,
+                    'belum_tuntas_count' => $belumTuntasCount,
+                    'persen_tuntas'      => $dinilaiCount > 0 ? round(($tuntasCount / $dinilaiCount) * 100, 1) : 0,
+                    'persen_progres'     => $totalPesertaWajib > 0 ? min(100, round(($dinilaiCount / $totalPesertaWajib) * 100, 1)) : 0,
+                    'per_ruangan'        => $perRuangan,
+                ]);
+            }
+
+            // 7. Ringkasan KPI (mengikuti jadwalTerpilih jika 1 mapel dipilih, atau seluruh mapel)
+            $nilaiScope = $jadwalTerpilih
+                ? $semuaNilai->where('jadwal_ujian_id', $jadwalTerpilih->id)
+                : $semuaNilai;
+
+            $mapelScopeCount = $jadwalTerpilih ? 1 : $jadwals->count();
+            $targetTotalNilai = $totalPesertaWajib * $mapelScopeCount;
+            $masukCount = $nilaiScope->count();
+            $tuntasScope = $nilaiScope->filter(fn($n) => (float) $n->nilai >= $kkm)->count();
+            $belumTuntasScope = $nilaiScope->filter(fn($n) => (float) $n->nilai < $kkm)->count();
+
+            $summary = (object) [
+                'jumlah_mapel'       => $jadwals->count(),
+                'jumlah_ruangan'     => $targetRuangans->count(),
+                'jumlah_peserta'     => $totalPesertaWajib,
+                'total_nilai_masuk'  => $masukCount,
+                'target_nilai'       => $targetTotalNilai,
+                'persen_progres'     => $targetTotalNilai > 0 ? min(100, round(($masukCount / $targetTotalNilai) * 100, 1)) : 0,
+                'rata_rata'          => $masukCount > 0 ? round((float) $nilaiScope->avg('nilai'), 2) : 0,
+                'tertinggi'          => $masukCount > 0 ? (float) $nilaiScope->max('nilai') : null,
+                'terendah'           => $masukCount > 0 ? (float) $nilaiScope->min('nilai') : null,
+                'tuntas_count'       => $tuntasScope,
+                'belum_tuntas_count' => $belumTuntasScope,
+                'persen_tuntas'      => $masukCount > 0 ? round(($tuntasScope / $masukCount) * 100, 1) : 0,
+            ];
+
+            // 8. Detail Nilai Murid & Breakdown Ruangan jika 1 Mata Pelajaran dipilih
+            if ($jadwalTerpilih) {
+                $rowMapel = $rekapPerMapel->firstWhere('jadwal_id', $jadwalTerpilih->id);
+                if ($rowMapel) {
+                    $rekapRuanganMapel = collect($rowMapel->per_ruangan)->values();
+                }
+
+                $nilaiByMurid = $semuaNilai->where('jadwal_ujian_id', $jadwalTerpilih->id)->keyBy('murid_id');
+
+                foreach ($targetRuangans as $rng) {
+                    foreach ($pesertaByRuangan[$rng->id] as $murid) {
+                        $n = $nilaiByMurid->get($murid->id);
+                        $angka = $n ? (float) $n->nilai : null;
+
+                        $detailNilaiMurid->push((object) [
+                            'murid'        => $murid,
+                            'ruangan'      => $rng,
+                            'nilai'        => $angka,
+                            'predikat'     => $n ? $n->getPredikatHuruf() : '-',
+                            'is_published' => $n ? (bool) $n->is_published : false,
+                            'tuntas'       => $angka !== null ? $angka >= $kkm : null,
+                        ]);
+                    }
+                }
+
+                // Urutkan nilai tertinggi dulu, lalu belum dinilai di bawah, lalu nama A-Z
+                $detailNilaiMurid = $detailNilaiMurid->sort(function ($a, $b) {
+                    if ($a->nilai === null && $b->nilai === null) {
+                        return strcmp($a->murid->nama_lengkap ?? '', $b->murid->nama_lengkap ?? '');
+                    }
+                    if ($a->nilai === null) return 1;
+                    if ($b->nilai === null) return -1;
+                    if ($a->nilai === $b->nilai) {
+                        return strcmp($a->murid->nama_lengkap ?? '', $b->murid->nama_lengkap ?? '');
+                    }
+                    return $b->nilai <=> $a->nilai;
+                })->values();
+            }
+        }
+
+        return compact(
+            'kkm',
+            'daftarTahun',
+            'tahunPelajaranId',
+            'tahunPelajaran',
+            'daftarUjian',
+            'ujianTerpilih',
+            'daftarLevel',
+            'selectedLevelId',
+            'levelTerpilih',
+            'daftarRuanganLevel',
+            'selectedRuanganId',
+            'ruanganTerpilih',
+            'targetRuangans',
+            'jadwals',
+            'selectedJadwalId',
+            'jadwalTerpilih',
+            'rekapPerMapel',
+            'rekapRuanganMapel',
+            'detailNilaiMurid',
+            'summary'
+        );
     }
 }
