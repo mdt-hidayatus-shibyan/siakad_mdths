@@ -8,6 +8,7 @@ use App\Models\Level;
 use App\Models\MataPelajaran;
 use App\Models\Semester;
 use App\Models\TahunPelajaran;
+use App\Models\Tingkat;
 use App\Models\Ujian\JadwalUjian;
 use App\Models\Ujian\PanitiaImni;
 use App\Models\Ujian\Ujian;
@@ -225,6 +226,12 @@ class JadwalImniController extends Controller
         $dates = [];
         $existingJadwal = collect();
         $mapels = collect();
+        $isLevelMalam = false;
+        $jumlahSesi = 2;
+        $defaultWaktuSesi = [
+            1 => ['mulai' => '13:45', 'selesai' => '14:30'],
+            2 => ['mulai' => '15:15', 'selesai' => '16:00'],
+        ];
 
         if ($tahun_pelajaran_id) {
             $imniUjians = Ujian::where('tahun_pelajaran_id', $tahun_pelajaran_id)
@@ -234,6 +241,14 @@ class JadwalImniController extends Controller
 
             if ($level_id) {
                 $level = Level::with('tingkat')->find($level_id);
+                $isLevelMalam = $this->isLevelMalam($level);
+
+                if ($isLevelMalam) {
+                    $jumlahSesi = 1;
+                    $defaultWaktuSesi = [
+                        1 => ['mulai' => '19:45', 'selesai' => '21:00'],
+                    ];
+                }
 
                 // Cari Ujian IMNI yang sesuai dengan tingkat level ini
                 $ujianImni = $imniUjians->firstWhere('tingkat_id', $level?->tingkat_id);
@@ -246,7 +261,11 @@ class JadwalImniController extends Controller
                     $end = Carbon::parse($ujianImni->tanggal_selesai);
 
                     for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-                        if ($d->isFriday()) continue; // Skip Jum'at
+                        if ($isLevelMalam) {
+                            if ($d->isThursday()) continue; // 6 IBT & 3 TSA: hari Kamis dilewati, Jum'at tetap ada
+                        } else {
+                            if ($d->isFriday()) continue; // 3 TPQ: hari Jum'at dilewati
+                        }
                         $dates[] = $d->format('Y-m-d');
                     }
                 }
@@ -278,7 +297,10 @@ class JadwalImniController extends Controller
             'dates',
             'existingJadwal',
             'mapels',
-            'pengawas'
+            'pengawas',
+            'isLevelMalam',
+            'jumlahSesi',
+            'defaultWaktuSesi'
         ));
     }
 
@@ -410,6 +432,26 @@ class JadwalImniController extends Controller
             'selectedTingkatId',
             'ketuaPanitia'
         ));
+    }
+
+    /**
+     * Helper: Cek apakah level termasuk ujian malam (6 Ibtidaiyah & 3 Tsanawiyah)
+     * Aturan: Hari Jum'at tetap ada, libur/skip otomatis hari Kamis, 1 sesi (19:45 - 21:00)
+     */
+    private function isLevelMalam(?Level $level): bool
+    {
+        if (!$level) {
+            return false;
+        }
+
+        $namaLevel = strtoupper(trim((string) $level->nama_level));
+        $namaTingkat = strtoupper(trim((string) ($level->tingkat?->nama_tingkat ?? '')));
+
+        return in_array((int) $level->urutan_level, [9, 12], true)
+            || str_contains($namaLevel, 'IBT')
+            || str_contains($namaLevel, 'TSA')
+            || str_contains($namaTingkat, 'IBTIDAIYAH')
+            || str_contains($namaTingkat, 'TSANAWIYAH');
     }
 
     /**

@@ -116,7 +116,7 @@
 
         <div class="p-3.5 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/20 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 flex items-start gap-2">
             <i class="bi bi-info-circle-fill text-primary shrink-0 mt-0.5"></i>
-            <span>Rentang tanggal ini akan otomatis menjadi hari-hari ujian pada <strong>Kertas Kerja Jadwal Ujian IMNI</strong> (hari Jum'at dilewati otomatis).</span>
+            <span>Rentang tanggal ini akan otomatis menjadi hari-hari ujian pada <strong>Kertas Kerja Jadwal Ujian IMNI</strong> (untuk <strong>6 IBT &amp; 3 TSA</strong> hari <strong>Kamis</strong> dilewati otomatis dan Jum'at tetap ada; untuk <strong>3 TPQ</strong> hari <strong>Jum'at</strong> dilewati otomatis).</span>
         </div>
 
         <!-- Keterangan / Catatan -->

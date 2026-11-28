@@ -93,14 +93,24 @@
 
             <!-- Header Tabel -->
             <div
-                class="bg-zinc-50/80 dark:bg-black/40 border-b border-zinc-100 dark:border-zinc-800/80 px-5 py-3.5 flex justify-between items-center">
-                <h3 class="font-black text-zinc-900 dark:text-white text-sm md:text-base flex items-center gap-2.5">
-                    <div
-                        class="w-7 h-7 rounded-lg bg-primary/10 text-primary dark:bg-primary-dark/20 dark:text-primary-dark border border-primary/20 dark:border-primary-dark/30 flex items-center justify-center shadow-2xs shrink-0">
-                        <i class="bi bi-table text-xs"></i>
-                    </div>
-                    Kertas Kerja Jadwal IMNI ({{ count($dates) }} Hari Ujian)
-                </h3>
+                class="bg-zinc-50/80 dark:bg-black/40 border-b border-zinc-100 dark:border-zinc-800/80 px-5 py-3.5 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <h3 class="font-black text-zinc-900 dark:text-white text-sm md:text-base flex items-center gap-2.5">
+                        <div
+                            class="w-7 h-7 rounded-lg bg-primary/10 text-primary dark:bg-primary-dark/20 dark:text-primary-dark border border-primary/20 dark:border-primary-dark/30 flex items-center justify-center shadow-2xs shrink-0">
+                            <i class="bi bi-table text-xs"></i>
+                        </div>
+                        Kertas Kerja Jadwal IMNI ({{ count($dates) }} Hari Ujian)
+                    </h3>
+                    <span
+                        class="px-2.5 py-1 rounded-lg text-[11px] font-bold {{ $isLevelMalam ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' }}">
+                        @if ($isLevelMalam)
+                            1 Mapel/Hari &bull; 19:45–21:00 &bull; Skip Kamis (Jum'at Aktif)
+                        @else
+                            2 Sesi/Hari &bull; Skip Jum'at
+                        @endif
+                    </span>
+                </div>
 
                 <button type="submit" class="m3-btn-primary px-5 py-2 group/btn cursor-pointer">
                     <i class="bi bi-cloud-arrow-up-fill text-sm"></i>
@@ -127,23 +137,15 @@
                     </thead>
                     <tbody>
                         @foreach ($dates as $dateIndex => $date)
-                            @for ($sesi = 1; $sesi <= 2; $sesi++)
+                            @for ($sesi = 1; $sesi <= $jumlahSesi; $sesi++)
                                 @php
                                     $jadwal =
                                         isset($existingJadwal[$date]) && isset($existingJadwal[$date][$sesi - 1])
                                             ? $existingJadwal[$date][$sesi - 1]
                                             : null;
 
-                                    $defaultMulai = '';
-                                    $defaultSelesai = '';
-
-                                    if ($sesi == 1) {
-                                        $defaultMulai = '13:45';
-                                        $defaultSelesai = '14:30';
-                                    } elseif ($sesi == 2) {
-                                        $defaultMulai = '15:15';
-                                        $defaultSelesai = '16:00';
-                                    }
+                                    $defaultMulai = $defaultWaktuSesi[$sesi]['mulai'] ?? '';
+                                    $defaultSelesai = $defaultWaktuSesi[$sesi]['selesai'] ?? '';
 
                                     $valMulai =
                                         $jadwal && $jadwal->waktu_mulai
@@ -164,7 +166,7 @@
                                     class="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors {{ !$isSesiAktif ? 'opacity-50 bg-zinc-50/30 dark:bg-black/30' : '' }}">
 
                                     @if ($sesi == 1)
-                                        <td rowspan="2"
+                                        <td rowspan="{{ $jumlahSesi }}"
                                             class="py-3 px-5 border-r border-b border-zinc-200/80 dark:border-zinc-800 align-top bg-zinc-50/50 dark:bg-black/20 text-center">
                                             <div
                                                 class="font-black text-xs text-zinc-900 dark:text-white tracking-tight leading-tight mb-1">
